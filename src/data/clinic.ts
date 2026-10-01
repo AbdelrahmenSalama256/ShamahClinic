@@ -48,7 +48,7 @@ export interface ClinicData {
 
 export const clinicData: ClinicData = {
   name: {
-    ar: "عيادات شمة",
+    ar: "عيادات شامه",
     en: "Shamah Clinics",
   },
   phone: "+20 112 188 0908",

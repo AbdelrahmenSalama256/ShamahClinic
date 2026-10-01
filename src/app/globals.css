@@ -1,26 +1,429 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Warm luxury palette - never sterile hospital white */
+  --bg-primary: #faf7f2;
+  --bg-secondary: #f4ece4;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #fdfbf8;
+  --bg-dark: #191412;
+  --bg-dark-card: #241d1a;
+
+  --text-primary: #211a16;
+  --text-secondary: #6b5e57;
+  --text-muted: #6e675c;
+  --text-inverse: #faf7f2;
+  --text-gold: #c9a227;
+
+  /* Signature Gold Gradient */
+  --gold-start: #d8b237;
+  --gold-mid: #c9a227;
+  --gold-end: #85640f;
+  --gold-glow: rgba(201, 162, 39, 0.25);
+  --gold-border: rgba(201, 162, 39, 0.35);
+
+  /* Blush / Rose supporting tones */
+  --blush-light: #fbf0eb;
+  --blush-accent: #e8b4b8;
+  --rose-gold: #c88d83;
+
+  /* Radius & Glass */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+
+  --font-tajawal: "Tajawal", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-montserrat: "Montserrat", "Segoe UI", Tahoma, Arial, sans-serif;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand-cream: var(--bg-primary);
+  --color-brand-sand: var(--bg-secondary);
+  --color-brand-dark: var(--bg-dark);
+  --color-brand-dark-card: var(--bg-dark-card);
+  --color-brand-text: var(--text-primary);
+  --color-brand-muted: var(--text-secondary);
+  --color-brand-gold: var(--gold-mid);
+  --color-brand-blush: var(--blush-accent);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+  transition: 0.3s all ease-in-out !important;
+}
+img {
+  width: 100%;
+}
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-tajawal);
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  transition: 0.3s all ease-in-out !important;
+}
+
+[dir="ltr"] body {
+  font-family: var(--font-montserrat);
+  transition: 0.3s all ease-in-out !important;
+}
+
+/* Glassmorphism */
+.glass-nav {
+  background: rgba(250, 247, 242, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.glass-nav-scrolled {
+  background: rgba(250, 247, 242, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(201, 162, 39, 0.25);
+  box-shadow: 0 10px 30px rgba(33, 26, 22, 0.05);
+}
+
+/* ============================================
+   Signature Gold Gradient — animated
+   ============================================ */
+
+.bg-gold-gradient {
+  background: linear-gradient(
+    120deg,
+    #c9a227 0%,
+    #e8c766 20%,
+    #f5e6a8 35%,
+    #e8c766 50%,
+    #c9a227 65%,
+    #8b6914 85%,
+    #6b4f0d 100%
+  );
+  background-size: 220% 220%;
+  animation: goldShift 8s ease-in-out infinite;
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+}
+.absolute {
+  position: absolute;
+}
+/* Shine sweep — a soft highlight that glides across */
+.bg-gold-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: goldShine 4.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes goldShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes goldShine {
+  0% {
+    transform: translateX(-120%);
+  }
+  60% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* Hover: speed the shine up a bit */
+.bg-gold-gradient:hover::before {
+  animation-duration: 1.2s;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .bg-gold-gradient {
+    animation: none;
+  }
+  .bg-gold-gradient::before {
+    animation: none;
+    display: none;
+  }
+}
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #faf7f2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4ac2d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8b6914;
+}
+
+/* Marquee strip */
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marqueeScroll 32s linear infinite;
+}
+
+[dir="rtl"] .animate-marquee {
+  animation-direction: reverse;
+}
+
+/* Image curtain/mask reveal base (driven by Framer Motion clip-path). */
+.photo-curtain img {
+  transform: scale(1.08);
+  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.photo-curtain.is-revealed img {
+  transform: scale(1);
+}
+
+/* Respect reduced motion: disable all animation and smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .animate-marquee {
+    animation: none !important;
+  }
+}
+
+.call-button-phone {
+  border: 0.2px solid #695850;
+  border-radius: 100px;
+}
+/* ============================================
+   Global button font-size overrides
+   Applies to <button>, <a> with button-like classes
+   ============================================ */
+
+/* كل الأزرار */
+button,
+a[class*="rounded-full"]:has(> svg, span),
+a[class*="items-center"]:has(> svg, span) {
+  font-size: 10px;
+  line-height: 1.4;
+  transition: 0.3s all ease-in-out !important;
+}
+
+@media (min-width: 480px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 15px;
+    transition: 0.3s all ease-in-out !important;
+  }
+}
+
+@media (min-width: 640px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    transition: 0.3s all ease-in-out !important;
+
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 17px;
+    transition: 0.3s all ease-in-out !important;
+  }
+}
+
+@media (min-width: 1280px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 0.875rem;
+    transition: 0.3s all ease-in-out !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 19px;
+    transition: 0.3s all ease-in-out !important;
+  }
+}
+/* ============================================
+   Shamah-style DatePicker (react-day-picker)
+   ============================================ */
+
+.rdp-shamah {
+  --rdp-cell-size: 38px;
+  --rdp-accent-color: var(--gold-mid);
+  --rdp-accent-background-color: var(--blush-light);
+  --rdp-background-color: var(--blush-light);
+  --rdp-outline: 2px solid var(--gold-mid);
+  --rdp-outline-selected: 2px solid var(--gold-end);
+  font-family: var(--font-tajawal);
+  color: var(--text-primary);
+}
+
+/* Header (month + nav arrows) */
+.rdp-shamah .rdp-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--gold-border);
+}
+
+.rdp-shamah .rdp-caption_label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: 0.02em;
+}
+
+.rdp-shamah .rdp-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.rdp-shamah .rdp-nav_button {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-end);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  cursor: pointer;
+}
+
+.rdp-shamah .rdp-nav_button:hover {
+  background: var(--blush-light);
+  border-color: var(--gold-border);
+}
+
+/* Weekday labels */
+.rdp-shamah .rdp-head_cell {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding-bottom: 6px;
+}
+
+/* Days */
+.rdp-shamah .rdp-day {
+  width: var(--rdp-cell-size);
+  height: var(--rdp-cell-size);
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.rdp-shamah .rdp-day:hover:not(.rdp-day_selected):not(.rdp-day_disabled) {
+  background: var(--blush-light);
+  color: var(--gold-end);
+}
+
+/* Selected day */
+.rdp-shamah .rdp-day_selected,
+.rdp-shamah .rdp-day_selected:hover {
+  background: linear-gradient(135deg, #c9a227 0%, #8b6914 100%);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.35);
+}
+
+/* Today (not selected) */
+.rdp-shamah .rdp-day_today:not(.rdp-day_selected) {
+  color: var(--gold-end);
+  font-weight: 800;
+  position: relative;
+}
+
+.rdp-shamah .rdp-day_today:not(.rdp-day_selected)::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--gold-mid);
+}
+
+/* Disabled days */
+.rdp-shamah .rdp-day_disabled {
+  color: var(--text-muted);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Outside days */
+.rdp-shamah .rdp-day_outside {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* RTL flip for nav arrows */
+.rdp-shamah[dir="rtl"] .rdp-nav_button svg {
+  transform: scaleX(-1);
 }

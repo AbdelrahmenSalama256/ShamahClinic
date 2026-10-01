@@ -9,7 +9,7 @@
 - Images: no real photos are available yet. Use a central image map (src/data/images.ts) pointing to high-quality SVG/gradient placeholders in /public/images (elegant gold/blush abstract visuals with proper aspect ratios), so real photos can replace them later by changing one file. Never hotlink external images.
 
 ## 1. Clinic data (keep in ONE file: src/data/clinic.ts)
-- Name: Shamah Clinics / عيادات شمة
+- Name: Shamah Clinics / عيادات شامة
 - Main phone and WhatsApp: +20 112 188 0908
 - Currency: EGP
 - Branches (all in Egypt):
