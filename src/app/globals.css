@@ -55,7 +55,7 @@
 }
 img {
   width: 100% !important;
-  height: auto ;
+  height: auto;
 }
 html {
   scroll-behavior: smooth;
@@ -427,4 +427,7 @@ a[class*="items-center"]:has(> svg, span) {
 /* RTL flip for nav arrows */
 .rdp-shamah[dir="rtl"] .rdp-nav_button svg {
   transform: scaleX(-1);
+}
+.nl-badge {
+  display: none !important;
 }
