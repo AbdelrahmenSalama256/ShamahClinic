@@ -49,7 +49,7 @@ export const HomeHero: React.FC = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/55 to-black/30" />
 
         {/* Content */}
-        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-start pt-32 pb-20 sm:pt-40 sm:pb-24 lg:pt-44 lg:pb-28">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-start pt-32 pb-0 sm:pt-40 sm:pb-24 lg:pt-44 lg:pb-28">
           <motion.p
             initial={reduce ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

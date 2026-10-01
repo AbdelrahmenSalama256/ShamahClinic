@@ -31,7 +31,7 @@ const Section: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ id, children, className = "" }) => (
-  <section id={id} className={`py-10 lg:py- 10${className}`}>
+  <section id={id} className={`py-10 lg:py-16 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
   </section>
 );
@@ -111,7 +111,7 @@ export const HomeBody: React.FC = () => {
       <Section className="bg-[var(--bg-primary)]">
         {/* min-w-0 on grid items prevents the swiper from blowing out the layout */}
         <div className="mt-8 lg:mt-14 grid lg:grid-cols-12 gap-8 lg:gap-16 items-end">
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 min-w-0">
             <Reveal>
               <div className="rounded-3xl overflow-hidden">
                 <Photo
@@ -123,7 +123,7 @@ export const HomeBody: React.FC = () => {
               </div>
             </Reveal>
           </div>
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-7 min-w-0">
             <SectionHeading
               index="01"
               title={{

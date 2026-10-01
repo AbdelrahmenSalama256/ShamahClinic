@@ -54,7 +54,8 @@
   transition: 0.3s all ease-in-out !important;
 }
 img {
-  width: 100%;
+  width: 100% !important;
+  height: auto !important;
 }
 html {
   scroll-behavior: smooth;

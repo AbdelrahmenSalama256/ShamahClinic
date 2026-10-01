@@ -30,7 +30,7 @@ export const OffersClient: React.FC = () => {
       <section className="py-8 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="sr-only">{t("العروض والباقات", "Offers and packages")}</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-lg:[&>*:last-child]:col-span-2">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 md:max-lg:[&>*:last-child]:col-span-2">
             {offersData.map((o, i) => (
               <Reveal className="h-full" key={o.id} delay={i * 0.08}>
                 <OfferCard offer={o} />

@@ -54,7 +54,7 @@ export const AboutClient: React.FC = () => {
       />
 
       {/* Story — asymmetric editorial split */}
-      <section className="py-10 lg:py- 10bg-[var(--bg-primary)]">
+      <section className="py-10 lg:py-16 bg-[var(--bg-primary)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
           <div className="lg:col-span-6">
             <SectionHeading
@@ -106,7 +106,7 @@ export const AboutClient: React.FC = () => {
       </section>
 
       {/* Values — numbered editorial list, not identical cards */}
-      <section className="py-10 lg:py- 10bg-[var(--bg-secondary)]/60">
+      <section className="py-10 lg:py-16 bg-[var(--bg-secondary)]/60">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <SectionHeading
             align="center"
@@ -130,7 +130,7 @@ export const AboutClient: React.FC = () => {
       </section>
 
       {/* Teasers to team & branches */}
-      <section className="py-10 lg:py- 10bg-[var(--bg-primary)]">
+      <section className="py-10 lg:py-16 bg-[var(--bg-primary)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
           <Reveal className="relative rounded-3xl overflow-hidden min-h-[300px] group">
             <Photo slot={images.doctors.doctor1} ratio="landscape" className="!aspect-auto !absolute inset-0 !h-full" imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]" sizes="(max-width:768px) 100vw, 45vw" />

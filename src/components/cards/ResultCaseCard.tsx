@@ -212,7 +212,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: xOut(slideDir) }}
                           transition={{ duration: 0.35, ease }}
-                          className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:gap-4"
+                          className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4"
                         >
                           {[activeResult.before, activeResult.after].map(
                             (photo, index) => (
@@ -223,7 +223,8 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                                 <Photo
                                   slot={photo}
                                   ratio="landscape"
-                                  className="!aspect-[4/3] sm:!aspect-[3/2] rounded-lg sm:rounded-xl overflow-hidden"
+                                  className="!aspect-[3/2] rounded-lg sm:rounded-xl overflow-hidden"
+                                  imgClassName="object-contain"
                                   sizes="(max-width: 640px) 100vw, 50vw"
                                 />
                                 <figcaption
