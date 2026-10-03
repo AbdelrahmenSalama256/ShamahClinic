@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Tajawal, Montserrat } from "next/font/google";
+import { Alexandria, Montserrat } from "next/font/google";
 import "./globals.css";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
 import { SITE_URL } from "@/lib/site";
 
-const tajawal = Tajawal({
+const alexandria = Alexandria({
   subsets: ["arabic"],
-  weight: ["300", "400", "500", "700", "800"],
-  variable: "--font-tajawal",
+  weight: "variable",
+  variable: "--font-alexandria",
   display: "swap",
 });
 
@@ -77,7 +77,7 @@ export default function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${tajawal.variable} ${montserrat.variable} h-full scroll-smooth`}
+      className={`${alexandria.variable} ${montserrat.variable} h-full scroll-smooth`}
       suppressHydrationWarning
     >
       <body
