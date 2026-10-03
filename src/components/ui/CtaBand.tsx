@@ -63,7 +63,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
           {/* Content side */}
           <div
             className={`flex flex-col justify-center px-6 sm:px-10 lg:px-14 ${
-              compact ? "py-10 lg:py-12" : "py-12 lg:py-16"
+              compact ? "py-5 lg:py-12" : "py-12 lg:py-16"
             }`}
           >
             <Reveal>

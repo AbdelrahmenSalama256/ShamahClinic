@@ -31,7 +31,7 @@ const Section: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ id, children, className = "" }) => (
-  <section id={id} className={`py-10 lg:py-16 ${className}`}>
+  <section id={id} className={`py-5 lg:py-16 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
   </section>
 );

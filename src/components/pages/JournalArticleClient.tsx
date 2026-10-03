@@ -116,7 +116,7 @@ export const JournalArticleClient: React.FC<{ article: Article }> = ({
         ]}
       />
 
-      <article className="py-10 lg:py-16">
+      <article className="py-5 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-[minmax(0,1fr)_280px] gap-10 lg:gap-14">
             {/* ══════════════ MAIN CONTENT ══════════════ */}

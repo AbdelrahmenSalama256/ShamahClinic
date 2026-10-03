@@ -26,7 +26,7 @@ export const JournalClient: React.FC = () => {
         photo={images.journal.routine}
       />
 
-      <section className="py-10 lg:py-16">
+      <section className="py-5 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="sr-only">{t("أحدث المقالات", "Latest articles")}</h2>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
