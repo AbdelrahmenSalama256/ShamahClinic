@@ -147,6 +147,7 @@ export const Navbar: React.FC = () => {
                 src={images.logo}
                 alt={t("شعار عيادات شامه", "Shamah Clinics logo")}
                 fill
+                sizes="(min-width: 640px) 176px, 144px"
                 priority
                 className="object-contain object-start"
               />
@@ -347,6 +348,7 @@ export const Navbar: React.FC = () => {
                         src={images.logo}
                         alt={t("شعار عيادات شامه", "Shamah Clinics logo")}
                         fill
+                        sizes="128px"
                         className="object-contain object-start"
                       />
                     </span>

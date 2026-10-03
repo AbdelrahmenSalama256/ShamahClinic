@@ -76,6 +76,7 @@ export const Footer: React.FC = () => {
                 src={images.logo}
                 alt={t("شعار عيادات شامه", "Shamah Clinics logo")}
                 fill
+                sizes="192px"
                 className="object-contain object-start brightness-110"
               />
             </span>
