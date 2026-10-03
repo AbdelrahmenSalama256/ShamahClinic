@@ -47,7 +47,7 @@
   --line-height-8xl: 8;
   --tw-leading: var(--line-height);
 
-  --font-el-messiri: "El Messiri", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-readex-pro: "Readex Pro", "Segoe UI", Tahoma, Arial, sans-serif;
   --font-montserrat: "Montserrat", "Segoe UI", Tahoma, Arial, sans-serif;
 }
 
@@ -76,7 +76,7 @@ html {
 body {
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: var(--font-el-messiri);
+  font-family: var(--font-readex-pro);
   overflow-x: hidden;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -334,7 +334,7 @@ a[class*="items-center"]:has(> svg, span) {
   --rdp-background-color: var(--blush-light);
   --rdp-outline: 2px solid var(--gold-mid);
   --rdp-outline-selected: 2px solid var(--gold-end);
-  font-family: var(--font-el-messiri);
+  font-family: var(--font-readex-pro);
   color: var(--text-primary);
 }
 

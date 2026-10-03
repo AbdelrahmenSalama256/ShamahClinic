@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { El_Messiri, Montserrat } from "next/font/google";
+import { Readex_Pro, Montserrat } from "next/font/google";
 import "./globals.css";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
 import { SITE_URL } from "@/lib/site";
 
-const elMessiri = El_Messiri({
+const readexPro = Readex_Pro({
   subsets: ["arabic"],
   weight: "variable",
-  variable: "--font-el-messiri",
+  variable: "--font-readex-pro",
   display: "swap",
 });
 
@@ -77,7 +77,7 @@ export default function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${elMessiri.variable} ${montserrat.variable} h-full scroll-smooth`}
+      className={`${readexPro.variable} ${montserrat.variable} h-full scroll-smooth`}
       suppressHydrationWarning
     >
       <body
