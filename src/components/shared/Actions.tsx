@@ -44,7 +44,7 @@ export const BookButton: React.FC<BookButtonProps> = ({
     size === "sm"
       ? "text-xs px-4 py-2"
       : size === "lg"
-        ? "text-base px-8 py-4"
+        ? "text-base px-4 py-2"
         : "text-sm px-6 py-3";
   return (
     <button
@@ -77,7 +77,7 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
     size === "sm"
       ? "text-xs px-4 py-2"
       : size === "lg"
-        ? "text-base px-8 py-4"
+        ? "text-base px-4 py-2"
         : "text-sm px-6 py-3";
   const skin =
     variant === "solid"
