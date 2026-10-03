@@ -36,7 +36,7 @@ export const SiteShell: React.FC<{ children: React.ReactNode }> = ({
               <motion.main
                 key={pathname}
                 id="main"
-                className="flex-1 pt-22 lg:pt-25"
+                className="flex-1 pt-10 lg:pt-25"
                 initial={reduce ? false : { opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={reduce ? undefined : { opacity: 0, y: -8 }}
