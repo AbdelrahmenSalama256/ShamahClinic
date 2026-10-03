@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
+import { useReducedMotion } from "framer-motion";
 import type { PhotoSlot } from "@/lib/images";
 import { blurFor } from "@/lib/blurs";
 import { useLanguage } from "@/context/LanguageContext";
@@ -44,30 +44,29 @@ export const Photo: React.FC<PhotoProps> = ({
   const [revealed, setRevealed] = useState(!curtain || !!reduce);
   const [loaded, setLoaded] = useState(false);
 
-  // Safety net: if animation never fires, force reveal.
   useEffect(() => {
-    if (revealed || !curtain || reduce) return;
-    const t = window.setTimeout(() => setRevealed(true), 1500);
-    return () => window.clearTimeout(t);
-  }, [revealed, curtain, reduce]);
+    const element = wrapperRef.current;
+    if (revealed || !curtain || reduce || !element) return;
 
-  const useMotion = curtain && !reduce;
-  const Wrapper = useMotion ? motion.div : "div";
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setRevealed(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "0px 0px -80px 0px" },
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [revealed, curtain, reduce]);
 
   const blurDataURL = blurFor(slot.src);
 
   return (
-    <Wrapper
+    <div
       ref={wrapperRef}
-      {...(useMotion
-        ? {
-            initial: { clipPath: "inset(0 0 100% 0)" },
-            whileInView: { clipPath: "inset(0 0 0% 0)" },
-            viewport: { once: true, margin: "0px 0px -80px 0px" },
-            transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] },
-            onAnimationComplete: () => setRevealed(true),
-          }
-        : {})}
       className={`relative overflow-hidden bg-[var(--bg-secondary)] ${ratioClass[ratio]} ${
         curtain ? `photo-curtain ${revealed ? "is-revealed" : ""}` : ""
       } ${className}`}
@@ -88,9 +87,8 @@ export const Photo: React.FC<PhotoProps> = ({
         style={{ objectPosition: slot.focal }}
         onLoad={() => {
           setLoaded(true);
-          if (!revealed) setRevealed(true);
         }}
       />
-    </Wrapper>
+    </div>
   );
 };
