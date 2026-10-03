@@ -250,7 +250,7 @@ button,
 a[class*="rounded-full"]:has(> svg, span),
 a[class*="items-center"]:has(> svg, span) {
   font-size: 12px;
-  line-height: 1.4;
+  /* line-height: 1.4; */
   transition: 0.3s all ease-in-out !important;
 }
 
