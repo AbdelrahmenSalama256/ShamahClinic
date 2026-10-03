@@ -51,7 +51,6 @@
 
 * {
   box-sizing: border-box;
-  transition: 0.3s all ease-in-out !important;
 }
 img {
   width: 100% !important;
@@ -68,12 +67,10 @@ body {
   overflow-x: hidden;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  transition: 0.3s all ease-in-out !important;
 }
 
 [dir="ltr"] body {
   font-family: var(--font-montserrat);
-  transition: 0.3s all ease-in-out !important;
 }
 
 /* Glassmorphism */
@@ -270,8 +267,7 @@ button,
 a[class*="rounded-full"]:has(> svg, span),
 a[class*="items-center"]:has(> svg, span) {
   font-size: 12px;
-  line-height: auto;
-  transition: 0.3s all ease-in-out !important;
+  line-height: 1.25;
   margin: 0;
 }
 
@@ -280,7 +276,6 @@ a[class*="items-center"]:has(> svg, span) {
   a[class*="rounded-full"]:has(> svg, span),
   a[class*="items-center"]:has(> svg, span) {
     font-size: 15px;
-    transition: 0.3s all ease-in-out !important;
   }
 }
 
@@ -288,8 +283,6 @@ a[class*="items-center"]:has(> svg, span) {
   button,
   a[class*="rounded-full"]:has(> svg, span),
   a[class*="items-center"]:has(> svg, span) {
-    transition: 0.3s all ease-in-out !important;
-
     font-size: 16px;
   }
 }
@@ -299,7 +292,6 @@ a[class*="items-center"]:has(> svg, span) {
   a[class*="rounded-full"]:has(> svg, span),
   a[class*="items-center"]:has(> svg, span) {
     font-size: 17px;
-    transition: 0.3s all ease-in-out !important;
   }
 }
 
@@ -308,7 +300,6 @@ a[class*="items-center"]:has(> svg, span) {
   a[class*="rounded-full"]:has(> svg, span),
   a[class*="items-center"]:has(> svg, span) {
     font-size: 0.875rem;
-    transition: 0.3s all ease-in-out !important;
   }
 }
 
@@ -317,7 +308,6 @@ a[class*="items-center"]:has(> svg, span) {
   a[class*="rounded-full"]:has(> svg, span),
   a[class*="items-center"]:has(> svg, span) {
     font-size: 19px;
-    transition: 0.3s all ease-in-out !important;
   }
 }
 /* ============================================
