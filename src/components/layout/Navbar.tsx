@@ -259,7 +259,7 @@ export const Navbar: React.FC = () => {
             <button
               onClick={toggleLanguage}
               aria-label={t("تغيير اللغة", "Switch language")}
-              className="lg:hidden p-2 rounded-full border border-[var(--gold-border)] text-xs font-bold text-[var(--text-primary)] hover:border-[var(--gold-mid)] transition-colors duration-300"
+              className="lg:hidden  rounded-full w-8 h-8 d-flex justify-center align-center border border-[var(--gold-border)] text-xs font-bold text-[var(--text-primary)] hover:border-[var(--gold-mid)] transition-colors duration-300"
             >
               {language === "ar" ? "EN" : "عربي"}
             </button>
