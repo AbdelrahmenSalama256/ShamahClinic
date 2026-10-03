@@ -64,6 +64,7 @@
 
 * {
   box-sizing: border-box;
+  transition: all 0.3s ease-in-out !important;
 }
 img {
   width: 100% !important;
@@ -71,6 +72,7 @@ img {
 }
 html {
   scroll-behavior: smooth;
+  transition: all 0.3s ease-in-out !important;
 }
 
 body {
@@ -282,6 +284,7 @@ a[class*="items-center"]:has(> svg, span) {
   font-size: 12px;
   line-height: 1;
   margin: 0;
+  transition: all 0.3s ease-in-out !important;
 }
 
 @media (min-width: 480px) {
