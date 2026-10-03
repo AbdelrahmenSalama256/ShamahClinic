@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Alexandria, Montserrat } from "next/font/google";
+import { El_Messiri, Montserrat } from "next/font/google";
 import "./globals.css";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
 import { SITE_URL } from "@/lib/site";
 
-const alexandria = Alexandria({
+const elMessiri = El_Messiri({
   subsets: ["arabic"],
   weight: "variable",
-  variable: "--font-alexandria",
+  variable: "--font-el-messiri",
   display: "swap",
 });
 
@@ -77,7 +77,7 @@ export default function RootLayout({
     <html
       lang="ar"
       dir="rtl"
-      className={`${alexandria.variable} ${montserrat.variable} h-full scroll-smooth`}
+      className={`${elMessiri.variable} ${montserrat.variable} h-full scroll-smooth`}
       suppressHydrationWarning
     >
       <body
