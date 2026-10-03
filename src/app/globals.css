@@ -427,6 +427,8 @@ a[class*="items-center"]:has(> svg, span) {
 .rdp-shamah[dir="rtl"] .rdp-nav_button svg {
   transform: scaleX(-1);
 }
-.nl-badge {
+.nl-wrap {
   display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
