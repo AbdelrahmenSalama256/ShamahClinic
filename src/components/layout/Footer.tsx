@@ -125,7 +125,7 @@ export const Footer: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-12 h-12 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-gray-200 hover:text-[var(--gold-start)] hover:border-[var(--gold-border)] hover:bg-white/10 transition-colors duration-300"
+                  className="w-9 h-9 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-gray-200 hover:text-[var(--gold-start)] hover:border-[var(--gold-border)] hover:bg-white/10 transition-colors duration-300"
                 >
                   <SocialIcon id={s.id} />
                 </a>
@@ -227,7 +227,7 @@ export const Footer: React.FC = () => {
                   <button
                     type="submit"
                     aria-label={t("اشتراك", "Subscribe")}
-                    className="absolute end-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-gold-gradient text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-300 cursor-pointer"
+                    className="absolute end-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gold-gradient text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-300 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5 rtl:-scale-x-100" />
                   </button>
