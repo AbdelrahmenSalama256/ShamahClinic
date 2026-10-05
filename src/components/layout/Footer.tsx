@@ -80,7 +80,7 @@ export const Footer: React.FC = () => {
                 className="object-contain object-start brightness-110"
               />
             </span>
-            <p className="text-xs sm:text-sm text-gray-300 leading-relaxed max-w-sm">
+            <p className="text-xs sm:text-sm text-white/85 leading-relaxed max-w-sm">
               {t(
                 "عيادات شامه لطب التجميل والليزر والعناية بالبشرة. ثلاثة فروع في القاهرة والجيزة تجمع بين الدقة الطبية وأجواء الرفاهية.",
                 "Shamah Clinics for aesthetic medicine, laser and skincare. Three branches across Cairo and Giza combining clinical precision with genuine comfort.",
@@ -125,7 +125,7 @@ export const Footer: React.FC = () => {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-full border border-white/15 bg-white/5 flex items-center justify-center text-gray-300 hover:text-[var(--gold-start)] hover:border-[var(--gold-border)] hover:bg-white/10 transition-colors duration-300"
+                  className="w-12 h-12 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-gray-200 hover:text-[var(--gold-start)] hover:border-[var(--gold-border)] hover:bg-white/10 transition-colors duration-300"
                 >
                   <SocialIcon id={s.id} />
                 </a>
@@ -135,9 +135,9 @@ export const Footer: React.FC = () => {
 
           {/* Branches */}
           <div className="lg:col-span-4 space-y-4">
-            <h4 className="text-sm font-bold text-[var(--gold-start)] tracking-wider">
+            <h2 className="text-sm font-bold text-[var(--gold-start)] tracking-wider">
               {t("فروعنا في مصر", "Our Branches")}
-            </h4>
+            </h2>
             <div className="space-y-3 text-xs">
               {clinicData.branches.map((b) => (
                 <div
@@ -169,9 +169,9 @@ export const Footer: React.FC = () => {
 
           {/* Site links — 2 columns */}
           <div className="lg:col-span-2 space-y-4">
-            <h4 className="text-sm font-bold text-[var(--gold-start)] tracking-wider">
+            <h2 className="text-sm font-bold text-[var(--gold-start)] tracking-wider">
               {t("روابط الموقع", "Site")}
-            </h4>
+            </h2>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-gray-300">
               {primaryNav.map((l) => (
                 <li key={l.href}>
@@ -198,9 +198,9 @@ export const Footer: React.FC = () => {
 
           {/* Newsletter */}
           <div className="lg:col-span-2 space-y-4">
-            <h4 className="text-sm font-bold text-[var(--gold-start)] tracking-wider">
+            <h2 className="text-sm font-bold text-[var(--gold-start)] tracking-wider">
               {t("كوني على تواصل", "Stay in Touch")}
-            </h4>
+            </h2>
             <p className="text-xs text-gray-400 leading-relaxed">
               {t(
                 "اشتركي لتصلكِ العروض الموسمية ونصائح العناية بالبشرة من طبيباتنا.",
@@ -222,12 +222,12 @@ export const Footer: React.FC = () => {
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder={t("بريدكِ الإلكتروني", "Your email address")}
-                    className="w-full bg-white/10 border border-white/20 focus:border-[var(--gold-mid)] text-xs text-white py-2.5 ps-3.5 pe-12 rounded-full outline-none placeholder:text-gray-500 transition-colors duration-300"
+                    className="w-full bg-white/10 border border-white/30 focus:border-[var(--gold-mid)] text-xs text-white py-3 ps-3.5 pe-14 rounded-full outline-none placeholder:text-gray-300 transition-colors duration-300"
                   />
                   <button
                     type="submit"
                     aria-label={t("اشتراك", "Subscribe")}
-                    className="absolute end-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gold-gradient text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-300 cursor-pointer"
+                    className="absolute end-1 top-1/2 -translate-y-1/2 w-11 h-11 rounded-full bg-gold-gradient text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-300 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5 rtl:-scale-x-100" />
                   </button>
@@ -242,7 +242,7 @@ export const Footer: React.FC = () => {
           </div>
         </div>
 
-        <div className="pt-7 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+        <div className="pt-7 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-300">
           <p>
             © {new Date().getFullYear()}{" "}
             {t(
