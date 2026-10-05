@@ -10,7 +10,7 @@ interface SwiperProps {
   label: { ar: string; en: string };
 
   autoPlayMs?: number;
-
+  loop?: boolean;
   mobilePerView?: number;
   tabletPerView?: number;
   desktopPerView?: number;
@@ -59,7 +59,7 @@ const usePerView = (
 export const Swiper: React.FC<SwiperProps> = ({
   slides,
   autoPlayMs = 4000,
-
+  
   mobilePerView = 1,
   tabletPerView = 2,
   desktopPerView = 3,

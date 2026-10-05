@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
 import { PageHero } from "@/components/shared/PageHero";
@@ -11,6 +11,7 @@ import { clinicData } from "@/data/clinic";
 import { branchesData } from "@/data/branches";
 import { treatmentsData } from "@/data/treatments";
 import { images } from "@/lib/images";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle,
   Phone,
@@ -19,20 +20,51 @@ import {
   Check,
   Calendar,
   MapPin,
+  ChevronDown,
 } from "lucide-react";
 
 export const ContactClient: React.FC = () => {
   const { t, language } = useLanguage();
   const { openBooking } = useBooking();
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    name: string;
+    phone: string;
+    services: string[];
+    message: string;
+  }>({
     name: "",
     phone: "",
-    service: "",
+    services: [],
     message: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sent, setSent] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
+  const servicesDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isServicesOpen) return;
+
+    const closeOnOutsideClick = (event: MouseEvent) => {
+      if (
+        event.target instanceof Node &&
+        !servicesDropdownRef.current?.contains(event.target)
+      ) {
+        setIsServicesOpen(false);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsServicesOpen(false);
+    };
+
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [isServicesOpen]);
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -59,15 +91,19 @@ export const ContactClient: React.FC = () => {
     setSent(true);
   };
 
+  const selectedServices = treatmentsData.filter((treatment) =>
+    form.services.includes(treatment.id),
+  );
+  const serviceNames = selectedServices
+    .map((treatment) => treatment.name[language])
+    .join(language === "ar" ? "، " : ", ");
   const waMessage =
     language === "ar"
       ? `مرحباً عيادات شامه، اسمي ${form.name || "..."}. أرغب في الاستفسار عن ${
-          treatmentsData.find((x) => x.id === form.service)?.name.ar ??
-          "خدماتكم"
+          serviceNames || "خدماتكم"
         }.`
       : `Hello Shamah Clinics, my name is ${form.name || "..."}. I would like to ask about ${
-          treatmentsData.find((x) => x.id === form.service)?.name.en ??
-          "your services"
+          serviceNames || "your services"
         }.`;
 
   return (
@@ -221,10 +257,11 @@ export const ContactClient: React.FC = () => {
                     <button
                       onClick={() => {
                         setSent(false);
+                        setIsServicesOpen(false);
                         setForm({
                           name: "",
                           phone: "",
-                          service: "",
+                          services: [],
                           message: "",
                         });
                       }}
@@ -305,33 +342,154 @@ export const ContactClient: React.FC = () => {
                     )}
                   </div>
 
-                  <div>
-                    <label
-                      htmlFor="c-service"
-                      className="block text-sm font-bold text-[var(--text-primary)] mb-1.5"
-                    >
-                      {t("الخدمة المهتمة بها", "Service you're interested in")}
-                    </label>
-                    <select
+                  <div className="relative" ref={servicesDropdownRef}>
+                    {/* Trigger */}
+                    <button
                       id="c-service"
-                      value={form.service}
-                      onChange={(e) =>
-                        setForm({ ...form, service: e.target.value })
-                      }
-                      className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--gold-mid)] text-sm outline-none bg-white transition-colors duration-300"
+                      type="button"
+                      aria-expanded={isServicesOpen}
+                      aria-controls="c-service-options"
+                      onClick={() => setIsServicesOpen((isOpen) => !isOpen)}
+                      className={`group w-full px-4 py-3 rounded-2xl border bg-white flex items-center justify-between gap-3 text-start text-sm outline-none transition-[border-color,box-shadow,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
+                        isServicesOpen
+                          ? "border-[var(--gold-mid)] shadow-[0_0_0_3px_var(--gold-glow)]"
+                          : "border-[var(--gold-border)]/50 hover:border-[var(--gold-mid)]/70"
+                      }`}
                     >
-                      <option value="">
-                        {t(
-                          "اختاري خدمة (اختياري)",
-                          "Select a service (optional)",
+                      <span
+                        className={`min-w-0 truncate ${
+                          selectedServices.length
+                            ? "text-[var(--text-primary)] font-medium"
+                            : "text-[var(--text-muted)]"
+                        }`}
+                      >
+                        {serviceNames ||
+                          t(
+                            "اختاري خدمة (اختياري)",
+                            "Select services (optional)",
+                          )}
+                      </span>
+
+                      <span className="flex items-center gap-2 shrink-0">
+                        {selectedServices.length > 0 && (
+                          <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--gold-end)] text-white text-[11px] font-bold tabular-nums">
+                            {selectedServices.length}
+                          </span>
                         )}
-                      </option>
-                      {treatmentsData.map((x) => (
-                        <option key={x.id} value={x.id}>
-                          {t(x.name.ar, x.name.en)}
-                        </option>
-                      ))}
-                    </select>
+                        <ChevronDown
+                          className={`w-4 h-4 text-[var(--gold-end)] transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
+                            isServicesOpen ? "rotate-180" : ""
+                          }`}
+                        />
+                      </span>
+                    </button>
+
+                    {/* Dropdown panel — Framer Motion */}
+                    <AnimatePresence>
+                      {isServicesOpen && (
+                        <motion.div
+                          id="c-service-options"
+                          role="listbox"
+                          initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                          transition={{
+                            duration: 0.24,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                          style={{ transformOrigin: "top center" }}
+                          className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto rounded-2xl border border-[var(--gold-border)]/50 bg-white shadow-2xl p-1.5"
+                        >
+                          {treatmentsData.map((treatment) => {
+                            const isChecked = form.services.includes(
+                              treatment.id,
+                            );
+                            return (
+                              <label
+                                key={treatment.id}
+                                className={`group/item flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm cursor-pointer transition-colors duration-200 ${
+                                  isChecked
+                                    ? "bg-[var(--blush-light)]/70"
+                                    : "hover:bg-[var(--bg-secondary)]"
+                                }`}
+                              >
+                                <span
+                                  className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center shrink-0 transition-[background-color,border-color,transform] duration-200 ${
+                                    isChecked
+                                      ? "bg-gold-gradient border-transparent scale-105"
+                                      : "bg-white border-[var(--gold-border)] group-hover/item:border-[var(--gold-mid)]"
+                                  }`}
+                                >
+                                  {isChecked && (
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      strokeWidth="3"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="w-3 h-3 text-white"
+                                    >
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  )}
+                                </span>
+
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() =>
+                                    setForm((previous) => ({
+                                      ...previous,
+                                      services: previous.services.includes(
+                                        treatment.id,
+                                      )
+                                        ? previous.services.filter(
+                                            (serviceId) =>
+                                              serviceId !== treatment.id,
+                                          )
+                                        : [...previous.services, treatment.id],
+                                    }))
+                                  }
+                                  className="sr-only"
+                                />
+
+                                <span
+                                  className={`flex-1 transition-colors duration-200 ${
+                                    isChecked
+                                      ? "text-[var(--gold-end)] font-semibold"
+                                      : "text-[var(--text-primary)] group-hover/item:text-[var(--gold-end)]"
+                                  }`}
+                                >
+                                  {t(treatment.name.ar, treatment.name.en)}
+                                </span>
+                              </label>
+                            );
+                          })}
+
+                          <div className="sticky bottom-0 mt-1 pt-2 border-t border-[var(--gold-border)]/30 bg-white flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setForm((prev) => ({ ...prev, services: [] }))
+                              }
+                              disabled={selectedServices.length === 0}
+                              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed px-2.5 py-2 transition-colors duration-200 cursor-pointer"
+                            >
+                              {t("مسح الكل", "Clear all")}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setIsServicesOpen(false)}
+                              className="rounded-full bg-gold-gradient text-white text-xs font-bold px-4 py-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+                            >
+                              {t("تم", "Done")}
+                            </button>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div>

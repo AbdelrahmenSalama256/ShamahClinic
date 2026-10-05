@@ -59,7 +59,7 @@ export const Footer: React.FC = () => {
     setNewsletterSubscribed(true);
   };
 
-  const whatsappUrl = `https://wa.me/201121880908?text=${encodeURIComponent(
+  const whatsappUrl = `${clinicData.whatsappUrl}?text=${encodeURIComponent(
     language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن الخدمات المتاحة لديكم."
       : "Hello Shamah Clinics, I would like to inquire about services.",

@@ -20,7 +20,7 @@ export function whatsappHref(language: "ar" | "en", custom?: string): string {
     (language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
       : "Hello Shamah Clinics, I would like to inquire about appointments and services.");
-  return `https://wa.me/201121880908?text=${encodeURIComponent(text)}`;
+  return `${clinicData.whatsappUrl}?text=${encodeURIComponent(text)}`;
 }
 
 interface BookButtonProps {

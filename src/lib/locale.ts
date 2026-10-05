@@ -1,6 +1,11 @@
+import { siteConfig } from "@/config/site";
+
 export type Locale = "ar" | "en";
 
-export function getLocalizedHref(href: string, language: Locale = "ar"): string {
+export function getLocalizedHref(
+    href: string,
+    language: Locale = siteConfig.defaultLanguage,
+): string {
     const hasProtocol = /^[a-z]+:\/\//i.test(href);
     const baseUrl = hasProtocol ? href : `http://localhost${href.startsWith("/") ? href : `/${href ?? ""}`}`;
     const url = new URL(baseUrl);
@@ -8,11 +13,11 @@ export function getLocalizedHref(href: string, language: Locale = "ar"): string 
     const withoutLocale = pathname.replace(/^\/(ar|en)(?=\/|$)/, "") || "/";
     const suffix = `${url.search}${url.hash}`;
 
-    if (language === "en") {
-        const localized = withoutLocale === "/" ? "/en" : `/en${withoutLocale}`;
-        return `${localized}${suffix}`;
-    }
-
-    const localized = withoutLocale === "/" ? "/" : withoutLocale;
+    const localized =
+        language === siteConfig.defaultLanguage
+            ? withoutLocale
+            : withoutLocale === "/"
+                ? `/${language}`
+                : `/${language}${withoutLocale}`;
     return `${localized}${suffix}`;
 }

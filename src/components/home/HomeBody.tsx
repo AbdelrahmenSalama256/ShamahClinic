@@ -144,7 +144,8 @@ export const HomeBody: React.FC = () => {
                 }}
                 mobilePerView={1}
                 tabletPerView={2}
-                desktopPerView={2}
+                loop={true}
+                  desktopPerView={2}
                 gap={24}
                 autoPlayMs={5000}
                 showArrows
@@ -219,9 +220,7 @@ export const HomeBody: React.FC = () => {
         lead={{
           ar: "فريقنا يرد خلال دقائق على واتساب لتأكيد الموعد المناسب لكِ.",
           en: "Our team replies within minutes on WhatsApp to confirm a time that suits you.",
-        
         }}
-
       />
 
       {/* 03 — Results preview */}
@@ -378,19 +377,19 @@ export const HomeBody: React.FC = () => {
         </div>
       </Section>
 
-      {/* 07 — Journal */}
-      <Section id="journal" className="bg-[var(--bg-primary)]">
+      {/* 07 — Blog */}
+      <Section id="blogs" className="bg-[var(--bg-primary)]">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionHeading
             index="07"
-            title={{ ar: "من مقالات شامه", en: "From the Shamah journal" }}
+            title={{ ar: "من مدونة شامه", en: "From the Shamah blog" }}
             lead={{
               ar: "مقالات طبية مبسطة تصحح المفاهيم الشائعة وتشرح روتين العناية.",
               en: "Clear medical articles correcting common myths and explaining care routines.",
             }}
           />
           <GoldLink href="/blogs" withArrow className="mb-1">
-            {t("كل المقالات", "All articles")}
+            {t("كل المدونات", "All blogs")}
           </GoldLink>
         </div>
         <div className="mt-6 lg:mt-10 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
@@ -401,7 +400,6 @@ export const HomeBody: React.FC = () => {
             ))}
         </div>
       </Section>
-      
     </>
   );
 };

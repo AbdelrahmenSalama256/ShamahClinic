@@ -37,7 +37,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
     en: "Book your consultation at the nearest branch, or message us on WhatsApp.",
   };
 
-  const whatsappUrl = `https://wa.me/201121880908?text=${encodeURIComponent(
+  const whatsappUrl = `${clinicData.whatsappUrl}?text=${encodeURIComponent(
     language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات."
       : "Hello Shamah Clinics, I would like to inquire about appointments.",

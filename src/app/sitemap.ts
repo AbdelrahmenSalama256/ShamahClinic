@@ -3,6 +3,8 @@ import { SITE_URL } from "@/lib/site";
 import { treatmentsData } from "@/data/treatments";
 import { branchesData } from "@/data/branches";
 import { journalData } from "@/data/journal";
+import { siteConfig } from "@/config/site";
+import { getLocalizedHref } from "@/lib/locale";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date("2026-09-29");
@@ -22,7 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const entries: MetadataRoute.Sitemap = staticRoutes.map((r) => ({
-    url: `${SITE_URL}${r.path}`,
+    url: `${SITE_URL}${getLocalizedHref(r.path, siteConfig.defaultLanguage)}`,
     lastModified,
     priority: r.priority,
     changeFrequency: r.changeFrequency,
@@ -30,7 +32,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   treatmentsData.forEach((t) =>
     entries.push({
-      url: `${SITE_URL}/treatments/${t.id}`,
+      url: `${SITE_URL}${getLocalizedHref(`/treatments/${t.id}`, siteConfig.defaultLanguage)}`,
       lastModified,
       priority: 0.8,
       changeFrequency: "monthly",
@@ -39,7 +41,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   branchesData.forEach((b) =>
     entries.push({
-      url: `${SITE_URL}/branches/${b.id}`,
+      url: `${SITE_URL}${getLocalizedHref(`/branches/${b.id}`, siteConfig.defaultLanguage)}`,
       lastModified,
       priority: 0.7,
       changeFrequency: "monthly",
@@ -48,7 +50,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   journalData.forEach((a) =>
     entries.push({
-      url: `${SITE_URL}/blogs/${a.slug}`,
+      url: `${SITE_URL}${getLocalizedHref(`/blogs/${a.slug}`, siteConfig.defaultLanguage)}`,
       lastModified: new Date(a.isoDate),
       priority: 0.6,
       changeFrequency: "yearly",

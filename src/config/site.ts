@@ -1,0 +1,110 @@
+export const siteConfig = {
+  defaultLanguage: "ar" as "ar" | "en",
+  enableDarkmoodOption: true,
+  siteUrl: "https://shamahclinics.com",
+  brand: {
+    name: {
+      ar: "عيادات شامه",
+      en: "Shamah Clinics",
+    },
+    logo: "/images/logo.png",
+    themeColor: "#C9A227",
+  },
+  contact: {
+    phone: "+20 112 188 0908",
+    whatsapp: "+201121880908",
+    email: "info@shamahclinics.com",
+    workingHours: {
+      ar: "يومياً من ١٠:٠٠ ص إلى ١٠:٠٠ م",
+      en: "Daily 10:00 AM – 10:00 PM",
+    },
+  },
+  metadata: {
+    title: "عيادات شامه | Shamah Clinics — طب التجميل والليزر والعناية بالبشرة",
+    titleTemplate: "%s | عيادات شامه",
+    description:
+      "عيادات شامه لطب التجميل والليزر والعناية الفائقة بالبشرة بالقاهرة والجيزة. فروعنا في مدينة نصر، التجمع الخامس، والشيخ زايد. أحدث أجهزة الليزر وحقن الفيلر والبوتوكس بإشراف طبي نسائي متكامل.",
+    keywords: [
+      "عيادات شامه",
+      "ليزر إزالة الشعر",
+      "تجميل القاهرة",
+      "فيلر وبوتوكس",
+      "هيدرافيشل",
+      "مدينة نصر",
+      "التجمع الخامس",
+      "الشيخ زايد",
+      "Shamah Clinics",
+    ],
+    openGraphTitle: "عيادات شامه | Shamah Clinics",
+    openGraphDescription:
+      "عيادات شامه لطب التجميل والليزر والعناية بالبشرة في مصر. ثلاثة فروع بالقاهرة والجيزة.",
+    locale: "ar_EG",
+    alternateLocale: "en_US",
+  },
+  socialLinks: [
+    {
+      id: "facebook",
+      href: "https://facebook.com/shamahclinics",
+      label: "Facebook",
+    },
+    {
+      id: "instagram",
+      href: "https://instagram.com/shamahclinics",
+      label: "Instagram",
+    },
+    {
+      id: "youtube",
+      href: "https://youtube.com/@shamahclinics",
+      label: "YouTube",
+    },
+  ],
+} as const;
+
+export const siteTheme = {
+  light: {
+    "--bg-primary": "#faf7f2",
+    "--bg-secondary": "#f4ece4",
+    "--bg-card": "#ffffff",
+    "--bg-card-subtle": "#fdfbf8",
+    "--bg-dark": "#191412",
+    "--bg-dark-card": "#241d1a",
+    "--text-primary": "#211a16",
+    "--text-secondary": "#6b5e57",
+    "--text-muted": "#6e675c",
+    "--text-inverse": "#faf7f2",
+    "--text-gold": "#c9a227",
+    "--gold-start": "#d8b237",
+    "--gold-mid": "#c9a227",
+    "--gold-end": "#85640f",
+    "--gold-glow": "rgba(201, 162, 39, 0.25)",
+    "--gold-border": "rgba(201, 162, 39, 0.35)",
+    "--gold-gradient":
+      "linear-gradient(120deg, #c9a227 0%, #e8c766 20%, #f5e6a8 35%, #e8c766 50%, #c9a227 65%, #8b6914 85%, #6b4f0d 100%)",
+    "--blush-light": "#fbf0eb",
+    "--blush-accent": "#e8b4b8",
+    "--rose-gold": "#c88d83",
+  },
+  dark: {
+    "--bg-primary": "#171513",
+    "--bg-secondary": "#24211e",
+    "--bg-card": "#211e1b",
+    "--bg-card-subtle": "#292522",
+    "--bg-dark": "#100f0e",
+    "--bg-dark-card": "#1b1917",
+    "--text-primary": "#f5eee6",
+    "--text-secondary": "#c9bdb1",
+    "--text-muted": "#b8aa9a",
+    "--text-inverse": "#211a16",
+    "--text-gold": "#e1c15b",
+    "--gold-start": "#e0bf58",
+    "--gold-mid": "#d5b446",
+    "--gold-end": "#c9a441",
+    "--gold-glow": "rgba(213, 180, 70, 0.2)",
+    "--gold-border": "rgba(213, 180, 70, 0.38)",
+    "--gold-gradient":
+      "linear-gradient(120deg, #8a6d1b 0%, #c29e3c 20%, #e1c15b 35%, #c29e3c 50%, #8a6d1b 65%, #5f4917 85%, #44330f 100%)",
+    "--blush-light": "#332720",
+    "--blush-accent": "#805c61",
+    "--rose-gold": "#d19b8e",
+  },
+} as const;

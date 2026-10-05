@@ -35,8 +35,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const { language, t, formatNumber } = useLanguage();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [selectedTreatmentId, setSelectedTreatmentId] = useState<string>(() => {
-    return preSelectedTreatmentId || treatmentsData[0].id;
+  const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>(() => {
+    return preSelectedTreatmentId &&
+      treatmentsData.some((treatment) => treatment.id === preSelectedTreatmentId)
+      ? [preSelectedTreatmentId]
+      : [treatmentsData[0].id];
   });
   const [selectedBranchId, setSelectedBranchId] = useState<string>(
     clinicData.branches[0].id,
@@ -80,9 +83,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
-  const currentTreatment =
-    treatmentsData.find((t) => t.id === selectedTreatmentId) ||
-    treatmentsData[0];
+  const selectedTreatments = treatmentsData.filter((treatment) =>
+    selectedTreatmentIds.includes(treatment.id),
+  );
   const currentBranch =
     clinicData.branches.find((b) => b.id === selectedBranchId) ||
     clinicData.branches[0];
@@ -128,6 +131,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   const handleNext = () => {
+    if (currentStep === 1 && selectedTreatmentIds.length === 0) {
+      setErrors({
+        treatment:
+          language === "ar"
+            ? "يرجى اختيار خدمة واحدة على الأقل"
+            : "Please select at least one service",
+      });
+      return;
+    }
+
     if (currentStep === 4) {
       if (!validateStep4()) return;
       const ref = "SHM-" + Math.floor(10000 + Math.random() * 90000);
@@ -151,7 +164,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     const startTime = `${dateFormatted}T090000Z`;
     const endTime = `${dateFormatted}T100000Z`;
 
-    const summary = `موعد في عيادات شامه: ${currentTreatment.name.ar}`;
+    const treatmentNames = selectedTreatments
+      .map((treatment) => treatment.name.ar)
+      .join("، ");
+    const summary = `موعد في عيادات شامه: ${treatmentNames}`;
     const description = `حجز مؤكد في عيادات شامه (${currentBranch.name.ar}). رقم المرجع: ${bookingRef}. هاتف الفرع: ${currentBranch.phone}`;
     const location = currentBranch.address.ar;
 
@@ -191,14 +207,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         `• رقم المرجع: ${bookingRef}\n` +
         `• الاسم: ${fullName}\n` +
         `• الهاتف: ${phoneNumber}\n` +
-        `• الخدمة: ${currentTreatment.name.ar}\n` +
+        `• الخدمات: ${selectedTreatments.map((treatment) => treatment.name.ar).join("، ")}\n` +
         `• الفرع: ${currentBranch.name.ar}\n` +
         `• التاريخ: ${selectedDate}\n` +
         `• الفترة: ${timeSlotLabels[selectedTimeSlot as keyof typeof timeSlotLabels].ar}\n` +
         (currentSpecialist ? `• الطبيبة: ${currentSpecialist.name.ar}\n` : "") +
         `أرجو تأكيد الموعد معي. شكراً لكم!`,
     );
-    return `https://wa.me/201020697427?text=${text}`;
+    return `${clinicData.whatsappUrl}?text=${text}`;
   };
 
   const ArrowPrev = language === "ar" ? ChevronRight : ChevronLeft;
@@ -305,20 +321,34 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     </h4>
                     <p className="text-xs text-[var(--text-secondary)]">
                       {t(
-                        "اختاري من قائمة الجلسات التجميلية المتخصصة لدينا",
-                        "Select from our specialized aesthetic treatments",
+                        "يمكنكِ اختيار خدمة واحدة أو أكثر من الجلسات التجميلية المتخصصة لدينا",
+                        "Select one or more of our specialized treatments",
                       )}
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {treatmentsData.map((item) => {
-                      const isSelected = item.id === selectedTreatmentId;
+                      const isSelected = selectedTreatmentIds.includes(item.id);
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={item.id}
-                          onClick={() => setSelectedTreatmentId(item.id)}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                          aria-pressed={isSelected}
+                          onClick={() => {
+                            setSelectedTreatmentIds((selected) =>
+                              isSelected
+                                ? selected.filter((id) => id !== item.id)
+                                : [...selected, item.id],
+                            );
+                            setErrors((previous) => {
+                              if (!previous.treatment) return previous;
+                              const remaining = { ...previous };
+                              delete remaining.treatment;
+                              return remaining;
+                            });
+                          }}
+                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between text-start ${
                             isSelected
                               ? "border-[var(--gold-mid)] bg-[var(--blush-light)]/60 shadow-sm"
                               : "border-gray-200 hover:border-[var(--gold-border)] bg-white"
@@ -343,10 +373,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           >
                             {isSelected && <Check className="w-3.5 h-3.5" />}
                           </div>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
+                  {errors.treatment && (
+                    <p className="text-xs text-red-500">{errors.treatment}</p>
+                  )}
                 </motion.div>
               )}
 
@@ -685,10 +718,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   <div className="bg-[var(--bg-secondary)]/70 p-5 rounded-2xl border border-[var(--gold-border)]/50 text-start space-y-2.5 text-xs sm:text-sm">
                     <div className="flex justify-flex-start border-b border-[var(--gold-border)]/30 pb-2">
                       <span className="text-[var(--text-muted)]">
-                        {t("الخدمة:", "Treatment:")}
+                        {t("الخدمات:", "Treatments:")}
                       </span>
                       <strong className="text-[var(--text-primary)] mx-1">
-                        {t(currentTreatment.name.ar, currentTreatment.name.en)}
+                        {selectedTreatments
+                          .map((treatment) =>
+                            t(treatment.name.ar, treatment.name.en),
+                          )
+                          .join(t("، ", ", "))}
                       </strong>
                     </div>
                     <div className="flex justify-flex-start border-b border-[var(--gold-border)]/30 pb-2">

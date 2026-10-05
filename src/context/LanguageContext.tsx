@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getLocalizedHref } from "@/lib/locale";
+import { siteConfig } from "@/config/site";
 
 export type Language = "ar" | "en";
 export type Direction = "rtl" | "ltr";
@@ -40,7 +41,11 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
   const router = useRouter();
   const pathname = usePathname();
 
-  const language: Language = pathname?.startsWith("/en") ? "en" : "ar";
+  const localePrefix = pathname?.match(/^\/(ar|en)(?=\/|$)/)?.[1];
+  const language: Language =
+    localePrefix === "ar" || localePrefix === "en"
+      ? localePrefix
+      : siteConfig.defaultLanguage;
   const direction: Direction = language === "ar" ? "rtl" : "ltr";
 
   useEffect(() => {

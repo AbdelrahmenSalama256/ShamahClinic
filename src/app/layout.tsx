@@ -5,6 +5,7 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationJsonLd, webSiteJsonLd } from "@/lib/jsonld";
 import { SITE_URL } from "@/lib/site";
+import { siteConfig, siteTheme } from "@/config/site";
 
 const readexPro = Readex_Pro({
   subsets: ["arabic"],
@@ -23,47 +24,34 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
-  themeColor: "#C9A227",
+  themeColor: siteConfig.brand.themeColor,
 };
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default:
-      "عيادات شامه | Shamah Clinics — طب التجميل والليزر والعناية بالبشرة",
-    template: "%s | عيادات شامه",
+    default: siteConfig.metadata.title,
+    template: siteConfig.metadata.titleTemplate,
   },
-  description:
-    "عيادات شامه لطب التجميل والليزر والعناية الفائقة بالبشرة بالقاهرة والجيزة. فروعنا في مدينة نصر، التجمع الخامس، والشيخ زايد. أحدث أجهزة الليزر وحقن الفيلر والبوتوكس بإشراف طبي نسائي متكامل.",
-  keywords: [
-    "عيادات شامه",
-    "ليزر إزالة الشعر",
-    "تجميل القاهرة",
-    "فيلر وبوتوكس",
-    "هيدرافيشل",
-    "مدينة نصر",
-    "التجمع الخامس",
-    "الشيخ زايد",
-    "Shamah Clinics",
-  ],
-  authors: [{ name: "Shamah Clinics" }],
+  description: siteConfig.metadata.description,
+  keywords: [...siteConfig.metadata.keywords],
+  authors: [{ name: siteConfig.brand.name.en }],
   robots: {
     index: true,
     follow: true,
     googleBot: { index: true, follow: true, "max-image-preview": "large" },
   },
   icons: {
-    icon: "/images/logo.png",
-    apple: "/images/logo.png",
+    icon: siteConfig.brand.logo,
+    apple: siteConfig.brand.logo,
   },
   openGraph: {
-    title: "عيادات شامه | Shamah Clinics",
-    description:
-      "عيادات شامه لطب التجميل والليزر والعناية بالبشرة في مصر. ثلاثة فروع بالقاهرة والجيزة.",
+    title: siteConfig.metadata.openGraphTitle,
+    description: siteConfig.metadata.openGraphDescription,
     url: SITE_URL,
-    siteName: "Shamah Clinics",
-    locale: "ar_EG",
-    alternateLocale: ["en_US"],
+    siteName: siteConfig.brand.name.en,
+    locale: siteConfig.metadata.locale,
+    alternateLocale: [siteConfig.metadata.alternateLocale],
     type: "website",
   },
 };
@@ -73,12 +61,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const defaultDirection =
+    siteConfig.defaultLanguage === "ar" ? "rtl" : "ltr";
+
   return (
     <html
-      lang="ar"
-      dir="rtl"
+      lang={siteConfig.defaultLanguage}
+      dir={defaultDirection}
       data-scroll-behavior="smooth"
       className={`${readexPro.variable} ${montserrat.variable} h-full scroll-smooth`}
+      style={siteTheme.light as React.CSSProperties}
       suppressHydrationWarning
     >
       <body

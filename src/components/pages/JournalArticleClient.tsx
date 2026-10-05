@@ -108,7 +108,7 @@ export const JournalArticleClient: React.FC<{ article: Article }> = ({
         photo={article.image}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/blogs", label: { ar: "المقالات", en: "Articles" } },
+          { href: "/blogs", label: { ar: "المدونة", en: "Blogs" } },
           {
             href: `/blogs/${article.slug}`,
             label: { ar: article.title.ar, en: article.title.en },
@@ -317,13 +317,13 @@ export const JournalArticleClient: React.FC<{ article: Article }> = ({
                 <div className="mt-16">
                   <div className="flex items-end justify-between mb-6">
                     <h2 className="text-xl font-black text-[var(--text-primary)]">
-                      {t("مقالات ذات صلة", "Related articles")}
+                      {t("مدونات ذات صلة", "Related blogs")}
                     </h2>
                     <Link
                       href={getLocalizedHref("/blogs", language)}
                       className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors"
                     >
-                      {t("كل المقالات", "All articles")}
+                      {t("كل المدونات", "All blogs")}
                       <Arrow className="w-3.5 h-3.5" />
                     </Link>
                   </div>
@@ -395,7 +395,7 @@ export const JournalArticleClient: React.FC<{ article: Article }> = ({
                   href={getLocalizedHref("/blogs", language)}
                   className="block text-center text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--gold-end)] transition-colors"
                 >
-                  {t("→ الرجوع لكل المقالات", "→ Back to all articles")}
+                  {t("→ الرجوع إلى المدونة", "→ Back to all blogs")}
                 </Link>
               </div>
             </aside>

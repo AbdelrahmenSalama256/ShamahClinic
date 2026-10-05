@@ -1,4 +1,5 @@
 import { SITE_URL } from "./site";
+import { siteConfig } from "@/config/site";
 import { clinicData } from "@/data/clinic";
 import { branchesData } from "@/data/branches";
 import { treatmentsData, type Treatment } from "@/data/treatments";
@@ -16,13 +17,13 @@ export function organizationJsonLd(): Json {
     "@context": "https://schema.org",
     "@type": "MedicalClinic",
     "@id": `${SITE_URL}/#organization`,
-    name: "عيادات شامه",
-    alternateName: "Shamah Clinics",
+    name: clinicData.name.ar,
+    alternateName: clinicData.name.en,
     url: SITE_URL,
     logo: logoUrl,
     image: `${SITE_URL}${images.interiors.reception.src}`,
     description:
-      "عيادات شامه لطب التجميل والليزر والعناية بالبشرة في القاهرة والجيزة، بثلاثة فروع وإشراف طبي نسائي متكامل.",
+      siteConfig.metadata.description,
     telephone: clinicData.phone,
     email: clinicData.email,
     priceRange: "EGP 850 - 6850",
@@ -46,7 +47,7 @@ export function branchJsonLd(branch: (typeof branchesData)[number]): Json {
     "@context": "https://schema.org",
     "@type": "MedicalClinic",
     "@id": `${SITE_URL}/branches/${branch.id}#clinic`,
-    name: `عيادات شامه — ${branch.name.ar}`,
+    name: `${clinicData.name.ar} — ${branch.name.ar}`,
     alternateName: branch.name.en,
     url: `${SITE_URL}/branches/${branch.id}`,
     image: `${SITE_URL}${branch.image.src}`,
@@ -113,10 +114,10 @@ export function articleJsonLd(article: Article): Json {
     datePublished: article.isoDate,
     dateModified: article.isoDate,
     inLanguage: "ar-EG",
-    author: { "@type": "Organization", name: "عيادات شامه" },
+    author: { "@type": "Organization", name: clinicData.name.ar },
     publisher: {
       "@type": "Organization",
-      name: "عيادات شامه",
+      name: clinicData.name.ar,
       logo: { "@type": "ImageObject", url: logoUrl },
     },
     mainEntityOfPage: `${SITE_URL}/blogs/${article.slug}`,
@@ -150,8 +151,8 @@ export function webSiteJsonLd(): Json {
     "@type": "WebSite",
     "@id": `${SITE_URL}/#website`,
     url: SITE_URL,
-    name: "عيادات شامه",
-    alternateName: "Shamah Clinics",
+    name: clinicData.name.ar,
+    alternateName: clinicData.name.en,
     inLanguage: ["ar-EG", "en"],
     publisher: { "@id": `${SITE_URL}/#organization` },
   };

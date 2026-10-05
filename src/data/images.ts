@@ -4,8 +4,10 @@
  * When real photos become available, updating this single file will reflect across the site.
  */
 
+  import { siteConfig } from "@/config/site";
+
   export const images = {
-  logo: "/images/logo.png",
+    logo: siteConfig.brand.logo,
   hero: {
     bg: "/images/hero-bg.svg",
     portrait: "/images/hero-portrait.svg",

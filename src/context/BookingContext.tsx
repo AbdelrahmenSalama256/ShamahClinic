@@ -16,10 +16,12 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined);
 
 export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [bookingSession, setBookingSession] = useState(0);
   const [options, setOptions] = useState<BookingOptions>({});
 
   const openBooking = useCallback((opts?: BookingOptions) => {
     setOptions(opts ?? {});
+    setBookingSession((session) => session + 1);
     setIsOpen(true);
   }, []);
 
@@ -31,6 +33,7 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
     <BookingContext.Provider value={value}>
       {children}
       <BookingModal
+        key={bookingSession}
         isOpen={isOpen}
         onClose={close}
         preSelectedTreatmentId={options.treatmentId}

@@ -15,7 +15,7 @@ export const FloatingActions: React.FC = () => {
   const { language, t } = useLanguage();
   const { openBooking } = useBooking();
 
-  const whatsappUrl = `https://wa.me/201121880908?text=${encodeURIComponent(
+  const whatsappUrl = `${clinicData.whatsappUrl}?text=${encodeURIComponent(
     language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
       : "Hello Shamah Clinics, I would like to inquire about appointments and services.",

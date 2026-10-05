@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!article) return {};
 
   return buildPageMetadata({
-    path: `/journal/${article.slug}`,
+    path: `/blogs/${article.slug}`,
     title: article.title,
     description: article.excerpt,
     image: article.image.src,
@@ -40,8 +40,8 @@ export default async function JournalArticlePage({ params }: Props) {
           articleJsonLd(article),
           breadcrumbJsonLd([
             { name: "الرئيسية", path: "" },
-            { name: "المقالات", path: "/blog" },
-            { name: article.title.ar, path: `/journals/${article.slug}` },
+            { name: "المدونة", path: "/blogs" },
+            { name: article.title.ar, path: `/blogs/${article.slug}` },
           ]),
         ]}
       />

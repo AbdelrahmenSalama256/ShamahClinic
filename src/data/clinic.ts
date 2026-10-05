@@ -1,3 +1,5 @@
+import { siteConfig } from "@/config/site";
+
 export interface Branch {
   id: string;
   name: {
@@ -47,22 +49,16 @@ export interface ClinicData {
 }
 
 export const clinicData: ClinicData = {
-  name: {
-    ar: "عيادات شامه",
-    en: "Shamah Clinics",
-  },
-  phone: "+20 112 188 0908",
-  whatsapp: "+201121880908",
-  whatsappUrl: "https://wa.me/201121880908",
-  email: "info@shamahclinics.com",
+  name: siteConfig.brand.name,
+  phone: siteConfig.contact.phone,
+  whatsapp: siteConfig.contact.whatsapp,
+  whatsappUrl: `https://wa.me/${siteConfig.contact.whatsapp.replace("+", "")}`,
+  email: siteConfig.contact.email,
   currency: {
     ar: "ج.م",
     en: "EGP",
   },
-  workingHours: {
-    ar: "يومياً من ١٠:٠٠ ص إلى ١٠:٠٠ م",
-    en: "Daily 10:00 AM – 10:00 PM",
-  },
+  workingHours: siteConfig.contact.workingHours,
   branches: [
     {
       id: "nasr-city",

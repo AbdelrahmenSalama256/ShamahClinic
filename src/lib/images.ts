@@ -1,3 +1,5 @@
+import { siteConfig } from "@/config/site";
+
 /**
  * Central image map for Shamah Clinics.
  * Every image slot on the site resolves through this single file so real client
@@ -25,7 +27,7 @@ const photo = (
 ): PhotoSlot => ({ src, alt: { ar, en }, width, height, focal });
 
 export const images = {
-  logo: "/images/logo.png",
+  logo: siteConfig.brand.logo,
 
   hero: photo(
     "/images/hero-portrait.jpg",

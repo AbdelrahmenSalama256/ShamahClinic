@@ -36,8 +36,8 @@ const destinations = [
   {
     href: "/blogs",
     icon: BookOpen,
-    label: { ar: "المقالات", en: "Journal" },
-    description: { ar: "مقالات طبية", en: "Medical articles" },
+    label: { ar: "المدونة", en: "Blogs" },
+    description: { ar: "مقالات طبية", en: "Medical blogs" },
   },
 ];
 

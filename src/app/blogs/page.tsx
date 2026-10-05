@@ -7,8 +7,8 @@ import { JournalClient } from "@/components/pages/JournalClient";
 export const metadata: Metadata = buildPageMetadata({
   path: "/blogs",
   title: {
-    ar: "المقالات— مقالات العناية بالبشرة والتجميل",
-    en: "Journal — Skincare & Aesthetics Articles",
+    ar: "مدونة شامه — مقالات العناية بالبشرة والتجميل",
+    en: "Shamah Blogs — Skincare & Aesthetics",
   },
   description: {
     ar: "مقالات طبية مبسطة من طبيبات عيادات شامه: حقائق عن ليزر إزالة الشعر، روتين العناية الشتوي بالبشرة الجافة، والفرق بين البوتوكس والفيلر.",
@@ -23,7 +23,7 @@ export default function JournalPage() {
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "الرئيسية", path: "" },
-          { name: "المقالات", path: "/blogs" },
+          { name: "المدونة", path: "/blogs" },
         ])}
       />
       <JournalClient />

@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { AnimatePresence, motion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
+import { useTheme } from "@/context/ThemeContext";
 import { useBooking } from "@/context/BookingContext";
+import { siteConfig } from "@/config/site";
 import { clinicData } from "@/data/clinic";
 import { images } from "@/lib/images";
 import { primaryNav } from "@/lib/site";
@@ -21,10 +23,13 @@ import {
   MapPin,
   Clock,
   ChevronDown,
+  Moon,
+  Sun,
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
   const { language, toggleLanguage, t } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const { openBooking } = useBooking();
   const pathname = usePathname();
 
@@ -62,7 +67,7 @@ export const Navbar: React.FC = () => {
   const isActive = (href: string) =>
     href === "/" ? normalizedPath === "/" : normalizedPath.startsWith(href);
 
-  const whatsappUrl = `https://wa.me/201121880908?text=${encodeURIComponent(
+  const whatsappUrl = `${clinicData.whatsappUrl}?text=${encodeURIComponent(
     language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
       : "Hello Shamah Clinics, I would like to inquire about appointments and services.",
@@ -257,6 +262,26 @@ export const Navbar: React.FC = () => {
 
           {/* ── Right actions ── */}
           <div className="flex items-center gap-2.5">
+            {siteConfig.enableDarkmoodOption && (
+              <button
+                onClick={toggleTheme}
+                aria-label={t(
+                  theme === "dark" ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن",
+                  theme === "dark" ? "Switch to light mode" : "Switch to dark mode",
+                )}
+                title={t(
+                  theme === "dark" ? "الوضع الفاتح" : "الوضع الداكن",
+                  theme === "dark" ? "Light mode" : "Dark mode",
+                )}
+                className="inline-flex items-center justify-center rounded-full w-8 h-8 border border-[var(--gold-border)] text-[var(--text-primary)] hover:border-[var(--gold-mid)] transition-colors duration-300 cursor-pointer"
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-4 h-4" />
+                ) : (
+                  <Moon className="w-4 h-4" />
+                )}
+              </button>
+            )}
             <button
               onClick={toggleLanguage}
               aria-label={t("تغيير اللغة", "Switch language")}
@@ -412,6 +437,27 @@ export const Navbar: React.FC = () => {
 
                   {/* Language */}
                   <div className="mt-5 pt-4 border-t border-[var(--gold-border)]/50">
+                    {siteConfig.enableDarkmoodOption && (
+                      <button
+                        onClick={toggleTheme}
+                        className="w-full flex items-center justify-between py-2.5 px-3 mb-2 rounded-lg bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)]"
+                      >
+                        <span className="flex items-center gap-2">
+                          {theme === "dark" ? (
+                            <Sun className="w-4 h-4 text-[var(--gold-mid)]" />
+                          ) : (
+                            <Moon className="w-4 h-4 text-[var(--gold-mid)]" />
+                          )}
+                          {t("المظهر", "Appearance")}
+                        </span>
+                        <span className="text-[var(--gold-end)] font-bold">
+                          {t(
+                            theme === "dark" ? "الوضع الفاتح" : "الوضع الداكن",
+                            theme === "dark" ? "Light mode" : "Dark mode",
+                          )}
+                        </span>
+                      </button>
+                    )}
                     <button
                       onClick={toggleLanguage}
                       className="w-full flex items-center justify-between py-2.5 px-3 rounded-lg bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)]"

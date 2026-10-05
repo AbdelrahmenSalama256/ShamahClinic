@@ -84,6 +84,65 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+html[data-theme="dark"] body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] .glass-nav {
+  background: rgba(23, 21, 19, 0.88);
+  border-bottom-color: var(--gold-border);
+}
+
+html[data-theme="dark"] .glass-nav-scrolled {
+  background: rgba(23, 21, 19, 0.96);
+  border-bottom-color: var(--gold-border);
+}
+
+html[data-theme="dark"] .bg-white {
+  background-color: var(--bg-card) !important;
+}
+
+html[data-theme="dark"] [class~="bg-gray-50"],
+html[data-theme="dark"] [class~="bg-gray-50/50"],
+html[data-theme="dark"] [class~="bg-gray-100"] {
+  background-color: var(--bg-secondary) !important;
+}
+
+html[data-theme="dark"] [class~="bg-gray-200"] {
+  background-color: var(--bg-card-subtle) !important;
+}
+
+html[data-theme="dark"] [class~="bg-emerald-50"],
+html[data-theme="dark"] [class~="bg-emerald-50/60"] {
+  background-color: #173329 !important;
+}
+
+html[data-theme="dark"] [class~="text-gray-400"],
+html[data-theme="dark"] [class~="text-gray-500"],
+html[data-theme="dark"] [class~="text-gray-600"],
+html[data-theme="dark"] [class~="text-gray-700"],
+html[data-theme="dark"] [class~="text-gray-800"] {
+  color: var(--text-secondary) !important;
+}
+
+html[data-theme="dark"] [class~="border-gray-200"],
+html[data-theme="dark"] [class~="border-gray-300"] {
+  border-color: var(--gold-border) !important;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  color-scheme: dark;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
 [dir="ltr"] body {
   font-family: var(--font-montserrat);
 }
@@ -109,16 +168,7 @@ body {
    ============================================ */
 
 .bg-gold-gradient {
-  background: linear-gradient(
-    120deg,
-    #c9a227 0%,
-    #e8c766 20%,
-    #f5e6a8 35%,
-    #e8c766 50%,
-    #c9a227 65%,
-    #8b6914 85%,
-    #6b4f0d 100%
-  );
+  background: var(--gold-gradient);
   background-size: 220% 220%;
   animation: goldShift 8s ease-in-out infinite;
   color: #ffffff;
@@ -411,7 +461,7 @@ a[class*="items-center"]:has(> svg, span) {
 /* Selected day */
 .rdp-shamah .rdp-day_selected,
 .rdp-shamah .rdp-day_selected:hover {
-  background: linear-gradient(135deg, #c9a227 0%, #8b6914 100%);
+  background: var(--gold-gradient);
   color: #ffffff;
   font-weight: 800;
   box-shadow: 0 4px 12px rgba(201, 162, 39, 0.35);
@@ -451,4 +501,35 @@ a[class*="items-center"]:has(> svg, span) {
 
 .rdp-shamah[dir="rtl"] .rdp-nav_button svg {
   transform: scaleX(-1);
+}
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-panel {
+  /* animation: ; */
+  animation: dropdownIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: top center;
+}
+@keyframes dropdownOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+.dropdown-panel-out {
+  animation: dropdownOut 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transform-origin: top center;
 }

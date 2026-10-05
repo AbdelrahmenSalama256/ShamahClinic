@@ -1,6 +1,7 @@
 import { treatmentsData } from "@/data/treatments";
+import { siteConfig } from "@/config/site";
 
-export const SITE_URL = "https://shamahclinics.com";
+export const SITE_URL = siteConfig.siteUrl;
 
 export interface NavChild {
   href: string;
@@ -36,7 +37,7 @@ export const primaryNav: NavItem[] = [
   { href: "/doctors", label: { ar: "الأطباء", en: "Doctors" } },
   { href: "/offers", label: { ar: "العروض", en: "Offers" } },
   { href: "/branches", label: { ar: "الفروع", en: "Branches" } },
-  { href: "/blogs", label: { ar: "المقالات", en: "Blogs" } },
+  { href: "/blogs", label: { ar: "المدونة", en: "Blogs" } },
   { href: "/contact", label: { ar: "تواصلي", en: "Contact" } },
 ];
 
@@ -47,8 +48,4 @@ export const footerNav: NavItem[] = [
   // { href: "/contact", label: { ar: "حجز موعد", en: "Book Appointment" } },
 ];
 
-export const socialLinks = [
-  { id: "facebook", href: "https://facebook.com/shamahclinics", label: "Facebook" },
-  { id: "instagram", href: "https://instagram.com/shamahclinics", label: "Instagram" },
-  { id: "youtube", href: "https://youtube.com/@shamahclinics", label: "YouTube" },
-] as const;
+export const socialLinks = siteConfig.socialLinks;
