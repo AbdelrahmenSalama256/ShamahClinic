@@ -32,8 +32,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TreatmentDetailPage({ params }: Props) {
   const { slug } = await params;
-  const all = await getMergedTreatments();
-  const treatment = all.find((t) => t.id === slug);
+  // `getMergedTreatment` is the variant that also pulls the treatment's own
+  // WordPress page (885 for botox) into `body`, which the detail renders.
+  const [treatment, all] = await Promise.all([
+    getMergedTreatment(slug),
+    getMergedTreatments(),
+  ]);
   if (!treatment) notFound();
 
   const related = all
