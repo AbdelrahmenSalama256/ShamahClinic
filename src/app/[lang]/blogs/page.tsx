@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { JournalClient } from "@/components/pages/JournalClient";
-import { getPosts, getCategories } from "@/lib/wp";
+import { getPosts, getCategories, getPageTitle } from "@/lib/wp";
 import { cardToUIArticle } from "@/lib/wp/ui";
 import { getLocalizedHref } from "@/lib/locale";
 import { SITE_URL } from "@/lib/site";
@@ -80,6 +80,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function JournalPage({ searchParams }: Props) {
   const { paged, categories, category, search, page } = await read(searchParams);
   const lang = await routeLang();
+  const title = await getPageTitle("journal", {
+    ar: "مدونة شامه",
+    en: "Shamah Blog",
+  });
 
   return (
     <>
@@ -92,6 +96,7 @@ export default async function JournalPage({ searchParams }: Props) {
         ])}
       />
       <JournalClient
+        title={title}
         firstPage={paged.items.map(cardToUIArticle)}
         page={paged.page}
         perPage={paged.perPage}

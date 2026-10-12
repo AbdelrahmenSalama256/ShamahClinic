@@ -21,6 +21,8 @@ interface Paged {
 }
 
 interface Props {
+  /** WordPress page 62 heading, with an authored fallback. */
+  title: { ar: string; en: string };
   firstPage: Article[];
   page: number;
   perPage: number;
@@ -48,6 +50,7 @@ function SkeletonCard() {
 }
 
 export const JournalClient: React.FC<Props> = ({
+  title,
   firstPage,
   page: serverPage,
   perPage,
@@ -128,14 +131,14 @@ export const JournalClient: React.FC<Props> = ({
   return (
     <>
       <PageHero
-        title={{ ar: "مدونة شامه", en: "Shamah Blog" }}
+        title={title}
         lead={{
           ar: "مقالات طبية مبسطة تكتبها طبيباتنا: تصحيح للمفاهيم الشائعة، شرح للجلسات، وروتينات عناية واقعية تناسب مناخ مصر.",
           en: "Clear medical articles written by our doctors: correcting common myths, explaining treatments, and realistic care routines for Egypt's climate.",
         }}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/blogs", label: { ar: "المدونة", en: "Blogs" } },
+          { href: "/blogs", label: title },
         ]}
         photo={images.journal.routine}
       />

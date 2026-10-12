@@ -17,7 +17,9 @@ const categoryLabels: Record<FaqItem["category"], { ar: string; en: string }> = 
   general: { ar: "الحجز والعيادات", en: "Booking & clinics" },
 };
 
-export const FaqClient: React.FC = () => {
+/** `title` is the WordPress page 169 heading, with an authored fallback for
+ *  Arabic where the TranslatePress subsite never translated it. */
+export const FaqClient: React.FC<{ title: { ar: string; en: string } }> = ({ title }) => {
   const { t } = useLanguage();
 
   const grouped = categoryOrder
@@ -27,14 +29,14 @@ export const FaqClient: React.FC = () => {
   return (
     <>
       <PageHero
-        title={{ ar: "الأسئلة الشائعة", en: "Frequently asked questions" }}
+        title={title}
         lead={{
           ar: "إجابات مباشرة على أكثر ما تسأل عنه العميلات قبل الحجز. لم تجدي سؤالك؟ راسلينا على واتساب وسنرد خلال دقائق.",
           en: "Direct answers to what clients ask most before booking. Can't find your question? Message us on WhatsApp and we reply within minutes.",
         }}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/faq", label: { ar: "الأسئلة الشائعة", en: "FAQ" } },
+          { href: "/faq", label: title },
         ]}
       />
 

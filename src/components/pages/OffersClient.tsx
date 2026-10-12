@@ -9,20 +9,24 @@ import { WhatsAppButton } from "@/components/shared/Actions";
 import type { Offer } from "@/data/offers";
 import { images } from "@/lib/images";
 
-export const OffersClient: React.FC<{ offers: Offer[] }> = ({ offers }) => {
+/** `title` is the WordPress shop page (9) heading, with an authored fallback. */
+export const OffersClient: React.FC<{ offers: Offer[]; title: { ar: string; en: string } }> = ({
+  offers,
+  title,
+}) => {
   const { t } = useLanguage();
 
   return (
     <>
       <PageHero
-        title={{ ar: "باقات وعروض الموسم", en: "Seasonal packages & offers" }}
+        title={title}
         lead={{
           ar: "باقات تجمع أكثر من جلسة بتوفير حقيقي، سارية في الفروع الثلاثة. الأسعار نهائية بدون رسوم خفية، والاستشارة تحدد ملاءمة الباقة لحالتكِ.",
           en: "Packages combining several sessions at a real saving, valid across all three branches. Prices are final with no hidden fees; a consultation confirms suitability.",
         }}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/offers", label: { ar: "العروض", en: "Offers" } },
+          { href: "/offers", label: title },
         ]}
         photo={images.interiors.treatmentRoom}
       />

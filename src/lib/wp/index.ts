@@ -19,7 +19,7 @@ import {
   type MapContext,
 } from "./mappers";
 import { htmlToText, decodeEntities } from "./sanitize";
-import { hrefPair } from "./lang";
+import { hrefPair, arabicRatio } from "./lang";
 import type {
   Article,
   ArticleCard,
@@ -411,6 +411,24 @@ export async function getHeroPhotos(): Promise<PhotoSlot[]> {
     raw = "";
   }
   return heroPhotos(raw);
+}
+
+/**
+ * A page's heading as the data team writes it in WordPress, used for the hero title
+ * and breadcrumb of the matching route. `authored` stays in charge of Arabic where
+ * the TranslatePress subsite never translated the title (page 3 is "Privacy Policy"
+ * in both languages), so an Arabic page never opens with an English heading.
+ */
+export async function getPageTitle(
+  slug: string,
+  authored: Bi,
+): Promise<Bi> {
+  const card = (await getAllPages()).find((p) => p.slug === slug);
+  if (!card) return authored;
+  return {
+    ar: arabicRatio(card.title.ar) > 0.3 ? card.title.ar : authored.ar,
+    en: card.title.en || authored.en,
+  };
 }
 
 // ---------------------------------------------------------------------------

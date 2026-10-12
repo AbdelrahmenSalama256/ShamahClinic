@@ -63,20 +63,22 @@ const policy: PolicyBlock[] = [
   },
 ];
 
-export const PrivacyClient: React.FC = () => {
+/** `title` is the WordPress page 3 heading where it is usable; the Arabic subsite
+ *  leaves page 3 in English, so Arabic keeps the authored "سياسة الخصوصية". */
+export const PrivacyClient: React.FC<{ title: { ar: string; en: string } }> = ({ title }) => {
   const { t, language } = useLanguage();
 
   return (
     <>
       <PageHero
-        title={{ ar: "سياسة الخصوصية", en: "Privacy Policy" }}
+        title={title}
         lead={{
           ar: "نحترم خصوصيتكِ. هذه الصفحة توضح ببساطة كيف يتعامل موقعنا مع معلوماتكِ.",
           en: "We respect your privacy. This page explains simply how our site handles your information.",
         }}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/privacy", label: { ar: "سياسة الخصوصية", en: "Privacy" } },
+          { href: "/privacy", label: title },
         ]}
       />
 

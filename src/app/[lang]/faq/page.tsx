@@ -3,6 +3,9 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/jsonld";
 import { FaqClient } from "@/components/pages/FaqClient";
+import { getPageTitle } from "@/lib/wp";
+
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -17,6 +20,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FaqPage() {
+  const title = await getPageTitle("faq", {
+    ar: "الأسئلة الشائعة",
+    en: "Frequently asked questions",
+  });
   return (
     <>
       <JsonLd
@@ -28,7 +35,7 @@ export default async function FaqPage() {
           ]),
         ]}
       />
-      <FaqClient />
+      <FaqClient title={title} />
     </>
   );
 }

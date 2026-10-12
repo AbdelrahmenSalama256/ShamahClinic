@@ -14,11 +14,13 @@ import {
 import { images } from "@/lib/images";
 
 interface Props {
+  /** WordPress page 696 heading, with an authored fallback. */
+  title: { ar: string; en: string };
   /** WordPress-titled catalog (pages/696) when available, authored list otherwise. */
   treatments?: Treatment[];
 }
 
-export const TreatmentsClient: React.FC<Props> = ({ treatments = treatmentsData }) => {
+export const TreatmentsClient: React.FC<Props> = ({ title, treatments = treatmentsData }) => {
   const { t } = useLanguage();
   const [active, setActive] = useState<TreatmentCategory | "all">("all");
 
@@ -33,17 +35,14 @@ export const TreatmentsClient: React.FC<Props> = ({ treatments = treatmentsData 
   return (
     <>
       <PageHero
-        title={{
-          ar: "خدمات عيادات شامه التجميلية",
-          en: "Shamah Clinics aesthetic treatments",
-        }}
+        title={title}
         lead={{
           ar: "جلسات ليزر، عناية بالبشرة، حقن تجميلي، وبروتوكولات نضارة ومكافحة شيخوخة — كلها بإشراف طبي نسائي وبأسعار تبدأ من قيمة واضحة معلنة.",
           en: "Laser, skincare, injectables and rejuvenation protocols — all under female medical supervision with clear starting prices.",
         }}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/services", label: { ar: "الخدمات", en: "Treatments" } },
+          { href: "/services", label: title },
         ]}
         photo={images.treatments.laser}
       />

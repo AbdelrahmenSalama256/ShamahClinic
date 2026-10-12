@@ -3,6 +3,9 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { PrivacyClient } from "@/components/pages/PrivacyClient";
+import { getPageTitle } from "@/lib/wp";
+
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -16,6 +19,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PrivacyPage() {
+  const title = await getPageTitle("privacy-policy", {
+    ar: "سياسة الخصوصية",
+    en: "Privacy Policy",
+  });
   return (
     <>
       <JsonLd
@@ -24,7 +31,7 @@ export default async function PrivacyPage() {
           { name: { ar: "سياسة الخصوصية", en: "Privacy" }, path: "/privacy" },
         ])}
       />
-      <PrivacyClient />
+      <PrivacyClient title={title} />
     </>
   );
 }

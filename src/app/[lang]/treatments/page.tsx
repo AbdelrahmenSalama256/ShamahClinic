@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { TreatmentsClient } from "@/components/pages/TreatmentsClient";
 import { getMergedTreatments } from "@/lib/wp/treatments";
+import { getPageTitle } from "@/lib/wp";
 
 export const revalidate = 300;
 
@@ -23,7 +24,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TreatmentsPage() {
-  const treatments = await getMergedTreatments();
+  const [treatments, title] = await Promise.all([
+    getMergedTreatments(),
+    getPageTitle("our-services", {
+      ar: "خدمات عيادات شامه التجميلية",
+      en: "Shamah Clinics aesthetic treatments",
+    }),
+  ]);
   return (
     <>
       <JsonLd
@@ -32,7 +39,7 @@ export default async function TreatmentsPage() {
           { name: { ar: "الخدمات", en: "Services" }, path: "/services" },
         ])}
       />
-      <TreatmentsClient treatments={treatments} />
+      <TreatmentsClient treatments={treatments} title={title} />
     </>
   );
 }
