@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { siteConfig } from "@/config/site";
 import { getLocalizedHref, type Locale } from "@/lib/locale";
-import { treatmentsData } from "@/data/treatments";
+import { getMergedTreatments } from "@/lib/wp/treatments";
 import { getAllArticles, getAllOffers, getAllPages, getBranchList } from "@/lib/wp";
 
 const LANGS: Locale[] = ["ar", "en"];
@@ -42,12 +42,13 @@ const date = (value: string | undefined): Date | undefined => {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [articles, offersAr, offersEn, pages, branches] = await Promise.all([
+  const [articles, offersAr, offersEn, pages, branches, treatments] = await Promise.all([
     getAllArticles(),
     getAllOffers("ar"),
     getAllOffers("en"),
     getAllPages().catch(() => []),
     getBranchList(),
+    getMergedTreatments(),
   ]);
 
   // WordPress owns these pages, so their lastmod comes from the dashboard.
@@ -67,7 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/privacy", priority: 0.3, changeFrequency: "yearly", lastModified: wpModified("privacy-policy") },
   ];
 
-  const treatmentRoutes: Route[] = treatmentsData.map((t) => ({
+  const treatmentRoutes: Route[] = treatments.map((t) => ({
     path: `/treatments/${t.id}`,
     priority: 0.8,
     changeFrequency: "monthly",

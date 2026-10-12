@@ -2,9 +2,16 @@ import { images, type PhotoSlot } from "@/lib/images";
 
 export type TreatmentCategory = "laser" | "injectables" | "skincare" | "anti-aging";
 
+/**
+ * A service card. The fields WordPress does not publish are empty rather than
+ * invented: `category`/`categoryName` are absent because page 696 has no service
+ * taxonomy, `priceStartingAt` is null because the dashboard gives no price, and
+ * `benefits`/`steps`/`aftercare` are empty lists. Every consumer renders nothing
+ * for an empty value instead of a placeholder or a zero.
+ */
 export interface Treatment {
   id: string;
-  category: TreatmentCategory;
+  category: TreatmentCategory | null;
   categoryName: { ar: string; en: string };
   name: { ar: string; en: string };
   tagline: { ar: string; en: string };
@@ -15,7 +22,7 @@ export interface Treatment {
   idealFor: { ar: string; en: string };
   duration: { ar: string; en: string };
   sessionsRecommended: { ar: string; en: string };
-  priceStartingAt: number;
+  priceStartingAt: number | null;
   image: PhotoSlot;
   featured?: boolean;
   /**

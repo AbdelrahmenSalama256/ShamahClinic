@@ -430,11 +430,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             <span className="text-xs font-bold text-[var(--text-primary)] block">
                               {t(item.name.ar, item.name.en)}
                             </span>
-                            <span className="text-[11px] text-[var(--gold-end)] font-semibold">
-                              {t("يبدأ من", "From")}{" "}
-                              {formatNumber(item.priceStartingAt)}{" "}
-                              {t("ج.م", "EGP")}
-                            </span>
+                            {item.priceStartingAt !== null && (
+                              <span className="text-[11px] text-[var(--gold-end)] font-semibold">
+                                {t("يبدأ من", "From")}{" "}
+                                {formatNumber(item.priceStartingAt)}{" "}
+                                {t("ج.م", "EGP")}
+                              </span>
+                            )}
                           </div>
                           <div
                             className={`w-5 h-5 rounded-full border flex items-center justify-center ${

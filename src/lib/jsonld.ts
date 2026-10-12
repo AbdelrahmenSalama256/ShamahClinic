@@ -169,13 +169,19 @@ export async function serviceJsonLd(treatment: Treatment): Promise<Json> {
     procedureType: "https://schema.org/CosmeticProcedure",
     inLanguage: OG_LOCALE[lang],
     provider: { "@id": `${SITE_URL}/#organization` },
-    offers: {
-      "@type": "Offer",
-      price: treatment.priceStartingAt,
-      priceCurrency: "EGP",
-      availability: "https://schema.org/InStock",
-      url: localized(path, lang),
-    },
+    // schema.org wants a real price; a service the dashboard gives no price for
+    // publishes no offer at all rather than a zero.
+    ...(treatment.priceStartingAt === null
+      ? {}
+      : {
+          offers: {
+            "@type": "Offer",
+            price: treatment.priceStartingAt,
+            priceCurrency: "EGP",
+            availability: "https://schema.org/InStock",
+            url: localized(path, lang),
+          },
+        }),
   };
 }
 

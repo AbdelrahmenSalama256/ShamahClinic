@@ -20,6 +20,14 @@ export const ResultsClient: React.FC<{ treatments: Treatment[] }> = ({
   const { t, language, formatNumber } = useLanguage();
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
 
+  // The table compares session length, course and starting price. A service
+  // WordPress publishes only a title and an intro has none of those figures, so
+  // it appears on `/services` and its own page instead of as a row of blanks.
+  const compared = treatments.filter(
+    (x): x is Treatment & { priceStartingAt: number } =>
+      !!x.duration[language] && x.priceStartingAt !== null,
+  );
+
   return (
     <>
       <PageHero
@@ -88,7 +96,7 @@ export const ResultsClient: React.FC<{ treatments: Treatment[] }> = ({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--gold-border)]/30 bg-[var(--bg-card)]">
-                  {treatments.map((x) => (
+                  {compared.map((x) => (
                     <tr
                       key={x.id}
                       className="hover:bg-[var(--bg-secondary)]/40 transition-colors duration-300"

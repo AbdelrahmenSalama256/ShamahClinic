@@ -7,16 +7,15 @@ import { treatmentsData, type Treatment } from "@/data/treatments";
 
 /**
  * The service cards WordPress publishes (pages/696) are the naming authority:
- * where a WordPress section matches a treatment on our side, its real title,
- * intro and section photo replace ours. Everything WordPress does not publish
- * (session counts, steps, aftercare, prices) stays authored in
- * `src/data/treatments.ts` and is listed as STATIC in docs/inventory.md.
- *
- * Seven sections are published; five name a treatment we author. The remaining
- * two (`glow-brightening-injections`, `mens-aesthetic-services`) have no row to
- * override — WordPress publishes only their title, intro and photo, and page 696
- * is the only services page in `/wp/v2/pages` besides 885 (botox), so there is no
- * body to render as a detail page. They stay available through `/api/v1/services`.
+ * every one of them reaches the site. Where a WordPress section matches a
+ * treatment we author, its real title, intro and section photo replace ours.
+ * Where it does not (`glow-brightening-injections`, `mens-aesthetic-services`),
+ * the section is appended as its own card and detail page carrying exactly what
+ * the dashboard gives — title, intro paragraph and photo. Nothing is invented to
+ * fill the rest, and the UI renders no block for a field WordPress has no value
+ * for. Everything WordPress does not publish (session counts, steps, aftercare,
+ * prices) stays authored in `src/data/treatments.ts` and is listed as STATIC in
+ * docs/inventory.md.
  */
 
 // The dashboard's section slugs are not our treatment ids, and title similarity
@@ -72,6 +71,40 @@ function arValue(value: string, authored: string): string {
   return arabicRatio(value) > 0.3 ? value : authored;
 }
 
+/**
+ * A WordPress section we have no authored row for: the card is built from the
+ * three fields page 696 gives (title, intro, photo) and every other field is
+ * left empty, which the detail and list UIs render as no block at all.
+ */
+function fromServiceCard(card: ServiceCard): Treatment {
+  const name = { ar: card.title.ar || card.title.en, en: card.title.en || card.title.ar };
+  const intro = {
+    ar: card.intro.ar || card.intro.en,
+    en: card.intro.en || card.intro.ar,
+  };
+  return {
+    id: card.slug,
+    category: null,
+    categoryName: { ar: "", en: "" },
+    name,
+    tagline: {
+      ar: firstSentence(intro.ar),
+      en: firstSentence(intro.en),
+    },
+    description: intro,
+    benefits: { ar: [], en: [] },
+    steps: { ar: [], en: [] },
+    aftercare: { ar: [], en: [] },
+    idealFor: { ar: "", en: "" },
+    duration: { ar: "", en: "" },
+    sessionsRecommended: { ar: "", en: "" },
+    priceStartingAt: null,
+    // The section's own WPBakery image, with the section title as its alt —
+    // which is all the dashboard provides.
+    image: toPhotoSlot(card.image, name),
+  };
+}
+
 export async function getMergedTreatments(): Promise<Treatment[]> {
   let cards: ServiceCard[] = [];
   try {
@@ -80,9 +113,11 @@ export async function getMergedTreatments(): Promise<Treatment[]> {
     cards = [];
   }
   if (!cards.length) return treatmentsData;
-  return treatmentsData.map((treatment) => {
+  const matched = new Set<string>();
+  const merged = treatmentsData.map((treatment) => {
     const card = matchCard(treatment, cards);
     if (!card) return treatment;
+    matched.add(card.slug);
     const name = {
       ar: arValue(card.title.ar, treatment.name.ar),
       en: card.title.en || treatment.name.en,
@@ -99,6 +134,7 @@ export async function getMergedTreatments(): Promise<Treatment[]> {
       image: card.image ? toPhotoSlot(card.image, name) : treatment.image,
     };
   });
+  return [...merged, ...cards.filter((card) => !matched.has(card.slug)).map(fromServiceCard)];
 }
 
 export async function getMergedTreatment(slug: string): Promise<Treatment | null> {
@@ -109,9 +145,10 @@ export async function getMergedTreatment(slug: string): Promise<Treatment | null
   // WordPress gives a section its own page only when the data team creates one:
   // page 885 (`botox-injections`) is the treatment page in `/wp/v2/pages` today,
   // so the botox detail shows the dashboard's long-form body and the others keep
-  // the authored description.
-  const pageSlug = SECTION_SLUG[treatment.id];
-  if (!pageSlug) return treatment;
+  // the authored description. A card that came from WordPress alone is looked up
+  // under its own section slug, so a page the team publishes later is used with
+  // no code change.
+  const pageSlug = SECTION_SLUG[treatment.id] || treatment.id;
   let html: { ar: string; en: string } | null = null;
   try {
     html = (await getPage(pageSlug))?.item.html ?? null;

@@ -21,18 +21,21 @@ export const TreatmentDetailClient: React.FC<{
 
   const body = language === "ar" ? treatment.body?.ar : treatment.body?.en;
 
+  // A service whose only source is a WordPress section (page 696) publishes no
+  // session length, count or price, so those facts are not shown rather than
+  // shown empty.
   const facts = [
-    {
+    treatment.duration.ar && {
       icon: Clock,
       label: { ar: "مدة الجلسة", en: "Session length" },
       value: treatment.duration,
     },
-    {
+    treatment.sessionsRecommended.ar && {
       icon: Repeat,
       label: { ar: "الجلسات الموصى بها", en: "Recommended sessions" },
       value: treatment.sessionsRecommended,
     },
-    {
+    treatment.priceStartingAt !== null && {
       icon: Wallet,
       label: { ar: "السعر يبدأ من", en: "Price from" },
       value: {
@@ -40,7 +43,19 @@ export const TreatmentDetailClient: React.FC<{
         en: `EGP ${treatment.priceStartingAt}`,
       },
     },
-  ];
+  ].filter(Boolean) as {
+    icon: typeof Clock;
+    label: { ar: string; en: string };
+    value: { ar: string; en: string };
+  }[];
+
+  const idealFor =
+    treatment.idealFor.ar || treatment.idealFor.en ? treatment.idealFor : null;
+  const lists = {
+    benefits: treatment.benefits[language].length > 0,
+    steps: treatment.steps[language].length > 0,
+    aftercare: treatment.aftercare[language].length > 0,
+  };
 
   return (
     <>
@@ -58,24 +73,26 @@ export const TreatmentDetailClient: React.FC<{
       <section className="py-8 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Key facts */}
-          <Reveal className="grid sm:grid-cols-3 gap-4 mb-10">
-            {facts.map((f) => (
-              <div
-                key={f.label.en}
-                className="flex items-start gap-3 p-5 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/40"
-              >
-                <f.icon className="w-5 h-5 text-[var(--gold-mid)] mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-xs text-[var(--text-muted)]">
-                    {t(f.label.ar, f.label.en)}
-                  </p>
-                  <p className="mt-1 text-sm font-bold text-[var(--text-primary)] leading-snug">
-                    {t(f.value.ar, f.value.en)}
-                  </p>
+          {facts.length > 0 && (
+            <Reveal className="grid sm:grid-cols-3 gap-4 mb-10">
+              {facts.map((f) => (
+                <div
+                  key={f.label.en}
+                  className="flex items-start gap-3 p-5 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/40"
+                >
+                  <f.icon className="w-5 h-5 text-[var(--gold-mid)] mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-xs text-[var(--text-muted)]">
+                      {t(f.label.ar, f.label.en)}
+                    </p>
+                    <p className="mt-1 text-sm font-bold text-[var(--text-primary)] leading-snug">
+                      {t(f.value.ar, f.value.en)}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </Reveal>
+              ))}
+            </Reveal>
+          )}
 
           <div className="grid lg:grid-cols-12 gap-10 lg:gap-14">
             {/* Main content */}
@@ -94,64 +111,72 @@ export const TreatmentDetailClient: React.FC<{
                     {t(treatment.description.ar, treatment.description.en)}
                   </p>
                 )}
-                <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
-                  <span className="font-bold text-[var(--text-primary)]">
-                    {t("مناسبة لـ: ", "Ideal for: ")}
-                  </span>
-                  {t(treatment.idealFor.ar, treatment.idealFor.en)}
-                </p>
+                {idealFor && (
+                  <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
+                    <span className="font-bold text-[var(--text-primary)]">
+                      {t("مناسبة لـ: ", "Ideal for: ")}
+                    </span>
+                    {t(idealFor.ar, idealFor.en)}
+                  </p>
+                )}
               </Reveal>
 
-              <Reveal>
-                <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
-                  {t("الفوائد", "Benefits")}
-                </h2>
-                <ul className="grid sm:grid-cols-2 gap-3">
-                  {treatment.benefits[language].map((b) => (
-                    <li
-                      key={b}
-                      className="flex items-start gap-2.5 text-sm text-[var(--text-primary)]"
-                    >
-                      <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--gold-mid)]" />
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
+              {lists.benefits && (
+                <Reveal>
+                  <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
+                    {t("الفوائد", "Benefits")}
+                  </h2>
+                  <ul className="grid sm:grid-cols-2 gap-3">
+                    {treatment.benefits[language].map((b) => (
+                      <li
+                        key={b}
+                        className="flex items-start gap-2.5 text-sm text-[var(--text-primary)]"
+                      >
+                        <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--gold-mid)]" />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </Reveal>
+              )}
 
-              <Reveal>
-                <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
-                  {t("خطوات الجلسة", "How the session works")}
-                </h2>
-                <ol className="space-y-4">
-                  {treatment.steps[language].map((s, i) => (
-                    <li key={i} className="flex gap-4">
-                      <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--gold-border)]/50 text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
-                        {formatNumber(i + 1)}
-                      </span>
-                      <p className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)] pt-1">
-                        {s}
-                      </p>
-                    </li>
-                  ))}
-                </ol>
-              </Reveal>
+              {lists.steps && (
+                <Reveal>
+                  <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
+                    {t("خطوات الجلسة", "How the session works")}
+                  </h2>
+                  <ol className="space-y-4">
+                    {treatment.steps[language].map((s, i) => (
+                      <li key={i} className="flex gap-4">
+                        <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--gold-border)]/50 text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
+                          {formatNumber(i + 1)}
+                        </span>
+                        <p className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)] pt-1">
+                          {s}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                </Reveal>
+              )}
 
-              <Reveal>
-                <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
-                  {t("العناية بعد الجلسة", "Aftercare")}
-                </h2>
-                <ul className="space-y-2.5 border-s-2 border-[var(--gold-border)] ps-5">
-                  {treatment.aftercare[language].map((a) => (
-                    <li
-                      key={a}
-                      className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)]"
-                    >
-                      {a}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
+              {lists.aftercare && (
+                <Reveal>
+                  <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
+                    {t("العناية بعد الجلسة", "Aftercare")}
+                  </h2>
+                  <ul className="space-y-2.5 border-s-2 border-[var(--gold-border)] ps-5">
+                    {treatment.aftercare[language].map((a) => (
+                      <li
+                        key={a}
+                        className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)]"
+                      >
+                        {a}
+                      </li>
+                    ))}
+                  </ul>
+                </Reveal>
+              )}
             </div>
 
             {/* Sticky booking aside */}
