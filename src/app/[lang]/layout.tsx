@@ -9,7 +9,6 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig, siteTheme } from "@/config/site";
 import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
-import { getNav } from "@/lib/wp/nav";
 import { getBranchList } from "@/lib/wp";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 
@@ -99,7 +98,6 @@ export default async function RootLayout({
     getMergedTreatments(),
     getBranchList(),
   ]);
-  const nav = await getNav(treatments);
 
   return (
     <html
@@ -115,7 +113,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <JsonLd data={await Promise.all([organizationJsonLd(), webSiteJsonLd()])} />
-        <SiteShell nav={nav} branches={branches} treatments={treatments}>
+        <SiteShell branches={branches} treatments={treatments}>
           {children}
         </SiteShell>
       </body>

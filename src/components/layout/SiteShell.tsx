@@ -15,7 +15,6 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingActions } from "@/components/ui/FloatingActions";
 import { CtaBand } from "@/components/ui/CtaBand";
-import type { NavData } from "@/lib/wp/nav";
 import type { BranchLite } from "@/data/branches";
 import type { TreatmentOption } from "@/data/treatments";
 
@@ -23,15 +22,14 @@ import type { TreatmentOption } from "@/data/treatments";
  * Application shell: providers, persistent chrome (navbar / footer / floating
  * actions / booking modal) and a smooth cross-fade between routes.
  *
- * `nav` is read in the root layout so the menu labels come from the WordPress
- * pages the client edits, rather than from a file in this repo.
+ * The menu itself is authored in `@/data/nav`; only the branch cards the footer
+ * lists come from WordPress.
  */
 export const SiteShell: React.FC<{
   children: React.ReactNode;
-  nav: NavData;
   branches: BranchLite[];
   treatments: TreatmentOption[];
-}> = ({ children, nav, branches, treatments }) => {
+}> = ({ children, branches, treatments }) => {
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
@@ -41,7 +39,7 @@ export const SiteShell: React.FC<{
         <ThemeProvider>
           <BookingProvider branches={branches} treatments={treatments}>
             <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
-              <Navbar nav={nav} />
+              <Navbar />
 
               <AnimatePresence mode="wait" initial={false}>
                 <motion.main
@@ -61,7 +59,7 @@ export const SiteShell: React.FC<{
               <div className="h-px bg-gold-gradient" />
 
               <div className="h-0.5 bg-gold-gradient" />
-              <Footer nav={nav} branches={branches} />
+              <Footer branches={branches} />
               <FloatingActions />
             </div>
           </BookingProvider>

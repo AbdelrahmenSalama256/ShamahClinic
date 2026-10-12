@@ -9,7 +9,7 @@ import type { BranchLite } from "@/data/branches";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
 import { socialLinks } from "@/lib/site";
-import type { NavData } from "@/lib/wp/nav";
+import { navItems } from "@/data/nav";
 import { Phone, Clock, Mail, Send, Check, MessageCircle } from "lucide-react";
 
 const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
@@ -41,8 +41,7 @@ const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-export const Footer: React.FC<{ nav: NavData; branches: BranchLite[] }> = ({
-  nav,
+export const Footer: React.FC<{ branches: BranchLite[] }> = ({
   branches,
 }) => {
   const { language, t } = useLanguage();
@@ -178,7 +177,7 @@ export const Footer: React.FC<{ nav: NavData; branches: BranchLite[] }> = ({
               {t("روابط الموقع", "Site")}
             </h2>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-gray-300">
-              {nav.items.map((l) => (
+              {navItems.map((l) => (
                 <li key={l.href}>
                   <Link
                     href={getLocalizedHref(l.href, language)}
