@@ -11,8 +11,8 @@ import { useBooking } from "@/context/BookingContext";
 import { siteConfig } from "@/config/site";
 import { clinicData } from "@/data/clinic";
 import { images } from "@/lib/images";
-import { primaryNav } from "@/lib/site";
 import { getLocalizedHref } from "@/lib/locale";
+import type { NavData } from "@/lib/wp/nav";
 import {
   Menu,
   X,
@@ -27,7 +27,7 @@ import {
   Sun,
 } from "lucide-react";
 
-export const Navbar: React.FC = () => {
+export const Navbar: React.FC<{ nav: NavData }> = ({ nav }) => {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { openBooking } = useBooking();
@@ -78,7 +78,7 @@ export const Navbar: React.FC = () => {
       : "Hello Shamah Clinics, I would like to inquire about appointments and services.",
   )}`;
 
-  const mobileParent = primaryNav.find((l) => l.href === openMobileDropdown);
+  const mobileParent = nav.items.find((l) => l.href === openMobileDropdown);
 
   // Shared link styling for the desktop nav
   const desktopLinkBase =
@@ -170,7 +170,7 @@ export const Navbar: React.FC = () => {
             aria-label={t("التنقل الرئيسي", "Primary")}
             onMouseLeave={() => openMenu({ dropdown: null })}
           >
-            {primaryNav.map((link) => {
+            {nav.items.map((link) => {
               const active = isActive(link.href);
               const hasChildren = !!link.children?.length;
               const isOpen = openDropdown === link.href;
@@ -312,7 +312,7 @@ export const Navbar: React.FC = () => {
             >
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">
-                {t("احجزي موعدك", "Book")}
+                {t(nav.book.ar, nav.book.en)}
               </span>
             </button>
 
@@ -395,7 +395,7 @@ export const Navbar: React.FC = () => {
                     className="flex flex-col mt-5"
                     aria-label={t("التنقل الرئيسي", "Primary")}
                   >
-                    {primaryNav.map((link) => {
+                    {nav.items.map((link) => {
                       const active = isActive(link.href);
                       const hasChildren = !!link.children?.length;
 

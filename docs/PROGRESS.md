@@ -55,6 +55,18 @@ Serve the build with `npx next start -p 3121` and test against that, never `next
 | 8d | No design/style changes beyond the shorter Home | done | Diffs this session are metadata, a11y attributes, loading attributes, one dynamic import |
 | 9 | Final report delivered | done | Reported: changes, Home cuts, curl language evidence, Lighthouse, pagination, static list, Vercel env, unverifiables |
 
+## AUDIT brief — prove wired vs truly static (no design changes)
+
+| # | Item | Status | Evidence (one line) |
+|---|------|--------|---------------------|
+| A | Map every `src/data` file + hardcoded UI string that the UI still imports, and what it feeds | done | 10 files under `src/data` enumerated with import sites; per-route element lists (15 routes x 2 langs) + hardcoded-literal file:line lists collected |
+| B | Probe WordPress for each claimed-static item (page 885, product descriptions, WPBakery section images, pages 32/3/67/169, homepage nav, hero/slider media) | done | All live GETs: 885 real EN body (AR REST = same English); 696 = 7 sections + 7 images; 32 real bilingual; 67/169/3 theme demo; 622 office blocks EN-only via REST; menu item ids 870/717/755/643/646/647/838; 4 Store-API products |
+| C | Wire every item where a real WP source exists and delete the static copy | in progress | C1 nav labels + booking CTA from page titles (622/696/9/62/67/32, 837 AR) through `lib/wp/nav.ts` → layout/SiteShell/Navbar/Footer. C2 branch name/address/phone/photo from page 622 `.ws-contact-office-item` blocks (`lib/wp/branches.ts`) feeding /branches, branch detail, /contact, /doctors cards, footer, booking wizard, JSON-LD, sitemap; `clinicData.branches` + `clinicData.services` + `getBranch()` deleted. C3-C6 pending |
+| D | Write `docs/WIRING.md`: route | element | source | WP source exists (with endpoint/id/selector) | action | todo | |
+| E | Keep the demo-text rule: authored static stays where WP holds lorem/placehold, with page id + quoted sample | todo | |
+| F | `npm run sync:wp` + lint + typecheck + build + runtime re-verify, language still server-side, snapshot fallback intact | todo | |
+| G | Update `docs/inventory.md` (+ DECISIONS) to match, commit | todo | |
+
 ## Not code, and not ours to do (host/client side)
 
 | Item | Status | Note |

@@ -4,19 +4,20 @@ import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
 import { Photo } from "@/components/ui/Photo";
-import { getBranch } from "@/data/branches";
+import type { BranchDetail } from "@/data/branches";
 import type { Specialist } from "@/data/specialists";
 import { Calendar, MapPin } from "lucide-react";
 
-export const DoctorCard: React.FC<{ doctor: Specialist; compact?: boolean }> = ({
-  doctor,
-  compact = false,
-}) => {
+export const DoctorCard: React.FC<{
+  doctor: Specialist;
+  branches: BranchDetail[];
+  compact?: boolean;
+}> = ({ doctor, branches, compact = false }) => {
   const { t, language } = useLanguage();
   const { openBooking } = useBooking();
 
   const branchNames = doctor.branches
-    .map((id) => getBranch(id)?.name[language])
+    .map((id) => branches.find((b) => b.id === id)?.name[language])
     .filter(Boolean)
     .join(" • ");
 

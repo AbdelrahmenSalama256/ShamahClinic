@@ -3,8 +3,7 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig } from "@/config/site";
 import { getLocalizedHref, type Locale } from "@/lib/locale";
 import { treatmentsData } from "@/data/treatments";
-import { branchesData } from "@/data/branches";
-import { getAllArticles, getAllOffers, getAllPages } from "@/lib/wp";
+import { getAllArticles, getAllOffers, getAllPages, getBranchList } from "@/lib/wp";
 
 const LANGS: Locale[] = ["ar", "en"];
 
@@ -43,11 +42,12 @@ const date = (value: string | undefined): Date | undefined => {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [articles, offersAr, offersEn, pages] = await Promise.all([
+  const [articles, offersAr, offersEn, pages, branches] = await Promise.all([
     getAllArticles(),
     getAllOffers("ar"),
     getAllOffers("en"),
     getAllPages().catch(() => []),
+    getBranchList(),
   ]);
 
   // WordPress owns these pages, so their lastmod comes from the dashboard.
@@ -73,7 +73,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly",
   }));
 
-  const branchRoutes: Route[] = branchesData.map((b) => ({
+  const branchRoutes: Route[] = branches.map((b) => ({
     path: `/branches/${b.id}`,
     priority: 0.7,
     changeFrequency: "monthly",

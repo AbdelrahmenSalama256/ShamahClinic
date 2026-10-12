@@ -9,6 +9,8 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig, siteTheme } from "@/config/site";
 import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
+import { getNav } from "@/lib/wp/nav";
+import { getBranchList } from "@/lib/wp";
 
 const readexPro = Readex_Pro({
   subsets: ["arabic"],
@@ -92,6 +94,8 @@ export default async function RootLayout({
   const lang = normalizeLang(segment);
   if (!lang) notFound();
 
+  const [nav, branches] = await Promise.all([getNav(), getBranchList()]);
+
   return (
     <html
       lang={lang}
@@ -106,7 +110,9 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <JsonLd data={await Promise.all([organizationJsonLd(), webSiteJsonLd()])} />
-        <SiteShell>{children}</SiteShell>
+        <SiteShell nav={nav} branches={branches}>
+          {children}
+        </SiteShell>
       </body>
     </html>
   );

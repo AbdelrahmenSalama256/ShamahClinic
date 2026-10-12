@@ -3,20 +3,20 @@ import { notFound } from "next/navigation";
 import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, branchJsonLd } from "@/lib/jsonld";
-import { branchesData, getBranch } from "@/data/branches";
 import { BranchDetailClient } from "@/components/pages/BranchDetailClient";
+import { getBranchList } from "@/lib/wp";
 
 interface Props {
   params: Promise<{ lang: string; slug: string }>;
 }
 
-export function generateStaticParams() {
-  return branchesData.map((b) => ({ slug: b.id }));
+export async function generateStaticParams() {
+  return (await getBranchList()).map((b) => ({ slug: b.id }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const branch = getBranch(slug);
+  const branch = (await getBranchList()).find((b) => b.id === slug);
   if (!branch) return {};
 
   return buildPageMetadata({
@@ -29,7 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function BranchDetailPage({ params }: Props) {
   const { slug } = await params;
-  const branch = getBranch(slug);
+  const branches = await getBranchList();
+  const branch = branches.find((b) => b.id === slug);
   if (!branch) notFound();
 
   return (
@@ -44,7 +45,7 @@ export default async function BranchDetailPage({ params }: Props) {
           ]),
         ]}
       />
-      <BranchDetailClient branch={branch} />
+      <BranchDetailClient branch={branch} others={branches.filter((b) => b.id !== branch.id)} />
     </>
   );
 }

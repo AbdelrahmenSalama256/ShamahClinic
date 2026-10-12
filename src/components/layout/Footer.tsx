@@ -5,9 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 import { clinicData } from "@/data/clinic";
+import type { BranchLite } from "@/data/branches";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
-import { primaryNav, socialLinks } from "@/lib/site";
+import { socialLinks } from "@/lib/site";
+import type { NavData } from "@/lib/wp/nav";
 import { Phone, Clock, Mail, Send, Check, MessageCircle } from "lucide-react";
 
 const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
@@ -39,7 +41,10 @@ const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-export const Footer: React.FC = () => {
+export const Footer: React.FC<{ nav: NavData; branches: BranchLite[] }> = ({
+  nav,
+  branches,
+}) => {
   const { language, t } = useLanguage();
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
@@ -139,7 +144,7 @@ export const Footer: React.FC = () => {
               {t("فروعنا في مصر", "Our Branches")}
             </h2>
             <div className="space-y-3 text-xs">
-              {clinicData.branches.map((b) => (
+              {branches.map((b) => (
                 <div
                   key={b.id}
                   className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[var(--gold-border)] transition-colors duration-300"
@@ -173,7 +178,7 @@ export const Footer: React.FC = () => {
               {t("روابط الموقع", "Site")}
             </h2>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-gray-300">
-              {primaryNav.map((l) => (
+              {nav.items.map((l) => (
                 <li key={l.href}>
                   <Link
                     href={getLocalizedHref(l.href, language)}

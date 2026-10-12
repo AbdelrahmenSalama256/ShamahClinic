@@ -1,17 +1,26 @@
 import { images, type PhotoSlot } from "@/lib/images";
 
-export interface BranchDetail {
+export interface BranchLite {
   id: string;
   name: { ar: string; en: string };
-  area: { ar: string; en: string };
   address: { ar: string; en: string };
   phone: string;
+}
+
+export interface BranchDetail extends BranchLite {
+  area: { ar: string; en: string };
   image: PhotoSlot;
   intro: { ar: string; en: string };
   features: { ar: string[]; en: string[] };
   landmark: { ar: string; en: string };
 }
 
+/**
+ * The authored side of each branch: ids, the Arabic name/address (the Arabic
+ * subsite serves these office blocks in English through REST) and the per-branch
+ * prose WordPress has no field for. `lib/wp/branches.ts` puts the homepage
+ * office blocks of page 622 on top of these rows before anything renders.
+ */
 export const branchesData: BranchDetail[] = [
   {
     id: "nasr-city",
@@ -74,5 +83,3 @@ export const branchesData: BranchDetail[] = [
     landmark: { ar: "خلف كابيتال وبارك ستريت، الحي الثاني", en: "Behind Capital & Park Street, 2nd District" },
   },
 ];
-
-export const getBranch = (id: string) => branchesData.find((b) => b.id === id);

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { clinicData } from "@/data/clinic";
+import type { BranchLite } from "@/data/branches";
 import { treatmentsData } from "@/data/treatments";
 import { specialistsData } from "@/data/specialists";
 import {
@@ -22,6 +23,8 @@ import { DatePicker } from "@/components/ui/DatePicker";
 interface BookingModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** The branch list, from the WordPress homepage office blocks. */
+  branches: BranchLite[];
   preSelectedTreatmentId?: string;
   preSelectedSpecialistId?: string;
   preSelectedOffer?: { ar: string; en: string };
@@ -33,6 +36,7 @@ const makeBookingRef = () => `SHM-${Math.floor(10000 + Math.random() * 90000)}`;
 export const BookingModal: React.FC<BookingModalProps> = ({
   isOpen,
   onClose,
+  branches,
   preSelectedTreatmentId,
   preSelectedSpecialistId,
   preSelectedOffer,
@@ -47,7 +51,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       : [treatmentsData[0].id];
   });
   const [selectedBranchId, setSelectedBranchId] = useState<string>(
-    clinicData.branches[0].id,
+    branches[0]?.id ?? "",
   );
   const [selectedSpecialistId, setSelectedSpecialistId] = useState<string>(
     () => {
@@ -93,8 +97,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     selectedTreatmentIds.includes(treatment.id),
   );
   const currentBranch =
-    clinicData.branches.find((b) => b.id === selectedBranchId) ||
-    clinicData.branches[0];
+    branches.find((b) => b.id === selectedBranchId) || branches[0];
   const currentSpecialist = specialistsData.find(
     (s) => s.id === selectedSpecialistId,
   );
@@ -476,7 +479,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       {t("الفروع المتاحة:", "Available Branches:")}
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      {clinicData.branches.map((b) => {
+                      {branches.map((b) => {
                         const isSelected = b.id === selectedBranchId;
                         return (
                           <button

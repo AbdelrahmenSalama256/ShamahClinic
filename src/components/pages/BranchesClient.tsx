@@ -5,12 +5,14 @@ import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { BranchCard } from "@/components/cards/BranchCard";
-import { branchesData } from "@/data/branches";
+import type { BranchDetail } from "@/data/branches";
 import { clinicData } from "@/data/clinic";
 import { images } from "@/lib/images";
 import { Clock } from "lucide-react";
 
-export const BranchesClient: React.FC = () => {
+export const BranchesClient: React.FC<{ branches: BranchDetail[] }> = ({
+  branches,
+}) => {
   const { t, language } = useLanguage();
 
   return (
@@ -32,7 +34,7 @@ export const BranchesClient: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="sr-only">{t("فروعنا", "Our branches")}</h2>
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 max-lg:[&>*:last-child]:col-span-2">
-            {branchesData.map((b, i) => (
+            {branches.map((b, i) => (
               <Reveal className="h-full" key={b.id} delay={i * 0.1}>
                 <BranchCard branch={b} />
               </Reveal>

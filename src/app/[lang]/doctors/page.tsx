@@ -3,6 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { DoctorsClient } from "@/components/pages/DoctorsClient";
+import { getBranchList } from "@/lib/wp";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -17,6 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function DoctorsPage() {
+  const branches = await getBranchList();
   return (
     <>
       <JsonLd
@@ -25,7 +27,7 @@ export default async function DoctorsPage() {
           { name: { ar: "الأطباء", en: "Doctors" }, path: "/doctors" },
         ])}
       />
-      <DoctorsClient />
+      <DoctorsClient branches={branches} />
     </>
   );
 }

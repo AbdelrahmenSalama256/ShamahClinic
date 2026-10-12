@@ -8,7 +8,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Photo } from "@/components/ui/Photo";
 import { whatsappHref } from "@/components/shared/Actions";
 import { clinicData } from "@/data/clinic";
-import { branchesData } from "@/data/branches";
+import type { BranchDetail } from "@/data/branches";
 import { treatmentsData } from "@/data/treatments";
 import { images } from "@/lib/images";
 import { motion, AnimatePresence } from "framer-motion";
@@ -23,7 +23,9 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-export const ContactClient: React.FC = () => {
+export const ContactClient: React.FC<{ branches: BranchDetail[] }> = ({
+  branches,
+}) => {
   const { t, language } = useLanguage();
   const { openBooking } = useBooking();
 
@@ -246,7 +248,7 @@ export const ContactClient: React.FC = () => {
                 {t("اتصلي بفرع محدد", "Call a specific branch")}
               </h2>
               <ul className="space-y-2">
-                {branchesData.map((b) => (
+                {branches.map((b) => (
                   <li
                     key={b.id}
                     className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[var(--bg-secondary)]/60 border border-[var(--gold-border)]/40"

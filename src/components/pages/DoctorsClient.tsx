@@ -7,9 +7,12 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Photo } from "@/components/ui/Photo";
 import { DoctorCard } from "@/components/cards/DoctorCard";
 import { specialistsData } from "@/data/specialists";
+import type { BranchDetail } from "@/data/branches";
 import { images } from "@/lib/images";
 
-export const DoctorsClient: React.FC = () => {
+export const DoctorsClient: React.FC<{ branches: BranchDetail[] }> = ({
+  branches,
+}) => {
   const { t, formatNumber } = useLanguage();
 
   return (
@@ -33,7 +36,7 @@ export const DoctorsClient: React.FC = () => {
           <div className="grid sm:grid-cols-3 gap-4 lg:gap-8">
             {specialistsData.map((doc, i) => (
               <Reveal className="h-full" key={doc.id} delay={i * 0.1}>
-                <DoctorCard doctor={doc} />
+                <DoctorCard doctor={doc} branches={branches} />
               </Reveal>
             ))}
           </div>

@@ -1,10 +1,11 @@
 import { SITE_URL } from "./site";
 import { siteConfig } from "@/config/site";
 import { clinicData } from "@/data/clinic";
-import { branchesData } from "@/data/branches";
+import type { BranchDetail } from "@/data/branches";
 import { treatmentsData, type Treatment } from "@/data/treatments";
 import { faqData, type FaqItem } from "@/data/faq";
 import { type Article } from "@/data/journal";
+import { getBranchList } from "./wp";
 import { images } from "./images";
 import { getLocalizedHref, type Locale } from "./locale";
 import { routeLang } from "./route-lang";
@@ -58,7 +59,7 @@ export async function organizationJsonLd(): Promise<Json> {
       opens: "10:00",
       closes: "22:00",
     },
-    branch: branchesData.map((b) => branchNode(b, lang)),
+    branch: (await getBranchList()).map((b) => branchNode(b, lang)),
     availableService: treatmentsData.map((t) => ({
       "@type": "MedicalProcedure",
       ...names(t.name, lang),
@@ -67,7 +68,7 @@ export async function organizationJsonLd(): Promise<Json> {
   };
 }
 
-function branchNode(branch: (typeof branchesData)[number], lang: Locale): Json {
+function branchNode(branch: BranchDetail, lang: Locale): Json {
   return {
     "@type": ["MedicalClinic", "LocalBusiness"],
     "@id": `${localized(`/branches/${branch.id}`, lang)}#clinic`,
@@ -88,7 +89,7 @@ function branchNode(branch: (typeof branchesData)[number], lang: Locale): Json {
 }
 
 /** Per-branch node used on a branch detail page. */
-export async function branchJsonLd(branch: (typeof branchesData)[number]): Promise<Json> {
+export async function branchJsonLd(branch: BranchDetail): Promise<Json> {
   const lang = await routeLang();
   return {
     ...branchNode(branch, lang),

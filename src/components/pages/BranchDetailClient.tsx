@@ -9,7 +9,6 @@ import { Photo } from "@/components/ui/Photo";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
 import type { BranchDetail } from "@/data/branches";
-import { branchesData } from "@/data/branches";
 import { clinicData } from "@/data/clinic";
 import {
   MapPin,
@@ -20,12 +19,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export const BranchDetailClient: React.FC<{ branch: BranchDetail }> = ({
-  branch,
-}) => {
+export const BranchDetailClient: React.FC<{
+  branch: BranchDetail;
+  others: BranchDetail[];
+}> = ({ branch, others }) => {
   const { t, language } = useLanguage();
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
-  const others = branchesData.filter((b) => b.id !== branch.id);
 
   return (
     <>

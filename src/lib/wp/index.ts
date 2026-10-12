@@ -39,7 +39,8 @@ import type {
   Lang,
 } from "./types";
 import { siteConfig } from "@/config/site";
-import { branchesData } from "@/data/branches";
+import type { BranchDetail } from "@/data/branches";
+import { mergeBranches, parseOffices } from "./branches";
 
 // Lists never carry `content` and never use `_embed`; images and term names are
 // hydrated from dedicated batched endpoints (see buildContext).
@@ -217,7 +218,10 @@ async function pairLists<T extends { id: number }>(
 // ---------------------------------------------------------------------------
 
 export async function getSettings(lang: Lang = "en"): Promise<Settings> {
-  const offers = await getOffers({ perPage: 1 }, lang);
+  const [offers, branches] = await Promise.all([
+    getOffers({ perPage: 1 }, lang),
+    getBranchList(),
+  ]);
   return {
     name: siteConfig.brand.name.en,
     tagline: "Great Skin Doesn't Happen By Chance",
@@ -226,7 +230,7 @@ export async function getSettings(lang: Lang = "en"): Promise<Settings> {
     whatsapp: WHATSAPP,
     email: siteConfig.contact.email,
     hours: siteConfig.contact.workingHours.en,
-    branches: branchesData.length,
+    branches: branches.length,
   };
 }
 
@@ -242,8 +246,26 @@ export interface BranchView {
   landmark: Bi;
 }
 
-export function getBranches(): BranchView[] {
-  return branchesData.map((b) => ({
+/**
+ * The three branches, with the homepage office blocks (name, address, phone and
+ * photo) on top of the authored rows. See `lib/wp/branches.ts` for what each
+ * side contributes.
+ */
+export async function getBranchList(): Promise<BranchDetail[]> {
+  let html = "";
+  try {
+    html = (await getPage("home"))?.item.html.en || "";
+  } catch {
+    // A WordPress outage must not take the whole layout down: the rendered
+    // branches then fall back to the authored rows, which is what the snapshot
+    // would have shown anyway.
+    html = "";
+  }
+  return mergeBranches(parseOffices(html));
+}
+
+function toView(b: BranchDetail): BranchView {
+  return {
     id: b.id,
     name: b.name,
     area: b.area,
@@ -253,11 +275,16 @@ export function getBranches(): BranchView[] {
     intro: b.intro,
     features: b.features,
     landmark: b.landmark,
-  }));
+  };
 }
 
-export function getBranch(idOrSlug: string): BranchView | null {
-  return getBranches().find((b) => b.id === idOrSlug) || null;
+export async function getBranches(): Promise<BranchView[]> {
+  return (await getBranchList()).map(toView);
+}
+
+export async function getBranch(idOrSlug: string): Promise<BranchView | null> {
+  const found = (await getBranchList()).find((b) => b.id === idOrSlug);
+  return found ? toView(found) : null;
 }
 
 /** How current the committed snapshot is — surfaced by /api/v1/settings. */
@@ -494,7 +521,7 @@ export async function getHome(
     getSettings(lang),
     getOffers({ perPage: offersCount }, lang),
     getPosts({ perPage: articlesCount }),
-    Promise.resolve(getBranches()),
+    getBranches(),
   ]);
   return { settings, offers: offersPaged.items, articles: articlesPaged.items, branches };
 }
