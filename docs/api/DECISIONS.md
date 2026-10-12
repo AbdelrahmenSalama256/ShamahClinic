@@ -257,10 +257,15 @@ pages; entries with no `modified` in the data omit `lastmod` rather than shippin
 
 ## Services cards: WP names over static cards
 Live page 696 has 7 image-bearing WPBakery sections with a title + short intro each; they are the
-clinic's own wording, so `getMergedTreatments()` overrides the static card **name and tagline**
+clinic's own wording, so `getMergedTreatments()` overrides the static card **name, tagline and photo**
 where a section matches (exact slug, then normalized-title containment) and leaves everything else
-untouched. Photos stay the authored local ones: the WPBakery images are page-builder assets and
-swapping them would change the approved visual concept. Exposed raw at `GET /api/v1/services`.
+untouched. The section's own image replaces the stock photo when the dashboard publishes one
+(`treatments.ts:99`, alt = the section title); where WP has no image the authored slot stands. Photos
+were originally kept authored on the theory that page-builder assets should not move the visual
+concept — the AUDIT reversed that, because the alternative was hiding a dashboard image behind a
+local file. Two published sections (`glow-brightening-injections`, `mens-aesthetic-services`) have no
+authored row to attach to, so they are not shown; recorded rather than invented.
+Exposed raw at `GET /api/v1/services`.
 
 ## Pagination canonical follows the clamped page
 `paginate()` clamps `?page=99` onto the last real page, so `/blogs?page=99` renders page 11. The
@@ -285,3 +290,57 @@ is now `dynamic(..., { ssr: false })` and mounted on first `openBooking()` (`boo
 which keeps the exit animation working on later opens. Verified on the production build: the dialog
 still opens with the offer's treatment preselected (`aria-pressed="true"`), `role=dialog` +
 `aria-modal` + labelledby intact, body scroll lock applied, and Escape restores it.
+
+## Nav is authored again — a client decision, not a data finding
+`src/data/nav.ts` now holds the whole header menu (9 lines + 4 dropdown children) and the footer link
+group, bilingual, in display order, with `bookCta` for the button. `src/lib/wp/nav.ts`, which derived
+those labels from WordPress page titles, is deleted (`e39f950`), as are `primaryNav` /
+`featuredServices` from `src/lib/site.ts`.
+
+The evidence that a WordPress menu exists is preserved here on purpose: the live homepage HTML carries
+`menu-item-870`→page 622, `717`→696, `755`→9, `643`→62, `646`→67, `647`→32, `838`→837. The site
+chooses not to follow it, because a dashboard slug edit silently renames the navigation. Removing a
+page from the menu is one deleted line in `src/data/nav.ts`. `scripts/verify-render.mjs` asserts the
+rendered header order/labels against that file in both languages, so a future "wire the nav to WP"
+change cannot pass the gate unnoticed.
+
+## Home card sections are capped at three, with a "View all"
+`HOME_CARDS = 3` in `src/components/home/HomeBody.tsx:46` applies to every list Home renders: reasons
+3 of 4, offers 3, branches 3, journal 3. The full lists stay on `/offers`, `/branches`, `/blogs` (and
+`/about` for the reasons) with their existing pagination. Home still fetches a 4th offer and article
+(`page.tsx:30` `{offers: 4, articles: 4}`) — that row is only the probe that more content exists, so
+the "All offers"/"All blogs" links are honest instead of decorative. Asserted in rendered HTML, AR+EN,
+by `scripts/verify-render.mjs`.
+
+## Interior page headings follow their WordPress page title
+`getPageTitle(slug, authored)` (`src/lib/wp/index.ts:422-432`) reads the same `getAllPages()` list the
+nav used to, so this costs no extra request. Five routes now take their H1 from the dashboard: 696
+Our Services/خدماتنا, 9 Offers/العروض, 62 Journal/معلومات طبية, 169 FAQ/أهم الأسئلة الشائعة, 3
+Privacy Policy. Arabic keeps the authored fallback whenever `arabicRatio ≤ 0.3` — that is why
+`/privacy` still reads سياسة الخصوصية while `/en/privacy` reads the WP title, and it is the same guard
+the service names use. Leads stay authored: every WordPress `excerpt.rendered` on those pages ends
+`[…]`, which is an auto-generated truncation rather than a sentence the clinic wrote.
+
+## The botox page body needed a render-path fix, not a data change
+Page 885 was already being fetched for `/services/botox`, but only inside `generateMetadata`, which
+reads `name`, `tagline` and `image.src` and discards `body`; the page component rendered rows from
+`getMergedTreatments()`, which never sets `body`. So the dashboard's long-form botox article was
+invisible. `e6e6181` moves the render path to `getMergedTreatment(slug)`. The Arabic side of 885 is
+untranslated English (`arabicRatio` 0.000), so `treatments.ts:128` leaves Arabic on the authored
+description; the audit rule is to show what WP returns **in the language it returns it**, not to put
+English text under an Arabic heading.
+
+## Theme demo content: the two different rules, and why they differ
+Where a WordPress page is ArtDay/WooCommerce sample text, the authored copy stays and the page id plus
+a quoted sample go in `docs/WIRING.md` §15 (pages 169, 3, 67, 62, 13). Where the same kind of demo
+text sits in a **WooCommerce product**, the site prints it — 781/780/581 render "These art prints have
+been hand painted…" as the offer lead and body. The distinction is not taste: the demo page has no
+record of being clinic content, while a product row is the clinic's own catalogue entry, and the
+content policy forbids the code deciding that a WordPress field "is not real content".
+
+## Verification is a script over rendered HTML, not a claim
+`scripts/verify-render.mjs` parses `src/data/nav.ts` (bracket depth separates top-level lines from
+dropdown children), fetches the built pages for both locales, and asserts header order and labels, the
+footer link group, the booking CTA, the four card sections at ≤3 cards, and the four "View all" links.
+42 checks, AR + EN, against `npx next start -p 3100`. Scroll-dependent visuals still cannot be proven
+from pixels in this environment (see PROGRESS "not verifiable"), so this covers the DOM contract only.
