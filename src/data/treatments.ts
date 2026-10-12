@@ -18,7 +18,15 @@ export interface Treatment {
   priceStartingAt: number;
   image: PhotoSlot;
   featured?: boolean;
+  /**
+   * Long-form HTML WordPress publishes for this treatment as its own page
+   * (today only 885 `botox-injections`). Empty when the dashboard has no page,
+   * or when the Arabic subsite answers that page in English.
+   */
+  body?: BilingualHtml;
 }
+
+type BilingualHtml = { ar: string; en: string };
 
 /** The booking and contact pickers only ever show these three fields. */
 export type TreatmentOption = Pick<Treatment, "id" | "name" | "priceStartingAt">;

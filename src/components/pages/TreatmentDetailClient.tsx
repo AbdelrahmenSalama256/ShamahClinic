@@ -19,6 +19,8 @@ export const TreatmentDetailClient: React.FC<{
 }> = ({ treatment, related }) => {
   const { t, language, formatNumber } = useLanguage();
 
+  const body = language === "ar" ? treatment.body?.ar : treatment.body?.en;
+
   const facts = [
     {
       icon: Clock,
@@ -82,9 +84,16 @@ export const TreatmentDetailClient: React.FC<{
                 <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-4">
                   {t("عن هذه الجلسة", "About this treatment")}
                 </h2>
-                <p className="text-base leading-relaxed text-[var(--text-secondary)]">
-                  {t(treatment.description.ar, treatment.description.en)}
-                </p>
+                {body ? (
+                  <div
+                    className="text-base leading-relaxed text-[var(--text-secondary)] [&_h2]:mt-5 [&_h2]:mb-2 [&_h2]:text-lg [&_h2]:font-black [&_h2]:text-[var(--text-primary)] [&_h3]:mt-4 [&_h3]:mb-1.5 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-[var(--text-primary)] [&_p]:mt-3 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:ps-5 [&_ul]:space-y-1.5 [&_ol]:mt-3 [&_ol]:list-decimal [&_ol]:ps-5 [&_ol]:space-y-1.5 [&_li]:text-[var(--text-secondary)] [&_a]:text-[var(--gold-end)] [&_a]:underline [&_strong]:text-[var(--text-primary)]"
+                    dangerouslySetInnerHTML={{ __html: body }}
+                  />
+                ) : (
+                  <p className="text-base leading-relaxed text-[var(--text-secondary)]">
+                    {t(treatment.description.ar, treatment.description.en)}
+                  </p>
+                )}
                 <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
                   <span className="font-bold text-[var(--text-primary)]">
                     {t("مناسبة لـ: ", "Ideal for: ")}

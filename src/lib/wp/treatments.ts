@@ -1,5 +1,6 @@
 import type { ServiceCard } from "./types";
-import { getServiceCards } from "./index";
+import { getPage, getServiceCards } from "./index";
+import { htmlToText } from "./sanitize";
 import { toPhotoSlot } from "./ui-helpers";
 import { arabicRatio } from "./lang";
 import { treatmentsData, type Treatment } from "@/data/treatments";
@@ -102,5 +103,30 @@ export async function getMergedTreatments(): Promise<Treatment[]> {
 
 export async function getMergedTreatment(slug: string): Promise<Treatment | null> {
   const all = await getMergedTreatments();
-  return all.find((t) => t.id === slug) || null;
+  const treatment = all.find((t) => t.id === slug);
+  if (!treatment) return null;
+
+  // WordPress gives a section its own page only when the data team creates one:
+  // page 885 (`botox-injections`) is the treatment page in `/wp/v2/pages` today,
+  // so the botox detail shows the dashboard's long-form body and the others keep
+  // the authored description.
+  const pageSlug = SECTION_SLUG[treatment.id];
+  if (!pageSlug) return treatment;
+  let html: { ar: string; en: string } | null = null;
+  try {
+    html = (await getPage(pageSlug))?.item.html ?? null;
+  } catch {
+    html = null;
+  }
+  if (!html?.en) return treatment;
+  return {
+    ...treatment,
+    body: {
+      // The Arabic subsite stores 885 in English (its REST body has no Arabic
+      // characters at all), so Arabic keeps showing the authored description
+      // rather than an untranslated block. Recorded in docs/WIRING.md.
+      ar: arabicRatio(htmlToText(html.ar)) > 0.3 ? html.ar : "",
+      en: html.en,
+    },
+  };
 }
