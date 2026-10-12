@@ -6,10 +6,10 @@ import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { WhatsAppButton } from "@/components/shared/Actions";
-import { offersData } from "@/data/offers";
+import type { Offer } from "@/data/offers";
 import { images } from "@/lib/images";
 
-export const OffersClient: React.FC = () => {
+export const OffersClient: React.FC<{ offers: Offer[] }> = ({ offers }) => {
   const { t } = useLanguage();
 
   return (
@@ -31,7 +31,7 @@ export const OffersClient: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="sr-only">{t("العروض والباقات", "Offers and packages")}</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 md:max-lg:[&>*:last-child]:col-span-2">
-            {offersData.map((o, i) => (
+            {offers.map((o, i) => (
               <Reveal className="h-full" key={o.id} delay={i * 0.08}>
                 <OfferCard offer={o} />
               </Reveal>

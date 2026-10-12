@@ -40,6 +40,10 @@ export const ContactClient: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [sent, setSent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [apiError, setApiError] = useState("");
+  const [serverWaUrl, setServerWaUrl] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [isServicesOpen, setIsServicesOpen] = useState(false);
   const servicesDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -85,18 +89,54 @@ export const ContactClient: React.FC = () => {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-    setSent(true);
-  };
-
   const selectedServices = treatmentsData.filter((treatment) =>
     form.services.includes(treatment.id),
   );
   const serviceNames = selectedServices
     .map((treatment) => treatment.name[language])
     .join(language === "ar" ? "، " : ", ");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validate()) return;
+    setSubmitting(true);
+    setApiError("");
+    try {
+      const res = await fetch("/api/v1/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          phone: form.phone.trim(),
+          service: serviceNames || undefined,
+          message: form.message.trim() || undefined,
+          lang: language,
+          _website: honeypot,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        setApiError(
+          data.error ||
+            (language === "ar"
+              ? "تعذّر الإرسال، حاولي مرة أخرى أو تواصلي عبر واتساب."
+              : "Could not send. Please try again or reach us on WhatsApp."),
+        );
+        return;
+      }
+      if (data.whatsappUrl) setServerWaUrl(data.whatsappUrl);
+      setSent(true);
+    } catch {
+      setApiError(
+        language === "ar"
+          ? "تعذّر الاتصال، تواصلي معنا مباشرة عبر واتساب أو الهاتف."
+          : "Connection failed. Please contact us directly on WhatsApp or by phone.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const waMessage =
     language === "ar"
       ? `مرحباً عيادات شامه، اسمي ${form.name || "..."}. أرغب في الاستفسار عن ${
@@ -105,6 +145,7 @@ export const ContactClient: React.FC = () => {
       : `Hello Shamah Clinics, my name is ${form.name || "..."}. I would like to ask about ${
           serviceNames || "your services"
         }.`;
+  const continueWaUrl = serverWaUrl || whatsappHref(language, waMessage);
 
   return (
     <>
@@ -246,7 +287,7 @@ export const ContactClient: React.FC = () => {
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                     <a
-                      href={whatsappHref(language, waMessage)}
+                      href={continueWaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-700 text-white font-bold text-sm px-6 py-3 hover:bg-emerald-800 hover:-translate-y-0.5 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
@@ -258,6 +299,9 @@ export const ContactClient: React.FC = () => {
                       onClick={() => {
                         setSent(false);
                         setIsServicesOpen(false);
+                        setServerWaUrl("");
+                        setApiError("");
+                        setHoneypot("");
                         setForm({
                           name: "",
                           phone: "",
@@ -273,6 +317,18 @@ export const ContactClient: React.FC = () => {
                 </Reveal>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                  {/* Honeypot — humans never see or fill this; bots do. */}
+                  <input
+                    type="text"
+                    name="_website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    className="absolute -left-[9999px] h-0 w-0 opacity-0"
+                    aria-hidden="true"
+                  />
+
                   <div>
                     <h2 className="text-xl font-black text-[var(--text-primary)] mb-1">
                       {t("أرسلي استفساركِ", "Send your enquiry")}
@@ -514,13 +570,22 @@ export const ContactClient: React.FC = () => {
                     />
                   </div>
 
+                  {apiError && (
+                    <p className="text-[13px] text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                      {apiError}
+                    </p>
+                  )}
+
                   <div className="flex flex-col sm:flex-row gap-3 pt-1">
                     <button
                       type="submit"
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient text-white font-bold text-sm py-3.5 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+                      disabled={submitting}
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient text-white font-bold text-sm py-3.5 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                     >
                       <MessageCircle className="w-4 h-4" />
-                      {t("إرسال الاستفسار", "Send enquiry")}
+                      {submitting
+                        ? t("جارٍ الإرسال…", "Sending…")
+                        : t("إرسال الاستفسار", "Send enquiry")}
                     </button>
                     <button
                       type="button"
@@ -533,8 +598,8 @@ export const ContactClient: React.FC = () => {
                   </div>
                   <p className="text-[11px] text-[var(--text-muted)]">
                     {t(
-                      "هذا النموذج للعرض داخل الموقع؛ الإرسال الفعلي يتم عبر واتساب أو الهاتف لضمان رد سريع.",
-                      "This form is on-site only; actual sending happens via WhatsApp or phone to ensure a fast reply.",
+                      "نستلم طلبكِ ثم نستكمله معكِ على واتساب لتأكيد الموعد بشكل فوري.",
+                      "We log your request and continue on WhatsApp to confirm your appointment instantly.",
                     )}
                   </p>
                 </form>

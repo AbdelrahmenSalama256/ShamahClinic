@@ -24,13 +24,18 @@ interface BookingModalProps {
   onClose: () => void;
   preSelectedTreatmentId?: string;
   preSelectedSpecialistId?: string;
+  preSelectedOffer?: { ar: string; en: string };
 }
+
+/** Booking reference shown in step 5 and carried in the lead + WhatsApp message. */
+const makeBookingRef = () => `SHM-${Math.floor(10000 + Math.random() * 90000)}`;
 
 export const BookingModal: React.FC<BookingModalProps> = ({
   isOpen,
   onClose,
   preSelectedTreatmentId,
   preSelectedSpecialistId,
+  preSelectedOffer,
 }) => {
   const { language, t, formatNumber } = useLanguage();
 
@@ -62,6 +67,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [bookingRef, setBookingRef] = useState<string>("");
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -130,7 +136,54 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     return Object.keys(errs).length === 0;
   };
 
-  const handleNext = () => {
+  /**
+   * The booking request is logged through /api/v1/lead (validation + rate limit,
+   * and CF7 email delivery if that mode is ever enabled). The WhatsApp deep link in
+   * step 5 stays the confirmation channel either way.
+   */
+  const sendBookingLead = async (ref: string): Promise<boolean> => {
+    const slot = timeSlotLabels[selectedTimeSlot as keyof typeof timeSlotLabels];
+    const payload = {
+      name: fullName.trim(),
+      phone: phoneNumber.trim(),
+      date: selectedDate,
+      service: selectedTreatments
+        .map((treatment) => t(treatment.name.ar, treatment.name.en))
+        .join(", "),
+      offer: preSelectedOffer ? t(preSelectedOffer.ar, preSelectedOffer.en) : undefined,
+      branch: currentBranch.name[language],
+      subject: [ref, t(slot.ar, slot.en), currentSpecialist?.name[language]]
+        .filter(Boolean)
+        .join(" — "),
+      message: notes.trim() || undefined,
+      lang: language,
+    };
+    try {
+      const res = await fetch("/api/v1/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        setErrors({
+          submit:
+            data.error ||
+            (language === "ar"
+              ? "تعذّر تسجيل الطلب، أكّدي الموعد مباشرة عبر واتساب."
+              : "Could not log the request. Please confirm on WhatsApp."),
+        });
+        return false;
+      }
+      setErrors({});
+      return true;
+    } catch {
+      // Fail open: the clinic still receives the full brief on WhatsApp.
+      return true;
+    }
+  };
+
+  const handleNext = async () => {
     if (currentStep === 1 && selectedTreatmentIds.length === 0) {
       setErrors({
         treatment:
@@ -143,8 +196,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
     if (currentStep === 4) {
       if (!validateStep4()) return;
-      const ref = "SHM-" + Math.floor(10000 + Math.random() * 90000);
+      const ref = makeBookingRef();
       setBookingRef(ref);
+      setSubmitting(true);
+      const accepted = await sendBookingLead(ref);
+      setSubmitting(false);
+      if (!accepted) return;
       setCurrentStep(5);
     } else {
       setCurrentStep((prev) => prev + 1);
@@ -207,6 +264,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         `• رقم المرجع: ${bookingRef}\n` +
         `• الاسم: ${fullName}\n` +
         `• الهاتف: ${phoneNumber}\n` +
+        (preSelectedOffer
+          ? `• ${t("العرض", "Offer")}: ${t(preSelectedOffer.ar, preSelectedOffer.en)}\n`
+          : "") +
         `• الخدمات: ${selectedTreatments.map((treatment) => treatment.name.ar).join("، ")}\n` +
         `• الفرع: ${currentBranch.name.ar}\n` +
         `• التاريخ: ${selectedDate}\n` +
@@ -239,6 +299,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             exit={{ opacity: 0, scale: 0.96, y: 12, filter: "blur(4px)" }}
             transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="booking-modal-title"
             className="bg-white rounded-3xl w-full max-w-2xl border border-[var(--gold-border)] shadow-2xl overflow-hidden relative my-auto"
           >
             {/* Modal Header */}
@@ -251,7 +314,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   <span className="text-xs font-bold text-[var(--gold-end)] uppercase tracking-wider block">
                     {t("حجز استشارة تجميلية", "Cosmetic Appointment")}
                   </span>
-                  <h3 className="text-lg sm:text-xl font-black text-[var(--text-primary)]">
+                  <h3
+                    id="booking-modal-title"
+                    className="text-lg sm:text-xl font-black text-[var(--text-primary)]"
+                  >
                     {currentStep === 5
                       ? t(
                           "تم تسجيل طلب الحجز بنجاح",
@@ -413,10 +479,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       {clinicData.branches.map((b) => {
                         const isSelected = b.id === selectedBranchId;
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={b.id}
+                            aria-pressed={isSelected}
                             onClick={() => setSelectedBranchId(b.id)}
-                            className={`p-3 rounded-2xl border text-center cursor-pointer transition-all ${
+                            className={`w-full p-3 rounded-2xl border text-center transition-all ${
                               isSelected
                                 ? "border-[var(--gold-mid)] bg-[var(--blush-light)] shadow-sm font-bold text-[var(--gold-end)]"
                                 : "border-gray-200 hover:border-[var(--gold-border)] text-[var(--text-secondary)]"
@@ -432,7 +500,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             <span className="text-xs block">
                               {b.name[language]}
                             </span>
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -446,9 +514,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       )}
                     </span>
                     <div className="space-y-2">
-                      <div
+                      <button
+                        type="button"
+                        aria-pressed={selectedSpecialistId === "any"}
                         onClick={() => setSelectedSpecialistId("any")}
-                        className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between ${
+                        className={`w-full p-3 rounded-2xl border flex items-center justify-between ${
                           selectedSpecialistId === "any"
                             ? "border-[var(--gold-mid)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
                             : "border-gray-200 text-[var(--text-secondary)]"
@@ -463,15 +533,17 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         {selectedSpecialistId === "any" && (
                           <Check className="w-4 h-4 text-[var(--gold-mid)]" />
                         )}
-                      </div>
+                      </button>
 
                       {specialistsData.map((doc) => {
                         const isSelected = doc.id === selectedSpecialistId;
                         return (
-                          <div
+                          <button
+                            type="button"
                             key={doc.id}
+                            aria-pressed={isSelected}
                             onClick={() => setSelectedSpecialistId(doc.id)}
-                            className={`p-3 rounded-2xl border cursor-pointer flex items-center justify-between ${
+                            className={`w-full p-3 rounded-2xl border flex items-center justify-between ${
                               isSelected
                                 ? "border-[var(--gold-mid)] bg-[var(--blush-light)] shadow-xs"
                                 : "border-gray-200 hover:border-gray-300"
@@ -488,7 +560,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             {isSelected && (
                               <Check className="w-4 h-4 text-[var(--gold-mid)]" />
                             )}
-                          </div>
+                          </button>
                         );
                       })}
                     </div>
@@ -538,10 +610,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         (slotKey) => {
                           const isSelected = selectedTimeSlot === slotKey;
                           return (
-                            <div
+                            <button
+                              type="button"
                               key={slotKey}
+                              aria-pressed={isSelected}
                               onClick={() => setSelectedTimeSlot(slotKey)}
-                              className={`p-3.5 rounded-2xl border cursor-pointer flex items-center justify-between transition-all ${
+                              className={`w-full p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
                                 isSelected
                                   ? "border-[var(--gold-mid)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
                                   : "border-gray-200 hover:border-gray-300 text-[var(--text-secondary)]"
@@ -565,7 +639,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                               {isSelected && (
                                 <Check className="w-4 h-4 text-[var(--gold-mid)]" />
                               )}
-                            </div>
+                            </button>
                           );
                         },
                       )}
@@ -665,6 +739,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--gold-mid)] text-sm outline-none resize-none"
                     />
                   </div>
+
+                  {errors.submit && (
+                    <p className="text-[11px] text-red-500 mt-1">{errors.submit}</p>
+                  )}
 
                   <p className="text-[11px] text-[var(--text-muted)] bg-gray-50 p-2.5 rounded-lg border border-gray-200">
                     {t(
@@ -829,12 +907,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                 <button
                   onClick={handleNext}
-                  className="bg-gold-gradient hover:opacity-95 text-white text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer"
+                  disabled={submitting}
+                  className="bg-gold-gradient hover:opacity-95 text-white text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
                 >
                   <span>
-                    {currentStep === 4
-                      ? t("تأكيد الحجز", "Confirm Booking")
-                      : t("التالي", "Next")}
+                    {submitting
+                      ? t("جارٍ الإرسال…", "Sending…")
+                      : currentStep === 4
+                        ? t("تأكيد الحجز", "Confirm Booking")
+                        : t("التالي", "Next")}
                   </span>
                   <ArrowNext className="w-4 h-4" />
                 </button>

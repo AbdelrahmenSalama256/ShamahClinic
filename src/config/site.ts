@@ -1,7 +1,7 @@
 export const siteConfig = {
   defaultLanguage: "ar" as "ar" | "en",
   enableDarkmoodOption: true,
-  siteUrl: "https://shamahclinics.com",
+  siteUrl: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.shamahclinics.com").replace(/\/+$/, ""),
   brand: {
     name: {
       ar: "عيادات شامه",
@@ -22,8 +22,12 @@ export const siteConfig = {
   metadata: {
     title: "عيادات شامه | Shamah Clinics — طب التجميل والليزر والعناية بالبشرة",
     titleTemplate: "%s | عيادات شامه",
+    titleEn: "Shamah Clinics — Aesthetic Medicine, Laser & Skincare in Cairo",
+    titleTemplateEn: "%s | Shamah Clinics",
     description:
       "عيادات شامه لطب التجميل والليزر والعناية الفائقة بالبشرة بالقاهرة والجيزة. فروعنا في مدينة نصر، التجمع الخامس، والشيخ زايد. أحدث أجهزة الليزر وحقن الفيلر والبوتوكس بإشراف طبي نسائي متكامل.",
+    descriptionEn:
+      "Shamah Clinics for aesthetic medicine, laser and advanced skincare in Cairo and Giza. Branches in Nasr City, Fifth Settlement and Sheikh Zayed. Latest laser technology, fillers and Botox under full female medical supervision.",
     keywords: [
       "عيادات شامه",
       "ليزر إزالة الشعر",
@@ -38,6 +42,9 @@ export const siteConfig = {
     openGraphTitle: "عيادات شامه | Shamah Clinics",
     openGraphDescription:
       "عيادات شامه لطب التجميل والليزر والعناية بالبشرة في مصر. ثلاثة فروع بالقاهرة والجيزة.",
+    openGraphTitleEn: "Shamah Clinics | Aesthetic & Laser Clinics",
+    openGraphDescriptionEn:
+      "Shamah Clinics for aesthetic medicine, laser and skincare in Egypt. Three branches in Cairo and Giza.",
     locale: "ar_EG",
     alternateLocale: "en_US",
   },

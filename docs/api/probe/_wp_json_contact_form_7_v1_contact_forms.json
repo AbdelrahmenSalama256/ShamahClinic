@@ -1,0 +1,7 @@
+{
+  "code": "wpcf7_forbidden",
+  "message": "You are not allowed to access contact forms.",
+  "data": {
+    "status": 403
+  }
+}

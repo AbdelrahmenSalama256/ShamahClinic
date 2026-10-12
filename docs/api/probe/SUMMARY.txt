@@ -1,0 +1,23 @@
+200	object(post,page,attachment,nav_menu_item,wp_block,wp_template,wp_template_part,wp_global_styles)	total=-	pages=-	/wp-json/wp/v2/types
+200	array(92)	total=92	pages=1	/wp-json/wp/v2/posts?per_page=100&_embed
+200	array(92)	total=92	pages=1	/wp-json/wp/v2/posts?per_page=100&_embed&lang=ar
+200	array(92)	total=92	pages=1	/wp-json/wp/v2/posts?per_page=100&_embed&lang=en
+200	array(27)	total=27	pages=1	/wp-json/wp/v2/pages?per_page=100
+200	array(27)	total=27	pages=1	/wp-json/wp/v2/pages?per_page=100&lang=ar
+200	array(27)	total=27	pages=1	/wp-json/wp/v2/pages?per_page=100&lang=en
+200	array(2)	total=2	pages=1	/wp-json/wp/v2/categories?per_page=100
+200	array(11)	total=11	pages=1	/wp-json/wp/v2/tags?per_page=100
+200	array(20)	total=48	pages=3	/wp-json/wp/v2/media?per_page=20
+200	array(1)	total=4	pages=4	/wp-json/wp/v2/product?per_page=1
+200	array(4)	total=4	pages=1	/wp-json/wc/store/v1/products?per_page=100
+200	array(4)	total=4	pages=1	/wp-json/wc/store/v1/products?per_page=100&lang=ar
+200	array(4)	total=4	pages=1	/wp-json/wc/store/v1/products?per_page=100&lang=en
+200	array(1)	total=-	pages=-	/wp-json/wc/store/v1/products/categories
+404	object(code,message,data)	total=-	pages=-	/wp-json/pll/v1/languages
+404	object(code,message,data)	total=-	pages=-	/wp-json/menus/v1/menus
+403	object(code,message,data)	total=-	pages=-	/wp-json/contact-form-7/v1/contact-forms
+404	object(code,message,data)	total=-	pages=-	/wp-json/rankmath/v1/getHead?url=https%3A%2F%2Fwww.shamahclinics.com%2F
+200	array(3)	total=57	pages=19	/wp-json/wp/v2/search?search=laser&per_page=3
+
+/wp-json/wp/v2/posts ar vs en ids: 1182,1174,1180,1178,1176 | 1182,1174,1180,1178,1176 -> lang param NOT separating
+/wp-json/wc/store/v1/products ar vs en ids: 785,781,780,581 | 785,781,780,581 -> lang param NOT separating

@@ -6,9 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "sync:wp": "node scripts/sync-wp.mjs"
   },
   "dependencies": {
+    "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^13.4.4",
@@ -17,6 +20,7 @@
     "react": "19.2.8",
     "react-day-picker": "^10.0.2",
     "react-dom": "19.2.8",
+    "sanitize-html": "^2.18.0",
     "swiper": "^14.2.0",
     "tailwind-merge": "^3.7.0"
   },
@@ -25,6 +29,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/sanitize-html": "^2.16.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",

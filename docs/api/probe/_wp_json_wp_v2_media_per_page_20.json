@@ -1,0 +1,3782 @@
+[
+  {
+    "id": 887,
+    "date": "2025-10-05T17:02:09",
+    "date_gmt": "2025-10-05T17:02:09",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins.png"
+    },
+    "modified": "2025-10-05T17:02:09",
+    "modified_gmt": "2025-10-05T17:02:09",
+    "slug": "shamaclinicslocatins",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/home/shamaclinicslocatins/",
+    "title": {
+      "rendered": "shamaclinicslocatins"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-887",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins.png'><img loading=\"lazy\" decoding=\"async\" width=\"200\" height=\"300\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-200x300.png\" class=\"attachment-medium size-medium\" alt=\"\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-200x300.png 200w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-683x1024.png 683w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-768x1152.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-8x12.png 8w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-600x900.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins.png 1024w\" sizes=\"auto, (max-width: 200px) 100vw, 200px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1024,
+      "height": 1536,
+      "file": "2025/10/shamaclinicslocatins.png",
+      "filesize": 2053556,
+      "sizes": {
+        "medium": {
+          "file": "shamaclinicslocatins-200x300.png",
+          "width": 200,
+          "height": 300,
+          "filesize": 58826,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-200x300.png"
+        },
+        "large": {
+          "file": "shamaclinicslocatins-683x1024.png",
+          "width": 683,
+          "height": 1024,
+          "filesize": 800096,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-683x1024.png"
+        },
+        "thumbnail": {
+          "file": "shamaclinicslocatins-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 25496,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-150x150.png"
+        },
+        "medium_large": {
+          "file": "shamaclinicslocatins-768x1152.png",
+          "width": 768,
+          "height": 1152,
+          "filesize": 1028271,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-768x1152.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "shamaclinicslocatins-8x12.png",
+          "width": 8,
+          "height": 12,
+          "filesize": 315,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-8x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "shamaclinicslocatins-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 292111,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "shamaclinicslocatins-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 100914,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "shamaclinicslocatins-600x900.png",
+          "width": 600,
+          "height": 900,
+          "filesize": 604640,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-600x900.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "shamaclinicslocatins-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 12184,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins-100x100.png"
+        },
+        "full": {
+          "file": "shamaclinicslocatins.png",
+          "width": 1024,
+          "height": 1536,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 622,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinicslocatins.png",
+    "filename": "shamaclinicslocatins.png",
+    "filesize": 2053556,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/887",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=887"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 622,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/622"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 876,
+    "date": "2025-10-05T03:30:10",
+    "date_gmt": "2025-10-05T03:30:10",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/booking1.png"
+    },
+    "modified": "2026-03-17T21:16:40",
+    "modified_gmt": "2026-03-17T21:16:40",
+    "slug": "booking1",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/booking/booking1/",
+    "title": {
+      "rendered": "Green Peel"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-876",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Green Peel\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-1024x683.png 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-768x512.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1.png 1536w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n<p>Green Peel</p>\n"
+    },
+    "caption": {
+      "rendered": "<p>Green Peel</p>\n"
+    },
+    "alt_text": "Green Peel",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1536,
+      "height": 1024,
+      "file": "2025/10/booking1.png",
+      "filesize": 2027827,
+      "sizes": {
+        "medium": {
+          "file": "booking1-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 76311,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-300x200.png"
+        },
+        "large": {
+          "file": "booking1-1024x683.png",
+          "width": 1024,
+          "height": 683,
+          "filesize": 893242,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-1024x683.png"
+        },
+        "thumbnail": {
+          "file": "booking1-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 30419,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-150x150.png"
+        },
+        "medium_large": {
+          "file": "booking1-768x512.png",
+          "width": 768,
+          "height": 512,
+          "filesize": 526889,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-768x512.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "booking1-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 692,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "booking1-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 324959,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "booking1-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 114226,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "booking1-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 302818,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "booking1-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 14898,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1-100x100.png"
+        },
+        "full": {
+          "file": "booking1.png",
+          "width": 1536,
+          "height": 1024,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 837,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/booking1.png",
+    "filename": "booking1.png",
+    "filesize": 2027827,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/876",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=876"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 837,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/837"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 867,
+    "date": "2025-10-04T23:18:21",
+    "date_gmt": "2025-10-04T23:18:21",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3.png"
+    },
+    "modified": "2026-03-17T21:18:17",
+    "modified_gmt": "2026-03-17T21:18:17",
+    "slug": "shamaclinics-slider3",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/shamaclinics-slider3/",
+    "title": {
+      "rendered": "Salicylic Acid Peel"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-867",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Salicylic Acid Peel\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-1024x683.png 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-768x512.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3.png 1536w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "Salicylic Acid Peel",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1536,
+      "height": 1024,
+      "file": "2025/10/shamaclinics-Slider3.png",
+      "filesize": 2025192,
+      "sizes": {
+        "medium": {
+          "file": "shamaclinics-Slider3-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 68930,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-300x200.png"
+        },
+        "large": {
+          "file": "shamaclinics-Slider3-1024x683.png",
+          "width": 1024,
+          "height": 683,
+          "filesize": 872109,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-1024x683.png"
+        },
+        "thumbnail": {
+          "file": "shamaclinics-Slider3-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 29541,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-150x150.png"
+        },
+        "medium_large": {
+          "file": "shamaclinics-Slider3-768x512.png",
+          "width": 768,
+          "height": 512,
+          "filesize": 514680,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-768x512.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "shamaclinics-Slider3-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 634,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "shamaclinics-Slider3-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 333445,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "shamaclinics-Slider3-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 114421,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "shamaclinics-Slider3-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 284997,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "shamaclinics-Slider3-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 14458,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3-100x100.png"
+        },
+        "full": {
+          "file": "shamaclinics-Slider3.png",
+          "width": 1536,
+          "height": 1024,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": null,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider3.png",
+    "filename": "shamaclinics-Slider3.png",
+    "filesize": 2025192,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/867",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=867"
+        }
+      ]
+    }
+  },
+  {
+    "id": 866,
+    "date": "2025-10-04T23:15:49",
+    "date_gmt": "2025-10-04T23:15:49",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2.png"
+    },
+    "modified": "2026-03-17T14:51:48",
+    "modified_gmt": "2026-03-17T14:51:48",
+    "slug": "shamaclinics-slider2",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/shamaclinics-slider2/",
+    "title": {
+      "rendered": "Chin and Perioral Filler Injections"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-866",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Chin and Perioral Filler Injections\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-1024x683.png 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-768x512.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2.png 1536w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "Chin and Perioral Filler Injections",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1536,
+      "height": 1024,
+      "file": "2025/10/shamaclinics-Slider2.png",
+      "filesize": 2267198,
+      "sizes": {
+        "medium": {
+          "file": "shamaclinics-Slider2-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 76174,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-300x200.png"
+        },
+        "large": {
+          "file": "shamaclinics-Slider2-1024x683.png",
+          "width": 1024,
+          "height": 683,
+          "filesize": 971000,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-1024x683.png"
+        },
+        "thumbnail": {
+          "file": "shamaclinics-Slider2-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 30646,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-150x150.png"
+        },
+        "medium_large": {
+          "file": "shamaclinics-Slider2-768x512.png",
+          "width": 768,
+          "height": 512,
+          "filesize": 569685,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-768x512.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "shamaclinics-Slider2-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 617,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "shamaclinics-Slider2-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 357175,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "shamaclinics-Slider2-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 120861,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "shamaclinics-Slider2-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 315615,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "shamaclinics-Slider2-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 14582,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2-100x100.png"
+        },
+        "full": {
+          "file": "shamaclinics-Slider2.png",
+          "width": 1536,
+          "height": 1024,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": null,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider2.png",
+    "filename": "shamaclinics-Slider2.png",
+    "filesize": 2267198,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/866",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=866"
+        }
+      ]
+    }
+  },
+  {
+    "id": 864,
+    "date": "2025-10-04T23:05:12",
+    "date_gmt": "2025-10-04T23:05:12",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider.png"
+    },
+    "modified": "2026-03-14T09:47:28",
+    "modified_gmt": "2026-03-14T09:47:28",
+    "slug": "shamaclinics1-slider",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/shamaclinics1-slider/",
+    "title": {
+      "rendered": "Expression line Botox"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-864",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"250\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-300x250.png\" class=\"attachment-medium size-medium\" alt=\"Expression line Botox\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-300x250.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-768x641.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-14x12.png 14w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-600x501.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider.png 1024w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n<p>Expression line Botox</p>\n"
+    },
+    "caption": {
+      "rendered": "<p>Expression line Botox</p>\n"
+    },
+    "alt_text": "Expression line Botox",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1024,
+      "height": 855,
+      "file": "2025/10/shamaclinics1-Slider.png",
+      "filesize": 502414,
+      "sizes": {
+        "medium": {
+          "file": "shamaclinics1-Slider-300x250.png",
+          "width": 300,
+          "height": 250,
+          "filesize": 60883,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-300x250.png"
+        },
+        "thumbnail": {
+          "file": "shamaclinics1-Slider-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 24865,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-150x150.png"
+        },
+        "medium_large": {
+          "file": "shamaclinics1-Slider-768x641.png",
+          "width": 768,
+          "height": 641,
+          "filesize": 286999,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-768x641.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "shamaclinics1-Slider-14x12.png",
+          "width": 14,
+          "height": 12,
+          "filesize": 531,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-14x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "shamaclinics1-Slider-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 199041,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "shamaclinics1-Slider-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 77852,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "shamaclinics1-Slider-600x501.png",
+          "width": 600,
+          "height": 501,
+          "filesize": 193934,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-600x501.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "shamaclinics1-Slider-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 12862,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider-100x100.png"
+        },
+        "full": {
+          "file": "shamaclinics1-Slider.png",
+          "width": 1024,
+          "height": 855,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": null,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics1-Slider.png",
+    "filename": "shamaclinics1-Slider.png",
+    "filesize": 502414,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/864",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=864"
+        }
+      ]
+    }
+  },
+  {
+    "id": 863,
+    "date": "2025-10-04T22:24:38",
+    "date_gmt": "2025-10-04T22:24:38",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider.png"
+    },
+    "modified": "2025-10-04T22:24:38",
+    "modified_gmt": "2025-10-04T22:24:38",
+    "slug": "shamaclinics-slider",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/shamaclinics-slider/",
+    "title": {
+      "rendered": "shamaclinics Slider"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-863",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-300x200.png\" class=\"attachment-medium size-medium\" alt=\"\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-1024x683.png 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-768x512.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider.png 1536w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1536,
+      "height": 1024,
+      "file": "2025/10/shamaclinics-Slider.png",
+      "filesize": 2136183,
+      "sizes": {
+        "medium": {
+          "file": "shamaclinics-Slider-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 85923,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-300x200.png"
+        },
+        "large": {
+          "file": "shamaclinics-Slider-1024x683.png",
+          "width": 1024,
+          "height": 683,
+          "filesize": 970026,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-1024x683.png"
+        },
+        "thumbnail": {
+          "file": "shamaclinics-Slider-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 34971,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-150x150.png"
+        },
+        "medium_large": {
+          "file": "shamaclinics-Slider-768x512.png",
+          "width": 768,
+          "height": 512,
+          "filesize": 576010,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-768x512.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "shamaclinics-Slider-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 725,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "shamaclinics-Slider-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 357484,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "shamaclinics-Slider-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 128458,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "shamaclinics-Slider-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 334863,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "shamaclinics-Slider-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 17227,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider-100x100.png"
+        },
+        "full": {
+          "file": "shamaclinics-Slider.png",
+          "width": 1536,
+          "height": 1024,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": null,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics-Slider.png",
+    "filename": "shamaclinics-Slider.png",
+    "filesize": 2136183,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/863",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=863"
+        }
+      ]
+    }
+  },
+  {
+    "id": 859,
+    "date": "2025-10-04T21:39:25",
+    "date_gmt": "2025-10-04T21:39:25",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/Botox-Injections4.png"
+    },
+    "modified": "2026-03-17T21:56:50",
+    "modified_gmt": "2026-03-17T21:56:50",
+    "slug": "botox-injections4",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/home/botox-injections4/",
+    "title": {
+      "rendered": "Derma Pen with Cosmo Medica Mesotherapy"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-859",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Derma Pen with Cosmo Medica Mesotherapy\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4.png 749w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n<p>Derma Pen with Cosmo Medica Mesotherapy</p>\n"
+    },
+    "caption": {
+      "rendered": "<p>Derma Pen with Cosmo Medica Mesotherapy</p>\n"
+    },
+    "alt_text": "Derma Pen with Cosmo Medica Mesotherapy",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 749,
+      "height": 499,
+      "file": "2025/10/Botox-Injections4.png",
+      "filesize": 304734,
+      "sizes": {
+        "medium": {
+          "file": "Botox-Injections4-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 76565,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-300x200.png"
+        },
+        "thumbnail": {
+          "file": "Botox-Injections4-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 31851,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-150x150.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "Botox-Injections4-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 713,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "Botox-Injections4-475x499.png",
+          "width": 475,
+          "height": 499,
+          "filesize": 217583,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-475x499.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "Botox-Injections4-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 99084,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "Botox-Injections4-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 235466,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "Botox-Injections4-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 16216,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4-100x100.png"
+        },
+        "full": {
+          "file": "Botox-Injections4.png",
+          "width": 749,
+          "height": 499,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 622,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Botox-Injections4.png",
+    "filename": "Botox-Injections4.png",
+    "filesize": 304734,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/859",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=859"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 622,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/622"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 858,
+    "date": "2025-10-04T21:37:37",
+    "date_gmt": "2025-10-04T21:37:37",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/Filler-Injections3.png"
+    },
+    "modified": "2025-10-04T21:37:43",
+    "modified_gmt": "2025-10-04T21:37:43",
+    "slug": "filler-injections3",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/home/filler-injections3/",
+    "title": {
+      "rendered": "Filler-Injections(3)"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-858",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Filler-Injections\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3.png 749w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n<p>Filler-Injections</p>\n"
+    },
+    "caption": {
+      "rendered": "<p>Filler-Injections</p>\n"
+    },
+    "alt_text": "Filler-Injections",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 749,
+      "height": 499,
+      "file": "2025/10/Filler-Injections3.png",
+      "filesize": 345314,
+      "sizes": {
+        "medium": {
+          "file": "Filler-Injections3-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 77821,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-300x200.png"
+        },
+        "thumbnail": {
+          "file": "Filler-Injections3-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 32195,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-150x150.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "Filler-Injections3-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 731,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "Filler-Injections3-475x499.png",
+          "width": 475,
+          "height": 499,
+          "filesize": 251373,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-475x499.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "Filler-Injections3-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 104261,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "Filler-Injections3-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 252716,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "Filler-Injections3-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 16176,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3-100x100.png"
+        },
+        "full": {
+          "file": "Filler-Injections3.png",
+          "width": 749,
+          "height": 499,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 622,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Filler-Injections3.png",
+    "filename": "Filler-Injections3.png",
+    "filesize": 345314,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/858",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=858"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 622,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/622"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 857,
+    "date": "2025-10-04T21:34:44",
+    "date_gmt": "2025-10-04T21:34:44",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3.png"
+    },
+    "modified": "2026-03-08T10:43:13",
+    "modified_gmt": "2026-03-08T10:43:13",
+    "slug": "laser-hair-removal-3",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/home/laser-hair-removal-3/",
+    "title": {
+      "rendered": "Laser Underarm Hair Removal"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-857",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Laser Underarm Hair Removal\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3.png 749w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n<p>Laser Underarm Hair Removal</p>\n"
+    },
+    "caption": {
+      "rendered": "<p>Laser Underarm Hair Removal</p>\n"
+    },
+    "alt_text": "Laser Underarm Hair Removal",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 749,
+      "height": 499,
+      "file": "2025/10/Laser-Hair-Removal-3.png",
+      "filesize": 261883,
+      "sizes": {
+        "medium": {
+          "file": "Laser-Hair-Removal-3-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 68989,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-300x200.png"
+        },
+        "thumbnail": {
+          "file": "Laser-Hair-Removal-3-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 30292,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-150x150.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "Laser-Hair-Removal-3-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 707,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "Laser-Hair-Removal-3-475x499.png",
+          "width": 475,
+          "height": 499,
+          "filesize": 201716,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-475x499.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "Laser-Hair-Removal-3-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 93040,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "Laser-Hair-Removal-3-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 205143,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "Laser-Hair-Removal-3-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 15618,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3-100x100.png"
+        },
+        "full": {
+          "file": "Laser-Hair-Removal-3.png",
+          "width": 749,
+          "height": 499,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 622,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-3.png",
+    "filename": "Laser-Hair-Removal-3.png",
+    "filesize": 261883,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/857",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=857"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 622,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/622"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 849,
+    "date": "2025-10-04T21:24:32",
+    "date_gmt": "2025-10-04T21:24:32",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/Skincare3.png"
+    },
+    "modified": "2026-03-17T21:55:06",
+    "modified_gmt": "2026-03-17T21:55:06",
+    "slug": "skincare3",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/home/skincare3/",
+    "title": {
+      "rendered": "Derma Pen with Mesotherapy using DX Technology"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-849",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Derma Pen with Mesotherapy using DX Technology\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3.png 749w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n<p>Derma Pen with Mesotherapy using DX Technology</p>\n"
+    },
+    "caption": {
+      "rendered": "<p>Derma Pen with Mesotherapy using DX Technology</p>\n"
+    },
+    "alt_text": "Derma Pen with Mesotherapy using DX Technology",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 749,
+      "height": 499,
+      "file": "2025/10/Skincare3.png",
+      "filesize": 303016,
+      "sizes": {
+        "medium": {
+          "file": "Skincare3-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 76161,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-300x200.png"
+        },
+        "thumbnail": {
+          "file": "Skincare3-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 34255,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-150x150.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "Skincare3-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 754,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "Skincare3-475x499.png",
+          "width": 475,
+          "height": 499,
+          "filesize": 242498,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-475x499.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "Skincare3-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 108555,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "Skincare3-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 233044,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "Skincare3-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 17387,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3-100x100.png"
+        },
+        "full": {
+          "file": "Skincare3.png",
+          "width": 749,
+          "height": 499,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 622,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Skincare3.png",
+    "filename": "Skincare3.png",
+    "filesize": 303016,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/849",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=849"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 622,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/622"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 848,
+    "date": "2025-10-04T17:08:43",
+    "date_gmt": "2025-10-04T17:08:43",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/ليزر.webp"
+    },
+    "modified": "2025-12-07T09:16:09",
+    "modified_gmt": "2025-12-07T09:16:09",
+    "slug": "%d9%84%d9%8a%d8%b2%d8%b1-2",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/laser-hair-removal-egypt-price/%d9%84%d9%8a%d8%b2%d8%b1-2/",
+    "title": {
+      "rendered": "Facial Laser Cost &#038; Safe Hair Removal"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-848",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر.webp'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"199\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-300x199.webp\" class=\"attachment-medium size-medium\" alt=\"Facial Laser Cost &amp; Safe Hair Removal\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-300x199.webp 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-1024x681.webp 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-768x511.webp 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-18x12.webp 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-600x399.webp 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر.webp 1134w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n<p>Facial Laser Cost &#038; Safe Hair Removal </p>\n"
+    },
+    "caption": {
+      "rendered": "<p>Facial Laser Cost &#038; Safe Hair Removal</p>\n"
+    },
+    "alt_text": "Facial Laser Cost & Safe Hair Removal",
+    "media_type": "image",
+    "mime_type": "image/webp",
+    "media_details": {
+      "width": 1134,
+      "height": 754,
+      "file": "2025/10/ليزر.webp",
+      "filesize": 41358,
+      "sizes": {
+        "medium": {
+          "file": "ليزر-300x199.webp",
+          "width": 300,
+          "height": 199,
+          "filesize": 8170,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-300x199.webp"
+        },
+        "large": {
+          "file": "ليزر-1024x681.webp",
+          "width": 1024,
+          "height": 681,
+          "filesize": 33296,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-1024x681.webp"
+        },
+        "thumbnail": {
+          "file": "ليزر-150x150.webp",
+          "width": 150,
+          "height": 150,
+          "filesize": 4062,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-150x150.webp"
+        },
+        "medium_large": {
+          "file": "ليزر-768x511.webp",
+          "width": 768,
+          "height": 511,
+          "filesize": 23886,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-768x511.webp"
+        },
+        "trp-custom-language-flag": {
+          "file": "ليزر-18x12.webp",
+          "width": 18,
+          "height": 12,
+          "filesize": 274,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-18x12.webp"
+        },
+        "arrivals-thumb": {
+          "file": "ليزر-475x530.webp",
+          "width": 475,
+          "height": 530,
+          "filesize": 15542,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-475x530.webp"
+        },
+        "woocommerce_thumbnail": {
+          "file": "ليزر-300x300.webp",
+          "width": 300,
+          "height": 300,
+          "filesize": 9072,
+          "uncropped": false,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-300x300.webp"
+        },
+        "woocommerce_single": {
+          "file": "ليزر-600x399.webp",
+          "width": 600,
+          "height": 399,
+          "filesize": 18504,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-600x399.webp"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "ليزر-100x100.webp",
+          "width": 100,
+          "height": 100,
+          "filesize": 2386,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-100x100.webp"
+        },
+        "full": {
+          "file": "ليزر.webp",
+          "width": 1134,
+          "height": 754,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر.webp"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 844,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر.webp",
+    "filename": "ليزر.webp",
+    "filesize": 41358,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/848",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=848"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "post",
+          "id": 844,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/posts/844"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 845,
+    "date": "2025-10-04T17:07:16",
+    "date_gmt": "2025-10-04T17:07:16",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price.jpg"
+    },
+    "modified": "2026-03-17T21:14:40",
+    "modified_gmt": "2026-03-17T21:14:40",
+    "slug": "laser-hair-removal-egypt-price-2",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/laser-hair-removal-egypt-price/laser-hair-removal-egypt-price-2/",
+    "title": {
+      "rendered": "Carbon Laser Peeling"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-845",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price.jpg'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"157\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-300x157.jpg\" class=\"attachment-medium size-medium\" alt=\"Carbon Laser Peeling\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-300x157.jpg 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-1024x536.jpg 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-768x402.jpg 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-18x9.jpg 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-600x314.jpg 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price.jpg 1200w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "Carbon Laser Peeling",
+    "media_type": "image",
+    "mime_type": "image/jpeg",
+    "media_details": {
+      "width": 1200,
+      "height": 628,
+      "file": "2025/10/Laser-Hair-Removal-Egypt-Price.jpg",
+      "filesize": 355192,
+      "sizes": {
+        "medium": {
+          "file": "Laser-Hair-Removal-Egypt-Price-300x157.jpg",
+          "width": 300,
+          "height": 157,
+          "filesize": 7192,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-300x157.jpg"
+        },
+        "large": {
+          "file": "Laser-Hair-Removal-Egypt-Price-1024x536.jpg",
+          "width": 1024,
+          "height": 536,
+          "filesize": 38341,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-1024x536.jpg"
+        },
+        "thumbnail": {
+          "file": "Laser-Hair-Removal-Egypt-Price-150x150.jpg",
+          "width": 150,
+          "height": 150,
+          "filesize": 4464,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-150x150.jpg"
+        },
+        "medium_large": {
+          "file": "Laser-Hair-Removal-Egypt-Price-768x402.jpg",
+          "width": 768,
+          "height": 402,
+          "filesize": 25596,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-768x402.jpg"
+        },
+        "trp-custom-language-flag": {
+          "file": "Laser-Hair-Removal-Egypt-Price-18x9.jpg",
+          "width": 18,
+          "height": 9,
+          "filesize": 792,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-18x9.jpg"
+        },
+        "arrivals-thumb": {
+          "file": "Laser-Hair-Removal-Egypt-Price-475x530.jpg",
+          "width": 475,
+          "height": 530,
+          "filesize": 21365,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-475x530.jpg"
+        },
+        "woocommerce_thumbnail": {
+          "file": "Laser-Hair-Removal-Egypt-Price-300x300.jpg",
+          "width": 300,
+          "height": 300,
+          "filesize": 10673,
+          "uncropped": false,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-300x300.jpg"
+        },
+        "woocommerce_single": {
+          "file": "Laser-Hair-Removal-Egypt-Price-600x314.jpg",
+          "width": 600,
+          "height": 314,
+          "filesize": 18564,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-600x314.jpg"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "Laser-Hair-Removal-Egypt-Price-100x100.jpg",
+          "width": 100,
+          "height": 100,
+          "filesize": 2817,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price-100x100.jpg"
+        },
+        "full": {
+          "file": "Laser-Hair-Removal-Egypt-Price.jpg",
+          "width": 1200,
+          "height": 628,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price.jpg"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 844,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-Egypt-Price.jpg",
+    "filename": "Laser-Hair-Removal-Egypt-Price.jpg",
+    "filesize": 355192,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/845",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=845"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "post",
+          "id": 844,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/posts/844"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 842,
+    "date": "2025-10-04T17:00:31",
+    "date_gmt": "2025-10-04T17:00:31",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/ليزر-.webp"
+    },
+    "modified": "2025-10-04T17:00:42",
+    "modified_gmt": "2025-10-04T17:00:42",
+    "slug": "%d9%84%d9%8a%d8%b2%d8%b1",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/journal/%d9%84%d9%8a%d8%b2%d8%b1/",
+    "title": {
+      "rendered": "ليزر"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-842",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-.webp'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"165\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--300x165.webp\" class=\"attachment-medium size-medium\" alt=\"ليزر - معلومات طبية\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--300x165.webp 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--1024x561.webp 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--768x421.webp 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--18x10.webp 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--600x329.webp 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-.webp 1200w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "ليزر - معلومات طبية",
+    "media_type": "image",
+    "mime_type": "image/webp",
+    "media_details": {
+      "width": 1200,
+      "height": 658,
+      "file": "2025/10/ليزر-.webp",
+      "filesize": 90212,
+      "sizes": {
+        "medium": {
+          "file": "ليزر--300x165.webp",
+          "width": 300,
+          "height": 165,
+          "filesize": 12664,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--300x165.webp"
+        },
+        "large": {
+          "file": "ليزر--1024x561.webp",
+          "width": 1024,
+          "height": 561,
+          "filesize": 75180,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--1024x561.webp"
+        },
+        "thumbnail": {
+          "file": "ليزر--150x150.webp",
+          "width": 150,
+          "height": 150,
+          "filesize": 6456,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--150x150.webp"
+        },
+        "medium_large": {
+          "file": "ليزر--768x421.webp",
+          "width": 768,
+          "height": 421,
+          "filesize": 50424,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--768x421.webp"
+        },
+        "trp-custom-language-flag": {
+          "file": "ليزر--18x10.webp",
+          "width": 18,
+          "height": 10,
+          "filesize": 210,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--18x10.webp"
+        },
+        "arrivals-thumb": {
+          "file": "ليزر--475x530.webp",
+          "width": 475,
+          "height": 530,
+          "filesize": 38118,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--475x530.webp"
+        },
+        "woocommerce_thumbnail": {
+          "file": "ليزر--300x300.webp",
+          "width": 300,
+          "height": 300,
+          "filesize": 18200,
+          "uncropped": false,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--300x300.webp"
+        },
+        "woocommerce_single": {
+          "file": "ليزر--600x329.webp",
+          "width": 600,
+          "height": 329,
+          "filesize": 38332,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--600x329.webp"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "ليزر--100x100.webp",
+          "width": 100,
+          "height": 100,
+          "filesize": 3460,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر--100x100.webp"
+        },
+        "full": {
+          "file": "ليزر-.webp",
+          "width": 1200,
+          "height": 658,
+          "mime_type": "image/webp",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-.webp"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 62,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/ليزر-.webp",
+    "filename": "ليزر-.webp",
+    "filesize": 90212,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/842",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=842"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 62,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/62"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 779,
+    "date": "2025-10-04T15:53:45",
+    "date_gmt": "2025-10-04T15:53:45",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n.jpg"
+    },
+    "modified": "2025-10-04T15:53:45",
+    "modified_gmt": "2025-10-04T15:53:45",
+    "slug": "521569149_17871844698394859_850867644392777533_n",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/?attachment_id=779",
+    "title": {
+      "rendered": "521569149_17871844698394859_850867644392777533_n"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-779",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n.jpg'><img loading=\"lazy\" decoding=\"async\" width=\"240\" height=\"300\" src=\"https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-240x300.jpg\" class=\"attachment-medium size-medium\" alt=\"\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-240x300.jpg 240w, https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-819x1024.jpg 819w, https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-768x960.jpg 768w, https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-1228x1536.jpg 1228w, https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-10x12.jpg 10w, https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-600x750.jpg 600w, https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n.jpg 1350w\" sizes=\"auto, (max-width: 240px) 100vw, 240px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "",
+    "media_type": "image",
+    "mime_type": "image/jpeg",
+    "media_details": {
+      "width": 1350,
+      "height": 1688,
+      "file": "2016/07/521569149_17871844698394859_850867644392777533_n.jpg",
+      "filesize": 272382,
+      "sizes": {
+        "medium": {
+          "file": "521569149_17871844698394859_850867644392777533_n-240x300.jpg",
+          "width": 240,
+          "height": 300,
+          "filesize": 15154,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-240x300.jpg"
+        },
+        "large": {
+          "file": "521569149_17871844698394859_850867644392777533_n-819x1024.jpg",
+          "width": 819,
+          "height": 1024,
+          "filesize": 86818,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-819x1024.jpg"
+        },
+        "thumbnail": {
+          "file": "521569149_17871844698394859_850867644392777533_n-150x150.jpg",
+          "width": 150,
+          "height": 150,
+          "filesize": 6740,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-150x150.jpg"
+        },
+        "medium_large": {
+          "file": "521569149_17871844698394859_850867644392777533_n-768x960.jpg",
+          "width": 768,
+          "height": 960,
+          "filesize": 78636,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-768x960.jpg"
+        },
+        "1536x1536": {
+          "file": "521569149_17871844698394859_850867644392777533_n-1228x1536.jpg",
+          "width": 1228,
+          "height": 1536,
+          "filesize": 153294,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-1228x1536.jpg"
+        },
+        "trp-custom-language-flag": {
+          "file": "521569149_17871844698394859_850867644392777533_n-10x12.jpg",
+          "width": 10,
+          "height": 12,
+          "filesize": 786,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-10x12.jpg"
+        },
+        "arrivals-thumb": {
+          "file": "521569149_17871844698394859_850867644392777533_n-475x530.jpg",
+          "width": 475,
+          "height": 530,
+          "filesize": 37459,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-475x530.jpg"
+        },
+        "woocommerce_thumbnail": {
+          "file": "521569149_17871844698394859_850867644392777533_n-300x300.jpg",
+          "width": 300,
+          "height": 300,
+          "filesize": 17744,
+          "uncropped": false,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-300x300.jpg"
+        },
+        "woocommerce_single": {
+          "file": "521569149_17871844698394859_850867644392777533_n-600x750.jpg",
+          "width": 600,
+          "height": 750,
+          "filesize": 55131,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-600x750.jpg"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "521569149_17871844698394859_850867644392777533_n-100x100.jpg",
+          "width": 100,
+          "height": 100,
+          "filesize": 3884,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n-100x100.jpg"
+        },
+        "full": {
+          "file": "521569149_17871844698394859_850867644392777533_n.jpg",
+          "width": 1350,
+          "height": 1688,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n.jpg"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 581,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/521569149_17871844698394859_850867644392777533_n.jpg",
+    "filename": "521569149_17871844698394859_850867644392777533_n.jpg",
+    "filesize": 272382,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/779",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=779"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "product",
+          "id": 581,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product/581"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 778,
+    "date": "2025-10-04T15:53:42",
+    "date_gmt": "2025-10-04T15:53:42",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n.jpg"
+    },
+    "modified": "2025-10-04T15:53:42",
+    "modified_gmt": "2025-10-04T15:53:42",
+    "slug": "539975999_17876816397394859_766565143121795196_n",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/?attachment_id=778",
+    "title": {
+      "rendered": "539975999_17876816397394859_766565143121795196_n"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-778",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n.jpg'><img loading=\"lazy\" decoding=\"async\" width=\"240\" height=\"300\" src=\"https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-240x300.jpg\" class=\"attachment-medium size-medium\" alt=\"\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-240x300.jpg 240w, https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-819x1024.jpg 819w, https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-768x960.jpg 768w, https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-1228x1536.jpg 1228w, https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-10x12.jpg 10w, https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-600x750.jpg 600w, https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n.jpg 1350w\" sizes=\"auto, (max-width: 240px) 100vw, 240px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "",
+    "media_type": "image",
+    "mime_type": "image/jpeg",
+    "media_details": {
+      "width": 1350,
+      "height": 1688,
+      "file": "2016/07/539975999_17876816397394859_766565143121795196_n.jpg",
+      "filesize": 350639,
+      "sizes": {
+        "medium": {
+          "file": "539975999_17876816397394859_766565143121795196_n-240x300.jpg",
+          "width": 240,
+          "height": 300,
+          "filesize": 14301,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-240x300.jpg"
+        },
+        "large": {
+          "file": "539975999_17876816397394859_766565143121795196_n-819x1024.jpg",
+          "width": 819,
+          "height": 1024,
+          "filesize": 95424,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-819x1024.jpg"
+        },
+        "thumbnail": {
+          "file": "539975999_17876816397394859_766565143121795196_n-150x150.jpg",
+          "width": 150,
+          "height": 150,
+          "filesize": 6472,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-150x150.jpg"
+        },
+        "medium_large": {
+          "file": "539975999_17876816397394859_766565143121795196_n-768x960.jpg",
+          "width": 768,
+          "height": 960,
+          "filesize": 85652,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-768x960.jpg"
+        },
+        "1536x1536": {
+          "file": "539975999_17876816397394859_766565143121795196_n-1228x1536.jpg",
+          "width": 1228,
+          "height": 1536,
+          "filesize": 180790,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-1228x1536.jpg"
+        },
+        "trp-custom-language-flag": {
+          "file": "539975999_17876816397394859_766565143121795196_n-10x12.jpg",
+          "width": 10,
+          "height": 12,
+          "filesize": 784,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-10x12.jpg"
+        },
+        "arrivals-thumb": {
+          "file": "539975999_17876816397394859_766565143121795196_n-475x530.jpg",
+          "width": 475,
+          "height": 530,
+          "filesize": 37725,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-475x530.jpg"
+        },
+        "woocommerce_thumbnail": {
+          "file": "539975999_17876816397394859_766565143121795196_n-300x300.jpg",
+          "width": 300,
+          "height": 300,
+          "filesize": 17458,
+          "uncropped": false,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-300x300.jpg"
+        },
+        "woocommerce_single": {
+          "file": "539975999_17876816397394859_766565143121795196_n-600x750.jpg",
+          "width": 600,
+          "height": 750,
+          "filesize": 57804,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-600x750.jpg"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "539975999_17876816397394859_766565143121795196_n-100x100.jpg",
+          "width": 100,
+          "height": 100,
+          "filesize": 3787,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n-100x100.jpg"
+        },
+        "full": {
+          "file": "539975999_17876816397394859_766565143121795196_n.jpg",
+          "width": 1350,
+          "height": 1688,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n.jpg"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 581,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/539975999_17876816397394859_766565143121795196_n.jpg",
+    "filename": "539975999_17876816397394859_766565143121795196_n.jpg",
+    "filesize": 350639,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/778",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=778"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "product",
+          "id": 581,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product/581"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 777,
+    "date": "2025-10-04T15:53:38",
+    "date_gmt": "2025-10-04T15:53:38",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n.jpg"
+    },
+    "modified": "2025-10-04T15:53:38",
+    "modified_gmt": "2025-10-04T15:53:38",
+    "slug": "549220869_17879018322394859_7463942622215656831_n",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/?attachment_id=777",
+    "title": {
+      "rendered": "549220869_17879018322394859_7463942622215656831_n"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-777",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n.jpg'><img loading=\"lazy\" decoding=\"async\" width=\"240\" height=\"300\" src=\"https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-240x300.jpg\" class=\"attachment-medium size-medium\" alt=\"\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-240x300.jpg 240w, https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-819x1024.jpg 819w, https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-768x960.jpg 768w, https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-1228x1536.jpg 1228w, https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-10x12.jpg 10w, https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-600x750.jpg 600w, https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n.jpg 1350w\" sizes=\"auto, (max-width: 240px) 100vw, 240px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "",
+    "media_type": "image",
+    "mime_type": "image/jpeg",
+    "media_details": {
+      "width": 1350,
+      "height": 1688,
+      "file": "2016/07/549220869_17879018322394859_7463942622215656831_n.jpg",
+      "filesize": 458346,
+      "sizes": {
+        "medium": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-240x300.jpg",
+          "width": 240,
+          "height": 300,
+          "filesize": 17649,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-240x300.jpg"
+        },
+        "large": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-819x1024.jpg",
+          "width": 819,
+          "height": 1024,
+          "filesize": 131640,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-819x1024.jpg"
+        },
+        "thumbnail": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-150x150.jpg",
+          "width": 150,
+          "height": 150,
+          "filesize": 7623,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-150x150.jpg"
+        },
+        "medium_large": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-768x960.jpg",
+          "width": 768,
+          "height": 960,
+          "filesize": 118475,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-768x960.jpg"
+        },
+        "1536x1536": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-1228x1536.jpg",
+          "width": 1228,
+          "height": 1536,
+          "filesize": 248344,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-1228x1536.jpg"
+        },
+        "trp-custom-language-flag": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-10x12.jpg",
+          "width": 10,
+          "height": 12,
+          "filesize": 804,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-10x12.jpg"
+        },
+        "arrivals-thumb": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-475x530.jpg",
+          "width": 475,
+          "height": 530,
+          "filesize": 48113,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-475x530.jpg"
+        },
+        "woocommerce_thumbnail": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-300x300.jpg",
+          "width": 300,
+          "height": 300,
+          "filesize": 21237,
+          "uncropped": false,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-300x300.jpg"
+        },
+        "woocommerce_single": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-600x750.jpg",
+          "width": 600,
+          "height": 750,
+          "filesize": 77893,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-600x750.jpg"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "549220869_17879018322394859_7463942622215656831_n-100x100.jpg",
+          "width": 100,
+          "height": 100,
+          "filesize": 4462,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n-100x100.jpg"
+        },
+        "full": {
+          "file": "549220869_17879018322394859_7463942622215656831_n.jpg",
+          "width": 1350,
+          "height": 1688,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n.jpg"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 581,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/549220869_17879018322394859_7463942622215656831_n.jpg",
+    "filename": "549220869_17879018322394859_7463942622215656831_n.jpg",
+    "filesize": 458346,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/777",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=777"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "product",
+          "id": 581,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product/581"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 776,
+    "date": "2025-10-04T15:53:34",
+    "date_gmt": "2025-10-04T15:53:34",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n.jpg"
+    },
+    "modified": "2025-10-04T15:53:34",
+    "modified_gmt": "2025-10-04T15:53:34",
+    "slug": "499681450_17864341677394859_3613073881417896282_n",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/?attachment_id=776",
+    "title": {
+      "rendered": "499681450_17864341677394859_3613073881417896282_n"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-776",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n.jpg'><img loading=\"lazy\" decoding=\"async\" width=\"240\" height=\"300\" src=\"https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-240x300.jpg\" class=\"attachment-medium size-medium\" alt=\"\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-240x300.jpg 240w, https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-819x1024.jpg 819w, https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-768x960.jpg 768w, https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-1228x1536.jpg 1228w, https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-10x12.jpg 10w, https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-600x750.jpg 600w, https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n.jpg 1350w\" sizes=\"auto, (max-width: 240px) 100vw, 240px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "",
+    "media_type": "image",
+    "mime_type": "image/jpeg",
+    "media_details": {
+      "width": 1350,
+      "height": 1688,
+      "file": "2016/07/499681450_17864341677394859_3613073881417896282_n.jpg",
+      "filesize": 490540,
+      "sizes": {
+        "medium": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-240x300.jpg",
+          "width": 240,
+          "height": 300,
+          "filesize": 18769,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-240x300.jpg"
+        },
+        "large": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-819x1024.jpg",
+          "width": 819,
+          "height": 1024,
+          "filesize": 131986,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-819x1024.jpg"
+        },
+        "thumbnail": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-150x150.jpg",
+          "width": 150,
+          "height": 150,
+          "filesize": 8243,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-150x150.jpg"
+        },
+        "medium_large": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-768x960.jpg",
+          "width": 768,
+          "height": 960,
+          "filesize": 118925,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-768x960.jpg"
+        },
+        "1536x1536": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-1228x1536.jpg",
+          "width": 1228,
+          "height": 1536,
+          "filesize": 246398,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-1228x1536.jpg"
+        },
+        "trp-custom-language-flag": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-10x12.jpg",
+          "width": 10,
+          "height": 12,
+          "filesize": 789,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-10x12.jpg"
+        },
+        "arrivals-thumb": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-475x530.jpg",
+          "width": 475,
+          "height": 530,
+          "filesize": 52791,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-475x530.jpg"
+        },
+        "woocommerce_thumbnail": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-300x300.jpg",
+          "width": 300,
+          "height": 300,
+          "filesize": 23623,
+          "uncropped": false,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-300x300.jpg"
+        },
+        "woocommerce_single": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-600x750.jpg",
+          "width": 600,
+          "height": 750,
+          "filesize": 80602,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-600x750.jpg"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "499681450_17864341677394859_3613073881417896282_n-100x100.jpg",
+          "width": 100,
+          "height": 100,
+          "filesize": 4459,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n-100x100.jpg"
+        },
+        "full": {
+          "file": "499681450_17864341677394859_3613073881417896282_n.jpg",
+          "width": 1350,
+          "height": 1688,
+          "mime_type": "image/jpeg",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n.jpg"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 581,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2016/07/499681450_17864341677394859_3613073881417896282_n.jpg",
+    "filename": "499681450_17864341677394859_3613073881417896282_n.jpg",
+    "filesize": 490540,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/776",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=776"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "product",
+          "id": 581,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product/581"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 766,
+    "date": "2025-10-04T15:07:47",
+    "date_gmt": "2025-10-04T15:07:47",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/shamaclinics5.png"
+    },
+    "modified": "2025-10-04T15:07:47",
+    "modified_gmt": "2025-10-04T15:07:47",
+    "slug": "shamaclinics5",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/home/shamaclinics5/",
+    "title": {
+      "rendered": "shamaclinics5"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-766",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-300x200.png\" class=\"attachment-medium size-medium\" alt=\"\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-1024x683.png 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-768x512.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5.png 1536w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1536,
+      "height": 1024,
+      "file": "2025/10/shamaclinics5.png",
+      "filesize": 1826535,
+      "sizes": {
+        "medium": {
+          "file": "shamaclinics5-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 55182,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-300x200.png"
+        },
+        "large": {
+          "file": "shamaclinics5-1024x683.png",
+          "width": 1024,
+          "height": 683,
+          "filesize": 758769,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-1024x683.png"
+        },
+        "thumbnail": {
+          "file": "shamaclinics5-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 21341,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-150x150.png"
+        },
+        "medium_large": {
+          "file": "shamaclinics5-768x512.png",
+          "width": 768,
+          "height": 512,
+          "filesize": 432751,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-768x512.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "shamaclinics5-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 559,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "shamaclinics5-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 252074,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "shamaclinics5-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 82548,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "shamaclinics5-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 230994,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "shamaclinics5-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 10462,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5-100x100.png"
+        },
+        "full": {
+          "file": "shamaclinics5.png",
+          "width": 1536,
+          "height": 1024,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 622,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics5.png",
+    "filename": "shamaclinics5.png",
+    "filesize": 1826535,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/766",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=766"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 622,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/622"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 764,
+    "date": "2025-10-04T15:03:42",
+    "date_gmt": "2025-10-04T15:03:42",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/shamaclinics4.png"
+    },
+    "modified": "2026-03-17T21:25:03",
+    "modified_gmt": "2026-03-17T21:25:03",
+    "slug": "shamaclinics4",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/home/shamaclinics4/",
+    "title": {
+      "rendered": "Laser Hair Removal for Men"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-764",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Laser Hair Removal for Men\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-1024x683.png 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-768x512.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4.png 1536w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n<p>Laser Hair Removal for Men</p>\n"
+    },
+    "caption": {
+      "rendered": "<p>Laser Hair Removal for Men</p>\n"
+    },
+    "alt_text": "Laser Hair Removal for Men",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1536,
+      "height": 1024,
+      "file": "2025/10/shamaclinics4.png",
+      "filesize": 1495390,
+      "sizes": {
+        "medium": {
+          "file": "shamaclinics4-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 52349,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-300x200.png"
+        },
+        "large": {
+          "file": "shamaclinics4-1024x683.png",
+          "width": 1024,
+          "height": 683,
+          "filesize": 671601,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-1024x683.png"
+        },
+        "thumbnail": {
+          "file": "shamaclinics4-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 20374,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-150x150.png"
+        },
+        "medium_large": {
+          "file": "shamaclinics4-768x512.png",
+          "width": 768,
+          "height": 512,
+          "filesize": 392754,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-768x512.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "shamaclinics4-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 552,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "shamaclinics4-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 224519,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "shamaclinics4-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 77318,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "shamaclinics4-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 214274,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "shamaclinics4-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 10247,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4-100x100.png"
+        },
+        "full": {
+          "file": "shamaclinics4.png",
+          "width": 1536,
+          "height": 1024,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 622,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics4.png",
+    "filename": "shamaclinics4.png",
+    "filesize": 1495390,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/764",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=764"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 622,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/622"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 762,
+    "date": "2025-10-04T15:01:57",
+    "date_gmt": "2025-10-04T15:01:57",
+    "guid": {
+      "rendered": "https://shamaclinics.com/wp-content/uploads/2025/10/shamaclinics3.png"
+    },
+    "modified": "2026-03-17T21:34:58",
+    "modified_gmt": "2026-03-17T21:34:58",
+    "slug": "shamaclinics3",
+    "status": "inherit",
+    "type": "attachment",
+    "link": "https://www.shamahclinics.com/home/shamaclinics3/",
+    "title": {
+      "rendered": "Cosmetic Threads for Men and Women"
+    },
+    "author": 1,
+    "featured_media": 0,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "class_list": [
+      "post-762",
+      "attachment",
+      "type-attachment",
+      "status-inherit",
+      "hentry"
+    ],
+    "description": {
+      "rendered": "<p class=\"attachment\"><a href='https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3.png'><img loading=\"lazy\" decoding=\"async\" width=\"300\" height=\"200\" src=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-300x200.png\" class=\"attachment-medium size-medium\" alt=\"Cosmetic Threads for Men and Women\" srcset=\"https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-300x200.png 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-1024x683.png 1024w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-768x512.png 768w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-18x12.png 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-600x400.png 600w, https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3.png 1536w\" sizes=\"auto, (max-width: 300px) 100vw, 300px\" /></a></p>\n"
+    },
+    "caption": {
+      "rendered": ""
+    },
+    "alt_text": "Cosmetic Threads for Men and Women",
+    "media_type": "image",
+    "mime_type": "image/png",
+    "media_details": {
+      "width": 1536,
+      "height": 1024,
+      "file": "2025/10/shamaclinics3.png",
+      "filesize": 1650049,
+      "sizes": {
+        "medium": {
+          "file": "shamaclinics3-300x200.png",
+          "width": 300,
+          "height": 200,
+          "filesize": 56880,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-300x200.png"
+        },
+        "large": {
+          "file": "shamaclinics3-1024x683.png",
+          "width": 1024,
+          "height": 683,
+          "filesize": 717588,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-1024x683.png"
+        },
+        "thumbnail": {
+          "file": "shamaclinics3-150x150.png",
+          "width": 150,
+          "height": 150,
+          "filesize": 22158,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-150x150.png"
+        },
+        "medium_large": {
+          "file": "shamaclinics3-768x512.png",
+          "width": 768,
+          "height": 512,
+          "filesize": 417274,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-768x512.png"
+        },
+        "trp-custom-language-flag": {
+          "file": "shamaclinics3-18x12.png",
+          "width": 18,
+          "height": 12,
+          "filesize": 608,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-18x12.png"
+        },
+        "arrivals-thumb": {
+          "file": "shamaclinics3-475x530.png",
+          "width": 475,
+          "height": 530,
+          "filesize": 238835,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-475x530.png"
+        },
+        "woocommerce_thumbnail": {
+          "file": "shamaclinics3-300x300.png",
+          "width": 300,
+          "height": 300,
+          "filesize": 81325,
+          "uncropped": false,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-300x300.png"
+        },
+        "woocommerce_single": {
+          "file": "shamaclinics3-600x400.png",
+          "width": 600,
+          "height": 400,
+          "filesize": 229035,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-600x400.png"
+        },
+        "woocommerce_gallery_thumbnail": {
+          "file": "shamaclinics3-100x100.png",
+          "width": 100,
+          "height": 100,
+          "filesize": 11027,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3-100x100.png"
+        },
+        "full": {
+          "file": "shamaclinics3.png",
+          "width": 1536,
+          "height": 1024,
+          "mime_type": "image/png",
+          "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3.png"
+        }
+      },
+      "image_meta": {
+        "aperture": "0",
+        "credit": "",
+        "camera": "",
+        "caption": "",
+        "created_timestamp": "0",
+        "copyright": "",
+        "focal_length": "0",
+        "iso": "0",
+        "shutter_speed": "0",
+        "title": "",
+        "orientation": "0",
+        "keywords": []
+      }
+    },
+    "post": 622,
+    "source_url": "https://www.shamahclinics.com/wp-content/uploads/2025/10/shamaclinics3.png",
+    "filename": "shamaclinics3.png",
+    "filesize": 1650049,
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/762",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/attachment"
+        }
+      ],
+      "author": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/users/1"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=762"
+        }
+      ],
+      "wp:attached-to": [
+        {
+          "embeddable": true,
+          "post_type": "page",
+          "id": 622,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/pages/622"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  }
+]

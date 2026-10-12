@@ -8,20 +8,26 @@ import { TreatmentCard } from "@/components/cards/TreatmentCard";
 import {
   treatmentsData,
   treatmentCategories,
+  type Treatment,
   type TreatmentCategory,
 } from "@/data/treatments";
 import { images } from "@/lib/images";
 
-export const TreatmentsClient: React.FC = () => {
+interface Props {
+  /** WordPress-titled catalog (pages/696) when available, authored list otherwise. */
+  treatments?: Treatment[];
+}
+
+export const TreatmentsClient: React.FC<Props> = ({ treatments = treatmentsData }) => {
   const { t } = useLanguage();
   const [active, setActive] = useState<TreatmentCategory | "all">("all");
 
   const filtered = useMemo(
     () =>
       active === "all"
-        ? treatmentsData
-        : treatmentsData.filter((x) => x.category === active),
-    [active],
+        ? treatments
+        : treatments.filter((x) => x.category === active),
+    [active, treatments],
   );
 
   return (

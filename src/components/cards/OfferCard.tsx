@@ -1,15 +1,20 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
 import { whatsappHref } from "@/components/shared/Actions";
+import { getLocalizedHref } from "@/lib/locale";
 import type { Offer } from "@/data/offers";
 import { Check, Calendar, MessageCircle } from "lucide-react";
 
 export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
   const { t, language, formatNumber } = useLanguage();
   const { openBooking } = useBooking();
+
+  const badge = t(offer.badge.ar, offer.badge.en);
+  const currency = offer.currency || t("ج.م", "EGP");
 
   const waMsg =
     language === "ar"
@@ -22,23 +27,32 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
         offer.popular ? "border-[var(--gold-mid)] shadow-lg" : "border-[var(--gold-border)]/50"
       }`}
     >
-      {offer.popular && (
+      {offer.popular && badge && (
         <div className="bg-gold-gradient text-white text-xs font-bold text-center py-2">
-          {t(offer.badge.ar, offer.badge.en)}
+          {badge}
         </div>
       )}
       <div className="p-3 sm:p-5 flex flex-col flex-1">
-        {!offer.popular && (
+        {!offer.popular && badge ? (
           <span className="text-xs font-bold text-[var(--gold-end)] tracking-wide">
-            {t(offer.badge.ar, offer.badge.en)}
+            {badge}
           </span>
-        )}
+        ) : null}
         <h3 className="mt-2 text-base sm:text-lg font-black text-[var(--text-primary)] leading-snug">
-          {t(offer.title.ar, offer.title.en)}
+          {/* The detail page carries the package terms parsed from WordPress, so the
+              title links to it exactly like a journal card. */}
+          <Link
+            href={getLocalizedHref(offer.href[language], language)}
+            className="hover:text-[var(--gold-end)] transition-colors duration-300"
+          >
+            {t(offer.title.ar, offer.title.en)}
+          </Link>
         </h3>
-        <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
-          {t(offer.subtitle.ar, offer.subtitle.en)}
-        </p>
+        {t(offer.subtitle.ar, offer.subtitle.en) ? (
+          <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
+            {t(offer.subtitle.ar, offer.subtitle.en)}
+          </p>
+        ) : null}
 
         <ul className="mt-4 space-y-2 flex-1">
           {offer.includes[language].map((inc) => (
@@ -53,20 +67,29 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
           <div className="flex items-end gap-3">
             <span className="text-2xl sm:text-3xl font-black text-[var(--gold-end)]">
               {formatNumber(offer.discountedPrice)}
-              <span className="text-base font-bold ms-1">{t("ج.م", "EGP")}</span>
+              <span className="text-base font-bold ms-1">{currency}</span>
             </span>
-            <span className="text-sm text-[var(--text-muted)] line-through mb-1">
-              {formatNumber(offer.originalPrice)}
-            </span>
-            <span className="ms-auto mb-1 text-xs font-bold text-white bg-emerald-700 rounded-full px-2.5 py-1">
-              {t("وفّري", "Save")} {formatNumber(offer.savingsPercentage)}٪
-            </span>
+            {/* Only a real discount gets a struck price and a savings badge. */}
+            {offer.originalPrice > offer.discountedPrice && offer.savingsPercentage > 0 ? (
+              <>
+                <span className="text-sm text-[var(--text-muted)] line-through mb-1">
+                  {formatNumber(offer.originalPrice)}
+                </span>
+                <span className="ms-auto mb-1 text-xs font-bold text-white bg-emerald-700 rounded-full px-2.5 py-1">
+                  {t("وفّري", "Save")} {formatNumber(offer.savingsPercentage)}٪
+                </span>
+              </>
+            ) : null}
           </div>
-          <p className="mt-2 text-xs text-[var(--text-muted)]">{t(offer.validUntil.ar, offer.validUntil.en)}</p>
+          {t(offer.validUntil.ar, offer.validUntil.en) ? (
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              {t(offer.validUntil.ar, offer.validUntil.en)}
+            </p>
+          ) : null}
 
           <div className="mt-4 flex flex-col sm:flex-row gap-2">
             <button
-              onClick={() => openBooking()}
+              onClick={() => openBooking({ offerName: offer.title })}
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient text-white font-bold text-sm py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
             >
               <Calendar className="w-4 h-4" />

@@ -10,7 +10,6 @@ import { ArticleCard } from "@/components/cards/ArticleCard";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
-import { journalData } from "@/data/journal";
 import { getSpecialist } from "@/data/specialists";
 import {
   Clock,
@@ -26,17 +25,13 @@ import {
   BookOpen,
 } from "lucide-react";
 
-export const JournalArticleClient: React.FC<{ article: Article }> = ({
-  article,
-}) => {
+export const JournalArticleClient: React.FC<{
+  article: Article;
+  related?: Article[];
+}> = ({ article, related = [] }) => {
   const { t, language, formatNumber } = useLanguage();
   const author = getSpecialist(article.authorId);
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
-
-  const related = useMemo(
-    () => journalData.filter((a) => a.slug !== article.slug).slice(0, 3),
-    [article.slug],
-  );
 
   // ── Build TOC from sections ──
   const toc = useMemo(
@@ -127,13 +122,15 @@ export const JournalArticleClient: React.FC<{ article: Article }> = ({
                   <CalendarDays className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
                   {t(article.date.ar, article.date.en)}
                 </span>
-                <span className="inline-flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
-                  {t(
-                    `${formatNumber(article.readMinutes)} دقائق قراءة`,
-                    `${article.readMinutes} min read`,
-                  )}
-                </span>
+                {article.readMinutes ? (
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+                    {t(
+                      `${formatNumber(article.readMinutes)} دقائق قراءة`,
+                      `${article.readMinutes} min read`,
+                    )}
+                  </span>
+                ) : null}
                 {author && (
                   <span className="inline-flex items-center gap-1.5">
                     {t("بقلم", "By")}{" "}

@@ -41,11 +41,4 @@ export const primaryNav: NavItem[] = [
   { href: "/contact", label: { ar: "تواصلي", en: "Contact" } },
 ];
 
-/** Secondary links surfaced in the footer. */
-export const footerNav: NavItem[] = [
-  // { href: "/faq", label: { ar: "الأسئلة الشائعة", en: "FAQ" } },
-  // { href: "/privacy", label: { ar: "سياسة الخصوصية", en: "Privacy Policy" } },
-  // { href: "/contact", label: { ar: "حجز موعد", en: "Book Appointment" } },
-];
-
 export const socialLinks = siteConfig.socialLinks;

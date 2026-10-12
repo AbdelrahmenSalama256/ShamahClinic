@@ -7,7 +7,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { clinicData } from "@/data/clinic";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
-import { primaryNav, footerNav, socialLinks } from "@/lib/site";
+import { primaryNav, socialLinks } from "@/lib/site";
 import { Phone, Clock, Mail, Send, Check, MessageCircle } from "lucide-react";
 
 const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
@@ -175,16 +175,6 @@ export const Footer: React.FC = () => {
             <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-gray-300">
               {primaryNav.map((l) => (
                 <li key={l.href}>
-                  <Link
-                    href={getLocalizedHref(l.href, language)}
-                    className="hover:text-[var(--gold-start)] transition-colors duration-300"
-                  >
-                    {t(l.label.ar, l.label.en)}
-                  </Link>
-                </li>
-              ))}
-              {footerNav.map((l) => (
-                <li key={`${l.href}-${l.label.en}`}>
                   <Link
                     href={getLocalizedHref(l.href, language)}
                     className="hover:text-[var(--gold-start)] transition-colors duration-300"

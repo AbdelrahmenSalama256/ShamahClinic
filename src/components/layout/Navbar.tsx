@@ -34,18 +34,23 @@ export const Navbar: React.FC = () => {
   const pathname = usePathname();
 
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(
-    null,
-  );
+  // Menu state is scoped to the path it was opened on, so navigating closes it
+  // without an effect round-trip.
+  const [menu, setMenu] = useState<{
+    path: string | null;
+    mobile: boolean;
+    dropdown: string | null;
+    mobileDropdown: string | null;
+  }>({ path: null, mobile: false, dropdown: null, mobileDropdown: null });
 
-  // Reset all menus on route change
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setOpenDropdown(null);
-    setOpenMobileDropdown(null);
-  }, [pathname]);
+  const openMenu = (
+    patch: Partial<Pick<typeof menu, "mobile" | "dropdown" | "mobileDropdown">>,
+  ) => setMenu({ ...menu, path: pathname ?? null, ...patch });
+
+  const onThisPath = menu.path === (pathname ?? null);
+  const isMobileMenuOpen = onThisPath && menu.mobile;
+  const openDropdown = onThisPath ? menu.dropdown : null;
+  const openMobileDropdown = onThisPath ? menu.mobileDropdown : null;
 
   // Track page scroll for header styling
   useEffect(() => {
@@ -163,7 +168,7 @@ export const Navbar: React.FC = () => {
           <nav
             className="hidden lg:flex items-center gap-1"
             aria-label={t("التنقل الرئيسي", "Primary")}
-            onMouseLeave={() => setOpenDropdown(null)}
+            onMouseLeave={() => openMenu({ dropdown: null })}
           >
             {primaryNav.map((link) => {
               const active = isActive(link.href);
@@ -187,7 +192,7 @@ export const Navbar: React.FC = () => {
                 <div
                   key={link.href}
                   className="relative"
-                  onMouseEnter={() => setOpenDropdown(link.href)}
+                  onMouseEnter={() => openMenu({ dropdown: link.href })}
                 >
                   <Link
                     href={getLocalizedHref(link.href, language)}
@@ -284,7 +289,7 @@ export const Navbar: React.FC = () => {
             )}
             <button
               onClick={toggleLanguage}
-              aria-label={t("تغيير اللغة", "Switch language")}
+              title={t("تغيير اللغة", "Switch language")}
               className="lg:hidden  rounded-full w-8 h-8 d-flex justify-center align-center border border-[var(--gold-border)] text-xs font-bold text-[var(--text-primary)] hover:border-[var(--gold-mid)] transition-colors duration-300"
             >
               {language === "ar" ? "EN" : "عربي"}
@@ -312,7 +317,7 @@ export const Navbar: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setIsMobileMenuOpen((v) => !v)}
+              onClick={() => openMenu({ mobile: !isMobileMenuOpen })}
               aria-label={t("القائمة", "Menu")}
               aria-expanded={isMobileMenuOpen}
               className="lg:hidden p-2 text-[var(--text-primary)] hover:text-[var(--gold-mid)] transition-colors duration-300"
@@ -339,8 +344,7 @@ export const Navbar: React.FC = () => {
         <div
           className="absolute inset-0 bg-black/40 backdrop-blur-sm"
           onClick={() => {
-            setIsMobileMenuOpen(false);
-            setOpenMobileDropdown(null);
+              openMenu({ mobile: false, mobileDropdown: null });
           }}
         />
 
@@ -378,7 +382,7 @@ export const Navbar: React.FC = () => {
                       />
                     </span>
                     <button
-                      onClick={() => setIsMobileMenuOpen(false)}
+                      onClick={() => openMenu({ mobile: false })}
                       aria-label={t("إغلاق", "Close")}
                       className="p-2 text-[var(--text-secondary)] hover:text-[var(--gold-mid)] transition-colors duration-300"
                     >
@@ -417,7 +421,7 @@ export const Navbar: React.FC = () => {
                       return (
                         <button
                           key={link.href}
-                          onClick={() => setOpenMobileDropdown(link.href)}
+                          onClick={() => openMenu({ mobileDropdown: link.href })}
                           className={`py-3 border-b border-[var(--gold-border)]/30 flex items-center justify-between text-sm font-semibold transition-colors duration-300 cursor-pointer ${
                             active
                               ? "text-[var(--gold-end)]"
@@ -477,7 +481,7 @@ export const Navbar: React.FC = () => {
                 <div className="pt-6 border-t border-[var(--gold-border)] flex flex-col gap-3">
                   <button
                     onClick={() => {
-                      setIsMobileMenuOpen(false);
+                      openMenu({ mobile: false });
                       openBooking();
                     }}
                     className="w-full bg-gold-gradient text-white font-medium py-3 rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
@@ -515,7 +519,7 @@ export const Navbar: React.FC = () => {
                 {/* Header with back */}
                 <div className="flex items-center justify-between pb-5 border-b border-[var(--gold-border)]">
                   <button
-                    onClick={() => setOpenMobileDropdown(null)}
+                    onClick={() => openMenu({ mobileDropdown: null })}
                     aria-label={t("رجوع", "Back")}
                     className="flex items-center gap-2 text-sm font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors duration-300 cursor-pointer"
                   >

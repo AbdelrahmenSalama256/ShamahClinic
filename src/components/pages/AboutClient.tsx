@@ -8,7 +8,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Photo } from "@/components/ui/Photo";
 import { GoldLink } from "@/components/shared/Actions";
 import { images } from "@/lib/images";
-import { verifiedFacts } from "@/data/placeholders";
+import { verifiedFacts } from "@/data/facts";
 import { treatmentsData } from "@/data/treatments";
 
 export const AboutClient: React.FC = () => {

@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1160,
+    "title": "Men’s Skin Peels (Chemical or Laser): Renewing the Skin and Restoring Vitality",
+    "url": "https://www.shamahclinics.com/mens-skin-peels/",
+    "type": "post",
+    "subtype": "post",
+    "_links": {
+      "self": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/posts/1160",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/post"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/search"
+        }
+      ]
+    }
+  },
+  {
+    "id": 1151,
+    "title": "Everything You Need to Know About Laser Hair Removal for Men",
+    "url": "https://www.shamahclinics.com/laser-hair-removal-for-men-2/",
+    "type": "post",
+    "subtype": "post",
+    "_links": {
+      "self": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/posts/1151",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/post"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/search"
+        }
+      ]
+    }
+  },
+  {
+    "id": 1139,
+    "title": "Carbon Laser Peeling: Restore Skin Radiance and Rejuvenate Your Face",
+    "url": "https://www.shamahclinics.com/carbon-laser-peeling/",
+    "type": "post",
+    "subtype": "post",
+    "_links": {
+      "self": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/posts/1139",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/post"
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/search"
+        }
+      ]
+    }
+  }
+]

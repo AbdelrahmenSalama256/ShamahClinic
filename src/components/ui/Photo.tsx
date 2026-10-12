@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
 import type { PhotoSlot } from "@/lib/images";
@@ -41,54 +41,73 @@ export const Photo: React.FC<PhotoProps> = ({
   const reduce = useReducedMotion();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const [revealed, setRevealed] = useState(!curtain || !!reduce);
+  // `idle` = no curtain (server HTML, priority images, reduced motion, and anything
+  // already on screen when the client starts). `armed` is the masked, hidden state —
+  // applied only once the client knows the frame is off screen, so a photo is never
+  // withheld from the first paint the way a CSS-hidden one was.
+  const [mode, setMode] = useState<"idle" | "armed" | "shown">("idle");
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const element = wrapperRef.current;
-    if (revealed || !curtain || reduce || !element) return;
+    if (!curtain || priority || reduce || !element) return;
 
+    const rect = element.getBoundingClientRect();
+    if (rect.bottom > 0 && rect.top < window.innerHeight) return;
+
+    setMode("armed");
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setRevealed(true);
+          setMode("shown");
           observer.disconnect();
         }
       },
       { rootMargin: "0px 0px -80px 0px" },
     );
-
     observer.observe(element);
     return () => observer.disconnect();
-  }, [revealed, curtain, reduce]);
+  }, [curtain, priority, reduce]);
 
   const blurDataURL = blurFor(slot.src);
+  const curtainClass =
+    mode === "armed" ? "photo-curtain" : mode === "shown" ? "photo-curtain is-revealed" : "";
+  const masked = mode === "armed" || (curtain && !loaded);
 
   return (
     <div
       ref={wrapperRef}
-      className={`relative overflow-hidden bg-[var(--bg-secondary)] ${ratioClass[ratio]} ${
-        curtain ? `photo-curtain ${revealed ? "is-revealed" : ""}` : ""
-      } ${className}`}
+      className={`relative overflow-hidden bg-[var(--bg-secondary)] ${ratioClass[ratio]} ${curtainClass} ${className}`}
     >
-      <Image
-        src={slot.src}
-        alt={language === "ar" ? slot.alt.ar : slot.alt.en}
-        fill
-        priority={priority}
-        loading={priority ? "eager" : "lazy"}
-        decoding="async"
-        {...(blurDataURL ? { placeholder: "blur" as const, blurDataURL } : {})}
-        sizes={sizes}
-        // Blur → sharp transition when the image finishes loading
-        className={`object-cover ${imgClassName} transition-[filter,opacity,transform] duration-700 ease-[cubic-bezier(.22,1,.36,1)] ${
-          loaded ? "blur-0 opacity-100" : "blur-md opacity-0"
-        }`}
-        style={{ objectPosition: slot.focal }}
-        onLoad={() => {
-          setLoaded(true);
-        }}
-      />
+      {/* WordPress returns posts with no featured image (featured_media 0): the frame
+          keeps its aspect ratio and no <img> is emitted, so nothing renders broken. */}
+      {slot.src ? (
+        <Image
+          src={slot.src}
+          alt={language === "ar" ? slot.alt.ar : slot.alt.en}
+          fill
+          priority={priority}
+          loading={priority ? "eager" : "lazy"}
+          fetchPriority={priority ? "high" : "auto"}
+          decoding="async"
+          {...(blurDataURL ? { placeholder: "blur" as const, blurDataURL } : {})}
+          sizes={sizes}
+          // The LCP image ships with no filter or opacity at all: a `blur(0)`
+          // transition still puts it on a filtered layer and costs it ~0.8 s of
+          // render delay. next/image's blur placeholder gives the same crossfade.
+          className={
+            priority
+              ? `object-cover ${imgClassName}`
+              : `object-cover ${imgClassName} transition-[filter,opacity,transform] duration-700 ease-[cubic-bezier(.22,1,.36,1)] ${
+                  masked ? "blur-md opacity-0" : "blur-0 opacity-100"
+                }`
+          }
+          style={{ objectPosition: slot.focal }}
+          onLoad={() => {
+            setLoaded(true);
+          }}
+        />
+      ) : null}
     </div>
   );
 };

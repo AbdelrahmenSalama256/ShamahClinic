@@ -13,10 +13,10 @@ import { Counter } from "@/components/ui/Counter";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
 import { images } from "@/lib/images";
 import { treatmentsData } from "@/data/treatments";
-import { verifiedFacts } from "@/data/placeholders";
+import { verifiedFacts } from "@/data/facts";
 
 export const HomeHero: React.FC = () => {
-  const { t, language, formatNumber } = useLanguage();
+  const { t, formatNumber } = useLanguage();
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({

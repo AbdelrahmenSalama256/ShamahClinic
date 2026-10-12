@@ -9,7 +9,11 @@ import { getSpecialist } from "@/data/specialists";
 import type { Article } from "@/data/journal";
 import { Clock } from "lucide-react";
 
-export const ArticleCard: React.FC<{ article: Article }> = ({ article }) => {
+export const ArticleCard: React.FC<{
+  article: Article;
+  /** First-row cards on the list page: their photo is the LCP element. */
+  priority?: boolean;
+}> = ({ article, priority = false }) => {
   const { t, language, formatNumber } = useLanguage();
   const author = getSpecialist(article.authorId);
 
@@ -22,6 +26,7 @@ export const ArticleCard: React.FC<{ article: Article }> = ({ article }) => {
         <Photo
           slot={article.image}
           ratio="landscape"
+          priority={priority}
           imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
           sizes="(max-width:1024px) 50vw, 33vw"
         />
@@ -31,20 +36,24 @@ export const ArticleCard: React.FC<{ article: Article }> = ({ article }) => {
           <span className="font-bold text-[var(--gold-end)]">
             {t(article.date.ar, article.date.en)}
           </span>
-          <span className="inline-flex items-center gap-1">
-            <Clock className="w-3 h-3" />
-            {t(
-              `${formatNumber(article.readMinutes)} دقائق قراءة`,
-              `${article.readMinutes} min read`,
-            )}
-          </span>
+          {article.readMinutes ? (
+            <span className="inline-flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              {t(
+                `${formatNumber(article.readMinutes)} دقائق قراءة`,
+                `${article.readMinutes} min read`,
+              )}
+            </span>
+          ) : null}
         </div>
         <h3 className="mt-2 text-sm sm:text-base lg:text-lg font-black leading-snug text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300">
           {t(article.title.ar, article.title.en)}
         </h3>
-        <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2">
-          {t(article.excerpt.ar, article.excerpt.en)}
-        </p>
+        {t(article.excerpt.ar, article.excerpt.en) ? (
+          <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2">
+            {t(article.excerpt.ar, article.excerpt.en)}
+          </p>
+        ) : null}
         {author && (
           <p className="mt-3 pt-3 border-t border-[var(--gold-border)]/40 text-[10px] sm:text-xs text-[var(--text-muted)]">
             {t("بقلم", "By")}{" "}

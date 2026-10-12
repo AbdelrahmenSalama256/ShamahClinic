@@ -295,6 +295,117 @@ html[data-theme="dark"] textarea {
   transform: scale(1);
 }
 
+/* Above-the-fold reveals: the same fade + rise as the scroll <Reveal>, but in CSS so
+   the hero copy and LCP image paint on first render instead of waiting for hydration.
+   The prefers-reduced-motion block below shortens these to a single frame. */
+@keyframes reveal-mount-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-mount-down {
+  from {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-mount-start {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-mount-end {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-mount-none {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+[class*="reveal-mount-"] {
+  animation-duration: 700ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: both;
+}
+
+/* Scroll reveals. `.reveal-scroll` is the only class present in the server HTML, and
+   it paints nothing: the hidden state is added by the client for elements the user
+   cannot see yet, then removed when they enter the viewport. */
+.reveal-scroll {
+  transition:
+    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.reveal-armed {
+  opacity: 0;
+}
+
+.reveal-arm-up {
+  transform: translateY(28px);
+}
+
+.reveal-arm-down {
+  transform: translateY(-28px);
+}
+
+.reveal-arm-start {
+  transform: translateX(-28px);
+}
+
+.reveal-arm-end {
+  transform: translateX(28px);
+}
+
+.reveal-mount-up {
+  animation-name: reveal-mount-up;
+}
+
+.reveal-mount-down {
+  animation-name: reveal-mount-down;
+}
+
+.reveal-mount-start {
+  animation-name: reveal-mount-start;
+}
+
+.reveal-mount-end {
+  animation-name: reveal-mount-end;
+}
+
+.reveal-mount-none {
+  animation-name: reveal-mount-none;
+}
+
 /* Respect reduced motion: disable all animation and smooth scrolling. */
 @media (prefers-reduced-motion: reduce) {
   html {

@@ -1,0 +1,114 @@
+[
+  {
+    "id": 785,
+    "date": "2025-10-04T16:42:47",
+    "date_gmt": "2025-10-04T16:42:47",
+    "guid": {
+      "rendered": "https://shamaclinics.com/?post_type=product&#038;p=785"
+    },
+    "modified": "2026-01-24T19:33:38",
+    "modified_gmt": "2026-01-24T19:33:38",
+    "slug": "%d9%a4-%d8%ac%d9%84%d8%b3%d8%a7%d8%aa-%d8%ac%d8%b3%d9%85-%d9%83%d8%a7%d9%85%d9%84-%d8%aa%d8%b4%d9%82%d9%8a%d8%b1-%d9%88%d8%ac%d9%87-%d9%88%d8%ad%d9%88%d8%a7%d8%ac%d8%a8-%d9%87%d8%af%d9%8a%d8%a9",
+    "status": "publish",
+    "type": "product",
+    "link": "https://www.shamahclinics.com/product/%d9%a4-%d8%ac%d9%84%d8%b3%d8%a7%d8%aa-%d8%ac%d8%b3%d9%85-%d9%83%d8%a7%d9%85%d9%84-%d8%aa%d8%b4%d9%82%d9%8a%d8%b1-%d9%88%d8%ac%d9%87-%d9%88%d8%ad%d9%88%d8%a7%d8%ac%d8%a8-%d9%87%d8%af%d9%8a%d8%a9/",
+    "title": {
+      "rendered": "4 Full Body Sessions + Complimentary Face &#038; Brow Bleaching"
+    },
+    "content": {
+      "rendered": "<h2 style=\"text-align: center;\">4 Full Body Sessions + Complimentary Face &amp; Brow Bleaching</h2>\n<p style=\"text-align: center;\">Unlock smooth skin and effortless beauty with Shamah Clinics&#8217; exclusive offer! Grab our 4 Full Body Laser Hair Removal sessions package, designed for maximum comfort and lasting results. As a special gift, enjoy a complimentary Face and Eyebrow Bleaching session to perfect your look. Our expert team uses the latest technology to ensure you get the best experience possible. Don&#8217;t miss out—book your appointment now and treat yourself to the care you deserve!</p>\n",
+      "protected": false
+    },
+    "excerpt": {
+      "rendered": "<p style=\"text-align: center;\">Double the glow at Shamah Clinics! Get 4 Full Body Laser sessions + FREE Face &amp; Eyebrow Bleaching. Professional care for a flawless look. Book today</p>\n",
+      "protected": false
+    },
+    "featured_media": 776,
+    "comment_status": "open",
+    "ping_status": "closed",
+    "template": "",
+    "meta": [],
+    "product_brand": [],
+    "product_cat": [
+      15
+    ],
+    "product_tag": [],
+    "class_list": [
+      "post-785",
+      "product",
+      "type-product",
+      "status-publish",
+      "has-post-thumbnail",
+      "product_cat-laser",
+      "first",
+      "instock",
+      "taxable",
+      "shipping-taxable",
+      "purchasable",
+      "product-type-simple"
+    ],
+    "_links": {
+      "self": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product/785",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/types/product"
+        }
+      ],
+      "replies": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/comments?post=785"
+        }
+      ],
+      "wp:featuredmedia": [
+        {
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media/776"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/media?parent=785"
+        }
+      ],
+      "wp:term": [
+        {
+          "taxonomy": "product_brand",
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product_brand?post=785"
+        },
+        {
+          "taxonomy": "product_cat",
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product_cat?post=785"
+        },
+        {
+          "taxonomy": "product_tag",
+          "embeddable": true,
+          "href": "https://www.shamahclinics.com/wp-json/wp/v2/product_tag?post=785"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  }
+]

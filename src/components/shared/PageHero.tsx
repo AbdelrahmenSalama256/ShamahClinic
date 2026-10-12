@@ -30,6 +30,8 @@ export const PageHero: React.FC<PageHeroProps> = ({
   variant = "split",
 }) => {
   const { t } = useLanguage();
+  // A lead that is empty in the current language renders nothing at all.
+  const leadText = lead ? t(lead.ar, lead.en) : "";
 
   return (
     <header className="relative bg-[var(--bg-primary)] border-b border-[var(--gold-border)]/25">
@@ -39,7 +41,7 @@ export const PageHero: React.FC<PageHeroProps> = ({
         {variant === "split" ? (
           <div className="mt-8 lg:mt-14 grid lg:grid-cols-12 gap-8 lg:gap-16 items-center">
             <div className={photo ? "lg:col-span-7" : "lg:col-span-9"}>
-              <Reveal>
+              <Reveal trigger="mount">
                 {index && (
                   <div className="flex items-baseline gap-4 mb-4">
                     <span className="text-4xl sm:text-5xl font-black text-[var(--gold-end)] tabular-nums leading-none">
@@ -51,19 +53,21 @@ export const PageHero: React.FC<PageHeroProps> = ({
                 <h1 className="text-[28px] sm:text-4xl lg:text-[52px] font-black tracking-tight leading-[1.06] text-[var(--text-primary)]">
                   {t(title.ar, title.en)}
                 </h1>
-                {lead && (
+                {leadText ? (
                   <p className="mt-5 text-[14px] sm:text-base lg:text-lg leading-relaxed text-[var(--text-secondary)] max-w-xl border-s-2 border-[var(--gold-mid)]/30 ps-4">
-                    {t(lead.ar, lead.en)}
+                    {leadText}
                   </p>
-                )}
+                ) : null}
               </Reveal>
             </div>
             {photo && (
               <div className="lg:col-span-5">
-                <Reveal delay={0.1} direction="start">
+                {/* This photo is the LCP element on every interior page. */}
+                <Reveal trigger="mount" delay={0.1} direction="start">
                   <Photo
                     slot={photo}
                     ratio="landscape"
+                    priority
                     curtain
                     className="rounded-2xl shadow-lg"
                     sizes="(max-width:1024px) 100vw, 40vw"
@@ -74,7 +78,7 @@ export const PageHero: React.FC<PageHeroProps> = ({
           </div>
         ) : (
           <>
-            <Reveal className="mt-8 lg:mt-14 max-w-3xl">
+            <Reveal trigger="mount" className="mt-8 lg:mt-14 max-w-3xl">
               {index && (
                 <div className="flex items-baseline gap-4 mb-4">
                   <span className="text-4xl sm:text-5xl font-black text-[var(--gold-end)] tabular-nums leading-none">
@@ -86,17 +90,18 @@ export const PageHero: React.FC<PageHeroProps> = ({
               <h1 className="text-[28px] sm:text-4xl lg:text-[52px] font-black tracking-tight leading-[1.06] text-[var(--text-primary)]">
                 {t(title.ar, title.en)}
               </h1>
-              {lead && (
+              {leadText ? (
                 <p className="mt-5 text-[14px] sm:text-base lg:text-lg leading-relaxed text-[var(--text-secondary)] max-w-2xl border-s-2 border-[var(--gold-mid)]/30 ps-4">
-                  {t(lead.ar, lead.en)}
+                  {leadText}
                 </p>
-              )}
+              ) : null}
             </Reveal>
             {photo && (
-              <Reveal delay={0.12} className="mt-10 lg:mt-14">
+              <Reveal trigger="mount" delay={0.12} className="mt-10 lg:mt-14">
                 <Photo
                   slot={photo}
                   ratio="wide"
+                  priority
                   curtain
                   className="rounded-2xl shadow-lg"
                   sizes="100vw"

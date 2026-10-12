@@ -1,0 +1,23 @@
+[
+  {
+    "id": 15,
+    "name": "laser",
+    "slug": "laser",
+    "description": "",
+    "parent": 0,
+    "count": 4,
+    "image": {
+      "id": 685,
+      "src": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal.jpg",
+      "thumbnail": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-300x300.jpg",
+      "srcset": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal.jpg 700w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-300x200.jpg 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-18x12.jpg 18w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-600x400.jpg 600w",
+      "sizes": "(max-width: 700px) 100vw, 700px",
+      "thumbnail_srcset": "https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-300x300.jpg 300w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-150x150.jpg 150w, https://www.shamahclinics.com/wp-content/uploads/2025/10/Laser-Hair-Removal-100x100.jpg 100w",
+      "thumbnail_sizes": "(max-width: 300px) 100vw, 300px",
+      "name": "Laser Hair Removal",
+      "alt": "Laser Hair Removal"
+    },
+    "review_count": 0,
+    "permalink": "https://www.shamahclinics.com/product-category/laser/"
+  }
+]

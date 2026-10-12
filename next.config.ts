@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // ISR pages keep serving from cache while the next render refreshes WordPress,
+  // so no visitor waits on the CMS host.
+  expireTime: 3600,
+  // Content comes from the committed snapshot during prerender, so this is only
+  // a safety net for an unusually heavy page — not a wait on WordPress.
+  staticPageGenerationTimeout: 120,
+  experimental: {
+    // Modest prerender concurrency keeps local CPU/memory predictable.
+    cpus: 2,
+  },
   async redirects() {
     return [
       {
@@ -20,14 +30,6 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [
-      { source: "/en", destination: "/" },
-      { source: "/en/:path*", destination: "/:path*" },
-      { source: "/ar", destination: "/" },
-      { source: "/ar/:path*", destination: "/:path*" },
-    ];
-  },
   images: {
     // Serve modern formats for all raster photography.
     formats: ["image/avif", "image/webp"],
@@ -39,6 +41,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "shamahclinics.com",
         pathname: "/images/**",
+      },
+      {
+        protocol: "https",
+        hostname: "www.shamahclinics.com",
+        pathname: "/wp-content/**",
       },
     ],
   },

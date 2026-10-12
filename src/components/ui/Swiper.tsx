@@ -76,14 +76,13 @@ export const Swiper: React.FC<SwiperProps> = ({
 
   const perView = usePerView(mobilePerView, tabletPerView, desktopPerView);
 
-  const [index, setIndex] = useState(0);
+  const [rawIndex, setRawIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
   const maxIndex = Math.max(0, slides.length - perView);
-
-  useEffect(() => {
-    setIndex((current) => Math.min(current, maxIndex));
-  }, [maxIndex]);
+  // Derived, not synced by an effect: a resize can shrink maxIndex mid-render.
+  const index = Math.min(rawIndex, maxIndex);
+  const goTo = (next: number) => setRawIndex(Math.max(0, Math.min(next, maxIndex)));
 
   useEffect(() => {
     if (reduce || paused || autoPlayMs === 0 || maxIndex === 0) {
@@ -91,7 +90,10 @@ export const Swiper: React.FC<SwiperProps> = ({
     }
 
     const id = setInterval(() => {
-      setIndex((current) => (current >= maxIndex ? 0 : current + 1));
+      setRawIndex((current) => {
+        const clamped = Math.min(current, maxIndex);
+        return clamped >= maxIndex ? 0 : clamped + 1;
+      });
     }, autoPlayMs);
 
     return () => clearInterval(id);
@@ -145,7 +147,7 @@ export const Swiper: React.FC<SwiperProps> = ({
         <div className="mt-5 flex items-center justify-center gap-4">
           {showArrows && (
             <button
-              onClick={() => setIndex((current) => Math.max(0, current - 1))}
+              onClick={() => goTo(index - 1)}
               disabled={index === 0}
               aria-label={t("السابق", "Previous")}
               className="p-2 rounded-full border border-[var(--gold-border)]/60 text-[var(--text-secondary)] hover:text-[var(--gold-end)] hover:border-[var(--gold-mid)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
@@ -159,16 +161,18 @@ export const Swiper: React.FC<SwiperProps> = ({
               {Array.from({ length: maxIndex + 1 }).map((_, i) => (
                 <button
                   key={i}
-                  onClick={() => setIndex(i)}
+                  onClick={() => goTo(i)}
                   aria-label={t(
                     `الانتقال إلى المجموعة ${i + 1}`,
                     `Go to group ${i + 1}`,
                   )}
                   aria-current={i === index}
-                  className={`h-2 rounded-full transition-[width,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
+                  // Padding + background-clip keeps the dot the same size and the
+                  // row the same height while the tap target reaches 24x24.
+                  className={`-m-2 h-6 p-2 bg-clip-content rounded-full transition-[width,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
                     i === index
-                      ? "w-6 bg-[var(--gold-mid)]"
-                      : "w-2 bg-[var(--gold-border)] hover:bg-[var(--gold-mid)]/60"
+                      ? "w-10 bg-[var(--gold-mid)]"
+                      : "w-6 bg-[var(--gold-border)] hover:bg-[var(--gold-mid)]/60"
                   }`}
                 />
               ))}
@@ -177,9 +181,7 @@ export const Swiper: React.FC<SwiperProps> = ({
 
           {showArrows && (
             <button
-              onClick={() =>
-                setIndex((current) => Math.min(maxIndex, current + 1))
-              }
+              onClick={() => goTo(index + 1)}
               disabled={index === maxIndex}
               aria-label={t("التالي", "Next")}
               className="p-2 rounded-full border border-[var(--gold-border)]/60 text-[var(--text-secondary)] hover:text-[var(--gold-end)] hover:border-[var(--gold-mid)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"

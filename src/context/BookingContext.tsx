@@ -1,11 +1,20 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
-import { BookingModal } from "@/components/booking/BookingModal";
+import dynamic from "next/dynamic";
+
+// Split out of the initial bundle: the wizard is only reached by a click, and its
+// framer-motion + form code was otherwise parsed on every page of the site.
+const BookingModal = dynamic(
+  () => import("@/components/booking/BookingModal").then((m) => m.BookingModal),
+  { ssr: false, loading: () => null },
+);
 
 interface BookingOptions {
   treatmentId?: string;
   specialistId?: string;
+  /** Offer the booking started from, shown prefilled in the summary. */
+  offerName?: { ar: string; en: string };
 }
 
 interface BookingContextType {
@@ -32,13 +41,16 @@ export const BookingProvider: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <BookingContext.Provider value={value}>
       {children}
-      <BookingModal
-        key={bookingSession}
-        isOpen={isOpen}
-        onClose={close}
-        preSelectedTreatmentId={options.treatmentId}
-        preSelectedSpecialistId={options.specialistId}
-      />
+      {bookingSession > 0 ? (
+        <BookingModal
+          key={bookingSession}
+          isOpen={isOpen}
+          onClose={close}
+          preSelectedTreatmentId={options.treatmentId}
+          preSelectedSpecialistId={options.specialistId}
+          preSelectedOffer={options.offerName}
+        />
+      ) : null}
     </BookingContext.Provider>
   );
 };

@@ -6,154 +6,212 @@ import { treatmentsData, type Treatment } from "@/data/treatments";
 import { faqData, type FaqItem } from "@/data/faq";
 import { type Article } from "@/data/journal";
 import { images } from "./images";
+import { getLocalizedHref, type Locale } from "./locale";
+import { routeLang } from "./route-lang";
 
 type Json = Record<string, unknown>;
 
 const logoUrl = `${SITE_URL}${images.logo}`;
+const OG_LOCALE: Record<Locale, string> = { ar: "ar_EG", en: "en_US" };
 
-/** Root Organization / MedicalBusiness schema, emitted sitewide. */
-export function organizationJsonLd(): Json {
+/** Resolve an image URL that may already be absolute (e.g. WordPress media). */
+function absUrl(u: string): string {
+  return /^https?:\/\//i.test(u) ? u : `${SITE_URL}${u}`;
+}
+
+function localized(path: string, lang: Locale): string {
+  return `${SITE_URL}${getLocalizedHref(path, lang)}`;
+}
+
+/** The name of an entity in the rendered language, other language as alias. */
+function names(label: { ar: string; en: string }, lang: Locale) {
+  return { name: label[lang], alternateName: label[lang === "ar" ? "en" : "ar"] };
+}
+
+/**
+ * Root MedicalBusiness / LocalBusiness node, emitted sitewide. It carries all
+ * three branches so a single graph entry describes the whole clinic group.
+ */
+export async function organizationJsonLd(): Promise<Json> {
+  const lang = await routeLang();
+  const brand = names(siteConfig.brand.name, lang);
   return {
     "@context": "https://schema.org",
-    "@type": "MedicalClinic",
+    "@type": ["MedicalClinic", "LocalBusiness"],
     "@id": `${SITE_URL}/#organization`,
-    name: clinicData.name.ar,
-    alternateName: clinicData.name.en,
+    ...brand,
     url: SITE_URL,
     logo: logoUrl,
     image: `${SITE_URL}${images.interiors.reception.src}`,
-    description:
-      siteConfig.metadata.description,
+    description: lang === "ar" ? siteConfig.metadata.description : siteConfig.metadata.descriptionEn,
     telephone: clinicData.phone,
     email: clinicData.email,
-    priceRange: "EGP 850 - 6850",
+    priceRange: "EGP 500 - 6850",
     medicalSpecialty: ["Dermatology", "CosmeticMedicine", "LaserTreatment"],
+    areaServed: [
+      { "@type": "City", name: lang === "ar" ? "القاهرة" : "Cairo" },
+      { "@type": "City", name: lang === "ar" ? "الجيزة" : "Giza" },
+    ],
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      opens: "10:00",
+      closes: "22:00",
+    },
+    branch: branchesData.map((b) => branchNode(b, lang)),
     availableService: treatmentsData.map((t) => ({
       "@type": "MedicalProcedure",
-      name: t.name.ar,
-      alternateName: t.name.en,
-      url: `${SITE_URL}/treatments/${t.id}`,
+      ...names(t.name, lang),
+      url: localized(`/treatments/${t.id}`, lang),
     })),
-    areaServed: [
-      { "@type": "City", name: "Cairo" },
-      { "@type": "City", name: "Giza" },
-    ],
   };
 }
 
-/** Per-branch MedicalClinic node with geo-less postal address. */
-export function branchJsonLd(branch: (typeof branchesData)[number]): Json {
+function branchNode(branch: (typeof branchesData)[number], lang: Locale): Json {
   return {
-    "@context": "https://schema.org",
-    "@type": "MedicalClinic",
-    "@id": `${SITE_URL}/branches/${branch.id}#clinic`,
-    name: `${clinicData.name.ar} — ${branch.name.ar}`,
-    alternateName: branch.name.en,
-    url: `${SITE_URL}/branches/${branch.id}`,
+    "@type": ["MedicalClinic", "LocalBusiness"],
+    "@id": `${localized(`/branches/${branch.id}`, lang)}#clinic`,
+    name: `${siteConfig.brand.name[lang]} — ${branch.name[lang]}`,
+    alternateName: branch.name[lang === "ar" ? "en" : "ar"],
+    url: localized(`/branches/${branch.id}`, lang),
     image: `${SITE_URL}${branch.image.src}`,
     telephone: branch.phone,
     parentOrganization: { "@id": `${SITE_URL}/#organization` },
     address: {
       "@type": "PostalAddress",
-      streetAddress: branch.address.ar,
-      addressLocality: branch.area.ar,
+      streetAddress: branch.address[lang],
+      addressLocality: branch.area[lang],
       addressCountry: "EG",
-    },
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ],
-      opens: "10:00",
-      closes: "22:00",
     },
     medicalSpecialty: ["Dermatology", "CosmeticMedicine", "LaserTreatment"],
   };
 }
 
-export function breadcrumbJsonLd(
-  trail: { name: string; path: string }[]
-): Json {
+/** Per-branch node used on a branch detail page. */
+export async function branchJsonLd(branch: (typeof branchesData)[number]): Promise<Json> {
+  const lang = await routeLang();
+  return {
+    ...branchNode(branch, lang),
+    "@context": "https://schema.org",
+    description: branch.intro[lang],
+    openingHoursSpecification: {
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+      opens: "10:00",
+      closes: "22:00",
+    },
+  };
+}
+
+export async function breadcrumbJsonLd(
+  trail: { name: { ar: string; en: string } | string; path: string }[],
+): Promise<Json> {
+  const lang = await routeLang();
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: trail.map((c, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      name: c.name,
-      item: `${SITE_URL}${c.path}`,
+      name: typeof c.name === "string" ? c.name : c.name[lang],
+      item: localized(c.path, lang),
     })),
   };
 }
 
-export function faqJsonLd(items: FaqItem[] = faqData): Json {
+export async function faqJsonLd(items: FaqItem[] = faqData): Promise<Json> {
+  const lang = await routeLang();
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: items.map((f) => ({
       "@type": "Question",
-      name: f.question.ar,
-      acceptedAnswer: { "@type": "Answer", text: f.answer.ar },
+      name: f.question[lang],
+      acceptedAnswer: { "@type": "Answer", text: f.answer[lang] },
     })),
   };
 }
 
-export function articleJsonLd(article: Article): Json {
+export async function articleJsonLd(article: Article): Promise<Json> {
+  const lang = await routeLang();
+  const path = `/blogs/${article.slug}`;
   return {
     "@context": "https://schema.org",
     "@type": "Article",
-    headline: article.title.ar,
-    description: article.excerpt.ar,
-    image: `${SITE_URL}${article.image.src}`,
+    headline: article.title[lang],
+    description: article.excerpt[lang],
+    image: absUrl(article.image.src),
     datePublished: article.isoDate,
-    dateModified: article.isoDate,
-    inLanguage: "ar-EG",
-    author: { "@type": "Organization", name: clinicData.name.ar },
+    dateModified: article.modifiedIso || article.isoDate,
+    inLanguage: OG_LOCALE[lang],
+    author: { "@type": "Organization", name: siteConfig.brand.name[lang] },
     publisher: {
       "@type": "Organization",
-      name: clinicData.name.ar,
+      name: siteConfig.brand.name[lang],
       logo: { "@type": "ImageObject", url: logoUrl },
     },
-    mainEntityOfPage: `${SITE_URL}/blogs/${article.slug}`,
+    mainEntityOfPage: localized(path, lang),
   };
 }
 
-export function serviceJsonLd(treatment: Treatment): Json {
+export async function serviceJsonLd(treatment: Treatment): Promise<Json> {
+  const lang = await routeLang();
+  const path = `/treatments/${treatment.id}`;
   return {
     "@context": "https://schema.org",
     "@type": "MedicalProcedure",
-    name: treatment.name.ar,
-    alternateName: treatment.name.en,
-    description: treatment.description.ar,
+    ...names(treatment.name, lang),
+    description: treatment.description[lang],
     image: `${SITE_URL}${treatment.image.src}`,
-    url: `${SITE_URL}/treatments/${treatment.id}`,
+    url: localized(path, lang),
     procedureType: "https://schema.org/CosmeticProcedure",
+    inLanguage: OG_LOCALE[lang],
     provider: { "@id": `${SITE_URL}/#organization` },
     offers: {
       "@type": "Offer",
       price: treatment.priceStartingAt,
       priceCurrency: "EGP",
       availability: "https://schema.org/InStock",
-      url: `${SITE_URL}/treatments/${treatment.id}`,
+      url: localized(path, lang),
     },
   };
 }
 
-export function webSiteJsonLd(): Json {
+export async function webSiteJsonLd(): Promise<Json> {
+  const lang = await routeLang();
   return {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "@id": `${SITE_URL}/#website`,
     url: SITE_URL,
-    name: clinicData.name.ar,
-    alternateName: clinicData.name.en,
-    inLanguage: ["ar-EG", "en"],
+    ...names(siteConfig.brand.name, lang),
+    inLanguage: ["ar-EG", "en-US"],
     publisher: { "@id": `${SITE_URL}/#organization` },
+  };
+}
+
+/** WooCommerce offer -> schema.org Offer (price converted from minor units). */
+export async function offerJsonLd(o: {
+  slug: string;
+  name: { ar: string; en: string };
+  price: number;
+  currency: string;
+  image: string | null;
+  description?: string;
+}): Promise<Json> {
+  const lang = await routeLang();
+  const path = `/offers/${o.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "Offer",
+    ...names(o.name, lang),
+    description: o.description || o.name[lang],
+    price: o.price,
+    priceCurrency: o.currency,
+    availability: "https://schema.org/InStock",
+    image: o.image ? absUrl(o.image) : undefined,
+    url: localized(path, lang),
+    inLanguage: OG_LOCALE[lang],
+    seller: { "@id": `${SITE_URL}/#organization` },
   };
 }
