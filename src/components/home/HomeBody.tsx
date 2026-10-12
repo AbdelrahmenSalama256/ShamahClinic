@@ -42,6 +42,9 @@ const Section: React.FC<{
   </section>
 );
 
+/** Every card list on Home shows the first three; the rest live on their page. */
+const HOME_CARDS = 3;
+
 const DifferentiatorItem: React.FC<{
   n: string;
   title: string;
@@ -149,7 +152,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({ offers, articles, branches }
                 autoPlayMs={5000}
                 showArrows
                 showDots
-                slides={differentiators.map((d, i) => (
+                slides={differentiators.slice(0, HOME_CARDS).map((d, i) => (
                   <Reveal key={d.n} delay={i * 0.08}>
                     <DifferentiatorItem
                       n={d.n}
@@ -160,11 +163,16 @@ export const HomeBody: React.FC<HomeBodyProps> = ({ offers, articles, branches }
                 ))}
               />
             </div>
+            {differentiators.length > HOME_CARDS && (
+              <GoldLink href="/about" withArrow size="sm" className="mt-5">
+                {t("كل الأسباب", "All reasons")}
+              </GoldLink>
+            )}
           </div>
         </div>
       </Section>
 
-      {/* 02 — Seasonal offers (live WordPress/WooCommerce, max 4) */}
+      {/* 02 — Seasonal offers (live WordPress/WooCommerce, max 3) */}
       <Section id="offers" className="bg-[var(--bg-secondary)]/60">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionHeading
@@ -180,7 +188,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({ offers, articles, branches }
           </GoldLink>
         </div>
         <div className="mt-6 lg:mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-          {offers.slice(0, 4).map((o, i) => (
+          {offers.slice(0, HOME_CARDS).map((o, i) => (
             <Reveal className="h-full min-w-0" key={o.id} delay={i * 0.08}>
               <OfferCard offer={o} />
             </Reveal>
@@ -205,7 +213,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({ offers, articles, branches }
         </div>
 
         <div className="mt-6 lg:mt-10 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
-          {branches.map((b, i) => (
+          {branches.slice(0, HOME_CARDS).map((b, i) => (
             <Reveal key={b.id} delay={i * 0.08} className="h-full min-w-0">
               <div className="group h-full flex flex-col rounded-2xl overflow-hidden bg-[var(--bg-card)] border border-[var(--gold-border)]/50 hover:border-[var(--gold-mid)]/60 shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)]">
                 <Link
@@ -290,7 +298,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({ offers, articles, branches }
           </GoldLink>
         </div>
         <div className="mt-6 lg:mt-10 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
-          {articles.slice(0, 3).map((a) => (
+          {articles.slice(0, HOME_CARDS).map((a) => (
             <ArticleCard key={a.slug} article={a} />
           ))}
         </div>

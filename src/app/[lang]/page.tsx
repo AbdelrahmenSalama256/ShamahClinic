@@ -26,7 +26,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   const lang = await routeLang();
   const [home, treatments, hero] = await Promise.all([
-    getHome({ offers: 4, articles: 3, lang }),
+    getHome({ offers: 4, articles: 4, lang }),
     getMergedTreatments(),
     getHeroPhotos(),
   ]);
