@@ -2,10 +2,11 @@ import { SITE_URL } from "./site";
 import { siteConfig } from "@/config/site";
 import { clinicData } from "@/data/clinic";
 import type { BranchDetail } from "@/data/branches";
-import { treatmentsData, type Treatment } from "@/data/treatments";
+import type { Treatment } from "@/data/treatments";
 import { faqData, type FaqItem } from "@/data/faq";
 import { type Article } from "@/data/journal";
 import { getBranchList } from "./wp";
+import { getMergedTreatments } from "./wp/treatments";
 import { images } from "./images";
 import { getLocalizedHref, type Locale } from "./locale";
 import { routeLang } from "./route-lang";
@@ -60,7 +61,7 @@ export async function organizationJsonLd(): Promise<Json> {
       closes: "22:00",
     },
     branch: (await getBranchList()).map((b) => branchNode(b, lang)),
-    availableService: treatmentsData.map((t) => ({
+    availableService: (await getMergedTreatments()).map((t) => ({
       "@type": "MedicalProcedure",
       ...names(t.name, lang),
       url: localized(`/treatments/${t.id}`, lang),

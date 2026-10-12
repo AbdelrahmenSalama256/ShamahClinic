@@ -10,11 +10,13 @@ import { ResultCaseCard } from "@/components/cards/ResultCaseCard";
 import { GoldLink } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
 import { resultsData } from "@/data/results";
-import { treatmentsData } from "@/data/treatments";
+import type { Treatment } from "@/data/treatments";
 import { images } from "@/lib/images";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
-export const ResultsClient: React.FC = () => {
+export const ResultsClient: React.FC<{ treatments: Treatment[] }> = ({
+  treatments,
+}) => {
   const { t, language, formatNumber } = useLanguage();
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
 
@@ -86,7 +88,7 @@ export const ResultsClient: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--gold-border)]/30 bg-[var(--bg-card)]">
-                  {treatmentsData.map((x) => (
+                  {treatments.map((x) => (
                     <tr
                       key={x.id}
                       className="hover:bg-[var(--bg-secondary)]/40 transition-colors duration-300"

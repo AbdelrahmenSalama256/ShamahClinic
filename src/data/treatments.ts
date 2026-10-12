@@ -20,6 +20,9 @@ export interface Treatment {
   featured?: boolean;
 }
 
+/** The booking and contact pickers only ever show these three fields. */
+export type TreatmentOption = Pick<Treatment, "id" | "name" | "priceStartingAt">;
+
 export const treatmentCategories: { id: TreatmentCategory | "all"; name: { ar: string; en: string } }[] = [
   { id: "all", name: { ar: "جميع الخدمات", en: "All Treatments" } },
   { id: "laser", name: { ar: "الليزر", en: "Laser" } },

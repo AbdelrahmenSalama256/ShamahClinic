@@ -10,21 +10,14 @@ import { TreatmentCard } from "@/components/cards/TreatmentCard";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Treatment } from "@/data/treatments";
-import { treatmentsData } from "@/data/treatments";
 import { Clock, Repeat, Wallet, Check } from "lucide-react";
 
-export const TreatmentDetailClient: React.FC<{ treatment: Treatment }> = ({
-  treatment,
-}) => {
+export const TreatmentDetailClient: React.FC<{
+  treatment: Treatment;
+  /** Cards WordPress names for the "related services" strip. */
+  related: Treatment[];
+}> = ({ treatment, related }) => {
   const { t, language, formatNumber } = useLanguage();
-
-  const related = treatmentsData
-    .filter(
-      (x) =>
-        x.id !== treatment.id &&
-        (x.category === treatment.category || x.featured),
-    )
-    .slice(0, 3);
 
   const facts = [
     {

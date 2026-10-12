@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ContactClient } from "@/components/pages/ContactClient";
 import { getBranchList } from "@/lib/wp";
+import { getMergedTreatments } from "@/lib/wp/treatments";
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -18,7 +19,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ContactPage() {
-  const branches = await getBranchList();
+  const [branches, treatments] = await Promise.all([
+    getBranchList(),
+    getMergedTreatments(),
+  ]);
   return (
     <>
       <JsonLd
@@ -27,7 +31,7 @@ export default async function ContactPage() {
           { name: { ar: "تواصلي", en: "Contact" }, path: "/contact" },
         ])}
       />
-      <ContactClient branches={branches} />
+      <ContactClient branches={branches} services={treatments} />
     </>
   );
 }

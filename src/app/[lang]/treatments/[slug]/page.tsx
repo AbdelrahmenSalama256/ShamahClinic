@@ -4,7 +4,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, serviceJsonLd } from "@/lib/jsonld";
 import { treatmentsData } from "@/data/treatments";
-import { getMergedTreatment } from "@/lib/wp/treatments";
+import { getMergedTreatment, getMergedTreatments } from "@/lib/wp/treatments";
 import { TreatmentDetailClient } from "@/components/pages/TreatmentDetailClient";
 
 export const revalidate = 300;
@@ -32,8 +32,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function TreatmentDetailPage({ params }: Props) {
   const { slug } = await params;
-  const treatment = await getMergedTreatment(slug);
+  const all = await getMergedTreatments();
+  const treatment = all.find((t) => t.id === slug);
   if (!treatment) notFound();
+
+  const related = all
+    .filter(
+      (x) =>
+        x.id !== treatment.id && (x.category === treatment.category || x.featured),
+    )
+    .slice(0, 3);
 
   return (
     <>
@@ -47,7 +55,7 @@ export default async function TreatmentDetailPage({ params }: Props) {
           ]),
         ]}
       />
-      <TreatmentDetailClient treatment={treatment} />
+      <TreatmentDetailClient treatment={treatment} related={related} />
     </>
   );
 }

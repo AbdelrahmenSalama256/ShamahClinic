@@ -17,6 +17,7 @@ import { FloatingActions } from "@/components/ui/FloatingActions";
 import { CtaBand } from "@/components/ui/CtaBand";
 import type { NavData } from "@/lib/wp/nav";
 import type { BranchLite } from "@/data/branches";
+import type { TreatmentOption } from "@/data/treatments";
 
 /**
  * Application shell: providers, persistent chrome (navbar / footer / floating
@@ -29,7 +30,8 @@ export const SiteShell: React.FC<{
   children: React.ReactNode;
   nav: NavData;
   branches: BranchLite[];
-}> = ({ children, nav, branches }) => {
+  treatments: TreatmentOption[];
+}> = ({ children, nav, branches, treatments }) => {
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
@@ -37,7 +39,7 @@ export const SiteShell: React.FC<{
     <MotionConfig reducedMotion="user">
       <LanguageProvider>
         <ThemeProvider>
-          <BookingProvider branches={branches}>
+          <BookingProvider branches={branches} treatments={treatments}>
             <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
               <Navbar nav={nav} />
 

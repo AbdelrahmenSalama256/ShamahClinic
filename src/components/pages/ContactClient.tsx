@@ -9,7 +9,7 @@ import { Photo } from "@/components/ui/Photo";
 import { whatsappHref } from "@/components/shared/Actions";
 import { clinicData } from "@/data/clinic";
 import type { BranchDetail } from "@/data/branches";
-import { treatmentsData } from "@/data/treatments";
+import type { TreatmentOption } from "@/data/treatments";
 import { images } from "@/lib/images";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,9 +23,11 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-export const ContactClient: React.FC<{ branches: BranchDetail[] }> = ({
-  branches,
-}) => {
+export const ContactClient: React.FC<{
+  branches: BranchDetail[];
+  /** The service picker in the lead form, named by WordPress page 696. */
+  services: TreatmentOption[];
+}> = ({ branches, services }) => {
   const { t, language } = useLanguage();
   const { openBooking } = useBooking();
 
@@ -91,7 +93,7 @@ export const ContactClient: React.FC<{ branches: BranchDetail[] }> = ({
     return Object.keys(errs).length === 0;
   };
 
-  const selectedServices = treatmentsData.filter((treatment) =>
+  const selectedServices = services.filter((treatment) =>
     form.services.includes(treatment.id),
   );
   const serviceNames = selectedServices
@@ -458,7 +460,7 @@ export const ContactClient: React.FC<{ branches: BranchDetail[] }> = ({
                           style={{ transformOrigin: "top center" }}
                           className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto rounded-2xl border border-[var(--gold-border)]/50 bg-white shadow-2xl p-1.5"
                         >
-                          {treatmentsData.map((treatment) => {
+                          {services.map((treatment) => {
                             const isChecked = form.services.includes(
                               treatment.id,
                             );

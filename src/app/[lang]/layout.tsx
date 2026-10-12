@@ -11,6 +11,7 @@ import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
 import { getNav } from "@/lib/wp/nav";
 import { getBranchList } from "@/lib/wp";
+import { getMergedTreatments } from "@/lib/wp/treatments";
 
 const readexPro = Readex_Pro({
   subsets: ["arabic"],
@@ -94,7 +95,11 @@ export default async function RootLayout({
   const lang = normalizeLang(segment);
   if (!lang) notFound();
 
-  const [nav, branches] = await Promise.all([getNav(), getBranchList()]);
+  const [treatments, branches] = await Promise.all([
+    getMergedTreatments(),
+    getBranchList(),
+  ]);
+  const nav = await getNav(treatments);
 
   return (
     <html
@@ -110,7 +115,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <JsonLd data={await Promise.all([organizationJsonLd(), webSiteJsonLd()])} />
-        <SiteShell nav={nav} branches={branches}>
+        <SiteShell nav={nav} branches={branches} treatments={treatments}>
           {children}
         </SiteShell>
       </body>

@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { BranchLite } from "@/data/branches";
+import type { TreatmentOption } from "@/data/treatments";
 
 // Split out of the initial bundle: the wizard is only reached by a click, and its
 // framer-motion + form code was otherwise parsed on every page of the site.
@@ -27,7 +28,8 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined);
 export const BookingProvider: React.FC<{
   children: React.ReactNode;
   branches: BranchLite[];
-}> = ({ children, branches }) => {
+  treatments: TreatmentOption[];
+}> = ({ children, branches, treatments }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [bookingSession, setBookingSession] = useState(0);
   const [options, setOptions] = useState<BookingOptions>({});
@@ -51,6 +53,7 @@ export const BookingProvider: React.FC<{
           isOpen={isOpen}
           onClose={close}
           branches={branches}
+          treatments={treatments}
           preSelectedTreatmentId={options.treatmentId}
           preSelectedSpecialistId={options.specialistId}
           preSelectedOffer={options.offerName}

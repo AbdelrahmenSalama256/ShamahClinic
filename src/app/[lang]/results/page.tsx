@@ -3,6 +3,9 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ResultsClient } from "@/components/pages/ResultsClient";
+import { getMergedTreatments } from "@/lib/wp/treatments";
+
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -17,6 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ResultsPage() {
+  const treatments = await getMergedTreatments();
   return (
     <>
       <JsonLd
@@ -25,7 +29,7 @@ export default async function ResultsPage() {
           { name: { ar: "النتائج", en: "Results" }, path: "/results" },
         ])}
       />
-      <ResultsClient />
+      <ResultsClient treatments={treatments} />
     </>
   );
 }

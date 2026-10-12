@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { clinicData } from "@/data/clinic";
 import type { BranchLite } from "@/data/branches";
-import { treatmentsData } from "@/data/treatments";
+import type { TreatmentOption } from "@/data/treatments";
 import { specialistsData } from "@/data/specialists";
 import {
   X,
@@ -25,6 +25,8 @@ interface BookingModalProps {
   onClose: () => void;
   /** The branch list, from the WordPress homepage office blocks. */
   branches: BranchLite[];
+  /** The service picker: names WordPress publishes, prices it does not. */
+  treatments: TreatmentOption[];
   preSelectedTreatmentId?: string;
   preSelectedSpecialistId?: string;
   preSelectedOffer?: { ar: string; en: string };
@@ -37,6 +39,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   isOpen,
   onClose,
   branches,
+  treatments,
   preSelectedTreatmentId,
   preSelectedSpecialistId,
   preSelectedOffer,
@@ -46,9 +49,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>(() => {
     return preSelectedTreatmentId &&
-      treatmentsData.some((treatment) => treatment.id === preSelectedTreatmentId)
+      treatments.some((treatment) => treatment.id === preSelectedTreatmentId)
       ? [preSelectedTreatmentId]
-      : [treatmentsData[0].id];
+      : [treatments[0]?.id ?? ""];
   });
   const [selectedBranchId, setSelectedBranchId] = useState<string>(
     branches[0]?.id ?? "",
@@ -93,7 +96,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
-  const selectedTreatments = treatmentsData.filter((treatment) =>
+  const selectedTreatments = treatments.filter((treatment) =>
     selectedTreatmentIds.includes(treatment.id),
   );
   const currentBranch =
@@ -397,7 +400,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {treatmentsData.map((item) => {
+                    {treatments.map((item) => {
                       const isSelected = selectedTreatmentIds.includes(item.id);
                       return (
                         <button
