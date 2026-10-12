@@ -3,6 +3,11 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { AboutClient } from "@/components/pages/AboutClient";
+import { getAbout } from "@/lib/wp/about";
+import { getBranchList } from "@/lib/wp";
+import { getMergedTreatments } from "@/lib/wp/treatments";
+
+export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -17,6 +22,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
+  const [about, branches, treatments] = await Promise.all([
+    getAbout(),
+    getBranchList(),
+    getMergedTreatments(),
+  ]);
   return (
     <>
       <JsonLd
@@ -25,7 +35,11 @@ export default async function AboutPage() {
           { name: { ar: "من نحن", en: "About" }, path: "/about" },
         ])}
       />
-      <AboutClient />
+      <AboutClient
+        about={about}
+        branchCount={branches.length}
+        treatmentCount={treatments.length}
+      />
     </>
   );
 }

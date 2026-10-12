@@ -3,6 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeBody } from "@/components/home/HomeBody";
 import { getHome } from "@/lib/wp";
+import { getMergedTreatments } from "@/lib/wp/treatments";
 import { routeLang } from "@/lib/route-lang";
 import { offerToUI, cardToUIArticle } from "@/lib/wp/ui";
 
@@ -24,11 +25,17 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const lang = await routeLang();
-  const home = await getHome({ offers: 4, articles: 3, lang });
+  const [home, treatments] = await Promise.all([
+    getHome({ offers: 4, articles: 3, lang }),
+    getMergedTreatments(),
+  ]);
 
   return (
     <>
-      <HomeHero />
+      <HomeHero
+        branchCount={home.settings.branches}
+        treatmentCount={treatments.length}
+      />
       <HomeBody
         offers={home.offers.map(offerToUI)}
         articles={home.articles.map(cardToUIArticle)}

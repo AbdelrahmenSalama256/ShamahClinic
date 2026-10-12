@@ -52,7 +52,9 @@ export function sanitizeHtmlBody(html: string): string {
     allowedSchemes: ["http", "https", "mailto", "tel"],
     disallowedTagsMode: "discard",
   });
-  return mirrorHtml(rewriteInternalLinks(safe));
+  // Mirror first: the map is keyed by the absolute WordPress URL, and link
+  // rewriting would turn inline `src`s relative before they could be matched.
+  return rewriteInternalLinks(mirrorHtml(safe));
 }
 
 /** Turn absolute shamahclinics.com URLs into relative first-party paths. */

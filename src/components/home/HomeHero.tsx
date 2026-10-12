@@ -12,10 +12,13 @@ import { Photo } from "@/components/ui/Photo";
 import { Counter } from "@/components/ui/Counter";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
 import { images } from "@/lib/images";
-import { treatmentsData } from "@/data/treatments";
-import { verifiedFacts } from "@/data/facts";
 
-export const HomeHero: React.FC = () => {
+/** `branchCount` comes from the WordPress office blocks, `treatmentCount` from the
+ *  service list page 696 names; both counters therefore follow the dashboard. */
+export const HomeHero: React.FC<{
+  branchCount: number;
+  treatmentCount: number;
+}> = ({ branchCount, treatmentCount }) => {
   const { t, formatNumber } = useLanguage();
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
@@ -126,7 +129,7 @@ export const HomeHero: React.FC = () => {
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
                 <Counter
-                  value={verifiedFacts.branchCount}
+                  value={branchCount}
                   format={formatNumber}
                 />
               </dd>
@@ -136,7 +139,7 @@ export const HomeHero: React.FC = () => {
                 {t("خدمة تجميلية", "Treatments")}
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
-                <Counter value={treatmentsData.length} format={formatNumber} />
+                <Counter value={treatmentCount} format={formatNumber} />
               </dd>
             </div>
             <div>

@@ -8,10 +8,18 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Photo } from "@/components/ui/Photo";
 import { GoldLink } from "@/components/shared/Actions";
 import { images } from "@/lib/images";
-import { verifiedFacts } from "@/data/facts";
-import { treatmentsData } from "@/data/treatments";
+import type { AboutContent } from "@/data/about";
 
-export const AboutClient: React.FC = () => {
+/**
+ * Copy comes from WordPress page 32 through `about`; the branch and treatment
+ * counters are the WordPress branch list and service list. The values block and
+ * the two teasers have no WordPress source and stay authored (docs/WIRING.md).
+ */
+export const AboutClient: React.FC<{
+  about: AboutContent;
+  branchCount: number;
+  treatmentCount: number;
+}> = ({ about, branchCount, treatmentCount }) => {
   const { t, formatNumber } = useLanguage();
 
   const values = [
@@ -41,69 +49,63 @@ export const AboutClient: React.FC = () => {
   return (
     <>
       <PageHero
-        title={{ ar: "من نحن", en: "About Shamah" }}
-        lead={{
-          ar: "عيادات شامه وجهة لطب التجميل والليزر والعناية بالبشرة في القاهرة والجيزة، تقوم على فكرة بسيطة: بشرة صحية بنتيجة طبيعية، وقرار طبي واضح بلا مبالغة.",
-          en: "Shamah Clinics is a destination for aesthetic medicine, laser and skincare in Cairo and Giza, built on a simple idea: healthy skin with natural results, and a clear medical decision without exaggeration.",
-        }}
+        title={about.title}
+        lead={about.lead}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/about", label: { ar: "من نحن", en: "About" } },
+          { href: "/about", label: about.title },
         ]}
         photo={images.interiors.reception}
       />
 
-      {/* Story — asymmetric editorial split */}
-      <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
-          <div className="lg:col-span-6">
-            <SectionHeading
-              title={{ ar: "بدأنا من سؤال بسيط", en: "We started from a simple question" }}
-            />
-            <div className="mt-6 space-y-4 text-base leading-[1.9] text-[var(--text-secondary)]">
-              <Reveal>
-                <p>
-                  {t(
-                    "لماذا تخرج كثيرات من عيادات التجميل بنتيجة لا تشبههن؟ كان هذا سؤالنا الأول. الإجابة عندنا أن التجميل الناجح لا يغيّر الملامح بل يرتاح بها الوجه، وأن كل بشرة حالة مستقلة تحتاج تقييماً لا قالباً جاهزاً.",
-                    "Why do many women leave aesthetic clinics with a result that does not look like them? That was our first question. Our answer is that successful aesthetics does not change features but lets the face rest, and that every skin is a unique case needing assessment, not a ready-made template."
-                  )}
-                </p>
-              </Reveal>
-              <Reveal delay={0.08}>
-                <p>
-                  {t(
-                    "من هذه الفكرة وُلدت عيادات شامه: طاقم طبي نسائي متخصص، أجهزة حديثة بمنتجات أصلية، وبروتوكول يبدأ دائماً باستشارة وتحليل مكتوب. اليوم نخدم عميلاتنا من ثلاثة فروع في القاهرة والجيزة.",
-                    "From this idea Shamah Clinics was born: a specialised all-female medical team, modern devices with authentic products, and a protocol that always begins with a consultation and a written analysis. Today we serve our clients from three branches across Cairo and Giza."
-                  )}
-                </p>
-              </Reveal>
-            </div>
+      {/* Story / Process — one editorial split per WordPress section */}
+      {about.sections.map((section, i) => (
+        <section
+          key={section.heading.en}
+          className={`py-5 lg:py-16 ${
+            i % 2 ? "bg-[var(--bg-secondary)]/60" : "bg-[var(--bg-primary)]"
+          }`}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+            <div className={section.image ? "lg:col-span-6" : "lg:col-span-12"}>
+              <SectionHeading title={section.heading} />
+              <div className="mt-6 space-y-4 text-base leading-[1.9] text-[var(--text-secondary)]">
+                {section.paragraphs.map((paragraph, p) => (
+                  <Reveal key={p} delay={p * 0.08}>
+                    <p>{t(paragraph.ar, paragraph.en)}</p>
+                  </Reveal>
+                ))}
+              </div>
 
-            {/* Real, verified figures only */}
-            <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-[var(--gold-border)]/50 pt-8">
-              <div>
-                <dt className="text-xs text-[var(--text-muted)]">{t("فرع", "Branches")}</dt>
-                <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(verifiedFacts.branchCount)}</span></dd>
+              {i === 0 ? (
+                <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-[var(--gold-border)]/50 pt-8">
+                  <div>
+                    <dt className="text-xs text-[var(--text-muted)]">{t("فرع", "Branches")}</dt>
+                    <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(branchCount)}</span></dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-[var(--text-muted)]">{t("خدمة", "Treatments")}</dt>
+                    <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(treatmentCount)}</span></dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-[var(--text-muted)]">{t("طاقم نسائي", "Female staff")}</dt>
+                    <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(100)}٪</span></dd>
+                  </div>
+                </dl>
+              ) : null}
+            </div>
+            {section.image ? (
+              <div className="lg:col-span-6">
+                <Reveal direction="start">
+                  <div className="rounded-3xl overflow-hidden">
+                    <Photo slot={section.image} ratio="landscape" curtain sizes="(max-width:1024px) 100vw, 45vw" />
+                  </div>
+                </Reveal>
               </div>
-              <div>
-                <dt className="text-xs text-[var(--text-muted)]">{t("خدمة", "Treatments")}</dt>
-                <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(treatmentsData.length)}</span></dd>
-              </div>
-              <div>
-                <dt className="text-xs text-[var(--text-muted)]">{t("طاقم نسائي", "Female staff")}</dt>
-                <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(100)}٪</span></dd>
-              </div>
-            </dl>
+            ) : null}
           </div>
-          <div className="lg:col-span-6">
-            <Reveal direction="start">
-              <div className="rounded-3xl overflow-hidden">
-                <Photo slot={images.interiors.consultation} ratio="landscape" curtain sizes="(max-width:1024px) 100vw, 45vw" />
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </section>
+        </section>
+      ))}
 
       {/* Values — numbered editorial list, not identical cards */}
       <section className="py-5 lg:py-16 bg-[var(--bg-secondary)]/60">
