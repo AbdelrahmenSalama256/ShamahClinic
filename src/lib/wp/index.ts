@@ -40,7 +40,9 @@ import type {
 } from "./types";
 import { siteConfig } from "@/config/site";
 import type { BranchDetail } from "@/data/branches";
+import type { PhotoSlot } from "@/lib/images";
 import { mergeBranches, parseOffices } from "./branches";
+import { heroPhotos } from "./hero";
 
 // Lists never carry `content` and never use `_embed`; images and term names are
 // hydrated from dedicated batched endpoints (see buildContext).
@@ -385,6 +387,30 @@ export async function getPage(slug: string): Promise<WithSeo<PageContent> | null
   const page = mapPage(enP, arP);
   const seo = await buildSeo(enP.link, arP?.link ?? null, page.title, { ar: "", en: "" }, null);
   return { item: page, seo };
+}
+
+/**
+ * A page body before sanitizing. The data team builds some sections with a page
+ * builder whose tags `sanitizeHtmlBody` discards (the homepage slider), so those
+ * are read from the original rendered body. Never sent to the browser as HTML —
+ * only parsed into images or text by a dedicated reader.
+ */
+async function getRawPageHtml(slug: string, lang: Lang = "en"): Promise<string> {
+  const decoded = safeDecode(slug);
+  const rel = `/wp/v2/pages?slug=${encodeURIComponent(decoded)}&_fields=${PAGE_DETAIL_FIELDS}`;
+  const row = await selectBySlug<WPPost>("pages-list", "pages", lang, decoded, rel);
+  return row?.content?.rendered || "";
+}
+
+/** Homepage hero backgrounds: the WordPress slider, or the authored photo if absent. */
+export async function getHeroPhotos(): Promise<PhotoSlot[]> {
+  let raw = "";
+  try {
+    raw = await getRawPageHtml("home");
+  } catch {
+    raw = "";
+  }
+  return heroPhotos(raw);
 }
 
 // ---------------------------------------------------------------------------

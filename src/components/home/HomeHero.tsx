@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   motion,
   useReducedMotion,
@@ -11,14 +11,57 @@ import { useLanguage } from "@/context/LanguageContext";
 import { Photo } from "@/components/ui/Photo";
 import { Counter } from "@/components/ui/Counter";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
-import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 
-/** `branchCount` comes from the WordPress office blocks, `treatmentCount` from the
- *  service list page 696 names; both counters therefore follow the dashboard. */
+/** How long each WordPress slide stays up before the next fades in. */
+const SLIDE_MS = 7000;
+
+/**
+ * The homepage slider published in WordPress (page 622), layered behind the hero
+ * copy. It is the same full-bleed cover photo the hero always had — no controls and
+ * no extra chrome; reduced motion simply keeps the first slide.
+ */
+function HeroBackdrop({ photos }: { photos: PhotoSlot[] }) {
+  const reduce = useReducedMotion();
+  const [index, setIndex] = useState(0);
+  useEffect(() => {
+    if (reduce || photos.length < 2) return;
+    const id = setInterval(() => setIndex((i) => (i + 1) % photos.length), SLIDE_MS);
+    return () => clearInterval(id);
+  }, [photos.length, reduce]);
+
+  return (
+    <>
+      {photos.map((photo, i) => (
+        <div
+          key={photo.src}
+          aria-hidden={i !== index}
+          className="absolute inset-0 transition-opacity duration-[1400ms] ease-out"
+          style={{ opacity: i === index ? 1 : 0 }}
+        >
+          <Photo
+            slot={photo}
+            ratio="hero"
+            priority={i === 0}
+            className="!aspect-auto !h-full w-full"
+            imgClassName="object-cover w-full h-full"
+            curtain
+            sizes="100vw"
+          />
+        </div>
+      ))}
+    </>
+  );
+}
+
+/** `photos` is the WordPress slider; `branchCount` comes from the homepage office
+ *  blocks and `treatmentCount` from the service list page 696 names, so all three
+ *  follow the dashboard. */
 export const HomeHero: React.FC<{
+  photos: PhotoSlot[];
   branchCount: number;
   treatmentCount: number;
-}> = ({ branchCount, treatmentCount }) => {
+}> = ({ photos, branchCount, treatmentCount }) => {
   const { t, formatNumber } = useLanguage();
   const reduce = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
@@ -37,15 +80,7 @@ export const HomeHero: React.FC<{
       {/* Full-bleed background image */}
       <div className="relative w-full min-h-[85vh] max-h-[880px] overflow-hidden flex">
         <motion.div style={{ y }} className="absolute inset-0">
-          <Photo
-            slot={images.hero}
-            ratio="hero"
-            priority
-            className="!aspect-auto !h-full w-full"
-            imgClassName="object-cover w-full h-full"
-            curtain
-            sizes="100vw"
-          />
+          <HeroBackdrop photos={photos} />
         </motion.div>
 
         {/* Gradient overlay: dark at bottom for text legibility, lighter at top to show the photo */}

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { WP_ORIGIN } from "./config";
 
 /**
  * WordPress serves its uploads as 0.9–2 MB PNGs from an origin that takes 4–6 s to
@@ -25,13 +26,25 @@ function load(): Record<string, string> {
   return map || {};
 }
 
+/**
+ * The map is keyed on the canonical media-library URL. WordPress prints some
+ * slider/attachment URLs protocol-relative and without the `www` the REST media
+ * host uses (`//shamahclinics.com/wp-content/uploads/2025/10/slide.png`), so both
+ * spellings have to reach the same entry.
+ */
+function canonicalKey(url: string): string {
+  const clean = url.trim();
+  const hit = clean.match(/^(?:https?:)?\/\/[^/]*(\/wp-content\/uploads\/.*)$/);
+  return hit ? `${WP_ORIGIN}${hit[1].split("?")[0]}` : clean.split("?")[0];
+}
+
 /** The locally mirrored copy of a WordPress upload URL, or the URL unchanged. */
 export function mirrorSrc(url: string): string;
 export function mirrorSrc(url: string | null): string | null;
 export function mirrorSrc(url: string | null): string | null {
   if (!url) return url;
-  const key = url.split("?")[0];
-  return load()[key] || url;
+  const key = canonicalKey(url);
+  return load()[key] || key;
 }
 
 /** Swap every WordPress upload src inside rendered post HTML. */

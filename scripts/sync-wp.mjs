@@ -308,12 +308,26 @@ function isUpload(url) {
   return typeof url === "string" && url.includes("/wp-content/uploads/");
 }
 
+/**
+ * Same canonical form the runtime mirror lookup uses: page builders print some
+ * upload URLs protocol-relative and without the `www` the media library uses, and
+ * those have to land on the same key as the REST `source_url`.
+ */
+function canonicalUpload(url) {
+  const clean = String(url).trim();
+  const hit = clean.match(/^(?:https?:)?\/\/[^/]*(\/wp-content\/uploads\/.*)$/);
+  return hit ? `${ORIGIN}${hit[1].split("?")[0]}` : clean.split("?")[0];
+}
+
 function contentImages(html) {
   const out = [];
   if (!html) return out;
-  for (const m of html.matchAll(/<img[^>]+src="([^"]+)"/g)) {
+  // `src` covers ordinary images; the slider keeps its backgrounds in
+  // `data-thumb`/`data-lazyload` on tags the sanitizer discards, so they need
+  // collecting here or the hero would load them straight off the CMS host.
+  for (const m of html.matchAll(/(?:<img[^>]+src|data-(?:thumb|lazyload))="([^"]+)"/g)) {
     // WP puts the size suffix in the src, e.g. `photo-1024x683.png`.
-    const src = m[1].replace(/\s.*$/, "");
+    const src = canonicalUpload(m[1].replace(/\s.*$/, ""));
     if (isUpload(src)) out.push(src);
   }
   return out;
@@ -334,11 +348,11 @@ function localNameFor(url) {
 async function collectMirrorCandidates({ posts, pages, media, products }) {
   const urls = new Set();
   for (const m of media) {
-    const src = chosenSrc(m.media_details?.sizes, m.source_url);
+    const src = canonicalUpload(chosenSrc(m.media_details?.sizes, m.source_url));
     if (isUpload(src)) urls.add(src);
   }
   for (const p of products) {
-    for (const img of p.images || []) if (isUpload(img?.src)) urls.add(img.src);
+    for (const img of p.images || []) if (isUpload(img?.src)) urls.add(canonicalUpload(img.src));
   }
   for (const list of [posts.en, posts.ar, pages.en, pages.ar]) {
     for (const item of list || []) {
