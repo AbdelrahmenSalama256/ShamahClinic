@@ -14,6 +14,8 @@ npm run build     # production build — reads ONLY data/wp/*.json
 npm run start     # serve the build
 npm run lint      # eslint (next lint was removed in Next 16)
 npm run typecheck # tsc --noEmit
+npx next start -p 3100 && BASE_URL=http://localhost:3100 node scripts/verify-render.mjs
+                  # asserts the authored menu and the 3-card Home limit from rendered HTML (AR + EN)
 ```
 
 ## Snapshot-first data flow
@@ -80,7 +82,10 @@ images and SEO fields — live at runtime, refreshed by ISR and `/api/revalidate
 `data/wp/*.json` as the build-time and outage fallback.
 
 The only content with no WordPress source is static, and it is listed row by row in
-`docs/inventory.md` under "Static content, not editable from the dashboard".
+`docs/inventory.md` under "Static content, not editable from the dashboard", with the
+per-element proof (endpoint, page/product id or HTML selector) in `docs/WIRING.md`.
+One deliberate exception: the header menu and the footer link group are authored in
+`src/data/nav.ts` by the client's decision, even though a WordPress menu exists.
 
 ## Revalidation
 
@@ -163,6 +168,9 @@ by dropping the approved animation system. Desktop preset: performance 99, LCP 0
 
 - `docs/inventory.md` — every UI field → its source (`WP:<endpoint>` or `STATIC`),
   including what was cut from the shortened home.
+- `docs/WIRING.md` — the audit table: 160 rows, every visible text block and image on
+  every route in both languages, each with the WordPress endpoint / page id / HTML
+  selector that proves the verdict, plus the theme-demo pages quoted as evidence.
 - `docs/api/DECISIONS.md` — endpoint probes and the decisions they forced.
 - `docs/api/probe/` — raw probe responses from the discovery phase.
 
