@@ -1,5 +1,9 @@
 # Inventory — UI section/field -> data source (contract)
 
+Per-element proof of what is wired and what is authored lives in **`docs/WIRING.md`** (160 rows, one
+per visible text block and image, on every route, in both languages, each with the REST endpoint,
+page/product id or HTML selector behind the verdict). This file is the summary contract.
+
 Legend:
 - `WP:<endpoint>` — real WordPress/WooCommerce data. Served **live** at runtime, from the committed
   **snapshot** during build and whenever live fails (see "Transport" below).
@@ -19,8 +23,8 @@ server does.
 ## Transport (snapshot-first)
 | Stage | behaviour |
 |-------|-----------|
-| `npm run sync:wp` (`scripts/sync-wp.mjs`) | pulls both subsites slowly (concurrency 2, 300 ms between requests, 30 s timeout, 1 retry with backoff, max 3 in-flight) into committed `data/wp/*.json`: `posts-list.{en,ar}`, `posts.{en,ar}` (full content), `pages-list.*`, `pages.*`, `categories.*`, `products.*`, `offer-categories.en`, `media.json` (one batched `/media?include=<ids>` per 100 ids), `seo.json`, `meta.json` (generatedAt, request count, byte size, row counts). It then downloads **only the images the site actually renders** (<=140, decided from the same `bestImageSrc` preference the UI uses), encodes them with sharp to `public/wp/<slug>-<hash>.webp` at 1280 px / q72, and records the URL -> file map in `data/wp/images.json`. Last verified run: 75 WP requests in 90.3 s, 53/53 images encoded into 1.1 MB. |
-| `next build` | reads **only** `data/wp/*.json`. Zero WordPress requests: `src/lib/wp/http.ts` rejects any live fetch while `NEXT_PHASE === "phase-production-build"` and logs `[wp] REFUSED live request during build`. `generateStaticParams` returns **every** post per language (92 + 92) plus all offers and services, so the last page of the journal is prerendered, not paid for by a visitor; `dynamicParams` stays true so anything published after the build still renders. `next.config.ts` caps generation to 2 CPUs with `staticPageGenerationTimeout: 120` and sets `expireTime: 3600` (stale-while-revalidate). Last verified run: 277 static pages in 16.4 s, 0 REFUSED lines, 302 snapshot reads. |
+| `npm run sync:wp` (`scripts/sync-wp.mjs`) | pulls both subsites slowly (concurrency 2, 300 ms between requests, 30 s timeout, 1 retry with backoff, max 3 in-flight) into committed `data/wp/*.json`: `posts-list.{en,ar}`, `posts.{en,ar}` (full content), `pages-list.*`, `pages.*`, `categories.*`, `products.*`, `offer-categories.en`, `media.json` (one batched `/media?include=<ids>` per 100 ids), `seo.json`, `meta.json` (generatedAt, request count, byte size, row counts). It then downloads **only the images the site actually renders** (<=140, decided from the same `bestImageSrc` preference the UI uses), encodes them with sharp to `public/wp/<slug>-<hash>.webp` at 1280 px / q72, and records the URL -> file map in `data/wp/images.json`. Last verified run (2026-10-12): 22 WP requests in 82.4 s, 60/60 images encoded into 1.4 MB, `git diff data/wp/` = the `meta.json` timestamp only. |
+| `next build` | reads **only** `data/wp/*.json`. Zero WordPress requests: `src/lib/wp/http.ts` rejects any live fetch while `NEXT_PHASE === "phase-production-build"` and logs `[wp] REFUSED live request during build`. `generateStaticParams` returns **every** post per language (92 + 92) plus all offers and services, so the last page of the journal is prerendered, not paid for by a visitor; `dynamicParams` stays true so anything published after the build still renders. `next.config.ts` caps generation to 2 CPUs with `staticPageGenerationTimeout: 120` and sets `expireTime: 3600` (stale-while-revalidate). Last verified run (2026-10-12): 277 static pages, exit 0, `[wp] live` = 0, 0 REFUSED lines, 326 snapshot reads. |
 | Runtime (ISR 300 s) | live WP with an 8 s abort + 1 retry and a global cap of 3 in-flight requests, deduped by URL; on error **or an empty list response** it falls back to the snapshot. Category + media reads cache for `WP_TAXONOMY_REVALIDATE` (3600 s) because a WP REST round trip here costs 4-6 s and the data team edits posts, not taxonomies. A page's independent reads run in `Promise.all`, so the worst case when the origin stalls is one 8 s budget per URL, not one per await. Every read logs its winner: `[wp] live en posts-list (92 rows)` / `[wp] snapshot ar posts (fetch failed)`. `/api/revalidate` (**POST**, secret-guarded) flushes the `wp:en` / `wp:ar` / `wp:seo` tags and the listed paths; it answers 401 on a wrong secret and 500 when `REVALIDATE_SECRET` is unset. |
 
 ### Images
@@ -42,32 +46,45 @@ is fetched only for detail views.
 |----|--------|
 | Brand name, tagline, currency, theme colour | CONFIG (`src/config/site.ts`) |
 | Phone 01121880908, WhatsApp 201121880908, email, hours | CONFIG (contact info is not exposed by WP REST; from the client brief) |
-| Primary nav (Home, About, Services, Offers, Blog, Branches, Contact, Booking) + AR labels | CONFIG (`src/lib/site.ts`) — hardcoded from the live menu; WP `menus` endpoint is 404 |
-| Service names shown in the nav dropdown | STATIC (`treatmentsData`, featured 4) — WP names are merged only on `/services` itself |
-| Logo, social links | STATIC local wordmark (`public/images`) + CONFIG |
+| Primary nav (9 lines + 4 dropdown children) and the footer link group | **STATIC `src/data/nav.ts`** (`navItems`, `bookCta`) — authored by the client's decision on 2026-10-12: "NAV IS STATIC AGAIN… no WordPress dependency". Removing a page from the menu deletes one line in that file. A WordPress menu does exist (homepage item ids `870`→622, `717`→696, `755`→9, `643`→62, `646`→67, `647`→32, `838`→837); it is deliberately not followed, and `src/lib/wp/nav.ts` was deleted. Proof: `node scripts/verify-render.mjs` compares the rendered header/footer against the file, AR + EN |
+| Booking CTA label (header, footer, hero, cards) | STATIC (`src/data/nav.ts` `bookCta`) |
+| Logo image + alt | STATIC local wordmark (`public/images/logo.png`) — `media.json` does hold id 722 `Shamah_Header.png`, but swapping it would change the header, which the decision forbids |
+| Social links | CONFIG |
+| Footer branch strip | WP (page 622 office blocks, see Branches) |
+| Service names in the dropdown | STATIC (`navItems[2].children`) — the WordPress-merged names are used on `/services`, `/results`, the pickers and the JSON-LD, not in the menu |
 
 ## Home (SHORTER — full cut list at the bottom)
+Every card list on Home renders at most 3 cards (`HOME_CARDS` in `src/components/home/HomeBody.tsx:46`)
+plus a "View all" link when the data holds more; asserted against the rendered HTML in AR and EN by
+`scripts/verify-render.mjs`. Final sections: 01 reasons **3 of 4** (authored, → `/about`), 02 offers
+**3** (WP, 4th row fetched only as the "more exist" probe, → `/offers`), 03 branches **3** (WP office
+blocks, → `/branches`), 04 journal **3** (WP posts, → `/blogs`), then one CTA band.
+
 | Section | source |
 |---------|--------|
-| Hero (headline, sub, CTAs, images) | STATIC — the live hero is a Revolution Slider whose images are JS-loaded, so they are not present in WP REST or the page HTML |
-| Short about block (heading, lead, 4 differentiators) | STATIC — hand-authored claims from the client brief; WP page 32 copy is theme demo text and is not used (see About) |
-| Offers (max 4) + "All offers" | WP:offers (WooCommerce Store API, the products that language's base returns, in WP order — nothing merged or filtered) |
-| Branches strip (3) with call / WhatsApp | STATIC (`src/data/branches.ts`) — WP has no branch CPT |
+| Hero photos (backdrop slider) | WP — the `rs-slide` images of page 622's Revolution Slider, parsed from the **raw** rendered body (`src/lib/wp/hero.ts`), mirrored to `/wp/*.webp`; `images.hero` only when the page has no slider |
+| Hero headline, sub, CTAs | STATIC — the slider's own captions ("Book Now", "Shop Now") are per-slide button labels and are dropped by design |
+| Short about block (heading, lead, 3 differentiators + "All reasons") | STATIC — hand-authored claims from the client brief; page 32 has no "why choose us" list (its copy is wired on `/about` itself) |
+| Offers (max 3) + "All offers" | WP:offers (WooCommerce Store API, the products that language's base returns, in WP order — nothing merged or filtered) |
+| Branches strip (max 3) with call / WhatsApp | WP — page 622 `.ws-contact-office-item` blocks (name EN, address, phone, photo) over `src/data/branches.ts` for the Arabic side |
 | Latest journal (max 3) + "All blogs" | WP:posts (3 most recent, both subsites) |
 | One strong CTA band | STATIC |
 
 ## Services (`/services` + `/services/[slug]`, aliases of `/treatments*`)
 | Field | source |
 |-------|--------|
-| Category chips | STATIC (`treatmentCategories`) — WP has no service taxonomy |
-| Card titles + taglines | WP:pages/696 (`/services/` page, 7 image-bearing WPBakery sections parsed into typed cards) merged over `src/data/treatments.ts` — WP is the naming authority where a section matches; the static entry is kept where WP has none. Not visible text invented: unmatched cards are unchanged static content |
-| Card photos | STATIC (`src/data/treatments.ts` / `lib/images.ts`) — the WP section images are page-builder assets; swapping them would change the approved visual concept, so photography stays as authored |
-| Detail body (steps, aftercare, FAQ per service) | STATIC — long-form authored per service; the WP services page has one intro per section, no per-service body |
+| Page H1 | WP — `getPageTitle("our-services")` = page 696 title (`خدماتنا` / `Our Services`), authored fallback. Same pattern on `/offers` (9 `العروض`/Offers), `/blogs` (62 `معلومات طبية`/Journal), `/faq` (169 `أهم الأسئلة الشائعة`/FAQ) and `/privacy` (3, EN only — its AR title is untranslated) |
+| Category chips | STATIC (`treatmentCategories`) — WP has no service taxonomy (`categories.*` is a post taxonomy: `Laser`, `laser session`) |
+| Card titles + taglines | WP:pages/696 (`/services/` page, 7 image-bearing WPBakery sections parsed into typed cards) merged over `src/data/treatments.ts` — WP is the naming authority where a section matches; the static entry is kept where WP has none, and in Arabic wherever `arabicRatio` says the subsite left it English. Two published WP sections (`glow-brightening-injections`, `mens-aesthetic-services`) have no authored row to attach to and therefore are not shown |
+| Card photos | WP — the section's own image replaces the stock photo where the dashboard publishes one (5 of 10 rows: Skincare, Laser-Hair-Removal, Botox-Injections, Filler-Injections-1, Chemical-Peeling, plus each section's AR twin); the authored `lib/images.ts` slot stays where WP has no image |
+| Detail body | WP when the dashboard gives the service its own page — page 885 `botox-injections` (EN 2 084 chars, 7 headings, `Botox-Injections4.png`) renders on `/en/services/botox`; the AR REST body of 885 is identical English, so Arabic shows the authored description. The other 9 slugs have no WP page |
+| Detail steps / aftercare / benefits / prices | STATIC — long-form authored per service; page 696 gives one intro per section and no prices |
 | JSON API | `GET /api/v1/services` (raw parsed cards, `?search=` supported) |
 
 ## Offers (`/offers`, `/offers/[slug]`)
 | Field | source |
 |-------|--------|
+| Page H1 | WP — page 9 title (`العروض` / `Offers`) with authored fallback |
 | Title, image, permalink | WP:offers (`wc/store/v1/products`) |
 | Price EGP | WP product `price` + `currency_minor_unit` (89900 / 100 -> 899 EGP) — never hand-typed |
 | regular / sale price | WP `regular_price` and `price` as returned; shown exactly as the dashboard holds them |
@@ -80,6 +97,8 @@ is fetched only for detail views.
 ## Journal (`/blogs`, `/blogs/[slug]`)
 | Field | source |
 |-------|--------|
+| Page H1 | WP — page 62 title (`معلومات طبية` / `Journal`), authored fallback; the lead stays authored because 62's whole body is "Set your Journal page to display blog posts." |
+|-------|--------|
 | Article cards (title, date, image, category, excerpt) | WP:posts list projection + `media.json` + `categories.{en,ar}` — each language shows its own subsite's `excerpt.rendered`. 91/92 AR excerpts are English auto-excerpts because WordPress generates them that way; the site displays that and does not rewrite it |
 | Card without a featured image | 15/92 posts have `featured_media: 0`. `<Photo>` renders the empty aspect-ratio frame (no `<img>`, no layout shift) instead of substituting a stock photo |
 | Article body | WP:posts `content.rendered`, sanitized (`sanitize-html`), only fetched on detail |
@@ -87,13 +106,28 @@ is fetched only for detail views.
 | Pagination | in-memory over the filtered list (92 posts, 9/page -> 11 pages, last page 2 items); `/blogs?page=N` is a real URL with an absolute per-language canonical and `<link rel=prev/next>` in `<head>`; an out-of-range `?page=` (99) renders **and canonicalizes** the last real page, so it cannot duplicate page 11 under a second canonical; "Load more" appends `/api/v1/posts?page=N+1` without a reload, so no page repeats or skips |
 
 ## Doctors (`/doctors`), Results (`/results`), FAQ (`/faq`), Privacy (`/privacy`)
-No WP source (or the matching page is theme demo) -> STATIC (`specialists.ts`, `results.ts`, `faq.ts`, `privacy` page copy).
+| Route | what is WP | what stays STATIC, and the proof |
+|-------|-----------|----------------------------------|
+| `/doctors` | the branch pills on each card (page 622 offices) | the whole team: no doctors/team page exists among the 27 EN + 27 AR rows of `pages-list.*`; نورهان/Nourhan/سلمى/Salma/ريم/Reem have **0 hits** across all 18 `data/wp/*.json`; `media.json` (23 items) has no portrait; "doctors" appears only as prose on pages 32 and 622 |
+| `/results` | the service names in the table (page 696, merged) | the before/after cases: `MEDIA` has no result pair; 7 of the 92 posts have before/after **titles** ("Fractional Laser for the Face Before and After", …) but they are journal articles, not case records with image pairs — they stay on `/blogs` |
+| `/faq` | the H1 (page 169 title) | the Q&A itself: page 169 is theme demo ("What is Artday? Artday is an online destination that tells stories behind interesting design objects and creators…") |
+| `/privacy` | the H1 in English (page 3 title; its AR title is untranslated, so Arabic falls back) | the policy body: page 3 is the WordPress default ("Who we are Suggested text: Our website address is: https://shamahclinics.com") |
 
 ## Branches (`/branches`, `/branches/[slug]`)
-STATIC (`branches.ts`, addresses/hours from the client brief) — WP has no branch records.
+WP — the office blocks of page 622 (`.ws-contact-office-item`: `strong` name, address lines, `P:` phone,
+`img`), parsed by `src/lib/wp/branches.ts` and merged over `src/data/branches.ts`. English name,
+address, phone and photo follow the dashboard; the Arabic subsite serves those blocks in English (169
+Arabic characters in a 40 KB body), so the Arabic name/address stays authored. An office the dashboard
+adds with no authored row is **appended**, so `/branches` can grow past three without a code change.
+STATIC and with no WP source: `branchesData.features` ("what this branch offers"), opening hours, and
+the `/branches` band headline. `clinicData.branches` and `getBranch()` were deleted by this audit.
 
 ## About (`/about`)
-STATIC (`AboutClient`) — live page 32 is theme demo content, so the authored story/process copy is used and marked here.
+WP — page 32 parsed by `src/lib/wp/about.ts`: the intro becomes the hero lead, "The Story"/قصتنا and
+"The Process"/عمليتنا plus their 5 `<br>` lines and the process photo become the two editorial splits.
+`src/data/about.ts` is now only the outage fallback. STATIC with no WP source: the three "what we stand
+by" values, the two teasers, the 100٪ female-staff figure. Branch and treatment counters count the
+WordPress lists.
 
 ## Contact (`/contact`) + Booking
 STATIC info + contact form UI -> `POST /api/v1/lead`. `LEAD_MODE=whatsapp` (default) returns a prefilled
@@ -123,23 +157,27 @@ list provider, so there is no transport to wire; the copy promises only that the
 
 ## Static content, not editable from the dashboard
 Everything else on the site comes from WordPress. These are the only hand-authored entries, each
-because the live site has no equivalent record (verified against the REST responses in `data/wp/`):
+because the live site has no equivalent record (verified against the REST responses in `data/wp/`),
+except the two rows marked *by decision*:
 
 | What | File | Why it cannot come from WP |
 |------|------|---------------------------|
-| Branch addresses, hours, phones (3 branches) | `src/data/branches.ts` | no branch CPT/taxonomy in WP |
-| Phone 01121880908, WhatsApp 201121880908, email, working hours | `src/data/clinic.ts`, `src/config/site.ts` | contact details are not exposed by WP REST |
-| FAQ page answers | `src/data/faq.ts` | page 169 is generic WooCommerce/Amaze demo markup, no clinic Q&A |
-| Doctors / specialists list | `src/data/specialists.ts` | no doctor CPT in WP |
-| Before/after result cases | `src/data/results.ts` | WP has no structured case records |
-| Hero headline, sub, CTAs and imagery | `src/components/home/HomeHero.tsx`, `src/lib/images.ts` | the live hero is a Revolution Slider rendered by JS — its slides are not in REST or the page HTML |
-| Photography on services, branches, about, contact, results | `src/lib/images.ts`, `public/images/*` | the WPBakery section images are page-builder assets; replacing them changes the approved visual concept |
-| Treatment detail bodies (steps, aftercare, per-service FAQ) | `src/data/treatments.ts` | WP page 696 gives one intro per section, no per-service body |
+| Branch ids, Arabic names/addresses, features, hours | `src/data/branches.ts` | no branch CPT/taxonomy; the AR subsite serves the office blocks in English, and no WP record lists a branch's features |
+| Phone 01121880908, WhatsApp 201121880908, email, working hours | `src/data/clinic.ts`, `src/config/site.ts` | `/wp/v2/settings` exposes none of them; the only emails WordPress holds are `info@artday.com` / `press@artday.com` / `shipping@artday.com` on page 67 |
+| FAQ page answers | `src/data/faq.ts` | page 169 is ArtDay demo markup ("What is Artday? …"), no clinic Q&A |
+| Doctors / specialists list | `src/data/specialists.ts` | no doctor page or CPT; 0 name matches in any snapshot; no portrait in `media.json` (23 items) |
+| Before/after result cases | `src/data/results.ts` | no case records and no before/after media; the 7 before/after **titled** posts are journal articles |
+| Hero headline, sub, CTAs | `src/components/home/HomeHero.tsx` | page 622's slider captions are per-slide button labels ("Book Now", "Shop Now"), not this headline. Its **photos** are now WP |
+| Interior/stock photography where WP publishes no image: home section 01, `/services` + `/offers` + `/blogs` + `/about` + `/contact` band photos, `/privacy`/CTA band photo | `src/lib/images.ts`, `public/images/*` | pages 9 and 62 have 0 images and no `featured_media`; 696's 7 images all belong to individual sections (already used per card); `media.json` holds only slider frames, section images, `booking1.png` and the logo |
+| Treatment detail steps, aftercare, benefits, prices, durations | `src/data/treatments.ts` | page 696 gives one intro per section and no prices; the WP botox body (885) is wired separately |
 | Service category chips | `src/data/treatments.ts` (`treatmentCategories`) | WP has no service taxonomy |
-| Offer package terms / inclusions | `src/components/pages/OfferDetailClient.tsx` | the Store API returns only name, price, image, description |
-| Navigation labels and footer link groups | `src/lib/site.ts`, `src/config/site.ts` | WP `menus` endpoint is 404 |
-| Static page copy for About and Privacy | `src/components/pages/AboutClient.tsx`, `src/app/[lang]/{about,privacy}/page.tsx` | pages 32 and 3 are theme demo copy |
-| Booking time slots, booking reference format, `.ics` download | `src/components/booking/BookingModal.tsx` | client-side booking aid, no WP source |
+| Offer package terms + the 3 card labels | `src/components/pages/OffersClient.tsx`, `OfferDetailClient.tsx`, `cards/OfferCard.tsx` | the Store API returns name, price, image, description only — 0 products carry an inclusion `<li>` |
+| Nav labels + footer link group + booking CTA | `src/data/nav.ts` | *by decision* (2026-10-12): the client wants the menu in one authored file with no WordPress dependency, although a WP menu exists (ids in "Global / shell") |
+| Header logo | `public/images/logo.png` | *by decision*: "Do not change the look of the header or footer" — `media` 722 `Shamah_Header.png` is the alternative |
+| About "what we stand by" values + the two teasers | `src/components/pages/AboutClient.tsx` | page 32 has no values block; page 32's story/process copy is now WP |
+| Privacy policy body + last-updated line | `src/components/pages/PrivacyClient.tsx` | page 3 is the WordPress default text ("Who we are Suggested text: …") |
+| `/contact` and `/branches` band headlines, form field labels, booking wizard steps/periods, `.ics` | `ContactClient.tsx`, `BranchesClient.tsx`, `BookingModal.tsx` | contact/booking copy is UI; page 67 is demo text and page 837 is only a CF7 form, which the site must not submit |
+| Newsletter field + confirmations | `src/components/layout/Footer.tsx` | WordPress exposes no subscriber endpoint and no provider is authorised |
 
 ## Render model (what the server HTML contains)
 Reveals and photo curtains never hide content in the bytes the server sends:
@@ -178,7 +216,7 @@ Verified against `git diff` of `src/components/home/HomeBody.tsx` (7 numbered se
 3. Mid-page `<CtaBand>` with props -> the single closing `<CtaBand />` at the end of the page.
 4. Section 03 "Results preview" swiper -> `/results`.
 5. Section 04 "Doctors" staggered `DoctorCard` strip -> `/doctors`.
-6. Section 05 "Featured offer" (one) -> up to 4 live WP offer cards + "All offers" (now position 02).
-7. Section 06 "Branches as cards" -> compact 3-up strip with call / WhatsApp actions.
+6. Section 05 "Featured offer" (one) -> up to 3 live WP offer cards + "All offers" (now position 02).
+7. Section 06 "Branches as cards" -> compact strip with call / WhatsApp actions (max 3, WP offices).
 8. Section 07 "Blog" -> up to 3 latest WP posts + "All blogs".
-Home is now: hero, short about, offers (<=4), branches strip, journal (<=3), one CTA.
+Home is now: hero, short about (3 reasons), offers (<=3), branches strip (<=3), journal (<=3), one CTA.
