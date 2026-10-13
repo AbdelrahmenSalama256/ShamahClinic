@@ -22,6 +22,37 @@ export const AboutClient: React.FC<{
 }> = ({ about, branchCount, treatmentCount }) => {
   const { t, formatNumber } = useLanguage();
 
+  const reasons = [
+    {
+      title: { ar: "استشارة قبل أي إجراء", en: "A consultation before any procedure" },
+      body: {
+        ar: "لا نبدأ جلسة قبل تحليل بشرتكِ وتوضيح المتوقع واقعياً وعدد الجلسات والتكلفة.",
+        en: "No session begins before analysing your skin and setting realistic expectations, session count and cost.",
+      },
+    },
+    {
+      title: { ar: "طاقم طبي نسائي بالكامل", en: "An all-female medical team" },
+      body: {
+        ar: "طبيبات وأخصائيات وتمريض نسائي في كل الفروع، لخصوصية وراحة كاملتين.",
+        en: "Female doctors, specialists and nurses at every branch, for complete privacy and comfort.",
+      },
+    },
+    {
+      title: { ar: "أجهزة حديثة ومنتجات أصلية", en: "Modern devices, authentic products" },
+      body: {
+        ar: "أجهزة ليزر بأنظمة تبريد، وفيلر وبوتوكس أصلي معتمد يُفتح أمامكِ.",
+        en: "Lasers with cooling systems, and authentic approved filler and Botox opened in front of you.",
+      },
+    },
+    {
+      title: { ar: "ثلاثة فروع قريبة منكِ", en: "Three branches near you" },
+      body: {
+        ar: "مدينة نصر، التجمع الخامس، والشيخ زايد — بمواعيد مرنة يومياً من ١٠ ص إلى ١٠ م.",
+        en: "Nasr City, Fifth Settlement and Sheikh Zayed — flexible hours daily, 10am to 10pm.",
+      },
+    },
+  ];
+
   const values = [
     {
       title: { ar: "الصدق قبل البيع", en: "Honesty before selling" },
@@ -61,7 +92,7 @@ export const AboutClient: React.FC<{
       {/* Story / Process — one editorial split per WordPress section */}
       {about.sections.map((section, i) => (
         <section
-          key={section.heading.en}
+          key={`${i}-${section.heading.en}`}
           className={`py-5 lg:py-16 ${
             i % 2 ? "bg-[var(--bg-secondary)]/60" : "bg-[var(--bg-primary)]"
           }`}
@@ -106,6 +137,39 @@ export const AboutClient: React.FC<{
           </div>
         </section>
       ))}
+
+      {/* Why clients choose Shamah — the four reasons Home used to carry. They have
+          no WordPress source (see docs/STATIC-SWEEP.md), so they live here as
+          authored copy and Home links to this block. */}
+      <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <SectionHeading
+            align="center"
+            title={{ ar: "لماذا تختار العميلات عيادات شامه؟", en: "Why clients choose Shamah Clinics" }}
+            lead={{
+              ar: "أربع نقاط نجيب عليها بصراحة قبل أي جلسة.",
+              en: "Four points we answer plainly before any session.",
+            }}
+          />
+          <ol className="mt-12 space-y-10">
+            {reasons.map((reason, i) => (
+              <Reveal as="li" key={i} delay={i * 0.08} className="flex gap-6">
+                <span className="text-4xl font-black text-[var(--gold-end)] tabular-nums leading-none">
+                  {formatNumber(i + 1)}
+                </span>
+                <div>
+                  <h3 className="text-xl font-black text-[var(--text-primary)]" dir="auto">
+                    {t(reason.title.ar, reason.title.en)}
+                  </h3>
+                  <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]" dir="auto">
+                    {t(reason.body.ar, reason.body.en)}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </ol>
+        </div>
+      </section>
 
       {/* Values — numbered editorial list, not identical cards */}
       <section className="py-5 lg:py-16 bg-[var(--bg-secondary)]/60">
