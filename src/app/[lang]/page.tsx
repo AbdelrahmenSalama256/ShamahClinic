@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeBody } from "@/components/home/HomeBody";
-import { getHome, getHeroPhotos } from "@/lib/wp";
-import { getMergedTreatments } from "@/lib/wp/treatments";
+import { getHome, getHeroPhotos, getHomeIntro, getPageTitle } from "@/lib/wp";
+import { getMergedTreatments, getFeaturedServices } from "@/lib/wp/treatments";
 import { routeLang } from "@/lib/route-lang";
 import { offerToUI, cardToUIArticle } from "@/lib/wp/ui";
 
@@ -25,10 +25,16 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const lang = await routeLang();
-  const [home, treatments, hero] = await Promise.all([
+  const [home, treatments, hero, intro, services, servicesTitle] = await Promise.all([
     getHome({ offers: 4, articles: 4, lang }),
     getMergedTreatments(),
     getHeroPhotos(),
+    getHomeIntro(),
+    getFeaturedServices(3),
+    getPageTitle("our-services", {
+      ar: "خدمات عيادات شامه التجميلية",
+      en: "Shamah Clinics aesthetic treatments",
+    }),
   ]);
 
   return (
@@ -39,6 +45,10 @@ export default async function HomePage() {
         treatmentCount={treatments.length}
       />
       <HomeBody
+        intro={intro}
+        services={services}
+        servicesTotal={treatments.length}
+        servicesTitle={servicesTitle}
         offers={home.offers.map(offerToUI)}
         articles={home.articles.map(cardToUIArticle)}
         branches={home.branches}

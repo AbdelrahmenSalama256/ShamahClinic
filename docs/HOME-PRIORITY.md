@@ -1,0 +1,113 @@
+# Home priority: which section the services block replaced
+
+Task: put WordPress services on Home **without making Home longer** — the number of
+Home sections stays what it was, and Journal, Offers and Branches keep their three
+cards each with a "View all" link.
+
+## 1. The section that was removed, and why it was the least valuable one
+
+Home's first band used to be the authored "Why clients choose Shamah Clinics" block:
+a reception photo, a heading, and a carousel of four numbered claims
+(`استشارة قبل أي إجراء`, `طاقم طبي نسائي بالكامل`, `أجهزة حديثة ومنتجات أصلية`,
+`ثلاثة فروع قريبة منكِ`), with an "All reasons" link to `/about`.
+
+It was scored against the three candidates that stayed, on the three questions the
+brief asks:
+
+| Section | Where its content comes from | Overlaps another section? | Links to a conversion action? | Verdict |
+| --- | --- | --- | --- | --- |
+| **Why Shamah (removed)** | Authored in `HomeBody.tsx`. The live-site sweep (`docs/STATIC-SWEEP.md`) searched 200 crawled documents for these four claims and found no WordPress page, post, widget or footer block that states them — they exist only in this repository. | Yes: every claim is restated by a section that survived — "consultation first" by each service page's assessment copy, "all-female team" by `/about` and `/doctors`, "modern devices" by the service pages, "three branches" by the Branches band right below it. | No. Its only link was "All reasons" → `/about`, an information page. | **Replaced.** Generic, unverifiable, duplicated elsewhere, no conversion path. |
+| Offers | Live WordPress/WooCommerce (`/api/v1/offers`, Store API products with prices). | No — it is the only place discounted packages appear. | Yes — `احجزي العرض` opens the booking dialog, plus a WhatsApp deep link per card. | Stays. |
+| Branches | Live WordPress (branch pages: names, areas, addresses, per-branch phones). | Partially with `/branches`, but on Home it is the tap-to-call entry. | Yes — `tel:` and WhatsApp links on every card. | Stays. |
+| Journal | Live WordPress posts (92 EN slugs mirrored in the snapshot). | No. | Indirect — each card is a post, and posts carry the booking CTA. | Stays. |
+
+The services block now occupies that exact band, so Home keeps **four** sections.
+The four claims were not deleted: they moved to `/about`, where they already had a
+home (the page's "Why clients choose Shamah Clinics" list — `AboutClient.tsx` renders
+them again above "What we stand by"), and the band's link to `/about` is kept, now
+labelled `لماذا تختار شامه` / `Why clients choose Shamah`.
+
+## 2. Which three services, chosen by a deterministic rule
+
+`getFeaturedServices(3)` in `src/lib/wp/treatments.ts`:
+
+1. **WordPress order first.** Page 696 (`our-services`) publishes its service sections
+   in a fixed order; the merged treatments are ranked by that order
+   (`getServiceCards()`), so Home shows the services the client put at the top of
+   their own services page, with no hand-picking.
+2. **Only cards that render.** A candidate must have both a mirrored photo and a
+   non-empty intro (`image.src` + `tagline.en|ar`); a service WordPress gives no photo
+   for would show a placeholder card on the most-visited page.
+3. **Near-duplicates are skipped.** Normalised names contained in one another
+   (`skincare` / `deep cleansing skincare`) collapse to the earlier-ranked one.
+4. **Optional override.** `src/config/home.ts` exports `featuredServiceSlugs`. It is
+   empty, so the rule above is used; filling it pins those slugs when they exist.
+
+Current result, identical in both languages:
+
+| # | slug | WordPress position |
+| --- | --- | --- |
+| 1 | `skincare-deep-cleansing` | 1 on page 696 |
+| 2 | `laser-hair-removal` | 2 |
+| 3 | `botox` | 3 |
+
+The services heading is page 696's own title (`getPageTitle("our-services")` →
+`خدماتنا` / `Our Services`). The introduction heading beside it is the homepage's own
+`#about` row heading (`The Best Aesthetic Center` in English; the Arabic row of that
+page is still untranslated English, so the Arabic side keeps the authored
+`لماذا تختار العميلات عيادات شامه؟`, exactly as `getHomeIntro()` documents).
+`كل الخدمات` / `All services` links to `/services` whenever more than three exist
+(12 merged services do).
+
+## 3. Layout, so Home does not grow
+
+The band keeps the replaced section's own pattern: heading style, `Section` container,
+`Reveal` delays, and — because the removed block was a carousel — the same `Swiper`
+component for the cards: `mobilePerView 1`, `tabletPerView 2`, `desktopPerView 3`,
+`gap 16`, no autoplay. From `lg` up all three fit, so `Swiper` hides its own control
+row (new `maxIndex > 0` guard in `src/components/ui/Swiper.tsx`) and the row is
+visually the same three-card grid as the Offers/branches/Journal bands. Stacking the
+three cards instead measured 1556 px for that band on a 390 px phone rather than
+844 px — ~710 px taller.
+
+## 4. Measured height, before and after
+
+Measured with Playwright (Chromium) against `next dev`, comparing `/` (after) with a
+temporary `/preview-home-before` route that rendered the committed HEAD version of
+`HomeBody.tsx` with the same data — the route and component were deleted afterwards.
+`document.documentElement.scrollHeight`, light theme, Arabic and English:
+
+| Viewport | Language | Home before | Home after | Δ |
+| --- | --- | --- | --- | --- |
+| 1440 × 900 | ar | 4333 px | 4209 px | **−124 px** |
+| 1440 × 900 | en | 4437 px | 4339 px | **−98 px** |
+| 390 × 844 | ar | 6669 px | 6774 px | **+105 px (+1.6 %)** |
+| 390 × 844 | en | 6874 px | 6987 px | **+113 px (+1.6 %)** |
+
+Band 1 specifically: 1440 → 566 → 562 px (ar), 620 → 643 px (en); 390 → 664 → 844 px
+(ar), 761 → 950 px (en). The phone band is taller because a service card (362 px) is
+taller than the text slide it replaces (~230 px) and the band now carries two headings
+(the WordPress introduction and the services heading) instead of one. The rest of Home
+got shorter on the phone (−68 px on Branches, −4 px each on Offers and Journal) thanks
+to the Task-B guards, leaving +105/113 px overall.
+
+Home is shorter on desktop and 1.6 % taller on the 390 px phone layout. The only ways
+to make the phone layout exactly neutral would have been to show fewer than three
+cards, hide the WordPress introduction text, or invent a compact card variant — all
+three change content or the visual design, so the +1.6 % is left in place and
+reported.
+
+Playwright is not a dependency of this project (it was used once, ad hoc, from
+`node_modules`); re-measuring needs `npm i -D playwright` plus a browser download.
+
+## 5. Final Home section list, in order
+
+| Band | Section | Cards on Home | "View all" |
+| --- | --- | --- | --- |
+| 1 | WordPress introduction (`#about` row of page 622) + Services (page 696 title) | 3 service cards | `كل الخدمات` / `All services` → `/services` |
+| 2 | `#offers` — Seasonal packages | 3 offer cards | `كل العروض` / `All offers` → `/offers` |
+| 3 | `#branches` — Our three branches | 3 branch cards | `تفاصيل الفروع` / `Branch details` → `/branches` |
+| 4 | `#blogs` — From the Shamah blog | 3 article cards | `كل المدونات` / `All blogs` → `/blogs` |
+
+Below the fold the page keeps its booking CTA band and the footer. The hero
+(`HomeHero`) is untouched.

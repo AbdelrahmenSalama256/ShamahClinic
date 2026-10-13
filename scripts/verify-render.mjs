@@ -2,8 +2,8 @@
  * Asserts, over the rendered HTML of a running production build, that
  *   1. the header menu, the footer link group and the booking CTA come from
  *      `src/data/nav.ts` (same labels, same order, both languages), and
- *   2. no Home card section renders more than three cards, each with a
- *      "View all" link to the page that holds the full list, and
+ *   2. no Home card section renders more than three cards, and a section carries a
+ *      "View all" link to its full page exactly when records are left out,
  *   3. every service section page 696 publishes is rendered on /services in both
  *      languages, and a service WordPress gives no price or session data for
  *      renders no price, no empty block and no schema.org Offer.
@@ -68,10 +68,32 @@ for (const lang of ["ar", "en"]) {
   }
 }
 
+/**
+ * Each Home card section, the "View all" label that leads to its full list, and
+ * where the API reports its record count. Home caps a section at three cards, so
+ * the rendered HTML cannot say whether a fourth record exists — the API the page
+ * itself reads can.
+ */
+const HOME_SECTIONS = [
+  { name: "services band", key: "services", totalPath: (lang) => `/api/v1/services?lang=${lang}` },
+  { name: "#offers articles", key: "offers", totalPath: () => "/api/v1/offers?per_page=100" },
+  { name: "#branches cards", key: "branches", totalPath: () => "/api/v1/branches" },
+  { name: "#blogs cards", key: "blogs", totalPath: () => "/api/v1/posts?per_page=100" },
+];
+
 const VIEW_ALL = {
-  ar: ["كل الأسباب", "كل العروض", "تفاصيل الفروع", "كل المدونات"],
-  en: ["All reasons", "All offers", "Branch details", "All blogs"],
+  services: { ar: "كل الخدمات", en: "All services" },
+  offers: { ar: "كل العروض", en: "All offers" },
+  branches: { ar: "تفاصيل الفروع", en: "Branch details" },
+  blogs: { ar: "كل المدونات", en: "All blogs" },
 };
+
+/** The record count behind an API endpoint, whether it returns a page or a bare list. */
+async function totalOf(path) {
+  const body = await (await fetch(`${ORIGIN}${path}`, { cache: "no-store" })).json();
+  const list = Array.isArray(body) ? body : body.items;
+  return typeof body.total === "number" ? body.total : list.length;
+}
 
 for (const lang of ["ar", "en"]) {
   const res = await fetch(`${ORIGIN}/${lang}`, { cache: "no-store" });
@@ -122,23 +144,87 @@ for (const lang of ["ar", "en"]) {
 
   // ── 2. three cards per Home section, with a route to the rest ──
   // Arabic is the prefix-less locale, so detail links are matched by substring.
-  const sections = {
-    "reasons carousel": $(`[aria-roledescription="carousel"] h3`).length,
-    "#offers articles": $("#offers article").length,
-    "#branches cards": $(`#branches a[href*="/branches/"]`).length,
-    "#blogs cards": $(`#blogs a[href*="/blogs/"]`).length,
+  // The band is found by its content, not by counting sections: the hero sits
+  // above it and a Home block can be hidden when WordPress has nothing for it.
+  const band = $(
+    $("main > section")
+      .toArray()
+      .find((s) => $(s).find(`a[href*="/treatments/"]`).length),
+  );
+
+  const cardCount = {
+    services: band.find(`a[href*="/treatments/"]`).length,
+    offers: $("#offers article").length,
+    branches: $(`#branches a[href*="/branches/"]`).length,
+    blogs: $(`#blogs a[href*="/blogs/"]`).length,
   };
-  for (const [name, count] of Object.entries(sections)) {
+
+  for (const section of HOME_SECTIONS) {
+    const count = cardCount[section.key];
     check(
       count > 0 && count <= MAX_CARDS,
-      `${lang}: ${name} shows ${count} card(s) (limit ${MAX_CARDS})`,
+      `${lang}: ${section.name} shows ${count} card(s) (limit ${MAX_CARDS})`,
+    );
+
+    // The cap only earns a "View all" when records are actually left out. Three
+    // branches are the whole network, so that band must not grow a dead link.
+    const total = await totalOf(section.totalPath(lang));
+    const label = VIEW_ALL[section.key][lang];
+    const found = $("a").toArray().some((a) => text($(a)) === label);
+    check(
+      found === (total > MAX_CARDS),
+      `${lang}: "${label}" ${
+        total > MAX_CARDS
+          ? `links the rest of its ${total} records`
+          : `stays away, since all ${total} record(s) render`
+      } (found: ${found})`,
     );
   }
 
-  for (const label of VIEW_ALL[lang]) {
-    const found = $("a").toArray().some((a) => text($(a)) === label);
-    check(found, `${lang}: "View all" link "${label}" present`);
+  // Home's services band links to /services and carries the page 696 title.
+  check(
+    band.find(`a[href$="/services"]`).length > 0,
+    `${lang}: the services band links to /services`,
+  );
+  check(
+    band.find("h2").length === 2,
+    `${lang}: that band holds the WordPress introduction and the services heading (${band.find("h2").length} h2)`,
+  );
+  check(
+    band.find("section").length === 0,
+    `${lang}: Home renders no nested band and no empty wrapper inside it`,
+  );
+
+  // ── no empty heading, on the pages WordPress feeds ──
+  for (const path of ["", "/services", "/offers", "/blogs", "/branches", "/about"]) {
+    const page = await fetch(`${ORIGIN}/${lang}${path}`, { cache: "no-store" });
+    const $p = cheerio.load(await page.text());
+    const blanks = $p("main h1, main h2, main h3, main h4")
+      .toArray()
+      .filter((h) => !$p(h).text().trim())
+      .map((h) => h.tagName);
+    check(
+      !blanks.length,
+      `${lang}: ${path || "/"} renders no empty heading${blanks.length ? ` (${blanks.join(", ")})` : ""}`,
+    );
+    check(
+      page.ok,
+      `${lang}: ${path || "/"} returned ${page.status}`,
+    );
   }
+
+  // ── the language is decided on the server, not by the client ──
+  const h1 = text($("main h1").first());
+  const arabicScript = /[؀-ۿ]/.test(h1);
+  check(
+    $("html").attr("dir") === (lang === "ar" ? "rtl" : "ltr") &&
+      $("html").attr("lang") === lang,
+    `${lang}: the served document declares lang=${lang} dir=${$("html").attr("dir")}`,
+  );
+  check(
+    lang === "ar" ? arabicScript : !arabicScript,
+    `${lang}: the H1 arrives in ${lang} from the server ("${h1.slice(0, 48)}")`,
+  );
 }
 
 console.log(`\nWordPress page titles the menu no longer follows:\n  ${wpTitles.join("\n  ")}`);

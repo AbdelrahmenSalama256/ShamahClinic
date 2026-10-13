@@ -4,6 +4,7 @@ import { htmlToText } from "./sanitize";
 import { toPhotoSlot } from "./ui-helpers";
 import { arabicRatio } from "./lang";
 import { treatmentsData, type Treatment } from "@/data/treatments";
+import { featuredServiceSlugs } from "@/config/home";
 
 /**
  * The service cards WordPress publishes (pages/696) are the naming authority:
@@ -135,6 +136,57 @@ export async function getMergedTreatments(): Promise<Treatment[]> {
     };
   });
   return [...merged, ...cards.filter((card) => !matched.has(card.slug)).map(fromServiceCard)];
+}
+
+/**
+ * The three services Home shows. The order is WordPress's own: the position of
+ * each service among page 696's sections, so the clinic's dashboard decides what
+ * leads. A service only qualifies when its card has both a photo and an intro to
+ * render, near-duplicate names are not repeated, and services we author but the
+ * dashboard does not list come last. `featuredServiceSlugs` pins the list instead.
+ * The rule is written up in docs/HOME-PRIORITY.md.
+ */
+export async function getFeaturedServices(limit = 3): Promise<Treatment[]> {
+  let cards: ServiceCard[] = [];
+  try {
+    cards = await getServiceCards();
+  } catch {
+    cards = [];
+  }
+  const all = await getMergedTreatments();
+  const byId = new Map(all.map((treatment) => [treatment.id, treatment]));
+
+  const pinned = featuredServiceSlugs
+    .map((id) => byId.get(id))
+    .filter((treatment): treatment is Treatment => !!treatment);
+  if (pinned.length >= limit) return pinned.slice(0, limit);
+
+  const rank = new Map<string, number>();
+  cards.forEach((card, i) => rank.set(card.slug, i));
+  const renders = (treatment: Treatment): boolean =>
+    !!treatment.image.src && !!(treatment.tagline.en || treatment.tagline.ar);
+  const ordered = all
+    .filter(renders)
+    .sort(
+      (a, b) =>
+        (rank.get(SECTION_SLUG[a.id] || a.id) ?? Number.MAX_SAFE_INTEGER) -
+        (rank.get(SECTION_SLUG[b.id] || b.id) ?? Number.MAX_SAFE_INTEGER),
+    );
+
+  const picked = pinned.length ? [...pinned] : [];
+  const taken = new Set(picked.map((treatment) => treatment.id));
+  for (const treatment of ordered) {
+    if (picked.length >= limit) break;
+    if (taken.has(treatment.id)) continue;
+    // The dashboard lists "Skincare" and a facial under another name; a card whose
+    // English name is contained in one already picked is the same service twice.
+    const name = normalize(treatment.name.en);
+    if (picked.some((other) => normalize(other.name.en).includes(name) || name.includes(normalize(other.name.en))))
+      continue;
+    picked.push(treatment);
+    taken.add(treatment.id);
+  }
+  return picked;
 }
 
 export async function getMergedTreatment(slug: string): Promise<Treatment | null> {
