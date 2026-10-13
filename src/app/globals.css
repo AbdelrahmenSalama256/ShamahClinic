@@ -60,14 +60,26 @@
   --border-control-soft: rgba(133, 100, 15, 0.55);
   --focus-ring: #85640f;
 
+  /* Status pairs: an error or confirmation reads on this theme's card surface. */
+  --text-success: #0a6636;
+  --bg-success-soft: #e6f2ea;
+  --border-success: #0a6636;
+  --text-danger: #b3261e;
+  --bg-danger-soft: #fbeaea;
+  --border-danger: #b3261e;
+  --text-success-on-dark: #3ddc84;
+  --text-danger-on-dark: #f2a0a0;
+
   /* Text on surfaces that are dark in both themes (hero, CTA band, footer). */
   --text-on-dark: #ffffff;
   --text-on-dark-muted: #d9d2ca;
-  --border-on-dark: rgba(61, 220, 132, 0.65);
+  /* Neutral hairline on those surfaces; the green pair below is for controls. */
+  --border-on-dark: rgba(255, 255, 255, 0.45);
 
   /* Sticky header: opaque enough to read whatever scrolls under it. */
   --nav-surface: rgba(250, 247, 242, 0.94);
   --nav-surface-scrolled: rgba(250, 247, 242, 0.97);
+  --nav-shadow: rgba(33, 26, 22, 0.08);
   --nav-height: 4.5rem;
   --floating-control-size: 3.5rem;
   --floating-control-gap: 1.5rem;
@@ -200,6 +212,13 @@ html[data-theme="dark"] textarea {
   outline-offset: 2px;
 }
 
+/* A placeholder is suggested text, not decoration: it stays at caption strength. */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
 /* Glassmorphism — the header must stay readable while content scrolls under it. */
 .glass-nav {
   -webkit-backdrop-filter: blur(16px);
@@ -213,7 +232,7 @@ html[data-theme="dark"] textarea {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--gold-border);
-  box-shadow: 0 10px 30px rgba(33, 26, 22, 0.05);
+  box-shadow: 0 10px 30px var(--nav-shadow);
 }
 
 /* ============================================
