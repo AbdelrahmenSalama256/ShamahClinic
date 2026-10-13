@@ -70,7 +70,7 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
   )}`;
 
   return (
-    <footer className="bg-[var(--bg-dark)] text-white pt-12 pb-24 sm:pb-8 border-t border-[var(--gold-border)]/30">
+    <footer className="bg-[var(--bg-dark)] text-[var(--text-on-dark)] pt-12 pb-[calc(var(--mobile-bar-height)+env(safe-area-inset-bottom))] sm:pb-[calc(var(--floating-control-size)+var(--floating-control-gap))] border-t border-[var(--border-control)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-white/10">
           {/* Brand */}
@@ -84,7 +84,7 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
                 className="object-contain object-start brightness-110"
               />
             </span>
-            <p className="text-xs sm:text-sm text-white/85 leading-relaxed max-w-sm">
+            <p className="text-xs sm:text-sm text-[var(--text-on-dark-muted)] leading-relaxed max-w-sm">
               {t(
                 "عيادات شامه لطب التجميل والليزر والعناية بالبشرة. ثلاثة فروع في القاهرة والجيزة تجمع بين الدقة الطبية وأجواء الرفاهية.",
                 "Shamah Clinics for aesthetic medicine, laser and skincare. Three branches across Cairo and Giza combining clinical precision with genuine comfort.",
@@ -96,25 +96,25 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
                 className="flex items-center gap-2 hover:text-[var(--gold-start)] transition-colors duration-300"
                 // dir="ltr"
               >
-                <Phone className="w-4 h-4 text-[var(--gold-mid)]" />
+                <Phone className="w-4 h-4 text-[var(--text-gold)]" />
                 <span>{clinicData.phone}</span>
               </a>
               <a
                 href={`mailto:${clinicData.email}`}
                 className="flex items-center gap-2 hover:text-[var(--gold-start)] transition-colors duration-300"
               >
-                <Mail className="w-4 h-4 text-[var(--gold-mid)]" />
+                <Mail className="w-4 h-4 text-[var(--text-gold)]" />
                 <span>{clinicData.email}</span>
               </a>
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[var(--gold-mid)]" />
+                <Clock className="w-4 h-4 text-[var(--text-gold)]" />
                 <span>{clinicData.workingHours[language]}</span>
               </div>
               <a
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors duration-300"
+                className="flex items-center gap-2 text-[var(--text-success-on-dark)] hover:text-[var(--text-success-on-dark)] transition-colors duration-300"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>{t("تواصل فوري عبر واتساب", "WhatsApp Chat")}</span>
@@ -129,7 +129,7 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-full border border-white/20 bg-white/5 flex items-center justify-center text-gray-200 hover:text-[var(--gold-start)] hover:border-[var(--gold-border)] hover:bg-white/10 transition-colors duration-300"
+                  className="w-9 h-9 rounded-full border border-[var(--border-on-dark)] bg-white/5 flex items-center justify-center text-[var(--text-on-dark-muted)] hover:text-[var(--gold-start)] hover:border-[var(--gold-border)] hover:bg-white/10 transition-colors duration-300"
                 >
                   <SocialIcon id={s.id} />
                 </a>
@@ -146,9 +146,9 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
               {branches.map((b) => (
                 <div
                   key={b.id}
-                  className="p-3 rounded-xl bg-white/5 border border-white/10 hover:border-[var(--gold-border)] transition-colors duration-300"
+                  className="p-3 rounded-xl bg-white/5 border border-[var(--border-on-dark)] hover:border-[var(--gold-border)] transition-colors duration-300"
                 >
-                  <div className="font-bold text-white text-xs mb-1 flex items-center justify-between gap-2">
+                  <div className="font-bold text-[var(--text-on-dark)] text-xs mb-1 flex items-center justify-between gap-2">
                     <Link
                       href={getLocalizedHref(`/branches/${b.id}`, language)}
                       className="hover:text-[var(--gold-start)] transition-colors duration-300"
@@ -202,7 +202,7 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
               )}
             </p>
             {newsletterSubscribed ? (
-              <div className="p-3 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-emerald-400 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-full bg-[var(--btn-wa-on-dark-bg-hover)] border border-[var(--btn-wa-on-dark-border)] text-[var(--text-success-on-dark)] text-xs flex items-center gap-2">
                 <Check className="w-4 h-4 shrink-0" />
                 <span>
                   {t("شكراً لاشتراككِ معنا!", "Thank you for subscribing!")}
@@ -216,18 +216,18 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder={t("بريدكِ الإلكتروني", "Your email address")}
-                    className="w-full bg-white/10 border border-white/30 focus:border-[var(--gold-mid)] text-xs text-white py-3 ps-3.5 pe-14 rounded-full outline-none placeholder:text-gray-300 transition-colors duration-300"
+                    className="w-full bg-white/10 border border-[var(--border-on-dark)] text-xs text-[var(--text-on-dark)] py-3 ps-3.5 pe-14 rounded-full outline-none placeholder:text-[var(--text-on-dark-muted)] transition-colors duration-300"
                   />
                   <button
                     type="submit"
                     aria-label={t("اشتراك", "Subscribe")}
-                    className="absolute end-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gold-gradient text-white flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-300 cursor-pointer"
+                    className="absolute end-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gold-gradient flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-300 cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5 rtl:-scale-x-100" />
                   </button>
                 </div>
                 {newsletterError && (
-                  <p className="text-[10px] text-red-400 ps-1">
+                  <p className="text-[10px] text-[var(--text-danger-on-dark)] ps-1">
                     {newsletterError}
                   </p>
                 )}

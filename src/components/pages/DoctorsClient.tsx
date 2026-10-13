@@ -42,7 +42,7 @@ export const DoctorsClient: React.FC<{ branches: BranchDetail[] }> = ({
           </div>
 
           {/* Consultation process — editorial numbered band */}
-          <div className="mt-12 lg:mt-16 grid lg:grid-cols-12 gap-10 items-center rounded-3xl bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/40 p-8 lg:p-12">
+          <div className="mt-12 lg:mt-16 grid lg:grid-cols-12 gap-10 items-center rounded-3xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-8 lg:p-12">
             <div className="lg:col-span-5">
               <Reveal>
                 <Photo slot={images.interiors.treatmentRoom} ratio="landscape" curtain sizes="(max-width:1024px) 100vw, 40vw" />
@@ -62,7 +62,7 @@ export const DoctorsClient: React.FC<{ branches: BranchDetail[] }> = ({
                   { ar: "متابعة بعد الجلسة لضبط النتيجة والاطمئنان على استجابة بشرتكِ.", en: "Post-session follow-up to refine results and check your skin's response." },
                 ].map((s, i) => (
                   <Reveal as="li" key={i} delay={i * 0.06} className="flex gap-4">
-                    <span className="w-8 h-8 shrink-0 rounded-full bg-white border border-[var(--gold-border)]/60 text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
+                    <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--border-control)] text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
                       {formatNumber(i + 1)}
                     </span>
                     <p className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)] pt-1">{t(s.ar, s.en)}</p>

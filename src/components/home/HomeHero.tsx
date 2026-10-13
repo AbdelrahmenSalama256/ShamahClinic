@@ -108,7 +108,7 @@ export const HomeHero: React.FC<{
               delay: 0.05,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="mt-4 text-[28px] sm:text-5xl lg:text-[64px] font-black leading-[1.05] tracking-tight text-white max-w-3xl"
+            className="mt-4 text-[28px] sm:text-5xl lg:text-[64px] font-black leading-[1.05] tracking-tight text-[var(--text-on-dark)] max-w-3xl"
           >
             {t("بشرةٌ تستحق ", "Skin that deserves ")}
             <span className="text-[var(--gold-start)]">
@@ -125,7 +125,7 @@ export const HomeHero: React.FC<{
               delay: 0.15,
               ease: [0.22, 1, 0.36, 1],
             }}
-            className="mt-5 text-sm sm:text-base lg:text-lg leading-relaxed text-white/75 max-w-2xl"
+            className="mt-5 text-sm sm:text-base lg:text-lg leading-relaxed text-[var(--text-on-dark-muted)] max-w-2xl"
           >
             {t(
               "نبدأ كل حالة باستشارة وتحليل واضح، ونستخدم أجهزة حديثة ومنتجات أصلية، مع طاقم طبي نسائي بالكامل وخصوصية تامة في ثلاثة فروع.",
@@ -144,11 +144,7 @@ export const HomeHero: React.FC<{
             className="mt-8 flex flex-row sm:flex-row gap-3 sm:gap-4"
           >
             <BookButton size="lg" />
-            <WhatsAppButton
-              size="lg"
-              variant="outline"
-              className="!text-white !border-white/40 !bg-white/5 hover:!bg-white/15 backdrop-blur-sm"
-            />
+            <WhatsAppButton size="lg" variant="onDark" className="backdrop-blur-sm" />
           </motion.div>
 
           {/* Verified figures */}
@@ -156,10 +152,10 @@ export const HomeHero: React.FC<{
             initial={reduce ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.35 }}
-            className="mt-12 grid grid-cols-3 gap-4 sm:gap-8 border-t border-white/15 pt-6 max-w-2xl w-full sm:w-auto"
+            className="mt-12 grid grid-cols-3 gap-4 sm:gap-8 border-t border-[var(--border-on-dark)] pt-6 max-w-2xl w-full sm:w-auto"
           >
             <div>
-              <dt className="text-[10px] sm:text-xs text-white/55 uppercase tracking-wider">
+              <dt className="text-[10px] sm:text-xs text-[var(--text-on-dark-muted)] uppercase tracking-wider">
                 {t("فروع", "Branches")}
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
@@ -170,7 +166,7 @@ export const HomeHero: React.FC<{
               </dd>
             </div>
             <div>
-              <dt className="text-[10px] sm:text-xs text-white/55 uppercase tracking-wider">
+              <dt className="text-[10px] sm:text-xs text-[var(--text-on-dark-muted)] uppercase tracking-wider">
                 {t("خدمة تجميلية", "Treatments")}
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
@@ -178,7 +174,7 @@ export const HomeHero: React.FC<{
               </dd>
             </div>
             <div>
-              <dt className="text-[10px] sm:text-xs text-white/55 uppercase tracking-wider">
+              <dt className="text-[10px] sm:text-xs text-[var(--text-on-dark-muted)] uppercase tracking-wider">
                 {t("طاقم نسائي", "Female staff")}
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">

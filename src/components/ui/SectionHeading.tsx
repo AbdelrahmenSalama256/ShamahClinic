@@ -33,7 +33,7 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
 }) => {
   const { t } = useLanguage();
   const titleColor = tone === "dark" ? "text-[var(--text-inverse)]" : "text-[var(--text-primary)]";
-  const leadColor = tone === "dark" ? "text-white/70" : "text-[var(--text-secondary)]";
+  const leadColor = tone === "dark" ? "text-[var(--text-on-dark-muted)]" : "text-[var(--text-secondary)]";
 
   // A section with no heading text renders nothing at all: WordPress can return a
   // list without a title, and an empty <h2> is a gap in the page, not a heading.

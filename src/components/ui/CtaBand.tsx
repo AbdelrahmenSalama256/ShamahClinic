@@ -70,10 +70,10 @@ export const CtaBand: React.FC<CtaBandProps> = ({
               <span className="inline-block text-[10px] font-bold tracking-[0.3em] uppercase text-[var(--gold-start)] mb-4">
                 {t("استشارة مجانية", "Free consultation")}
               </span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white leading-[1.15]">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-on-dark)] leading-[1.15]">
                 {t(heading.ar, heading.en)}
               </h2>
-              <p className="mt-4 text-sm sm:text-base text-white/65 leading-relaxed max-w-lg">
+              <p className="mt-4 text-sm sm:text-base text-[var(--text-on-dark-muted)] leading-relaxed max-w-lg">
                 {t(sub.ar, sub.en)}
               </p>
             </Reveal>
@@ -84,7 +84,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
             >
               <button
                 onClick={() => openBooking()}
-                className="bg-gold-gradient text-white font-bold text-sm px-4 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] flex items-center justify-center gap-2 cursor-pointer"
+                className="bg-gold-gradient font-bold text-sm px-4 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Calendar className="w-4 h-4" />
                 <span>{t("احجزي موعدك", "Book Appointment")}</span>
@@ -93,15 +93,15 @@ export const CtaBand: React.FC<CtaBandProps> = ({
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-transparent border border-white/25 text-white font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-white/10 transition-colors duration-300 flex items-center justify-center gap-2"
+                className="bg-transparent border border-[var(--border-on-dark)] text-[var(--text-on-dark)] font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-[var(--bg-dark-card)] transition-colors duration-300 flex items-center justify-center gap-2"
               >
-                <MessageCircle className="w-4 h-4 text-emerald-400" />
+                <MessageCircle className="w-4 h-4 text-[var(--text-success-on-dark)]" />
                 <span>{t("واتساب", "WhatsApp")}</span>
               </a>
               <Reveal delay={0.2}>
                 <a
                   href={`tel:${clinicData.phone.replace(/\s/g, "")}`}
-                  className="bg-transparent border border-white/25 text-white font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-white/10 transition-colors duration-300 flex items-center justify-center gap-2"
+                  className="bg-transparent border border-[var(--border-on-dark)] text-[var(--text-on-dark)] font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-[var(--bg-dark-card)] transition-colors duration-300 flex items-center justify-center gap-2"
                   dir="ltr"
                 >
                   <Phone className="w-4 h-4 text-[var(--gold-start)]" />

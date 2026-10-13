@@ -75,7 +75,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
   const xOut = (dir: number) => (rtl ? 40 * dir : -40 * dir);
 
   return (
-    <div className="h-full flex flex-col rounded-2xl overflow-hidden border border-[var(--gold-border)]/50 bg-[var(--bg-card)] transition-[box-shadow,border-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:shadow-lg hover:border-[var(--gold-mid)]/60">
+    <div className="h-full flex flex-col rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] transition-[box-shadow,border-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:shadow-lg hover:border-[var(--border-control)]">
       {/* ── Before / After grid ── */}
       <div className="grid grid-cols-2">
         {(
@@ -83,7 +83,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
             {
               slot: result.before,
               label: { ar: "قبل", en: "Before" },
-              style: "bg-[var(--bg-dark)]/85",
+              style: "bg-[var(--bg-dark)]/85 text-[var(--text-on-dark)]",
               aria: t(
                 `عرض نتيجة ${result.treatment.ar}`,
                 `View ${result.treatment.en} result`,
@@ -92,7 +92,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
             {
               slot: result.after,
               label: { ar: "بعد", en: "After" },
-              style: "bg-[var(--gold-end)]/90",
+              style: "bg-[var(--gold-end)] text-[var(--text-inverse)]",
               aria: t(
                 `عرض نتيجة ${result.treatment.ar} بعد الخدمة`,
                 `View ${result.treatment.en} after treatment`,
@@ -121,7 +121,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
             />
             <span className="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-500" />
             <span
-              className={`absolute bottom-2 start-2 ${item.style} text-white text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm`}
+              className={`absolute bottom-2 start-2 ${item.style} text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm`}
             >
               {t(item.label.ar, item.label.en)}
             </span>
@@ -132,23 +132,23 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
       {/* ── Description ── */}
       <div className="p-4 sm:p-5 flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="inline-flex items-center text-[11px] font-bold text-[var(--gold-end)] bg-[var(--blush-light)] border border-[var(--gold-border)]/40 rounded-full px-2.5 py-1">
+          <span className="inline-flex items-center text-[11px] font-bold text-[var(--gold-end)] bg-[var(--blush-light)] border border-[var(--border-control)] rounded-full px-2.5 py-1">
             {t(result.treatment.ar, result.treatment.en)}
           </span>
 
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/25 rounded-full px-2.5 py-1">
-            <MapPin className="w-3 h-3 text-[var(--gold-mid)] shrink-0" />
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] rounded-full px-2.5 py-1">
+            <MapPin className="w-3 h-3 text-[var(--text-gold)] shrink-0" />
             {t(result.area.ar, result.area.en)}
           </span>
 
-          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/25 rounded-full px-2.5 py-1">
-            <CalendarDays className="w-3 h-3 text-[var(--gold-mid)] shrink-0" />
+          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] rounded-full px-2.5 py-1">
+            <CalendarDays className="w-3 h-3 text-[var(--text-gold)] shrink-0" />
             {t(result.sessions.ar, result.sessions.en)}
           </span>
         </div>
 
         {result.note && (
-          <p className="text-[13px] sm:text-sm leading-relaxed text-[var(--text-secondary)] ps-3 border-s-2 border-[var(--gold-mid)]/40">
+          <p className="text-[13px] sm:text-sm leading-relaxed text-[var(--text-secondary)] ps-3 border-s-2 border-[var(--border-control)]">
             {t(result.note.ar, result.note.en)}
           </p>
         )}
@@ -183,7 +183,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                   className="relative w-full max-w-6xl max-h-[100dvh] sm:max-h-[calc(100dvh-2rem)] lg:max-h-[calc(100dvh-3rem)] overflow-y-auto rounded-none sm:rounded-2xl bg-[var(--bg-primary)] shadow-2xl"
                 >
                   {/* Sticky header */}
-                  <div className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--gold-border)]/40 bg-[var(--bg-primary)]/95 px-3 py-2.5 sm:px-5 sm:py-3 lg:px-6 backdrop-blur">
+                  <div className="sticky top-0 z-20 flex items-center justify-between border-b border-[var(--border-control)] bg-[var(--bg-primary)]/95 px-3 py-2.5 sm:px-5 sm:py-3 lg:px-6 backdrop-blur">
                     <p className="text-xs sm:text-sm font-bold text-[var(--text-primary)]">
                       {t("معرض النتائج", "Results gallery")}{" "}
                       <span className="text-[var(--text-muted)] tabular-nums">
@@ -232,7 +232,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                                     index === 0
                                       ? "bg-black/75"
                                       : "bg-[var(--gold-end)]/90"
-                                  } rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-bold text-white backdrop-blur-sm`}
+                                  } rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-bold text-[var(--text-on-dark)] backdrop-blur-sm`}
                                 >
                                   {index === 0
                                     ? t("قبل", "Before")
@@ -249,7 +249,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                         type="button"
                         onClick={() => move(rtl ? 1 : -1)}
                         aria-label={t("النتيجة السابقة", "Previous result")}
-                        className="hidden sm:flex absolute start-2 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 p-2.5 text-white backdrop-blur transition-[background-color,transform] duration-300 hover:bg-black/80 hover:scale-105"
+                        className="hidden sm:flex absolute start-2 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 p-2.5 text-[var(--text-on-dark)] backdrop-blur transition-[background-color,transform] duration-300 hover:bg-black/80 hover:scale-105"
                       >
                         {rtl ? (
                           <ChevronRight className="h-5 w-5" />
@@ -261,7 +261,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                         type="button"
                         onClick={() => move(rtl ? -1 : 1)}
                         aria-label={t("النتيجة التالية", "Next result")}
-                        className="hidden sm:flex absolute end-2 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 p-2.5 text-white backdrop-blur transition-[background-color,transform] duration-300 hover:bg-black/80 hover:scale-105"
+                        className="hidden sm:flex absolute end-2 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 p-2.5 text-[var(--text-on-dark)] backdrop-blur transition-[background-color,transform] duration-300 hover:bg-black/80 hover:scale-105"
                       >
                         {rtl ? (
                           <ChevronLeft className="h-5 w-5" />
@@ -280,7 +280,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.3, ease, delay: 0.05 }}
-                          className="mx-auto w-full max-w-2xl rounded-lg sm:rounded-xl border border-[var(--gold-border)]/40 bg-[var(--bg-dark)]/95 p-3 sm:p-4 lg:p-5 text-white shadow-xl backdrop-blur-md"
+                          className="mx-auto w-full max-w-2xl rounded-lg sm:rounded-xl border border-[var(--border-control)] bg-[var(--bg-dark)]/95 p-3 sm:p-4 lg:p-5 text-[var(--text-on-dark)] shadow-xl backdrop-blur-md"
                         >
                           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px]">
                             <span className="inline-flex items-center font-bold text-[var(--gold-start)] bg-[var(--gold-end)]/20 border border-[var(--gold-start)]/30 rounded-full px-2.5 py-1">
@@ -289,11 +289,11 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                                 activeResult.treatment.en,
                               )}
                             </span>
-                            <span className="inline-flex items-center gap-1 text-white/75 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
+                            <span className="inline-flex items-center gap-1 text-[var(--text-on-dark-muted)] bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
                               <MapPin className="w-3 h-3 shrink-0" />
                               {t(activeResult.area.ar, activeResult.area.en)}
                             </span>
-                            <span className="inline-flex items-center gap-1 text-white/75 bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
+                            <span className="inline-flex items-center gap-1 text-[var(--text-on-dark-muted)] bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
                               <CalendarDays className="w-3 h-3 shrink-0" />
                               {t(
                                 activeResult.sessions.ar,
@@ -302,7 +302,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                             </span>
                           </div>
 
-                          <p className="mt-2.5 sm:mt-3 text-[13px] sm:text-sm leading-relaxed text-white/95 border-s-2 border-[var(--gold-start)]/50 ps-3">
+                          <p className="mt-2.5 sm:mt-3 text-[13px] sm:text-sm leading-relaxed text-[var(--text-on-dark)] border-s-2 border-[var(--gold-start)]/50 ps-3">
                             {t(activeResult.note.ar, activeResult.note.en)}
                           </p>
                         </motion.div>
@@ -310,7 +310,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                     </div>
 
                     {/* Mobile navigation bar */}
-                    <div className="sm:hidden mt-4 flex items-center justify-between gap-2 rounded-full border border-[var(--gold-border)]/40 bg-[var(--bg-card)] p-1.5">
+                    <div className="sm:hidden mt-4 flex items-center justify-between gap-2 rounded-full border border-[var(--border-control)] bg-[var(--bg-card)] p-1.5">
                       <button
                         type="button"
                         onClick={() => move(rtl ? 1 : -1)}

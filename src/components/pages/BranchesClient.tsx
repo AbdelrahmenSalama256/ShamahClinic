@@ -41,8 +41,8 @@ export const BranchesClient: React.FC<{ branches: BranchDetail[] }> = ({
             ))}
           </div>
 
-          <Reveal className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 text-center rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/40 p-6">
-            <Clock className="w-5 h-5 text-[var(--gold-mid)] shrink-0" />
+          <Reveal className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 text-center rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-6">
+            <Clock className="w-5 h-5 text-[var(--text-gold)] shrink-0" />
             <p className="text-sm text-[var(--text-secondary)]">
               {t("مواعيد العمل في كل الفروع: ", "Opening hours at all branches: ")}
               <strong className="text-[var(--text-primary)]">{clinicData.workingHours[language]}</strong>

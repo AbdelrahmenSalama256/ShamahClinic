@@ -44,7 +44,7 @@ export const OfferDetailClient: React.FC<OfferDetailClientProps> = ({
           {/* Detail body */}
           <div className="lg:col-span-7 min-w-0">
             {offer.includes[language].length > 0 && (
-              <Reveal className="rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-card)] p-6">
+              <Reveal className="rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-6">
                 <h2 className="text-lg font-black text-[var(--text-primary)] mb-3">
                   {t("ماذا تتضمن الباقة", "What the package includes")}
                 </h2>
@@ -73,7 +73,7 @@ export const OfferDetailClient: React.FC<OfferDetailClientProps> = ({
               </Reveal>
             ) : null}
 
-            <Reveal className="mt-8 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/40 p-6">
+            <Reveal className="mt-8 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-6">
               <h2 className="text-lg font-black text-[var(--text-primary)] mb-3">
                 {t("شروط الباقات", "Package terms")}
               </h2>

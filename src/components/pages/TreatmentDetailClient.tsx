@@ -78,9 +78,9 @@ export const TreatmentDetailClient: React.FC<{
               {facts.map((f) => (
                 <div
                   key={f.label.en}
-                  className="flex items-start gap-3 p-5 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/40"
+                  className="flex items-start gap-3 p-5 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)]"
                 >
-                  <f.icon className="w-5 h-5 text-[var(--gold-mid)] mt-0.5 shrink-0" />
+                  <f.icon className="w-5 h-5 text-[var(--text-gold)] mt-0.5 shrink-0" />
                   <div>
                     <p className="text-xs text-[var(--text-muted)]">
                       {t(f.label.ar, f.label.en)}
@@ -132,7 +132,7 @@ export const TreatmentDetailClient: React.FC<{
                         key={b}
                         className="flex items-start gap-2.5 text-sm text-[var(--text-primary)]"
                       >
-                        <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--gold-mid)]" />
+                        <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--text-gold)]" />
                         <span>{b}</span>
                       </li>
                     ))}
@@ -148,7 +148,7 @@ export const TreatmentDetailClient: React.FC<{
                   <ol className="space-y-4">
                     {treatment.steps[language].map((s, i) => (
                       <li key={i} className="flex gap-4">
-                        <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--gold-border)]/50 text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
+                        <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--border-control)] text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
                           {formatNumber(i + 1)}
                         </span>
                         <p className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)] pt-1">
@@ -181,7 +181,7 @@ export const TreatmentDetailClient: React.FC<{
 
             {/* Sticky booking aside */}
             <aside className="lg:col-span-5">
-              <div className="lg:sticky lg:top-32 rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-card)] p-6 shadow-sm">
+              <div className="lg:sticky lg:top-32 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-6 shadow-sm">
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
                   {t(
                     "احجزي استشارتكِ لهذه الجلسة، أو أرسلي استفساركِ مباشرة على واتساب وسنرد خلال دقائق.",
@@ -197,7 +197,7 @@ export const TreatmentDetailClient: React.FC<{
                   <WhatsAppButton
                     size="lg"
                     variant="outline"
-                    className="w-full !text-[var(--text-primary)] !border-[var(--gold-border)] !bg-white hover:!bg-[var(--blush-light)]"
+                    className="w-full"
                     custom={
                       language === "ar"
                         ? `مرحباً عيادات شامه، أرغب في الاستفسار عن جلسة ${treatment.name.ar}.`
@@ -231,7 +231,7 @@ export const TreatmentDetailClient: React.FC<{
               <div className="mt-8 text-center">
                 <Link
                   href={getLocalizedHref("/services", language)}
-                  className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors duration-300 inline-flex items-center gap-1"
+                  className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300 inline-flex items-center gap-1"
                 >
                   {t("تصفحي كل الخدمات", "Browse all treatments")}
                 </Link>

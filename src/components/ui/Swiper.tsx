@@ -152,7 +152,7 @@ export const Swiper: React.FC<SwiperProps> = ({
               onClick={() => goTo(index - 1)}
               disabled={index === 0}
               aria-label={t("السابق", "Previous")}
-              className="p-2 rounded-full border border-[var(--gold-border)]/60 text-[var(--text-secondary)] hover:text-[var(--gold-end)] hover:border-[var(--gold-mid)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+              className="p-2 rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:text-[var(--text-gold)] hover:border-[var(--border-control)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
             >
               <PrevIcon className="w-4 h-4" />
             </button>
@@ -173,8 +173,8 @@ export const Swiper: React.FC<SwiperProps> = ({
                   // row the same height while the tap target reaches 24x24.
                   className={`-m-2 h-6 p-2 bg-clip-content rounded-full transition-[width,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
                     i === index
-                      ? "w-10 bg-[var(--gold-mid)]"
-                      : "w-6 bg-[var(--gold-border)] hover:bg-[var(--gold-mid)]/60"
+                      ? "w-10 bg-[var(--text-gold)]"
+                      : "w-6 bg-[var(--border-control)] hover:bg-[var(--gold-mid)]/60"
                   }`}
                 />
               ))}
@@ -186,7 +186,7 @@ export const Swiper: React.FC<SwiperProps> = ({
               onClick={() => goTo(index + 1)}
               disabled={index === maxIndex}
               aria-label={t("التالي", "Next")}
-              className="p-2 rounded-full border border-[var(--gold-border)]/60 text-[var(--text-secondary)] hover:text-[var(--gold-end)] hover:border-[var(--gold-mid)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+              className="p-2 rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:text-[var(--text-gold)] hover:border-[var(--border-control)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
             >
               <NextIcon className="w-4 h-4" />
             </button>

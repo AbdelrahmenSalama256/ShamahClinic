@@ -47,12 +47,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min }) 
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--gold-mid)] focus:ring-1 focus:ring-[var(--gold-mid)] text-sm font-semibold outline-none bg-white flex items-center justify-between cursor-pointer hover:border-[var(--gold-border)] transition-colors"
+        className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--border-control)] focus:ring-1 focus:ring-[var(--gold-mid)] text-sm font-semibold outline-none bg-[var(--bg-card)] flex items-center justify-between cursor-pointer hover:border-[var(--gold-border)] transition-colors"
       >
         <span className={selected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}>
           {selected ? format(selected, "dd/MM/yyyy") : t("اختاري التاريخ", "Pick a date")}
         </span>
-        <CalendarIcon className="w-4 h-4 text-[var(--gold-mid)]" />
+        <CalendarIcon className="w-4 h-4 text-[var(--text-gold)]" />
       </button>
 
       {/* Popup */}
@@ -63,7 +63,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min }) 
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute z-50 mt-2 p-4 rounded-2xl bg-white border border-[var(--gold-border)]/50 shadow-2xl rdp-shamah"
+            className="absolute z-50 mt-2 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-control)] shadow-2xl rdp-shamah"
           >
             {/* Close button */}
             <button
@@ -90,14 +90,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min }) 
             />
 
             {/* Footer actions */}
-            <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--gold-border)]/40">
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-[var(--border-control)]">
               <button
                 type="button"
                 onClick={() => {
                   onChange(format(new Date(), "yyyy-MM-dd"));
                   setOpen(false);
                 }}
-                className="text-xs font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors cursor-pointer"
+                className="text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors cursor-pointer"
               >
                 {t("اليوم", "Today")}
               </button>

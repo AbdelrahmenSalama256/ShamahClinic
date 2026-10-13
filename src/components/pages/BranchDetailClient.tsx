@@ -45,9 +45,9 @@ export const BranchDetailClient: React.FC<{
             {/* Details */}
             <div className="lg:col-span-7 space-y-10">
               <Reveal>
-                <div className="rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-card)] p-6 space-y-5">
+                <div className="rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-6 space-y-5">
                   <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-[var(--gold-mid)] mt-0.5 shrink-0" />
+                    <MapPin className="w-5 h-5 text-[var(--text-gold)] mt-0.5 shrink-0" />
                     <div>
                       <h2 className="font-black text-[var(--text-primary)] mb-1">
                         {t("العنوان", "Address")}
@@ -63,8 +63,8 @@ export const BranchDetailClient: React.FC<{
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3 border-t border-[var(--gold-border)]/40 pt-5">
-                    <Phone className="w-5 h-5 text-[var(--gold-mid)] mt-0.5 shrink-0" />
+                  <div className="flex items-start gap-3 border-t border-[var(--border-control)] pt-5">
+                    <Phone className="w-5 h-5 text-[var(--text-gold)] mt-0.5 shrink-0" />
                     <div>
                       <h2 className="font-black text-[var(--text-primary)] mb-1">
                         {t("هاتف الفرع", "Branch phone")}
@@ -72,14 +72,14 @@ export const BranchDetailClient: React.FC<{
                       <a
                         href={`tel:${branch.phone}`}
                         dir="ltr"
-                        className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors duration-300"
+                        className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
                       >
                         {branch.phone}
                       </a>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3 border-t border-[var(--gold-border)]/40 pt-5">
-                    <Clock className="w-5 h-5 text-[var(--gold-mid)] mt-0.5 shrink-0" />
+                  <div className="flex items-start gap-3 border-t border-[var(--border-control)] pt-5">
+                    <Clock className="w-5 h-5 text-[var(--text-gold)] mt-0.5 shrink-0" />
                     <div>
                       <h2 className="font-black text-[var(--text-primary)] mb-1">
                         {t("مواعيد العمل", "Opening hours")}
@@ -102,7 +102,7 @@ export const BranchDetailClient: React.FC<{
                       key={f}
                       className="flex items-start gap-2.5 text-sm text-[var(--text-primary)]"
                     >
-                      <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--gold-mid)]" />
+                      <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--text-gold)]" />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -123,7 +123,7 @@ export const BranchDetailClient: React.FC<{
 
             {/* Booking aside */}
             <aside className="lg:col-span-5">
-              <div className="lg:sticky lg:top-32 rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-secondary)]/60 p-6">
+              <div className="lg:sticky lg:top-32 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-secondary)]/60 p-6">
                 <h2 className="text-xl font-black text-[var(--text-primary)] mb-2">
                   {t("احجزي في فرع", "Book at")}{" "}
                   {t(branch.name.ar, branch.name.en)}
@@ -139,7 +139,7 @@ export const BranchDetailClient: React.FC<{
                   <WhatsAppButton
                     size="lg"
                     variant="outline"
-                    className="w-full !text-[var(--text-primary)] !border-[var(--gold-border)] !bg-white hover:!bg-[var(--blush-light)]"
+                    className="w-full"
                     custom={
                       language === "ar"
                         ? `مرحباً عيادات شامه، أرغب في حجز موعد بفرع ${branch.name.ar}.`
@@ -169,7 +169,7 @@ export const BranchDetailClient: React.FC<{
                 <Link
                   key={o.id}
                   href={getLocalizedHref(`/branches/${o.id}`, language)}
-                  className="group flex items-center gap-4 p-4 rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-card)] hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+                  className="group flex items-center gap-4 p-4 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
                 >
                   <div className="w-20 h-16 rounded-xl overflow-hidden shrink-0">
                     <Photo
@@ -187,7 +187,7 @@ export const BranchDetailClient: React.FC<{
                       {t(o.area.ar, o.area.en)}
                     </p>
                   </div>
-                  <Arrow className="w-5 h-5 text-[var(--gold-mid)] shrink-0 transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+                  <Arrow className="w-5 h-5 text-[var(--text-gold)] shrink-0 transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
                 </Link>
               ))}
             </div>

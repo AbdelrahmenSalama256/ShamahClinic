@@ -58,7 +58,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "", priority: 1, changeFrequency: "weekly", lastModified: wpModified("home") },
     { path: "/services", priority: 0.9, changeFrequency: "weekly", lastModified: wpModified("our-services") },
     { path: "/doctors", priority: 0.8, changeFrequency: "monthly" },
-    { path: "/results", priority: 0.7, changeFrequency: "monthly" },
+    // { path: "/results", priority: 0.7, changeFrequency: "monthly" },
     { path: "/offers", priority: 0.8, changeFrequency: "weekly", lastModified: wpModified("shop") },
     { path: "/branches", priority: 0.8, changeFrequency: "monthly" },
     { path: "/blogs", priority: 0.7, changeFrequency: "weekly", lastModified: wpModified("journal") },

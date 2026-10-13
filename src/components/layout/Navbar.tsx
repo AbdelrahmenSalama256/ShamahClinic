@@ -105,19 +105,19 @@ export const Navbar: React.FC = () => {
         <div
           className={`hidden lg:block overflow-hidden transition-[max-height,opacity] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
             isScrolled ? "max-h-0 opacity-0" : "max-h-10 opacity-100"
-          } border-b border-[var(--gold-border)]/40 pb-2 mb-2 text-xs text-[var(--text-secondary)]`}
+          } border-b border-[var(--border-control)] pb-2 mb-2 text-xs text-[var(--text-secondary)]`}
         >
           <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
             <div className="flex items-center gap-6">
               <span className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+                <MapPin className="w-3.5 h-3.5 text-[var(--text-gold)]" />
                 {t(
                   "فروعنا: مدينة نصر • التجمع الخامس • الشيخ زايد",
                   "Branches: Nasr City • New Cairo • Sheikh Zayed",
                 )}
               </span>
               <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+                <Clock className="w-3.5 h-3.5 text-[var(--text-gold)]" />
                 {clinicData.workingHours[language]}
               </span>
             </div>
@@ -125,9 +125,9 @@ export const Navbar: React.FC = () => {
               <a
                 href={`tel:${clinicData.phone.replace(/\s/g, "")}`}
                 dir="ltr"
-                className="flex items-center gap-1.5 hover:text-[var(--gold-mid)] transition-colors duration-300"
+                className="flex items-center gap-1.5 hover:text-[var(--text-gold)] transition-colors duration-300"
               >
-                <Phone className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+                <Phone className="w-3.5 h-3.5 text-[var(--text-gold)]" />
                 <span>{clinicData.phone}</span>
               </a>
               <span className="text-[var(--gold-end)]" aria-hidden="true">
@@ -135,9 +135,9 @@ export const Navbar: React.FC = () => {
               </span>
               <button
                 onClick={toggleLanguage}
-                className="flex items-center gap-1 hover:text-[var(--gold-mid)] transition-colors duration-300 font-medium cursor-pointer"
+                className="flex items-center gap-1 hover:text-[var(--text-gold)] transition-colors duration-300 font-medium cursor-pointer"
               >
-                <Globe className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+                <Globe className="w-3.5 h-3.5 text-[var(--text-gold)]" />
                 <span>{language === "ar" ? "English" : "العربية"}</span>
               </button>
             </div>
@@ -222,7 +222,7 @@ export const Navbar: React.FC = () => {
                           ease: [0.22, 1, 0.36, 1],
                         }}
                         role="menu"
-                        className="absolute top-full start-0 mt-2 w-72 rounded-2xl bg-[var(--bg-card)] border border-[var(--gold-border)]/40 shadow-2xl overflow-hidden z-50"
+                        className="absolute top-full start-0 mt-2 w-72 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-control)] shadow-2xl overflow-hidden z-50"
                       >
                         <div className="p-2">
                           {link.children!.map((child) => (
@@ -249,10 +249,10 @@ export const Navbar: React.FC = () => {
                             </Link>
                           ))}
                         </div>
-                        <div className="border-t border-[var(--gold-border)]/30 p-2">
+                        <div className="border-t border-[var(--border-control)] p-2">
                           <Link
                             href={getLocalizedHref(link.href, language)}
-                            className="block text-center text-xs font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] py-1.5 transition-colors duration-300"
+                            className="block text-center text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] py-1.5 transition-colors duration-300"
                           >
                             {t("كل الخدمات ←", "All treatments →")}
                           </Link>
@@ -278,7 +278,7 @@ export const Navbar: React.FC = () => {
                   theme === "dark" ? "الوضع الفاتح" : "الوضع الداكن",
                   theme === "dark" ? "Light mode" : "Dark mode",
                 )}
-                className="inline-flex items-center justify-center rounded-full w-8 h-8 border border-[var(--gold-border)] text-[var(--text-primary)] hover:border-[var(--gold-mid)] transition-colors duration-300 cursor-pointer"
+                className="inline-flex items-center justify-center rounded-full w-8 h-8 border border-[var(--gold-border)] text-[var(--text-primary)] hover:border-[var(--border-control)] transition-colors duration-300 cursor-pointer"
               >
                 {theme === "dark" ? (
                   <Sun className="w-4 h-4" />
@@ -290,7 +290,7 @@ export const Navbar: React.FC = () => {
             <button
               onClick={toggleLanguage}
               title={t("تغيير اللغة", "Switch language")}
-              className="lg:hidden  rounded-full w-8 h-8 d-flex justify-center align-center border border-[var(--gold-border)] text-xs font-bold text-[var(--text-primary)] hover:border-[var(--gold-mid)] transition-colors duration-300"
+              className="lg:hidden  rounded-full w-8 h-8 d-flex justify-center align-center border border-[var(--gold-border)] text-xs font-bold text-[var(--text-primary)] hover:border-[var(--border-control)] transition-colors duration-300"
             >
               {language === "ar" ? "EN" : "عربي"}
             </button>
@@ -300,15 +300,15 @@ export const Navbar: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t("تواصل عبر واتساب", "Chat on WhatsApp")}
-              className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full border border-emerald-500/30 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors duration-300"
+              className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full border border-[var(--border-success)] bg-[var(--bg-success-soft)] text-[var(--text-success)] hover:bg-[var(--bg-success-soft)] transition-colors duration-300"
             >
-              <MessageCircle className="w-5 h-5 text-emerald-600" />
+              <MessageCircle className="w-5 h-5 text-[var(--text-success)]" />
             </a>
 
             <button
               onClick={() => openBooking()}
               aria-label={t("احجزي موعدك", "Book appointment")}
-              className="bg-gold-gradient text-white font-medium text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] flex items-center gap-2 cursor-pointer"
+              className="bg-gold-gradient font-medium text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] flex items-center gap-2 cursor-pointer"
             >
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">
@@ -320,7 +320,7 @@ export const Navbar: React.FC = () => {
               onClick={() => openMenu({ mobile: !isMobileMenuOpen })}
               aria-label={t("القائمة", "Menu")}
               aria-expanded={isMobileMenuOpen}
-              className="lg:hidden p-2 text-[var(--text-primary)] hover:text-[var(--gold-mid)] transition-colors duration-300"
+              className="lg:hidden p-2 text-[var(--text-primary)] hover:text-[var(--text-gold)] transition-colors duration-300"
             >
               {isMobileMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -384,7 +384,7 @@ export const Navbar: React.FC = () => {
                     <button
                       onClick={() => openMenu({ mobile: false })}
                       aria-label={t("إغلاق", "Close")}
-                      className="p-2 text-[var(--text-secondary)] hover:text-[var(--gold-mid)] transition-colors duration-300"
+                      className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-gold)] transition-colors duration-300"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -404,7 +404,7 @@ export const Navbar: React.FC = () => {
                           <Link
                             key={link.href}
                             href={getLocalizedHref(link.href, language)}
-                            className={`py-3 border-b border-[var(--gold-border)]/30 flex items-center justify-between text-sm font-semibold transition-colors duration-300 ${
+                            className={`py-3 border-b border-[var(--border-control)] flex items-center justify-between text-sm font-semibold transition-colors duration-300 ${
                               active
                                 ? "text-[var(--gold-end)]"
                                 : "text-[var(--text-primary)] hover:text-[var(--gold-end)]"
@@ -422,7 +422,7 @@ export const Navbar: React.FC = () => {
                         <button
                           key={link.href}
                           onClick={() => openMenu({ mobileDropdown: link.href })}
-                          className={`py-3 border-b border-[var(--gold-border)]/30 flex items-center justify-between text-sm font-semibold transition-colors duration-300 cursor-pointer ${
+                          className={`py-3 border-b border-[var(--border-control)] flex items-center justify-between text-sm font-semibold transition-colors duration-300 cursor-pointer ${
                             active
                               ? "text-[var(--gold-end)]"
                               : "text-[var(--text-primary)] hover:text-[var(--gold-end)]"
@@ -440,7 +440,7 @@ export const Navbar: React.FC = () => {
                   </nav>
 
                   {/* Language */}
-                  <div className="mt-5 pt-4 border-t border-[var(--gold-border)]/50">
+                  <div className="mt-5 pt-4 border-t border-[var(--border-control)]">
                     {siteConfig.enableDarkmoodOption && (
                       <button
                         onClick={toggleTheme}
@@ -448,9 +448,9 @@ export const Navbar: React.FC = () => {
                       >
                         <span className="flex items-center gap-2">
                           {theme === "dark" ? (
-                            <Sun className="w-4 h-4 text-[var(--gold-mid)]" />
+                            <Sun className="w-4 h-4 text-[var(--text-gold)]" />
                           ) : (
-                            <Moon className="w-4 h-4 text-[var(--gold-mid)]" />
+                            <Moon className="w-4 h-4 text-[var(--text-gold)]" />
                           )}
                           {t("المظهر", "Appearance")}
                         </span>
@@ -467,7 +467,7 @@ export const Navbar: React.FC = () => {
                       className="w-full flex items-center justify-between py-2.5 px-3 rounded-lg bg-[var(--bg-secondary)] text-sm font-semibold text-[var(--text-primary)]"
                     >
                       <span className="flex items-center gap-2">
-                        <Globe className="w-4 h-4 text-[var(--gold-mid)]" />
+                        <Globe className="w-4 h-4 text-[var(--text-gold)]" />
                         {t("اللغة الحالية", "Current language")}
                       </span>
                       <span className="text-[var(--gold-end)] font-bold">
@@ -484,7 +484,7 @@ export const Navbar: React.FC = () => {
                       openMenu({ mobile: false });
                       openBooking();
                     }}
-                    className="w-full bg-gold-gradient text-white font-medium py-3 rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                    className="w-full bg-gold-gradient font-medium py-3 rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Calendar className="w-4 h-4" />
                     <span>{t("احجزي موعدك الآن", "Book Appointment Now")}</span>
@@ -493,7 +493,7 @@ export const Navbar: React.FC = () => {
                     href={whatsappUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-emerald-700 text-white font-medium py-3 rounded-xl shadow-sm flex items-center justify-center gap-2"
+                    className="w-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] font-medium py-3 rounded-xl shadow-sm flex items-center justify-center gap-2"
                   >
                     <MessageCircle className="w-4 h-4" />
                     <span>{t("محادثة واتساب فورية", "Chat on WhatsApp")}</span>
@@ -521,7 +521,7 @@ export const Navbar: React.FC = () => {
                   <button
                     onClick={() => openMenu({ mobileDropdown: null })}
                     aria-label={t("رجوع", "Back")}
-                    className="flex items-center gap-2 text-sm font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors duration-300 cursor-pointer"
+                    className="flex items-center gap-2 text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300 cursor-pointer"
                   >
                     <ChevronDown
                       className={`w-4 h-4 ${
@@ -547,7 +547,7 @@ export const Navbar: React.FC = () => {
                       <Link
                         key={child.href}
                         href={getLocalizedHref(child.href, language)}
-                        className="group flex flex-col gap-1 py-3 border-b border-[var(--gold-border)]/30"
+                        className="group flex flex-col gap-1 py-3 border-b border-[var(--border-control)]"
                       >
                         <span className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300">
                           {t(child.label.ar, child.label.en)}
@@ -562,7 +562,7 @@ export const Navbar: React.FC = () => {
 
                     <Link
                       href={getLocalizedHref(mobileParent.href, language)}
-                      className="mt-4 block text-center text-sm font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] py-3 rounded-xl border border-[var(--gold-border)]/50 hover:border-[var(--gold-mid)] transition-colors duration-300"
+                      className="mt-4 block text-center text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] py-3 rounded-xl border border-[var(--border-control)] hover:border-[var(--border-control)] transition-colors duration-300"
                     >
                       {t("كل الخدمات ←", "All treatments →")}
                     </Link>

@@ -22,7 +22,7 @@ export const DoctorCard: React.FC<{
     .join(" • ");
 
   return (
-    <article className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--gold-border)]/50 bg-[var(--bg-card)] hover:shadow-xl transition-[box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]">
+    <article className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl transition-[box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]">
       <div className="relative overflow-hidden">
         <Photo
           slot={doctor.image}
@@ -45,19 +45,19 @@ export const DoctorCard: React.FC<{
           {doctor.specialties[language].map((s) => (
             <li
               key={s}
-              className="text-[11px] font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--gold-border)]/40 rounded-full px-3 py-1"
+              className="text-[11px] font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-control)] rounded-full px-3 py-1"
             >
               {s}
             </li>
           ))}
         </ul>
         <p className="mt-3 sm:mt-4 inline-flex items-center gap-1.5 text-[10px] sm:text-xs text-[var(--text-muted)]">
-          <MapPin className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+          <MapPin className="w-3.5 h-3.5 text-[var(--text-gold)]" />
           {branchNames}
         </p>
         <button
           onClick={() => openBooking({ specialistId: doctor.id })}
-          className="mt-3 sm:mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient text-white font-bold text-xs sm:text-sm py-2.5 sm:py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+          className="mt-3 sm:mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-xs sm:text-sm py-2.5 sm:py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
         >
           <Calendar className="w-4 h-4" />
           <span>{t("احجزي مع هذه الطبيبة", "Book with this doctor")}</span>

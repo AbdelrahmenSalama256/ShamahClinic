@@ -49,7 +49,7 @@ export const BookButton: React.FC<BookButtonProps> = ({
   return (
     <button
       onClick={() => openBooking({ treatmentId, specialistId })}
-      className={`inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient text-white font-bold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${pad} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${pad} ${className}`}
     >
       <Calendar className="w-4 h-4" />
       <span>
@@ -62,7 +62,11 @@ export const BookButton: React.FC<BookButtonProps> = ({
 interface WhatsAppButtonProps {
   custom?: string;
   size?: "sm" | "md" | "lg";
-  variant?: "solid" | "outline";
+  /**
+   * Chosen by the surface the control sits on: `solid` anywhere, `outline` on a
+   * light card, `onDark` on surfaces that stay dark in both themes.
+   */
+  variant?: "solid" | "outline" | "onDark";
   className?: string;
 }
 
@@ -81,8 +85,10 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
         : "text-sm px-6 py-3";
   const skin =
     variant === "solid"
-      ? "bg-emerald-700 text-white hover:bg-emerald-800"
-      : "bg-white/10 border border-white/25 text-white hover:bg-white/20";
+      ? "bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] hover:bg-[var(--btn-wa-solid-bg-hover)] hover:text-[var(--btn-wa-solid-fg-hover)]"
+      : variant === "outline"
+        ? "bg-[var(--btn-wa-outline-bg)] text-[var(--btn-wa-outline-fg)] border border-[var(--btn-wa-outline-border)] hover:bg-[var(--btn-wa-outline-bg-hover)] hover:text-[var(--btn-wa-outline-fg-hover)]"
+        : "bg-[var(--btn-wa-on-dark-bg)] text-[var(--btn-wa-on-dark-fg)] border border-[var(--btn-wa-on-dark-border)] hover:bg-[var(--btn-wa-on-dark-bg-hover)] hover:text-[var(--btn-wa-on-dark-fg-hover)]";
   return (
     <a
       href={whatsappHref(language, custom)}
@@ -108,7 +114,7 @@ export const CallButton: React.FC<{
     <a
       href={`tel:${num}`}
       dir="ltr"
-      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--gold-border)] text-[var(--gold-end)] font-bold hover:bg-[var(--blush-light)] transition-[background-color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${pad} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--blush-light)] transition-[background-color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${pad} ${className}`}
     >
       <Phone className="w-4 h-4" />
       <span>{phone ?? clinicData.phone}</span>
@@ -140,7 +146,7 @@ export const GoldLink: React.FC<GoldLinkProps> = ({
   return (
     <Link
       href={localizedPath}
-      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--gold-mid)] text-[var(--gold-end)] font-bold hover:bg-[var(--gold-mid)] hover:text-white transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 ${pad} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--gold-mid)] hover:text-[var(--btn-gold-fg)] transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 ${pad} ${className}`}
     >
       <span>{children}</span>
       {withArrow && <Arrow className="w-4 h-4" />}

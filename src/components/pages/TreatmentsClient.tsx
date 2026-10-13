@@ -60,8 +60,8 @@ export const TreatmentsClient: React.FC<Props> = ({ title, treatments = treatmen
                   aria-pressed={isActive}
                   className={`px-5 py-2.5 rounded-full text-sm font-bold border transition-[background-color,color,transform,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
                     isActive
-                      ? "bg-gold-gradient text-white border-transparent shadow-md"
-                      : "bg-white text-[var(--text-secondary)] border-[var(--gold-border)]/60 hover:border-[var(--gold-mid)] hover:text-[var(--gold-end)]"
+                      ? "bg-gold-gradient border-transparent shadow-md"
+                      : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-control)] hover:border-[var(--border-control)] hover:text-[var(--gold-end)]"
                   }`}
                 >
                   {t(c.name.ar, c.name.en)}

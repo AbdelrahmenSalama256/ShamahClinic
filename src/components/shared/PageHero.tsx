@@ -34,7 +34,7 @@ export const PageHero: React.FC<PageHeroProps> = ({
   const leadText = lead ? t(lead.ar, lead.en) : "";
 
   return (
-    <header className="relative bg-[var(--bg-primary)] border-b border-[var(--gold-border)]/25">
+    <header className="relative bg-[var(--bg-primary)] border-b border-[var(--border-control)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-10 lg:pt-10 lg:pb-16">
         <Breadcrumbs items={breadcrumbs} />
 
@@ -54,7 +54,7 @@ export const PageHero: React.FC<PageHeroProps> = ({
                   {t(title.ar, title.en)}
                 </h1>
                 {leadText ? (
-                  <p className="mt-5 text-[14px] sm:text-base lg:text-lg leading-relaxed text-[var(--text-secondary)] max-w-xl border-s-2 border-[var(--gold-mid)]/30 ps-4">
+                  <p className="mt-5 text-[14px] sm:text-base lg:text-lg leading-relaxed text-[var(--text-secondary)] max-w-xl border-s-2 border-[var(--border-control)] ps-4">
                     {leadText}
                   </p>
                 ) : null}
@@ -91,7 +91,7 @@ export const PageHero: React.FC<PageHeroProps> = ({
                 {t(title.ar, title.en)}
               </h1>
               {leadText ? (
-                <p className="mt-5 text-[14px] sm:text-base lg:text-lg leading-relaxed text-[var(--text-secondary)] max-w-2xl border-s-2 border-[var(--gold-mid)]/30 ps-4">
+                <p className="mt-5 text-[14px] sm:text-base lg:text-lg leading-relaxed text-[var(--text-secondary)] max-w-2xl border-s-2 border-[var(--border-control)] ps-4">
                   {leadText}
                 </p>
               ) : null}

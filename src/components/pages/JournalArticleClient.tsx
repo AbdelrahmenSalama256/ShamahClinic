@@ -117,14 +117,14 @@ export const JournalArticleClient: React.FC<{
             {/* ══════════════ MAIN CONTENT ══════════════ */}
             <div className="min-w-0">
               {/* Meta row + author */}
-              <Reveal className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--text-muted)] mb-8 pb-6 border-b border-[var(--gold-border)]/40">
+              <Reveal className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-[var(--text-muted)] mb-8 pb-6 border-b border-[var(--border-control)]">
                 <span className="inline-flex items-center gap-1.5">
-                  <CalendarDays className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+                  <CalendarDays className="w-3.5 h-3.5 text-[var(--text-gold)]" />
                   {t(article.date.ar, article.date.en)}
                 </span>
                 {article.readMinutes ? (
                   <span className="inline-flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+                    <Clock className="w-3.5 h-3.5 text-[var(--text-gold)]" />
                     {t(
                       `${formatNumber(article.readMinutes)} دقائق قراءة`,
                       `${article.readMinutes} min read`,
@@ -136,7 +136,7 @@ export const JournalArticleClient: React.FC<{
                     {t("بقلم", "By")}{" "}
                     <Link
                       href={getLocalizedHref("/doctors", language)}
-                      className="font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors"
+                      className="font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors"
                     >
                       {t(author.name.ar, author.name.en)}
                     </Link>
@@ -183,13 +183,13 @@ export const JournalArticleClient: React.FC<{
 
               {/* Inline CTA — mid-article */}
               <Reveal className="my-12 rounded-2xl bg-gold-gradient p-6 sm:p-8 text-center shadow-lg">
-                <h3 className="text-lg sm:text-xl font-black text-white mb-2">
+                <h3 className="text-lg sm:text-xl font-black text-[var(--text-on-dark)] mb-2">
                   {t(
                     "محتاجة استشارة شخصية لحالتكِ؟",
                     "Need a personal consultation for your case?",
                   )}
                 </h3>
-                <p className="text-sm text-white/85 mb-5 max-w-lg mx-auto">
+                <p className="text-sm text-[var(--text-on-dark-muted)] mb-5 max-w-lg mx-auto">
                   {t(
                     "احجزي موعدكِ مع إحدى طبيباتنا واستلمي خطة مخصصة لبشرتكِ.",
                     "Book your appointment with one of our doctors and get a plan tailored to your skin.",
@@ -197,11 +197,7 @@ export const JournalArticleClient: React.FC<{
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <BookButton size="lg" />
-                  <WhatsAppButton
-                    size="lg"
-                    variant="outline"
-                    className="!text-white !border-white/50 !bg-white/10 hover:!bg-white/20"
-                  />
+                  <WhatsAppButton size="lg" variant="onDark" />
                 </div>
               </Reveal>
 
@@ -210,7 +206,7 @@ export const JournalArticleClient: React.FC<{
                 {article.tags[language].map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--gold-border)]/40 rounded-full px-3 py-1 hover:border-[var(--gold-mid)] hover:text-[var(--gold-end)] transition-colors duration-300"
+                    className="text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-control)] rounded-full px-3 py-1 hover:border-[var(--border-control)] hover:text-[var(--gold-end)] transition-colors duration-300"
                   >
                     #{tag}
                   </span>
@@ -218,9 +214,9 @@ export const JournalArticleClient: React.FC<{
               </div>
 
               {/* Share row */}
-              <Reveal className="mt-8 flex flex-wrap items-center gap-3 py-5 border-t border-b border-[var(--gold-border)]/40">
+              <Reveal className="mt-8 flex flex-wrap items-center gap-3 py-5 border-t border-b border-[var(--border-control)]">
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
-                  <Share2 className="w-4 h-4 text-[var(--gold-mid)]" />
+                  <Share2 className="w-4 h-4 text-[var(--text-gold)]" />
                   {t("شاركي المقال:", "Share this article:")}
                 </span>
                 <div className="flex items-center gap-2">
@@ -229,7 +225,7 @@ export const JournalArticleClient: React.FC<{
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Share on WhatsApp"
-                    className="w-9 h-9 rounded-full border border-[var(--gold-border)]/50 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300 flex items-center justify-center transition-colors"
+                    className="w-9 h-9 rounded-full border border-[var(--border-control)] text-[var(--text-success)] hover:bg-[var(--bg-success-soft)] hover:border-[var(--border-success)] flex items-center justify-center transition-colors"
                   >
                     <MessageCircle className="w-4 h-4" />
                   </a>
@@ -238,7 +234,7 @@ export const JournalArticleClient: React.FC<{
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Share on X"
-                    className="w-9 h-9 rounded-full border border-[var(--gold-border)]/50 text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] flex items-center justify-center transition-colors"
+                    className="w-9 h-9 rounded-full border border-[var(--border-control)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] flex items-center justify-center transition-colors"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -253,7 +249,7 @@ export const JournalArticleClient: React.FC<{
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Share on Facebook"
-                    className="w-9 h-9 rounded-full border border-[var(--gold-border)]/50 text-blue-600 hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center transition-colors"
+                    className="w-9 h-9 rounded-full border border-[var(--border-control)] text-blue-600 hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center transition-colors"
                   >
                     <svg
                       viewBox="0 0 24 24"
@@ -266,10 +262,10 @@ export const JournalArticleClient: React.FC<{
                   <button
                     onClick={copyLink}
                     aria-label="Copy link"
-                    className="w-9 h-9 rounded-full border border-[var(--gold-border)]/50 text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:border-[var(--gold-mid)] flex items-center justify-center transition-colors cursor-pointer"
+                    className="w-9 h-9 rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:border-[var(--border-control)] flex items-center justify-center transition-colors cursor-pointer"
                   >
                     {copied ? (
-                      <Check className="w-4 h-4 text-emerald-600" />
+                      <Check className="w-4 h-4 text-[var(--text-success)]" />
                     ) : (
                       <Link2 className="w-4 h-4" />
                     )}
@@ -279,7 +275,7 @@ export const JournalArticleClient: React.FC<{
 
               {/* Author box */}
               {author && (
-                <Reveal className="mt-12 flex flex-col sm:flex-row gap-5 items-start rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-secondary)]/60 p-6">
+                <Reveal className="mt-12 flex flex-col sm:flex-row gap-5 items-start rounded-2xl border border-[var(--border-control)] bg-[var(--bg-secondary)]/60 p-6">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0">
                     <Photo
                       slot={author.image}
@@ -300,7 +296,7 @@ export const JournalArticleClient: React.FC<{
                     </p>
                     <Link
                       href={getLocalizedHref("/doctors", language)}
-                      className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors duration-300"
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
                     >
                       {t("تعرّفي على الفريق الطبي", "Meet the medical team")}
                       <Arrow className="w-3.5 h-3.5" />
@@ -318,7 +314,7 @@ export const JournalArticleClient: React.FC<{
                     </h2>
                     <Link
                       href={getLocalizedHref("/blogs", language)}
-                      className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors"
+                      className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors"
                     >
                       {t("كل المدونات", "All blogs")}
                       <Arrow className="w-3.5 h-3.5" />
@@ -340,10 +336,10 @@ export const JournalArticleClient: React.FC<{
                 {toc.length > 0 && (
                   <nav
                     aria-label="Table of contents"
-                    className="rounded-2xl border border-[var(--gold-border)]/40 bg-[var(--bg-card)] p-5"
+                    className="rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-5"
                   >
-                    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[var(--gold-border)]/40">
-                      <List className="w-4 h-4 text-[var(--gold-mid)]" />
+                    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[var(--border-control)]">
+                      <List className="w-4 h-4 text-[var(--text-gold)]" />
                       <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
                         {t("في هذا المقال", "In this article")}
                       </span>
@@ -373,12 +369,12 @@ export const JournalArticleClient: React.FC<{
                 {/* Sidebar CTA */}
                 <div className="rounded-2xl bg-[var(--bg-dark)] p-5 text-center">
                   <div className="w-12 h-12 rounded-xl bg-gold-gradient mx-auto mb-3 flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-white" />
+                    <BookOpen className="w-5 h-5 text-[var(--text-on-dark)]" />
                   </div>
-                  <h3 className="text-sm font-black text-white mb-2">
+                  <h3 className="text-sm font-black text-[var(--text-on-dark)] mb-2">
                     {t("استشارة مخصصة", "Personal consultation")}
                   </h3>
-                  <p className="text-xs text-white/70 mb-4 leading-relaxed">
+                  <p className="text-xs text-[var(--text-on-dark-muted)] mb-4 leading-relaxed">
                     {t(
                       "خطة علاجية مناسبة لبشرتكِ مع طبيبة متخصصة.",
                       "A treatment plan tailored to your skin with a specialist doctor.",
@@ -405,7 +401,7 @@ export const JournalArticleClient: React.FC<{
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label="Back to top"
-          className="fixed bottom-6 end-6 z-40 w-11 h-11 rounded-full bg-gold-gradient text-white shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 flex items-center justify-center cursor-pointer"
+          className="fixed bottom-[calc(var(--mobile-bar-height)+var(--floating-control-gap)+env(safe-area-inset-bottom))] sm:bottom-[calc(var(--floating-control-gap)+env(safe-area-inset-bottom))] end-6 z-[45] w-11 h-11 rounded-full bg-gold-gradient shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 flex items-center justify-center cursor-pointer"
         >
           <ChevronUp className="w-5 h-5" />
         </button>

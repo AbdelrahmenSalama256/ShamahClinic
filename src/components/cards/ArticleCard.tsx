@@ -20,7 +20,7 @@ export const ArticleCard: React.FC<{
   return (
     <Link
       href={getLocalizedHref(`/blogs/${article.slug}`, language)}
-      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--gold-border)]/50 bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
     >
       <div className="relative overflow-hidden">
         <Photo
@@ -58,7 +58,7 @@ export const ArticleCard: React.FC<{
           </p>
         ) : null}
         {author && (
-          <p className="mt-3 pt-3 border-t border-[var(--gold-border)]/40 text-[10px] sm:text-xs text-[var(--text-muted)]">
+          <p className="mt-3 pt-3 border-t border-[var(--border-control)] text-[10px] sm:text-xs text-[var(--text-muted)]">
             {t("بقلم", "By")}{" "}
             <span className="font-semibold text-[var(--text-secondary)]">
               {t(author.name.ar, author.name.en)}

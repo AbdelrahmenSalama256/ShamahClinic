@@ -31,11 +31,11 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
   return (
     <article
       className={`relative flex flex-col h-full rounded-2xl border bg-[var(--bg-card)] overflow-hidden transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 hover:shadow-xl ${
-        offer.popular ? "border-[var(--gold-mid)] shadow-lg" : "border-[var(--gold-border)]/50"
+        offer.popular ? "border-[var(--border-control)] shadow-lg" : "border-[var(--border-control)]"
       }`}
     >
       {offer.popular && badge && (
-        <div className="bg-gold-gradient text-white text-xs font-bold text-center py-2">
+        <div className="bg-gold-gradient text-xs font-bold text-center py-2">
           {badge}
         </div>
       )}
@@ -65,14 +65,14 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
           <ul className="mt-4 space-y-2 flex-1">
             {includes.map((inc) => (
               <li key={inc} className="flex items-start gap-2 text-xs sm:text-sm text-[var(--text-primary)]">
-                <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--gold-mid)]" />
+                <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--text-gold)]" />
                 <span dir="auto">{inc}</span>
               </li>
             ))}
           </ul>
         )}
 
-        <div className={`pt-4 border-t border-[var(--gold-border)]/40 ${includes.length ? "mt-4" : "mt-auto"}`}>
+        <div className={`pt-4 border-t border-[var(--border-control)] ${includes.length ? "mt-4" : "mt-auto"}`}>
           <div className="flex items-end gap-3">
             {hasPrice ? (
               <span className="text-2xl sm:text-3xl font-black text-[var(--gold-end)]" dir="ltr">
@@ -90,7 +90,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
                 <span className="text-sm text-[var(--text-muted)] line-through mb-1" dir="ltr">
                   {formatNumber(offer.originalPrice)}
                 </span>
-                <span className="ms-auto mb-1 text-xs font-bold text-white bg-emerald-700 rounded-full px-2.5 py-1">
+                <span className="ms-auto mb-1 text-xs font-bold text-[var(--btn-wa-solid-fg)] bg-[var(--btn-wa-solid-bg)] rounded-full px-2.5 py-1">
                   {t("وفّري", "Save")} {formatNumber(offer.savingsPercentage)}٪
                 </span>
               </>
@@ -105,7 +105,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
           <div className="mt-4 flex flex-col sm:flex-row gap-2">
             <button
               onClick={() => openBooking({ offerName: offer.title })}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient text-white font-bold text-sm py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-sm py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
             >
               <Calendar className="w-4 h-4" />
               <span>{t("احجزي العرض", "Book Offer")}</span>
@@ -114,7 +114,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
               href={whatsappHref(language, waMsg)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-emerald-600/40 text-emerald-700 font-bold text-sm py-3 hover:bg-emerald-50 transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-success)] text-[var(--text-success)] font-bold text-sm py-3 hover:bg-[var(--bg-success-soft)] transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
             >
               <MessageCircle className="w-4 h-4" />
               <span>{t("استفسري", "Ask")}</span>

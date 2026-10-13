@@ -37,7 +37,7 @@ const EMPTY: WpArticleCard[] = [];
 
 function SkeletonCard() {
   return (
-    <div className="h-full rounded-2xl overflow-hidden border border-[var(--gold-border)]/50 bg-[var(--bg-card)]">
+    <div className="h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)]">
       <div className="aspect-[3/2] animate-pulse bg-[var(--bg-secondary)]" />
       <div className="p-3 sm:p-5 space-y-3">
         <div className="h-3 w-1/3 rounded animate-pulse bg-[var(--bg-secondary)]" />
@@ -153,8 +153,8 @@ export const JournalClient: React.FC<Props> = ({
                 aria-pressed={!activeCategory}
                 className={`rounded-full px-4 py-1.5 text-sm font-bold border transition-colors ${
                   !activeCategory
-                    ? "bg-gold-gradient text-white border-transparent"
-                    : "border-[var(--gold-border)]/60 text-[var(--text-secondary)] hover:border-[var(--gold-mid)]"
+                    ? "bg-gold-gradient border-transparent"
+                    : "border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]"
                 }`}
               >
                 {t("الكل", "All")}
@@ -166,8 +166,8 @@ export const JournalClient: React.FC<Props> = ({
                   aria-pressed={activeCategory === c.slug}
                   className={`rounded-full px-4 py-1.5 text-sm font-bold border transition-colors ${
                     activeCategory === c.slug
-                      ? "bg-gold-gradient text-white border-transparent"
-                      : "border-[var(--gold-border)]/60 text-[var(--text-secondary)] hover:border-[var(--gold-mid)]"
+                      ? "bg-gold-gradient border-transparent"
+                      : "border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]"
                   }`}
                 >
                   {t(c.name.ar, c.name.en)}
@@ -181,11 +181,11 @@ export const JournalClient: React.FC<Props> = ({
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder={t("ابحثي في المدونة…", "Search the blog…")}
                 aria-label={t("بحث", "Search")}
-                className="w-full sm:w-56 rounded-full border border-[var(--gold-border)]/60 bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--gold-mid)]"
+                className="w-full sm:w-56 rounded-full border border-[var(--border-control)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--border-control)]"
               />
               <button
                 type="submit"
-                className="rounded-full bg-[var(--bg-dark)] text-white px-4 py-2 text-sm font-bold hover:opacity-90 transition-opacity"
+                className="rounded-full bg-[var(--bg-dark)] text-[var(--text-on-dark)] px-4 py-2 text-sm font-bold hover:opacity-90 transition-opacity"
               >
                 {t("بحث", "Search")}
               </button>
@@ -213,7 +213,7 @@ export const JournalClient: React.FC<Props> = ({
               <button
                 onClick={loadMore}
                 disabled={loading}
-                className="inline-flex items-center gap-2 rounded-full bg-gold-gradient text-white font-bold text-sm px-7 py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full bg-gold-gradient font-bold text-sm px-7 py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
               >
                 {loading ? t("جارٍ التحميل…", "Loading…") : t("عرض المزيد", "Load more")}
               </button>
@@ -238,8 +238,8 @@ export const JournalClient: React.FC<Props> = ({
                     aria-current={n === page ? "page" : undefined}
                     className={`min-w-9 h-9 rounded-full text-sm font-bold border transition-colors ${
                       n === page
-                        ? "bg-[var(--bg-dark)] text-white border-transparent"
-                        : "border-[var(--gold-border)]/60 text-[var(--text-secondary)] hover:border-[var(--gold-mid)]"
+                        ? "bg-[var(--bg-dark)] text-[var(--text-on-dark)] border-transparent"
+                        : "border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]"
                     }`}
                   >
                     {n}

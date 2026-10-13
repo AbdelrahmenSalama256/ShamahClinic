@@ -53,7 +53,7 @@ export const FaqClient: React.FC<{ title: { ar: string; en: string } }> = ({ tit
             ))}
           </div>
 
-          <Reveal className="mt-16 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/40 p-8 text-center">
+          <Reveal className="mt-16 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-8 text-center">
             <h2 className="text-xl font-black text-[var(--text-primary)] mb-2">
               {t("ما زال لديكِ سؤال؟", "Still have a question?")}
             </h2>

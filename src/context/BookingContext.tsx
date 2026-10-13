@@ -21,6 +21,8 @@ interface BookingOptions {
 
 interface BookingContextType {
   openBooking: (opts?: BookingOptions) => void;
+  /** True while the wizard is on screen, so fixed controls can stand aside. */
+  isBookingOpen: boolean;
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined);
@@ -42,7 +44,7 @@ export const BookingProvider: React.FC<{
 
   const close = useCallback(() => setIsOpen(false), []);
 
-  const value = useMemo(() => ({ openBooking }), [openBooking]);
+  const value = useMemo(() => ({ openBooking, isBookingOpen: isOpen }), [openBooking, isOpen]);
 
   return (
     <BookingContext.Provider value={value}>

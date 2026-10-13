@@ -308,12 +308,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             role="dialog"
             aria-modal="true"
             aria-labelledby="booking-modal-title"
-            className="bg-white rounded-3xl w-full max-w-2xl border border-[var(--gold-border)] shadow-2xl overflow-hidden relative my-auto"
+            className="bg-[var(--bg-card)] rounded-3xl w-full max-w-2xl border border-[var(--gold-border)] shadow-2xl overflow-hidden relative my-auto"
           >
             {/* Modal Header */}
-            <div className="bg-[var(--bg-secondary)] p-5 sm:p-6 border-b border-[var(--gold-border)]/60 flex items-center justify-between">
+            <div className="bg-[var(--bg-secondary)] p-5 sm:p-6 border-b border-[var(--border-control)] flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gold-gradient text-white flex items-center justify-center shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-gold-gradient flex items-center justify-center shadow-sm">
                   <CalendarIcon className="w-5 h-5" />
                 </div>
                 <div>
@@ -335,7 +335,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
               </div>
               <button
                 onClick={onClose}
-                className="w-9 h-9 rounded-full bg-white border border-[var(--gold-border)]/50 text-[var(--text-secondary)] hover:text-red-500 hover:border-red-300 transition-colors flex items-center justify-center cursor-pointer"
+                className="w-9 h-9 rounded-full bg-[var(--bg-card)] border border-[var(--border-control)] text-[var(--text-secondary)] hover:text-[var(--text-danger)] hover:border-[var(--border-danger)] transition-colors flex items-center justify-center cursor-pointer"
                 aria-label="Close"
               >
                 <X className="w-5 h-5" />
@@ -344,16 +344,16 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
             {/* Progress Step Bar */}
             {currentStep < 5 && (
-              <div className="px-6 pt-5 pb-2 bg-white">
+              <div className="px-6 pt-5 pb-2 bg-[var(--bg-card)]">
                 <div className="flex items-center justify-between mb-2">
                   {[1, 2, 3, 4].map((stepNum) => (
                     <div key={stepNum} className="flex items-center">
                       <div
                         className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition-[transform,background-color,color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
                           currentStep === stepNum
-                            ? "bg-gold-gradient text-white shadow-sm scale-110"
+                            ? "bg-gold-gradient shadow-sm scale-110"
                             : currentStep > stepNum
-                              ? "bg-emerald-700 text-white"
+                              ? "bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)]"
                               : "bg-gray-100 text-[var(--text-muted)]"
                         }`}
                       >
@@ -422,8 +422,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           }}
                           className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between text-start ${
                             isSelected
-                              ? "border-[var(--gold-mid)] bg-[var(--blush-light)]/60 shadow-sm"
-                              : "border-gray-200 hover:border-[var(--gold-border)] bg-white"
+                              ? "border-[var(--border-control)] bg-[var(--blush-light)]/60 shadow-sm"
+                              : "border-gray-200 hover:border-[var(--gold-border)] bg-[var(--bg-card)]"
                           }`}
                         >
                           <div className="text-start">
@@ -441,7 +441,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           <div
                             className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                               isSelected
-                                ? "bg-[var(--gold-mid)] border-[var(--gold-mid)] text-white"
+                                ? "bg-[var(--gold-mid)] border-[var(--gold-mid)] text-[var(--btn-gold-fg)]"
                                 : "border-gray-300"
                             }`}
                           >
@@ -452,7 +452,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     })}
                   </div>
                   {errors.treatment && (
-                    <p className="text-xs text-red-500">{errors.treatment}</p>
+                    <p className="text-xs text-[var(--text-danger)]">{errors.treatment}</p>
                   )}
                 </motion.div>
               )}
@@ -494,14 +494,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             onClick={() => setSelectedBranchId(b.id)}
                             className={`w-full p-3 rounded-2xl border text-center transition-all ${
                               isSelected
-                                ? "border-[var(--gold-mid)] bg-[var(--blush-light)] shadow-sm font-bold text-[var(--gold-end)]"
+                                ? "border-[var(--border-control)] bg-[var(--blush-light)] shadow-sm font-bold text-[var(--gold-end)]"
                                 : "border-gray-200 hover:border-[var(--gold-border)] text-[var(--text-secondary)]"
                             }`}
                           >
                             <MapPin
                               className={`w-4 h-4 mx-auto mb-1 ${
                                 isSelected
-                                  ? "text-[var(--gold-mid)]"
+                                  ? "text-[var(--text-gold)]"
                                   : "text-gray-400"
                               }`}
                             />
@@ -528,7 +528,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         onClick={() => setSelectedSpecialistId("any")}
                         className={`w-full p-3 rounded-2xl border flex items-center justify-between ${
                           selectedSpecialistId === "any"
-                            ? "border-[var(--gold-mid)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
+                            ? "border-[var(--border-control)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
                             : "border-gray-200 text-[var(--text-secondary)]"
                         }`}
                       >
@@ -539,7 +539,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           )}
                         </span>
                         {selectedSpecialistId === "any" && (
-                          <Check className="w-4 h-4 text-[var(--gold-mid)]" />
+                          <Check className="w-4 h-4 text-[var(--text-gold)]" />
                         )}
                       </button>
 
@@ -553,7 +553,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             onClick={() => setSelectedSpecialistId(doc.id)}
                             className={`w-full p-3 rounded-2xl border flex items-center justify-between ${
                               isSelected
-                                ? "border-[var(--gold-mid)] bg-[var(--blush-light)] shadow-xs"
+                                ? "border-[var(--border-control)] bg-[var(--blush-light)] shadow-xs"
                                 : "border-gray-200 hover:border-gray-300"
                             }`}
                           >
@@ -566,7 +566,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                               </span>
                             </div>
                             {isSelected && (
-                              <Check className="w-4 h-4 text-[var(--gold-mid)]" />
+                              <Check className="w-4 h-4 text-[var(--text-gold)]" />
                             )}
                           </button>
                         );
@@ -625,7 +625,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                               onClick={() => setSelectedTimeSlot(slotKey)}
                               className={`w-full p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
                                 isSelected
-                                  ? "border-[var(--gold-mid)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
+                                  ? "border-[var(--border-control)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
                                   : "border-gray-200 hover:border-gray-300 text-[var(--text-secondary)]"
                               }`}
                             >
@@ -633,7 +633,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                                 <Clock
                                   className={`w-4 h-4 ${
                                     isSelected
-                                      ? "text-[var(--gold-mid)]"
+                                      ? "text-[var(--text-gold)]"
                                       : "text-gray-400"
                                   }`}
                                 />
@@ -645,7 +645,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                                 </span>
                               </div>
                               {isSelected && (
-                                <Check className="w-4 h-4 text-[var(--gold-mid)]" />
+                                <Check className="w-4 h-4 text-[var(--text-gold)]" />
                               )}
                             </button>
                           );
@@ -692,12 +692,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       )}
                       className={`w-full p-3 rounded-xl border text-sm outline-none ${
                         errors.fullName
-                          ? "border-red-500 bg-red-50/50"
-                          : "border-gray-300 focus:border-[var(--gold-mid)]"
+                          ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
+                          : "border-gray-300 focus:border-[var(--border-control)]"
                       }`}
                     />
                     {errors.fullName && (
-                      <p className="text-[11px] text-red-500 mt-1">
+                      <p className="text-[11px] text-[var(--text-danger)] mt-1">
                         {errors.fullName}
                       </p>
                     )}
@@ -718,12 +718,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       placeholder="010xxxxxxxx"
                       className={`w-full p-3 rounded-xl border text-sm outline-none ${
                         errors.phoneNumber
-                          ? "border-red-500 bg-red-50/50"
-                          : "border-gray-300 focus:border-[var(--gold-mid)]"
+                          ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
+                          : "border-gray-300 focus:border-[var(--border-control)]"
                       }`}
                     />
                     {errors.phoneNumber && (
-                      <p className="text-[11px] text-red-500 mt-1">
+                      <p className="text-[11px] text-[var(--text-danger)] mt-1">
                         {errors.phoneNumber}
                       </p>
                     )}
@@ -744,12 +744,12 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         "هل لديكِ حساسية معينة أو أسئلة عن التبريد؟",
                         "Any allergies, previous treatments, or questions?",
                       )}
-                      className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--gold-mid)] text-sm outline-none resize-none"
+                      className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--border-control)] text-sm outline-none resize-none"
                     />
                   </div>
 
                   {errors.submit && (
-                    <p className="text-[11px] text-red-500 mt-1">{errors.submit}</p>
+                    <p className="text-[11px] text-[var(--text-danger)] mt-1">{errors.submit}</p>
                   )}
 
                   <p className="text-[11px] text-[var(--text-muted)] bg-gray-50 p-2.5 rounded-lg border border-gray-200">
@@ -772,13 +772,13 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                    className="w-20 h-20 rounded-full bg-emerald-50 border-2 border-emerald-400 text-emerald-600 flex items-center justify-center mx-auto shadow-lg"
+                    className="w-20 h-20 rounded-full bg-[var(--bg-success-soft)] border-2 border-[var(--border-success)] text-[var(--text-success)] flex items-center justify-center mx-auto shadow-lg"
                   >
                     <Check className="w-10 h-10 stroke-[2.5]" />
                   </motion.div>
 
                   <div>
-                    <span className="text-xs font-bold text-emerald-700 bg-emerald-100/80 px-3.5 py-1 rounded-full border border-emerald-300">
+                    <span className="text-xs font-bold text-[var(--text-success)] bg-[var(--bg-success-soft)] px-3.5 py-1 rounded-full border border-[var(--border-success)]">
                       {t(
                         "تم تسجيل طلب الحجز بنجاح",
                         "Booking Request Registered",
@@ -801,8 +801,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     </p>
                   </div>
 
-                  <div className="bg-[var(--bg-secondary)]/70 p-5 rounded-2xl border border-[var(--gold-border)]/50 text-start space-y-2.5 text-xs sm:text-sm">
-                    <div className="flex justify-flex-start border-b border-[var(--gold-border)]/30 pb-2">
+                  <div className="bg-[var(--bg-secondary)]/70 p-5 rounded-2xl border border-[var(--border-control)] text-start space-y-2.5 text-xs sm:text-sm">
+                    <div className="flex justify-flex-start border-b border-[var(--border-control)] pb-2">
                       <span className="text-[var(--text-muted)]">
                         {t("الخدمات:", "Treatments:")}
                       </span>
@@ -814,7 +814,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           .join(t("، ", ", "))}
                       </strong>
                     </div>
-                    <div className="flex justify-flex-start border-b border-[var(--gold-border)]/30 pb-2">
+                    <div className="flex justify-flex-start border-b border-[var(--border-control)] pb-2">
                       <span className="text-[var(--text-muted)]">
                         {t("الفرع:", "Branch:")}
                       </span>
@@ -823,7 +823,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       </strong>
                     </div>
                     {currentSpecialist && (
-                      <div className="flex justify-flex-start border-b border-[var(--gold-border)]/30 pb-2">
+                      <div className="flex justify-flex-start border-b border-[var(--border-control)] pb-2">
                         <span className="text-[var(--text-muted)]">
                           {t("الطبيبة المعالجة:", "Specialist:")}
                         </span>
@@ -832,7 +832,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         </strong>
                       </div>
                     )}
-                    <div className="flex justify-flex-start border-b border-[var(--gold-border)]/30 pb-2">
+                    <div className="flex justify-flex-start border-b border-[var(--border-control)] pb-2">
                       <span className="text-[var(--text-muted)]">
                         {t("التاريخ والفترة:", "Date & Slot:")}
                       </span>
@@ -863,7 +863,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       href={getWhatsAppConfirmationUrl()}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3.5 px-6 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 text-sm"
+                      className="w-full bg-[var(--btn-wa-solid-bg)] hover:bg-[var(--btn-wa-solid-bg-hover)] text-[var(--btn-wa-solid-fg)] font-bold py-3.5 px-6 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 text-sm"
                     >
                       <MessageCircle className="w-5 h-5" />
                       <span>
@@ -876,7 +876,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                     <button
                       onClick={downloadIcsCalendar}
-                      className="w-full bg-white border border-[var(--gold-border)] text-[var(--gold-end)] hover:bg-[var(--blush-light)] font-bold py-3 px-6 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 text-sm cursor-pointer"
+                      className="w-full bg-[var(--bg-card)] border border-[var(--gold-border)] text-[var(--gold-end)] hover:bg-[var(--blush-light)] font-bold py-3 px-6 rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 text-sm cursor-pointer"
                     >
                       <Download className="w-4 h-4" />
                       <span>
@@ -916,7 +916,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <button
                   onClick={handleNext}
                   disabled={submitting}
-                  className="bg-gold-gradient hover:opacity-95 text-white text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                  className="bg-gold-gradient hover:opacity-95 text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
                 >
                   <span>
                     {submitting

@@ -37,7 +37,7 @@ export const navItems: NavItem[] = [
       },
     ],
   },
-  { href: "/results", label: { ar: "النتائج", en: "Results" } },
+  // { href: "/results", label: { ar: "النتائج", en: "Results" } },
   { href: "/doctors", label: { ar: "الأطباء", en: "Doctors" } },
   { href: "/offers", label: { ar: "العروض", en: "Offers" } },
   { href: "/branches", label: { ar: "الفروع", en: "Branches" } },

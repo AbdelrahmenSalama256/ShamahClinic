@@ -77,7 +77,7 @@ export const NotFoundClient: React.FC = () => {
           </Reveal>
 
           <Reveal delay={0.05}>
-            <h1 className="text-[32px] sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-white">
+            <h1 className="text-[32px] sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.08] text-[var(--text-on-dark)]">
               {t("يبدو أن هذه الصفحة", "This page")}
               <br />
               <span className="text-[var(--gold-start)]">
@@ -87,7 +87,7 @@ export const NotFoundClient: React.FC = () => {
           </Reveal>
 
           <Reveal delay={0.1}>
-            <p className="mt-6 text-sm sm:text-base lg:text-lg leading-relaxed text-white/65 max-w-xl mx-auto">
+            <p className="mt-6 text-sm sm:text-base lg:text-lg leading-relaxed text-[var(--text-on-dark-muted)] max-w-xl mx-auto">
               {t(
                 "ربما تغيّر الرابط أو كُتب بطريقة مختلفة. لا تقلقي، كل خدماتنا ومحتوانا في مكانه — اختاري وجهة من الأسفل.",
                 "The link may have changed or been typed differently. Nothing is lost — pick a destination below to continue.",
@@ -108,7 +108,7 @@ export const NotFoundClient: React.FC = () => {
 
         {/* Destination cards */}
         <Reveal delay={0.2} className="mt-16 lg:mt-20">
-          <p className="text-center text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-white/40 mb-6">
+          <p className="text-center text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[var(--text-on-dark-muted)] mb-6">
             {t("أو تصفّحي هذه الوجهات", "Or explore these destinations")}
           </p>
 
@@ -119,22 +119,22 @@ export const NotFoundClient: React.FC = () => {
                 <Link
                   key={d.href}
                   href={d.href}
-                  className="group relative flex flex-col items-start gap-3 p-5 rounded-2xl border border-white/10 bg-white/[0.03] hover:bg-white/[0.06] hover:border-[var(--gold-start)]/40 hover:-translate-y-1 transition-[transform,background-color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] backdrop-blur-sm"
+                  className="group relative flex flex-col items-start gap-3 p-5 rounded-2xl border border-[var(--border-on-dark)] bg-white/[0.03] hover:bg-white/[0.06] hover:border-[var(--gold-start)]/40 hover:-translate-y-1 transition-[transform,background-color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] backdrop-blur-sm"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[var(--gold-start)]/10 border border-[var(--gold-start)]/30 flex items-center justify-center group-hover:bg-[var(--gold-start)]/20 transition-colors duration-300">
                     <Icon className="w-4 h-4 text-[var(--gold-start)]" />
                   </div>
 
                   <div className="min-w-0">
-                    <span className="block text-sm font-black text-white group-hover:text-[var(--gold-start)] transition-colors duration-300">
+                    <span className="block text-sm font-black text-[var(--text-on-dark)] group-hover:text-[var(--gold-start)] transition-colors duration-300">
                       {t(d.label.ar, d.label.en)}
                     </span>
-                    <span className="block text-[11px] text-white/50 mt-0.5">
+                    <span className="block text-[11px] text-[var(--text-on-dark-muted)] mt-0.5">
                       {t(d.description.ar, d.description.en)}
                     </span>
                   </div>
 
-                  <Arrow className="absolute top-5 end-5 w-3.5 h-3.5 text-white/30 group-hover:text-[var(--gold-start)] group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-[transform,color] duration-300" />
+                  <Arrow className="absolute top-5 end-5 w-3.5 h-3.5 text-[var(--text-on-dark-muted)] group-hover:text-[var(--gold-start)] group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-[transform,color] duration-300" />
                 </Link>
               );
             })}

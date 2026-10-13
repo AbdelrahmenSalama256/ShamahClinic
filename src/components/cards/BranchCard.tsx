@@ -13,7 +13,7 @@ export const BranchCard: React.FC<{ branch: BranchDetail }> = ({ branch }) => {
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
 
   return (
-    <article className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--gold-border)]/50 bg-[var(--bg-card)] hover:shadow-xl transition-[box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]">
+    <article className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl transition-[box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]">
       <div className="relative overflow-hidden">
         <Photo
           slot={branch.image}
@@ -27,14 +27,14 @@ export const BranchCard: React.FC<{ branch: BranchDetail }> = ({ branch }) => {
           {t(branch.name.ar, branch.name.en)}
         </h3>
         <p className="mt-1.5 flex items-start gap-1.5 sm:gap-2 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
-          <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[var(--gold-mid)]" />
+          <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[var(--text-gold)]" />
           <span>{t(branch.address.ar, branch.address.en)}</span>
         </p>
-        <div className="mt-3 pt-3 border-t border-[var(--gold-border)]/40 flex items-center justify-between gap-2">
+        <div className="mt-3 pt-3 border-t border-[var(--border-control)] flex items-center justify-between gap-2">
           <a
             href={`tel:${branch.phone}`}
             dir="ltr"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors duration-300"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
           >
             <Phone className="w-4 h-4" />
             {branch.phone}

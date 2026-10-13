@@ -46,7 +46,7 @@ export const ResultsClient: React.FC<{ treatments: Treatment[] }> = ({
       <section className="py-8 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Honest disclosure
-          <Reveal className="mb-12 rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--blush-light)]/60 p-5 sm:p-6">
+          <Reveal className="mb-12 rounded-2xl border border-[var(--border-control)] bg-[var(--blush-light)]/60 p-5 sm:p-6">
             <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
               {t(
                 "ملاحظة شفافة: الصور المعروضة تمثيلية لطبيعة النتائج، وسنستبدلها بصور حقيقية لعميلاتنا فور الحصول على موافقتهن الموثّقة على النشر. النتائج الفعلية تختلف من حالة لأخرى حسب نوع البشرة وعمق المشكلة والالتزام بالخطة.",
@@ -76,7 +76,7 @@ export const ResultsClient: React.FC<{ treatments: Treatment[] }> = ({
                 en: "Realistic figures per service, tailored to your case at consultation.",
               }}
             />
-            <div className="mt-10 overflow-x-auto rounded-2xl border border-[var(--gold-border)]/50">
+            <div className="mt-10 overflow-x-auto rounded-2xl border border-[var(--border-control)]">
               <table className="w-full text-sm min-w-[560px]">
                 <thead className="bg-[var(--bg-secondary)]/80 text-[var(--text-primary)]">
                   <tr>
@@ -119,7 +119,7 @@ export const ResultsClient: React.FC<{ treatments: Treatment[] }> = ({
                             `/treatments/${x.id}`,
                             language,
                           )}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors duration-300"
+                          className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
                         >
                           {t("التفاصيل", "Details")}
                           <Arrow className="w-3.5 h-3.5" />

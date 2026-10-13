@@ -177,9 +177,9 @@ export const ContactClient: React.FC<{
               href={whatsappHref(language)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-5 rounded-2xl border border-emerald-500/30 bg-emerald-50/60 hover:bg-emerald-50 hover:-translate-y-0.5 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+              className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-success)] bg-[var(--bg-success-soft)]/60 hover:bg-[var(--bg-success-soft)] hover:-translate-y-0.5 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
             >
-              <span className="w-11 h-11 rounded-full bg-emerald-700 text-white flex items-center justify-center shrink-0">
+              <span className="w-11 h-11 rounded-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] flex items-center justify-center shrink-0">
                 <MessageCircle className="w-5 h-5" />
               </span>
               <span>
@@ -198,9 +198,9 @@ export const ContactClient: React.FC<{
             <a
               href={`tel:${clinicData.phone.replace(/\s/g, "")}`}
               // dir="ltr"
-              className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-card)] hover:-translate-y-0.5 hover:shadow-md transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+              className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] hover:-translate-y-0.5 hover:shadow-md transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
             >
-              <span className="w-11 h-11 rounded-full bg-gold-gradient text-white flex items-center justify-center shrink-0">
+              <span className="w-11 h-11 rounded-full bg-gold-gradient flex items-center justify-center shrink-0">
                 <Phone className="w-5 h-5" />
               </span>
               <span className="text-start">
@@ -213,7 +213,7 @@ export const ContactClient: React.FC<{
               </span>
             </a>
 
-            <div className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-card)]">
+            <div className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)]">
               <span className="w-11 h-11 rounded-full bg-[var(--bg-secondary)] text-[var(--gold-end)] flex items-center justify-center shrink-0">
                 <Mail className="w-5 h-5" />
               </span>
@@ -230,7 +230,7 @@ export const ContactClient: React.FC<{
               </span>
             </div>
 
-            <div className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--gold-border)]/50 bg-[var(--bg-card)]">
+            <div className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)]">
               <span className="w-11 h-11 rounded-full bg-[var(--bg-secondary)] text-[var(--gold-end)] flex items-center justify-center shrink-0">
                 <Clock className="w-5 h-5" />
               </span>
@@ -253,16 +253,16 @@ export const ContactClient: React.FC<{
                 {branches.map((b) => (
                   <li
                     key={b.id}
-                    className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[var(--bg-secondary)]/60 border border-[var(--gold-border)]/40"
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[var(--bg-secondary)]/60 border border-[var(--border-control)]"
                   >
                     <span className="flex items-center gap-2 text-sm text-[var(--text-primary)]">
-                      <MapPin className="w-4 h-4 text-[var(--gold-mid)] shrink-0" />
+                      <MapPin className="w-4 h-4 text-[var(--text-gold)] shrink-0" />
                       {t(b.name.ar, b.name.en)}
                     </span>
                     <a
                       href={`tel:${b.phone}`}
                       dir="ltr"
-                      className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--gold-mid)] transition-colors duration-300 shrink-0"
+                      className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300 shrink-0"
                     >
                       {b.phone}
                     </a>
@@ -274,10 +274,10 @@ export const ContactClient: React.FC<{
 
           {/* Form (visual only) */}
           <div className="lg:col-span-7">
-            <div className="rounded-3xl border border-[var(--gold-border)]/50 bg-[var(--bg-card)] p-6 sm:p-8">
+            <div className="rounded-3xl border border-[var(--border-control)] bg-[var(--bg-card)] p-6 sm:p-8">
               {sent ? (
                 <Reveal className="text-center py-8">
-                  <span className="inline-flex w-16 h-16 rounded-full bg-emerald-50 border-2 border-emerald-400 text-emerald-600 items-center justify-center mb-4">
+                  <span className="inline-flex w-16 h-16 rounded-full bg-[var(--bg-success-soft)] border-2 border-[var(--border-success)] text-[var(--text-success)] items-center justify-center mb-4">
                     <Check className="w-8 h-8" />
                   </span>
                   <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-2">
@@ -294,7 +294,7 @@ export const ContactClient: React.FC<{
                       href={continueWaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-700 text-white font-bold text-sm px-6 py-3 hover:bg-emerald-800 hover:-translate-y-0.5 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] font-bold text-sm px-6 py-3 hover:bg-[var(--btn-wa-solid-bg-hover)] hover:-translate-y-0.5 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
                     >
                       <MessageCircle className="w-4 h-4" />
                       {t("أكملي عبر واتساب", "Continue on WhatsApp")}
@@ -362,12 +362,12 @@ export const ContactClient: React.FC<{
                       placeholder={t("مثال: سارة أحمد", "e.g. Sarah Ahmed")}
                       className={`w-full p-3 rounded-xl border text-sm outline-none transition-colors duration-300 ${
                         errors.name
-                          ? "border-red-500 bg-red-50/50"
-                          : "border-gray-300 focus:border-[var(--gold-mid)]"
+                          ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
+                          : "border-gray-300 focus:border-[var(--border-control)]"
                       }`}
                     />
                     {errors.name && (
-                      <p className="text-[11px] text-red-500 mt-1">
+                      <p className="text-[11px] text-[var(--text-danger)] mt-1">
                         {errors.name}
                       </p>
                     )}
@@ -391,12 +391,12 @@ export const ContactClient: React.FC<{
                       placeholder="010xxxxxxxx"
                       className={`w-full p-3 rounded-xl border text-sm outline-none transition-colors duration-300 ${
                         errors.phone
-                          ? "border-red-500 bg-red-50/50"
-                          : "border-gray-300 focus:border-[var(--gold-mid)]"
+                          ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
+                          : "border-gray-300 focus:border-[var(--border-control)]"
                       }`}
                     />
                     {errors.phone && (
-                      <p className="text-[11px] text-red-500 mt-1">
+                      <p className="text-[11px] text-[var(--text-danger)] mt-1">
                         {errors.phone}
                       </p>
                     )}
@@ -410,10 +410,10 @@ export const ContactClient: React.FC<{
                       aria-expanded={isServicesOpen}
                       aria-controls="c-service-options"
                       onClick={() => setIsServicesOpen((isOpen) => !isOpen)}
-                      className={`group w-full px-4 py-3 rounded-2xl border bg-white flex items-center justify-between gap-3 text-start text-sm outline-none transition-[border-color,box-shadow,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
+                      className={`group w-full px-4 py-3 rounded-2xl border bg-[var(--bg-card)] flex items-center justify-between gap-3 text-start text-sm outline-none transition-[border-color,box-shadow,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
                         isServicesOpen
-                          ? "border-[var(--gold-mid)] shadow-[0_0_0_3px_var(--gold-glow)]"
-                          : "border-[var(--gold-border)]/50 hover:border-[var(--gold-mid)]/70"
+                          ? "border-[var(--border-control)] shadow-[0_0_0_3px_var(--gold-glow)]"
+                          : "border-[var(--border-control)] hover:border-[var(--border-control)]"
                       }`}
                     >
                       <span
@@ -432,7 +432,7 @@ export const ContactClient: React.FC<{
 
                       <span className="flex items-center gap-2 shrink-0">
                         {selectedServices.length > 0 && (
-                          <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--gold-end)] text-white text-[11px] font-bold tabular-nums">
+                          <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--gold-end)] text-[var(--btn-gold-fg)] text-[11px] font-bold tabular-nums">
                             {selectedServices.length}
                           </span>
                         )}
@@ -458,7 +458,7 @@ export const ContactClient: React.FC<{
                             ease: [0.22, 1, 0.36, 1],
                           }}
                           style={{ transformOrigin: "top center" }}
-                          className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto rounded-2xl border border-[var(--gold-border)]/50 bg-white shadow-2xl p-1.5"
+                          className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] shadow-2xl p-1.5"
                         >
                           {services.map((treatment) => {
                             const isChecked = form.services.includes(
@@ -477,7 +477,7 @@ export const ContactClient: React.FC<{
                                   className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center shrink-0 transition-[background-color,border-color,transform] duration-200 ${
                                     isChecked
                                       ? "bg-gold-gradient border-transparent scale-105"
-                                      : "bg-white border-[var(--gold-border)] group-hover/item:border-[var(--gold-mid)]"
+                                      : "bg-[var(--bg-card)] border-[var(--gold-border)] group-hover/item:border-[var(--border-control)]"
                                   }`}
                                 >
                                   {isChecked && (
@@ -488,7 +488,7 @@ export const ContactClient: React.FC<{
                                       strokeWidth="3"
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
-                                      className="w-3 h-3 text-white"
+                                      className="w-3 h-3"
                                     >
                                       <polyline points="20 6 9 17 4 12" />
                                     </svg>
@@ -527,7 +527,7 @@ export const ContactClient: React.FC<{
                             );
                           })}
 
-                          <div className="sticky bottom-0 mt-1 pt-2 border-t border-[var(--gold-border)]/30 bg-white flex items-center justify-between gap-2">
+                          <div className="sticky bottom-0 mt-1 pt-2 border-t border-[var(--border-control)] bg-[var(--bg-card)] flex items-center justify-between gap-2">
                             <button
                               type="button"
                               onClick={() =>
@@ -542,7 +542,7 @@ export const ContactClient: React.FC<{
                             <button
                               type="button"
                               onClick={() => setIsServicesOpen(false)}
-                              className="rounded-full bg-gold-gradient text-white text-xs font-bold px-4 py-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+                              className="rounded-full bg-gold-gradient text-xs font-bold px-4 py-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
                             >
                               {t("تم", "Done")}
                             </button>
@@ -570,12 +570,12 @@ export const ContactClient: React.FC<{
                         "اكتبي استفساركِ أو الوقت المفضل للزيارة...",
                         "Write your question or preferred visit time...",
                       )}
-                      className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--gold-mid)] text-sm outline-none resize-none transition-colors duration-300"
+                      className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--border-control)] text-sm outline-none resize-none transition-colors duration-300"
                     />
                   </div>
 
                   {apiError && (
-                    <p className="text-[13px] text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                    <p className="text-[13px] text-[var(--text-danger)] bg-[var(--bg-danger-soft)] border border-[var(--border-danger)] rounded-lg px-3 py-2">
                       {apiError}
                     </p>
                   )}
@@ -584,7 +584,7 @@ export const ContactClient: React.FC<{
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient text-white font-bold text-sm py-3.5 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-sm py-3.5 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                     >
                       <MessageCircle className="w-4 h-4" />
                       {submitting
@@ -594,7 +594,7 @@ export const ContactClient: React.FC<{
                     <button
                       type="button"
                       onClick={() => openBooking()}
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--gold-mid)] text-[var(--gold-end)] font-bold text-sm py-3.5 hover:bg-[var(--blush-light)] transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--gold-end)] font-bold text-sm py-3.5 hover:bg-[var(--blush-light)] transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
                     >
                       <Calendar className="w-4 h-4" />
                       {t("أو احجزي مباشرة", "Or book directly")}

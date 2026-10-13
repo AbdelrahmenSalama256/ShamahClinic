@@ -12,13 +12,13 @@ export const FaqAccordion: React.FC<{ items: FaqItem[] }> = ({ items }) => {
   const [open, setOpen] = useState<string | null>(items[0]?.id ?? null);
 
   return (
-    <div className="border-t border-[var(--gold-border)]/40">
+    <div className="border-t border-[var(--border-control)]">
       {items.map((item, i) => {
         const isOpen = open === item.id;
         return (
           <div
             key={item.id}
-            className="border-b border-[var(--gold-border)]/40"
+            className="border-b border-[var(--border-control)]"
           >
             <button
               onClick={() => setOpen(isOpen ? null : item.id)}
@@ -76,8 +76,8 @@ export const FaqAccordion: React.FC<{ items: FaqItem[] }> = ({ items }) => {
               <span
                 className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-[background-color,border-color,color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
                   isOpen
-                    ? "bg-gold-gradient border border-transparent text-white"
-                    : "bg-transparent border border-[var(--gold-border)]/50 text-[var(--gold-mid)] group-hover:border-[var(--gold-mid)] group-hover:text-[var(--gold-end)]"
+                    ? "bg-gold-gradient border border-transparent"
+                    : "bg-transparent border border-[var(--border-control)] text-[var(--text-gold)] group-hover:border-[var(--border-control)] group-hover:text-[var(--gold-end)]"
                 }`}
               >
                 {isOpen ? (

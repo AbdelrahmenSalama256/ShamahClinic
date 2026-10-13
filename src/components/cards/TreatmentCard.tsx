@@ -19,7 +19,7 @@ export const TreatmentCard: React.FC<{ treatment: Treatment }> = ({
   return (
     <Link
       href={getLocalizedHref(`/treatments/${treatment.id}`, language)}
-      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--gold-border)]/50 bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
     >
       <div className="relative overflow-hidden">
         <Photo
@@ -48,7 +48,7 @@ export const TreatmentCard: React.FC<{ treatment: Treatment }> = ({
         <p className="mt-1.5 min-h-[2.5rem] sm:min-h-[3rem] text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2" dir="auto">
           {tagline}
         </p>
-        <div className="mt-auto pt-3 border-t border-[var(--gold-border)]/40 flex items-center justify-between">
+        <div className="mt-auto pt-3 border-t border-[var(--border-control)] flex items-center justify-between">
           {treatment.priceStartingAt === null ? (
             <span />
           ) : (

@@ -43,7 +43,7 @@ export const OffersClient: React.FC<{ offers: Offer[]; title: { ar: string; en: 
           </div>
 
           {/* Terms */}
-          <Reveal className="mt-10 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--gold-border)]/40 p-6">
+          <Reveal className="mt-10 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-6">
             <h2 className="text-lg font-black text-[var(--text-primary)] mb-3">
               {t("شروط الباقات", "Package terms")}
             </h2>

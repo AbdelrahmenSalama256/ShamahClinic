@@ -50,8 +50,8 @@ export const BeforeAfterSection: React.FC = () => {
         
         {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-14">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-[var(--gold-border)] text-xs font-bold text-[var(--gold-end)] mb-4 shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-[var(--gold-mid)]" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--bg-card)] border border-[var(--gold-border)] text-xs font-bold text-[var(--gold-end)] mb-4 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--text-gold)]" />
             <span>{t("نتائج حقيقية ملموسة", "Real Aesthetic Results")}</span>
           </div>
 
@@ -97,7 +97,7 @@ export const BeforeAfterSection: React.FC = () => {
                 className="object-cover"
                 draggable={false}
               />
-              <span className="absolute bottom-6 end-6 bg-[var(--gold-mid)] text-white text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-md backdrop-blur-sm z-10 pointer-events-none">
+              <span className="absolute bottom-6 end-6 bg-[var(--gold-mid)] text-[var(--btn-gold-fg)] text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-md backdrop-blur-sm z-10 pointer-events-none">
                 {t("بعد الجلسة ✦ توهج ونضارة", "After ✦ Radiant Glow")}
               </span>
             </div>
@@ -118,7 +118,7 @@ export const BeforeAfterSection: React.FC = () => {
                   className="object-cover"
                   draggable={false}
                 />
-                <span className="absolute bottom-6 start-6 bg-[var(--bg-dark)]/80 text-white text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-md backdrop-blur-sm z-10 pointer-events-none">
+                <span className="absolute bottom-6 start-6 bg-[var(--bg-dark)]/80 text-[var(--text-on-dark)] text-xs sm:text-sm font-bold px-4 py-1.5 rounded-full shadow-md backdrop-blur-sm z-10 pointer-events-none">
                   {t("قبل الجلسة", "Before")}
                 </span>
               </div>
@@ -126,12 +126,12 @@ export const BeforeAfterSection: React.FC = () => {
 
             {/* Vertical Divider Line with Glow */}
             <div
-              className="absolute top-0 bottom-0 w-1 bg-white shadow-[0_0_15px_rgba(201,162,39,0.9)] z-20 pointer-events-none"
+              className="absolute top-0 bottom-0 w-1 bg-[var(--bg-card)] shadow-[0_0_15px_rgba(201,162,39,0.9)] z-20 pointer-events-none"
               style={{ left: `${sliderPosition}%` }}
             >
               {/* Circular Drag Handle */}
-              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-11 h-11 rounded-full bg-gold-gradient border-2 border-white shadow-xl flex items-center justify-center text-white cursor-pointer pointer-events-auto hover:scale-110 transition-transform">
-                <ChevronsLeftRight className="w-5 h-5 text-white" />
+              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-11 h-11 rounded-full bg-gold-gradient border-2 border-white shadow-xl flex items-center justify-center cursor-pointer pointer-events-auto hover:scale-110 transition-transform">
+                <ChevronsLeftRight className="w-5 h-5" />
               </div>
             </div>
           </div>
