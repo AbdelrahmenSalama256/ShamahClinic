@@ -39,18 +39,18 @@ authored Arabic; the fallbacks are listed in §17.
 
 ## 1. Counts
 
-The tables in §2–§13 hold **160 element rows**, covering shared chrome, the booking overlay and all
+The tables in §2–§13 hold **162 element rows**, covering shared chrome, the booking overlay and all
 15 route surfaces in AR and EN. Classified by the `source now` column:
 
 | verdict | rows | how counted |
 |---|---|---|
-| rendered from WordPress | **63** | 50 rows are WordPress only; 13 more are WordPress-primary with an authored fallback for the gap named in §17 |
+| rendered from WordPress | **65** | 52 rows are WordPress only (the 2 WP-only service cards and the AR heading row joined them in `495409e`); 13 more are WordPress-primary with an authored fallback for the gap named in §17 |
 | authored, and no WordPress source exists | **74** | `WordPress source?` begins with `no` |
 | authored although WordPress holds it — by the client's decision (nav, header/footer look) | **4** | `action` says "by decision" |
 | authored because the WordPress content is theme demo text (§15) | **5** | contact H1 + lead, FAQ lead + Q&A groups, privacy body |
 | authored, WP holds adjacent data but not this literal (auto-excerpt leads, slide captions, metadata copy, teasers) | **10** | `WordPress source?` says `partial` / `yes but unusable` |
-| cross-references and one WP-only gap (rows with no source of their own) | **4** | OfferCard-as-a-unit, WP-only service sections, blank validity line, EN-based read time |
-| wired by this audit, static copy deleted or made unreachable | **18 rows / 9 groups** | every row whose `action` starts with `wired`/`fixed`, grouped in §14 |
+| cross-references and rule rows (no source of their own) | **4** | OfferCard-as-a-unit, the no-price/no-`Offer` rule, blank validity line, EN-based read time |
+| wired by this audit, static copy deleted or made unreachable | **19 rows / 10 groups** | every row whose `action` starts with `wired`/`fixed`, grouped in §14 |
 | dead code found by this audit | **4** | §16 |
 
 One row is one element and covers both languages, except where the Arabic and English sides resolve
@@ -122,19 +122,19 @@ paths (only the canonical differs: `treatments/page.tsx:31` builds `/services`).
 | Page lead (`TreatmentsClient.tsx:40-43`) | STATIC literal | yes but unusable — 696's `excerpt.rendered` ends `[...]` (WP auto-excerpt) | kept STATIC |
 | Hero photo (`TreatmentsClient.tsx:48`) | STATIC `images.treatments.laser` | no page-level image: `PAGE(696).featured_media` is unset and its 7 `<img>`s all belong to individual sections (already used per card) | kept STATIC — there is no single "all services" WP image to pick without inventing a mapping |
 | Category chips ×6 (`TreatmentsClient.tsx:55-71`) | STATIC `treatmentCategories` (`src/data/treatments.ts:34-40`) | no — WordPress has no service taxonomy; `CATS` is a **post** taxonomy (`Laser`, `laser session`) and is used on `/blogs` | kept STATIC |
-| Treatment cards ×10 (`TreatmentsClient.tsx:76-80`) | WP-merged | yes — `PAGE(696)` sections via `getServiceCards()` (`src/lib/wp/index.ts:495-503`) → `mapServiceCards` (`src/lib/wp/mappers.ts:200`) | wired (`f1ed720`) |
+| Treatment cards ×12 (`TreatmentsClient.tsx:76-80`) | WP-merged | yes — **all 7** `PAGE(696)` sections via `getServiceCards()` (`src/lib/wp/index.ts:513-521`) → `mapServiceCards` (`src/lib/wp/mappers.ts:200`), plus the 5 authored rows WP has no section for | wired (`f1ed720`); the 2 WP-only sections wired now (`495409e`) |
 | Price disclaimer (`TreatmentsClient.tsx:83-88`) | STATIC literal | no — prices are not published for services | kept STATIC |
 
 TreatmentCard (`src/components/cards/TreatmentCard.tsx`):
 
 | element | source now | WordPress source? | action |
 |---|---|---|---|
-| Image + alt (`:23-28`) | WP section photo when published, else STATIC `images.treatments.*` | yes — 5 of 10 rows aliased by `SECTION_SLUG` (`src/lib/wp/treatments.ts:26-32`): Skincare.jpg, Laser-Hair-Removal.jpg, Botox-Injections.jpg, Filler-Injections-1.jpg, Chemical-Peeling.jpg; alt = the section title | kept WP-with-authored-fallback (`treatments.ts:99`) |
-| Category badge (`:29-31`) | STATIC | no | kept STATIC |
-| Title (`:34-36`) | WP `card.title` over STATIC | yes — 696 `<h2>`s; AR uses the WP value only when `arabicRatio > 0.3` (`:71-73`) because AR sections 1 and 3 are untranslated | kept WP |
-| Tagline (`:37-39`) | WP `card.intro` first sentence over STATIC | yes — section intro paragraphs | kept WP |
-| "From" label, price, "ج.م/EGP", "Details" (`:42-48`) | STATIC literals + `treatmentsData.priceStartingAt` | no — `PAGE(696)` publishes no prices; `PRODUCTS` prices belong to offers, not services | kept STATIC |
-| Two WP-only sections (`glow-brightening-injections`, `mens-aesthetic-services`) | not rendered | yes — 696 publishes them, and `MEDIA` 729/730 has their images | documented gap: the authored catalog has no row to attach them to, so showing them would need new card rows; recorded in `docs/inventory.md` |
+| Image + alt (`:23-31`) | WP section photo when published, else STATIC `images.treatments.*` | yes — 696 gives each section its own image, and all 7 now render: Skincare.jpg, Laser-Hair-Removal.jpg, Botox-Injections.jpg, Filler-Injections-1.jpg, Glow-Brightening-Injections.jpg, Chemical-Peeling.jpg, Mens-Aesthetic-Services.jpg; alt = the section title | kept WP-with-authored-fallback (`treatments.ts:99`) |
+| Category badge (`:29-36`) | STATIC `treatmentCategories` label where the row is authored; **no badge** on a WP-only service | no — WordPress has no service taxonomy | kept STATIC, hidden when WordPress gives no category |
+| Title (`:38-40`) | WP `card.title` over STATIC | yes — 696 `<h2>`s; AR uses the WP value only when `arabicRatio > 0.3` (`:71-73`) because AR sections 1 and 3 are untranslated | kept WP |
+| Tagline (`:41-43`) | WP `card.intro` first sentence over STATIC | yes — section intro paragraphs | kept WP |
+| "From" label, price, "ج.م/EGP", "Details" (`:45-56`) | STATIC literals + `treatmentsData.priceStartingAt`; **no price slot** on a WP-only service (an empty span keeps the row's layout, "Details" stays at the end) | no — `PAGE(696)` publishes no prices; `PRODUCTS` prices belong to offers, not services | kept STATIC; `priceStartingAt` is `number \| null` so nothing prints "0 EGP" |
+| The 2 WP-only sections (`glow-brightening-injections`, `mens-aesthetic-services`) | **WP** — `fromServiceCard` (`src/lib/wp/treatments.ts:76-108`) builds the card from the section's title, intro paragraph and photo only | yes — 696 publishes both, with their mirrored images and real Arabic titles/intros | **wired by the follow-up** — previously documented as a gap ("no authored row to attach them to"), which held WordPress content back. Now appended in WP order, given detail routes, sitemap entries and `availableService` JSON-LD |
 
 ## 5. `/services/[slug]` ≡ `/treatments/[slug]` — `TreatmentDetailClient`
 
@@ -144,18 +144,20 @@ TreatmentCard (`src/components/cards/TreatmentCard.tsx`):
 | H1 / lead (`:48-49`) | WP merged name + intro | yes — `PAGE(696)` | kept WP |
 | Hero photo (`:50`) | WP section image when published | yes | kept WP |
 | 3 fact cards: labels (`:27`, `:32`, `:37`) | STATIC literals | no | kept STATIC |
-| 3 fact values: duration, sessions, price (`:28-41`) | STATIC `treatmentsData` | no | kept STATIC |
-| "About this treatment" H2 (`:84-86`) | STATIC literal | no | kept STATIC |
+| 3 fact values: duration, sessions, price (`:24-53`) | STATIC `treatmentsData`; **the block is not rendered at all** on a WP-only service (no duration, no course, `priceStartingAt: null`) | no — 696 gives a section a title, one paragraph and an image | kept STATIC where authored, hidden where WordPress has no figure (`facts.length > 0`) |
+| "About this treatment" H2 (`:100-103`) | STATIC literal | no | kept STATIC |
 | **Long-form body** (`:88-91`, `dangerouslySetInnerHTML`) | **WP** `getMergedTreatment(slug)` | yes — `PAGE(885)` (`/wp/v2/pages?slug=botox-injections`), EN body 2 084 chars, 7 `<h2>`s ("What Is Botox?", "How Does Botox Work?", …) and `Botox-Injections4.png`; AR REST body is the same English (arabic ratio 0.000), so `treatments.ts:128` keeps the authored Arabic | **fixed by this audit** (`e6e6181`): the render path used `getMergedTreatments()`, which never sets `body`, so 885 was fetched for metadata and discarded. Proof on the production build: `/en/services/botox` contains `<h2><span>Botox Injections – What You Need to Know</span></h2>`; `/ar/services/botox` shows the authored Arabic description and 0 visible occurrences |
-| Fallback description (`:93-96`) | STATIC `treatmentsData.description` | yes only for 885; the other 9 slugs have no WP page (`PAGES` = 27 rows, listed in §15) | kept as the fallback branch |
-| "Ideal for:" + value (`:99-101`) | STATIC literal + `treatmentsData.idealFor` | no | kept STATIC |
-| Benefits H2 + items (`:106-118`) | STATIC literal + `treatmentsData.benefits` | no | kept STATIC |
-| Steps H2 + items (`:123-133`) | STATIC | no | kept STATIC |
-| Aftercare H2 + items (`:141-151`) | STATIC | no | kept STATIC |
+| Fallback description (`:104-113`) | STATIC `treatmentsData.description` for authored rows; for a WP-only service it is the **WordPress section paragraph** (`fromServiceCard` puts 696's intro in `description`) | yes for 885 and for the 2 WP-only sections; the other 9 authored slugs have no WP page (`PAGES` = 27 rows, listed in §15) | kept as the fallback branch |
+| "Ideal for:" + value (`:114-121`) | STATIC literal + `treatmentsData.idealFor`; hidden when WordPress gives none | no | kept STATIC |
+| Benefits H2 + items (`:124-141`) | STATIC literal + `treatmentsData.benefits`; hidden when the list is empty | no | kept STATIC |
+| Steps H2 + items (`:143-161`) | STATIC; hidden when empty | no | kept STATIC |
+| Aftercare H2 + items (`:163-181`) | STATIC; hidden when empty | no | kept STATIC |
+| JSON-LD `offers` | emitted only when a price exists; a WP-only service publishes `MedicalProcedure` with no `Offer` | no — schema.org wants a real price | kept, never faked with 0 |
 | Aside intro, buttons, disclaimer (`:160-188`) | STATIC literals (`Actions.tsx:56`, `:94`) | no | kept STATIC |
 | "Related treatments" H2 (`:196-198`) | STATIC literal | no | kept STATIC |
 | Related cards (`:200-204`) | WP-merged, filtered by category/featured | yes — same 696 list | kept WP |
 | "Browse all treatments" (`:207-212`) | STATIC literal | no | kept STATIC |
+| AR heading text | the dashboard holds a stray list number on 696's laser heading (`3. إزالة الشعر بالليزر`); `extractServiceSections` (`mappers.ts:168`) trims a leading `N.` so the card and H1 read `إزالة الشعر بالليزر` | yes — quoted from `pages.ar.json` id 696 | kept: formatting trim only, no word dropped; asserted by name in `scripts/verify-render.mjs` |
 
 ## 6. `/offers` — `src/app/[lang]/offers/page.tsx` + `OffersClient`
 
@@ -302,6 +304,7 @@ Every content element on this route is WordPress; the chrome around it is author
 | 7 | Home card lists capped at 3 with "View all" per section | `e9b6497` | no static copy; 4th WP row is fetched only as the "more exist" probe |
 | 8 | Header menu + footer link group returned to one authored file | `e39f950` | `src/lib/wp/nav.ts` (WP-derived nav) **deleted**; `featuredServices`/`primaryNav` deleted from `src/lib/site.ts`; `src/data/nav.ts` added |
 | 9 | `sanitizeHtmlBody` now mirrors in-body image srcs before link rewriting | `8e647e3` | WP bodies were hot-linking `wp-content` URLs |
+| 10 | The 2 service sections page 696 publishes without an authored row (`glow-brightening-injections`, `mens-aesthetic-services`) — card, detail route, sitemap entry, `availableService` JSON-LD, booking/contact pickers | `495409e` | **no static copy was removed: this was WordPress content the site was not showing.** `priceStartingAt` became `number \| null` and `category` gained `null`, so the card renders no badge and no price instead of a 0 or a made-up chip; `serviceJsonLd` omits `Offer` without a price; `/results` keeps its 10 figure-bearing rows |
 
 ## 15. WordPress is theme demo here — authored copy kept, with the quoted sample
 
@@ -358,11 +361,11 @@ Not a defect to hide — the reason each exists is the TranslatePress gap or a m
 
 | check | result |
 |---|---|
-| `npm run sync:wp` | 22 WordPress requests in 82.4 s; 60/60 images mirrored; `git diff` on `data/wp/` = `meta.json` timestamp only, i.e. no content drift |
+| `npm run sync:wp` | 22 WordPress requests in 80.7 s; 60/60 images mirrored (both new section photos were already mirrored); `git diff` on `data/wp/` = `meta.json` timestamp only, i.e. no content drift |
 | `npm run typecheck` | exit 0 |
 | `npm run lint` | exit 0 |
-| `npm run build` | exit 0 |
-| `node scripts/verify-render.mjs` | **42 checks passed, 0 failed** in AR + EN: header order/labels equal `src/data/nav.ts`, footer lists every menu href, booking CTA equals `bookCta`, and `#offers`, `#branches`, `#blogs` and the reasons carousel each render exactly 3 cards with their "View all" link |
+| `npm run build` | exit 0, 285 static pages (was 277: the 2 new service slugs x 2 languages x the `/services` alias), `[wp] live` = 0, 0 REFUSED lines, 334 snapshot reads |
+| `node scripts/verify-render.mjs` | **117 checks passed, 0 failed** in AR + EN: header order/labels equal `src/data/nav.ts`, footer lists every menu href, booking CTA equals `bookCta`, `#offers`, `#branches`, `#blogs` and the reasons carousel each render exactly 3 cards with their "View all" link, **all 7 page-696 service titles render on `/services` in both languages (12 cards)**, and each WP-only detail route answers 200 with the WordPress intro, a mirrored photo, `MedicalProcedure` JSON-LD without an `Offer`, no price fact and no empty Benefits/Steps/Aftercare heading |
 | rendered H1s = WP page titles | `/services` خدماتنا · `/offers` العروض · `/blogs` معلومات طبية · `/faq` أهم الأسئلة الشائعة · `/about` معلومات عنا · `/en/services` Our Services · `/en/offers` Offers · `/en/blogs` Journal · `/en/faq` FAQ · `/en/privacy` Privacy Policy · `/ar/services/botox` حقن البوتوكس · `/en/services/botox` Botox Injections |
 | page 885 body | present in the rendered HTML of `/en/services/botox`; absent from `/ar/services/botox` (authored Arabic shown instead), ratio guard per §17 |
 | WordPress hotlinks | 0 occurrences of `www.shamahclinics.com/wp-content` in the served HTML of `/`, `/en`, `/en/offers`, `/en/blogs`, `/ar/branches`, `/en/contact`; `/wp/*.webp` references per route: home 5, `/en/blogs` 5, `/en/offers` 7, `/en/services/botox` 3 |

@@ -76,6 +76,14 @@ Serve the build with `npx next start -p 3121` and test against that, never `next
 | N3 | No content guard, filter, de-duplication or merging anywhere (offers included) | done | Grep of the offer/post paths: no `OFFERS_PRICES_CONFIRMED`, no predicate drops 785/781/780/581, price printed from `price` + `currency_minor_unit`, AR English auto-excerpts displayed as returned |
 | N4 | Re-run the gate and prove it on the production build with a script over rendered HTML, in both languages; update inventory + WIRING; commit per item | done | 42/42 assertions on `next start -p 3100` (nav from `src/data/nav.ts`, 0 section over 3 cards, all four "View all" links present), one commit per item (`d08bfe2`, `6778d20`, `4dd9e8f`, `c665a10`) |
 
+## Follow-up — "services not fetched": every page-696 section must reach the site
+
+| # | Item | Status | Evidence (one line) |
+|---|------|--------|---------------------|
+| S1 | Find why services looked unfetched and wire what was missing | done | `/api/v1/services` always returned 7 real WP cards, but `getMergedTreatments()` only **overrode** the 5 authored rows it could alias, so `glow-brightening-injections` and `mens-aesthetic-services` never rendered. `495409e` appends every unmatched section as its own card + detail route + sitemap row + `availableService` entry, in WP order |
+| S2 | Nothing invented where WordPress gives no value | done | `priceStartingAt: number \| null`, `category: TreatmentCategory \| null`: no badge, no "From … ج.م" (empty slot keeps the card row), no fact grid, no Ideal-for/Benefits/Steps/Aftercare headings, no schema.org `Offer`, excluded from the `/results` figure table. The build now prerenders 285 pages (was 277) because the 2 new slugs answer in both languages on both `/services/[slug]` and `/treatments/[slug]` |
+| S3 | Re-verify on the production build, AR + EN | done | `sync:wp` 22 requests/80.7 s/no content drift, typecheck 0, lint 0, build EXIT 0 with `[wp] live` = 0 and 334 snapshot reads, `verify-render.mjs` **117/117**: 7 WP titles render on `/services` (12 cards), both WP-only detail routes 200 with the WP intro, mirrored photo, `MedicalProcedure` without `Offer`, 0 `wp-content` hotlinks, no price anywhere; the AR dashboard heading `3. إزالة الشعر بالليزر` is reported as trimmed to `إزالة الشعر بالليزر`, not silently |
+
 ## Not code, and not ours to do (host/client side)
 
 | Item | Status | Note |

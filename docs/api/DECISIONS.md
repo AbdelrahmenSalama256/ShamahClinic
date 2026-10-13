@@ -338,9 +338,34 @@ been hand painted…" as the offer lead and body. The distinction is not taste: 
 record of being clinic content, while a product row is the clinic's own catalogue entry, and the
 content policy forbids the code deciding that a WordPress field "is not real content".
 
+## A WordPress section is a service even when we author no row for it
+The audit wired page 696's sections over the authored catalog and left a note that two of them
+(`glow-brightening-injections`, `mens-aesthetic-services`) "are not shown", because there was no
+`treatmentsData` row to attach their name to. That is the code deciding which WordPress content is
+displayable — exactly what the content policy forbids — so `495409e` appends every unmatched section
+as its own card and detail route, in the order the page lists them.
+
+The second half of the same decision is what the UI must **not** do once a service has no authored
+row: WordPress gives a section a title, one paragraph and an image, so those cards carry nothing else.
+`priceStartingAt` became `number | null` and `category` gained `null`, and every consumer treats
+"no value" as "no block": no category badge, no "يبدأ من / From … ج.م" line (an empty slot keeps the
+card's flex row, so the layout does not move), no duration/course/price fact grid, no Ideal-for,
+Benefits, Steps or Aftercare heading over an empty list, no `Offer` in the JSON-LD (schema.org wants a
+real price, and a 0 would be a fabricated one), and no row in the `/results` comparison table, whose
+three data columns are figures WordPress does not hold. They do appear in the booking and contact
+service pickers, in `availableService` and in the sitemap — 12 services now, up from 10.
+
+`extractServiceSections` also trims a leading list number from a section heading; the Arabic dashboard
+holds `3. إزالة الشعر بالليزر` while every other heading is unnumbered. That is a formatting trim, not
+a dropped word, and the verification script prints both strings so the substitution is never silent.
+
 ## Verification is a script over rendered HTML, not a claim
 `scripts/verify-render.mjs` parses `src/data/nav.ts` (bracket depth separates top-level lines from
-dropdown children), fetches the built pages for both locales, and asserts header order and labels, the
-footer link group, the booking CTA, the four card sections at ≤3 cards, and the four "View all" links.
-42 checks, AR + EN, against `npx next start -p 3100`. Scroll-dependent visuals still cannot be proven
-from pixels in this environment (see PROGRESS "not verifiable"), so this covers the DOM contract only.
+dropdown children), reads page 696 out of `data/wp/pages.{en,ar}.json` for the service sections, fetches
+the built pages for both locales, and asserts header order and labels, the footer link group, the
+booking CTA, the four card sections at ≤3 cards with their "View all" links, all 7 WordPress service
+titles rendered on `/services` (12 cards), and — per WP-only service — a 200 detail route with the
+WordPress intro, a mirrored photo, `MedicalProcedure` JSON-LD that carries no `Offer`, no price fact and
+no empty Benefits/Steps/Aftercare heading. 117 checks, AR + EN, against `npx next start -p 3100`.
+Scroll-dependent visuals still cannot be proven from pixels in this environment (see PROGRESS "not
+verifiable"), so this covers the DOM contract only.
