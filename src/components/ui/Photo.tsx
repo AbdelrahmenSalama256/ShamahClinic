@@ -3,7 +3,7 @@
 import React, { useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
-import type { PhotoSlot } from "@/lib/images";
+import { images, type PhotoSlot } from "@/lib/images";
 import { blurFor } from "@/lib/blurs";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -80,7 +80,10 @@ export const Photo: React.FC<PhotoProps> = ({
       className={`relative overflow-hidden bg-[var(--bg-secondary)] ${ratioClass[ratio]} ${curtainClass} ${className}`}
     >
       {/* WordPress returns posts with no featured image (featured_media 0): the frame
-          keeps its aspect ratio and no <img> is emitted, so nothing renders broken. */}
+          keeps its aspect ratio and no <img> is emitted, so nothing renders broken.
+          The empty frame takes the brand's gold tone and the logo mark, so a missing
+          photo reads as a deliberate block rather than a hole, and the layout does
+          not shift when it appears. */}
       {slot.src ? (
         <Image
           src={slot.src}
@@ -107,7 +110,16 @@ export const Photo: React.FC<PhotoProps> = ({
             setLoaded(true);
           }}
         />
-      ) : null}
+      ) : (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,var(--blush-light),var(--bg-secondary))]"
+        >
+          <span className="relative block w-28 h-8 opacity-70">
+            <Image src={images.logo} alt="" fill sizes="112px" className="object-contain" />
+          </span>
+        </div>
+      )}
     </div>
   );
 };

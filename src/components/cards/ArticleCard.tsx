@@ -46,11 +46,14 @@ export const ArticleCard: React.FC<{
             </span>
           ) : null}
         </div>
-        <h3 className="mt-2 text-sm sm:text-base lg:text-lg font-black leading-snug text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300">
+        <h3
+          className="mt-2 text-sm sm:text-base lg:text-lg font-black leading-snug line-clamp-2 text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300"
+          dir="auto"
+        >
           {t(article.title.ar, article.title.en)}
         </h3>
         {t(article.excerpt.ar, article.excerpt.en) ? (
-          <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2">
+          <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2" dir="auto">
             {t(article.excerpt.ar, article.excerpt.en)}
           </p>
         ) : null}

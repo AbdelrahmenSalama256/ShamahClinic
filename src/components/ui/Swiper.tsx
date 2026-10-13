@@ -143,7 +143,9 @@ export const Swiper: React.FC<SwiperProps> = ({
         </div>
       </div>
 
-      {(showArrows || showDots) && (
+      {/* Every slide already fits the row, so there is nothing to page through:
+          the controls would render as dead buttons (and cost the band their height). */}
+      {(showArrows || showDots) && maxIndex > 0 && (
         <div className="mt-5 flex items-center justify-center gap-4">
           {showArrows && (
             <button

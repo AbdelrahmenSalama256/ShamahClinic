@@ -13,11 +13,13 @@ export const TreatmentCard: React.FC<{ treatment: Treatment }> = ({
 }) => {
   const { t, language, formatNumber } = useLanguage();
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
+  const name = t(treatment.name.ar, treatment.name.en);
+  const tagline = t(treatment.tagline.ar, treatment.tagline.en);
 
   return (
     <Link
       href={getLocalizedHref(`/treatments/${treatment.id}`, language)}
-      className="group block rounded-2xl overflow-hidden border border-[var(--gold-border)]/50 bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--gold-border)]/50 bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
     >
       <div className="relative overflow-hidden">
         <Photo
@@ -34,20 +36,25 @@ export const TreatmentCard: React.FC<{ treatment: Treatment }> = ({
           </span>
         )}
       </div>
-      <div className="p-3 sm:p-5">
-        <h3 className="text-sm sm:text-base lg:text-lg font-black text-[var(--text-primary)] leading-snug group-hover:text-[var(--gold-end)] transition-colors duration-300">
-          {t(treatment.name.ar, treatment.name.en)}
+      <div className="p-3 sm:p-5 flex flex-col flex-1">
+        <h3
+          className="text-sm sm:text-base lg:text-lg font-black text-[var(--text-primary)] leading-snug line-clamp-2 group-hover:text-[var(--gold-end)] transition-colors duration-300"
+          dir="auto"
+        >
+          {name}
         </h3>
-        <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2">
-          {t(treatment.tagline.ar, treatment.tagline.en)}
+        {/* A two-line slot is reserved whether the intro is one line or none, so
+            the price row below lands at the same height on every card. */}
+        <p className="mt-1.5 min-h-[2.5rem] sm:min-h-[3rem] text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2" dir="auto">
+          {tagline}
         </p>
-        <div className="mt-3 pt-3 border-t border-[var(--gold-border)]/40 flex items-center justify-between">
+        <div className="mt-auto pt-3 border-t border-[var(--gold-border)]/40 flex items-center justify-between">
           {treatment.priceStartingAt === null ? (
             <span />
           ) : (
             <span className="text-xs text-[var(--text-muted)]">
               {t("يبدأ من", "From")}{" "}
-              <strong className="text-[var(--gold-end)] text-sm">
+              <strong className="text-[var(--gold-end)] text-sm" dir="ltr">
                 {formatNumber(treatment.priceStartingAt)} {t("ج.م", "EGP")}
               </strong>
             </span>

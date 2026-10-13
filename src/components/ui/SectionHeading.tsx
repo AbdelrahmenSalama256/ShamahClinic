@@ -25,7 +25,7 @@ interface SectionHeadingProps {
  */
 export const SectionHeading: React.FC<SectionHeadingProps> = ({
   index,
-  title,
+  title: titleProp,
   lead,
   align = "start",
   tone = "light",
@@ -34,6 +34,12 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
   const { t } = useLanguage();
   const titleColor = tone === "dark" ? "text-[var(--text-inverse)]" : "text-[var(--text-primary)]";
   const leadColor = tone === "dark" ? "text-white/70" : "text-[var(--text-secondary)]";
+
+  // A section with no heading text renders nothing at all: WordPress can return a
+  // list without a title, and an empty <h2> is a gap in the page, not a heading.
+  const title = t(titleProp.ar, titleProp.en);
+  const leadText = lead ? t(lead.ar, lead.en) : "";
+  if (!title) return null;
 
   return (
     <Reveal
@@ -50,12 +56,13 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
       )}
       <h2
         className={`text-[22px] sm:text-3xl lg:text-4xl font-black tracking-tight leading-[1.15] ${titleColor}`}
+        dir="auto"
       >
-        {t(title.ar, title.en)}
+        {title}
       </h2>
-      {lead && (
-        <p className={`mt-3 text-[13px] sm:text-base leading-relaxed ${leadColor}`}>
-          {t(lead.ar, lead.en)}
+      {leadText && (
+        <p className={`mt-3 text-[13px] sm:text-base leading-relaxed ${leadColor}`} dir="auto">
+          {leadText}
         </p>
       )}
     </Reveal>

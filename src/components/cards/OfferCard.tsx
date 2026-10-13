@@ -15,6 +15,13 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
 
   const badge = t(offer.badge.ar, offer.badge.en);
   const currency = offer.currency || t("ج.م", "EGP");
+  const title = t(offer.title.ar, offer.title.en);
+  const subtitle = t(offer.subtitle.ar, offer.subtitle.en);
+  const includes = offer.includes[language] || [];
+  const validUntil = t(offer.validUntil.ar, offer.validUntil.en);
+  // A WooCommerce product can carry no price at all, and then the card shows its
+  // booking action instead of a "0 EGP" line.
+  const hasPrice = Number(offer.discountedPrice) > 0;
 
   const waMsg =
     language === "ar"
@@ -38,41 +45,49 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
             {badge}
           </span>
         ) : null}
-        <h3 className="mt-2 text-base sm:text-lg font-black text-[var(--text-primary)] leading-snug">
+        <h3 className="mt-2 text-base sm:text-lg font-black text-[var(--text-primary)] leading-snug line-clamp-3" dir="auto">
           {/* The detail page carries the package terms parsed from WordPress, so the
               title links to it exactly like a journal card. */}
           <Link
             href={getLocalizedHref(offer.href[language], language)}
             className="hover:text-[var(--gold-end)] transition-colors duration-300"
           >
-            {t(offer.title.ar, offer.title.en)}
+            {title}
           </Link>
         </h3>
-        {t(offer.subtitle.ar, offer.subtitle.en) ? (
-          <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed">
-            {t(offer.subtitle.ar, offer.subtitle.en)}
+        {subtitle ? (
+          <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2" dir="auto">
+            {subtitle}
           </p>
         ) : null}
 
-        <ul className="mt-4 space-y-2 flex-1">
-          {offer.includes[language].map((inc) => (
-            <li key={inc} className="flex items-start gap-2 text-xs sm:text-sm text-[var(--text-primary)]">
-              <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--gold-mid)]" />
-              <span>{inc}</span>
-            </li>
-          ))}
-        </ul>
+        {!!includes.length && (
+          <ul className="mt-4 space-y-2 flex-1">
+            {includes.map((inc) => (
+              <li key={inc} className="flex items-start gap-2 text-xs sm:text-sm text-[var(--text-primary)]">
+                <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--gold-mid)]" />
+                <span dir="auto">{inc}</span>
+              </li>
+            ))}
+          </ul>
+        )}
 
-        <div className="mt-4 pt-4 border-t border-[var(--gold-border)]/40">
+        <div className={`pt-4 border-t border-[var(--gold-border)]/40 ${includes.length ? "mt-4" : "mt-auto"}`}>
           <div className="flex items-end gap-3">
-            <span className="text-2xl sm:text-3xl font-black text-[var(--gold-end)]">
-              {formatNumber(offer.discountedPrice)}
-              <span className="text-base font-bold ms-1">{currency}</span>
-            </span>
+            {hasPrice ? (
+              <span className="text-2xl sm:text-3xl font-black text-[var(--gold-end)]" dir="ltr">
+                {formatNumber(offer.discountedPrice)}
+                <span className="text-base font-bold ms-1">{currency}</span>
+              </span>
+            ) : (
+              <span className="text-sm font-bold text-[var(--text-secondary)]">
+                {t("السعر عند الحجز", "Price on booking")}
+              </span>
+            )}
             {/* Only a real discount gets a struck price and a savings badge. */}
-            {offer.originalPrice > offer.discountedPrice && offer.savingsPercentage > 0 ? (
+            {hasPrice && offer.originalPrice > offer.discountedPrice && offer.savingsPercentage > 0 ? (
               <>
-                <span className="text-sm text-[var(--text-muted)] line-through mb-1">
+                <span className="text-sm text-[var(--text-muted)] line-through mb-1" dir="ltr">
                   {formatNumber(offer.originalPrice)}
                 </span>
                 <span className="ms-auto mb-1 text-xs font-bold text-white bg-emerald-700 rounded-full px-2.5 py-1">
@@ -81,9 +96,9 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
               </>
             ) : null}
           </div>
-          {t(offer.validUntil.ar, offer.validUntil.en) ? (
+          {validUntil ? (
             <p className="mt-2 text-xs text-[var(--text-muted)]">
-              {t(offer.validUntil.ar, offer.validUntil.en)}
+              {validUntil}
             </p>
           ) : null}
 
