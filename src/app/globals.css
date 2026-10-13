@@ -20,7 +20,59 @@
   --gold-mid: #c9a227;
   --gold-end: #85640f;
   --gold-glow: rgba(201, 162, 39, 0.25);
-  --gold-border: rgba(201, 162, 39, 0.35);
+  --gold-border: rgba(133, 100, 15, 0.8);
+
+  /* Gold is readable as text only at --gold-end strength. */
+  --text-gold: #85640f;
+
+  /* --------------------------------------------
+     Semantic button pairs. A surface and its ink always
+     travel together, which is what stops an unthemed
+     `bg-white` from meeting an inverted `--text-primary`
+     and printing white on white. Choose by the surface
+     the control sits on: solid anywhere, outline on a
+     light surface, onDark on an always-dark one.
+     Ratios are measured against every stop the theme
+     paints (see docs/contrast-report.md).
+     -------------------------------------------- */
+  --btn-gold-fg: #211a16;
+  --btn-gold-fg-hover: #211a16;
+
+  --btn-wa-solid-bg: #0a6636;
+  --btn-wa-solid-fg: #ffffff;
+  --btn-wa-solid-bg-hover: #075e2f;
+  --btn-wa-solid-fg-hover: #ffffff;
+
+  --btn-wa-outline-bg: transparent;
+  --btn-wa-outline-fg: #0a6636;
+  --btn-wa-outline-border: #0a6636;
+  --btn-wa-outline-bg-hover: #0a6636;
+  --btn-wa-outline-fg-hover: #ffffff;
+
+  --btn-wa-on-dark-bg: transparent;
+  --btn-wa-on-dark-fg: #3ddc84;
+  --btn-wa-on-dark-border: rgba(61, 220, 132, 0.65);
+  --btn-wa-on-dark-bg-hover: rgba(61, 220, 132, 0.16);
+  --btn-wa-on-dark-fg-hover: #6ee7a8;
+
+  /* Control boundaries and the focus ring, ≥3:1 on this theme's surfaces. */
+  --border-control: #9c7619;
+  --border-control-soft: rgba(133, 100, 15, 0.55);
+  --focus-ring: #85640f;
+
+  /* Text on surfaces that are dark in both themes (hero, CTA band, footer). */
+  --text-on-dark: #ffffff;
+  --text-on-dark-muted: #d9d2ca;
+  --border-on-dark: rgba(61, 220, 132, 0.65);
+
+  /* Sticky header: opaque enough to read whatever scrolls under it. */
+  --nav-surface: rgba(250, 247, 242, 0.94);
+  --nav-surface-scrolled: rgba(250, 247, 242, 0.97);
+  --nav-height: 4.5rem;
+  --floating-control-size: 3.5rem;
+  --floating-control-gap: 1.5rem;
+  /* Height of the sticky mobile action bar (p-3 + 2.75rem control + p-3). */
+  --mobile-bar-height: 4.25rem;
 
   /* Blush / Rose supporting tones */
   --blush-light: #fbf0eb;
@@ -72,6 +124,8 @@ img {
 }
 html {
   scroll-behavior: smooth;
+  /* Anchors and focus jumps must land below the sticky header. */
+  scroll-padding-top: calc(var(--nav-height) + 0.5rem);
   transition: all 0.3s ease-in-out !important;
 }
 
@@ -93,16 +147,8 @@ html[data-theme="dark"] {
   color-scheme: dark;
 }
 
-html[data-theme="dark"] .glass-nav {
-  background: rgba(23, 21, 19, 0.88);
-  border-bottom-color: var(--gold-border);
-}
-
-html[data-theme="dark"] .glass-nav-scrolled {
-  background: rgba(23, 21, 19, 0.96);
-  border-bottom-color: var(--gold-border);
-}
-
+/* The header surface comes from --nav-surface, which flips with the theme. */
+html[data-theme="dark"] [class~="bg-white"],
 html[data-theme="dark"] .bg-white {
   background-color: var(--bg-card) !important;
 }
@@ -147,19 +193,26 @@ html[data-theme="dark"] textarea {
   font-family: var(--font-montserrat);
 }
 
-/* Glassmorphism */
+/* One focus ring site-wide. Unlayered, so it wins over `focus:outline-none`
+   utilities and stays visible on light, dark and always-dark surfaces. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Glassmorphism — the header must stay readable while content scrolls under it. */
 .glass-nav {
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
-  background: #faf7f2d9;
-  border-bottom: 1px solid #c9a22726;
+  background: var(--nav-surface);
+  border-bottom: 1px solid var(--gold-border);
 }
 
 .glass-nav-scrolled {
-  background: rgba(250, 247, 242, 0.95);
+  background: var(--nav-surface-scrolled);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(201, 162, 39, 0.25);
+  border-bottom: 1px solid var(--gold-border);
   box-shadow: 0 10px 30px rgba(33, 26, 22, 0.05);
 }
 
@@ -171,9 +224,12 @@ html[data-theme="dark"] textarea {
   background: var(--gold-gradient);
   background-size: 220% 220%;
   animation: goldShift 8s ease-in-out infinite;
-  color: #ffffff;
+  color: var(--btn-gold-fg);
   position: relative;
   overflow: hidden;
+}
+.bg-gold-gradient:hover {
+  color: var(--btn-gold-fg-hover);
 }
 .absolute {
   position: absolute;
