@@ -54,20 +54,24 @@ is fetched only for detail views.
 | Service names in the dropdown | STATIC (`navItems[2].children`) — the WordPress-merged names are used on `/services`, `/results`, the pickers and the JSON-LD, not in the menu |
 
 ## Home (SHORTER — full cut list at the bottom)
-Every card list on Home renders at most 3 cards (`HOME_CARDS` in `src/components/home/HomeBody.tsx:46`)
-plus a "View all" link when the data holds more; asserted against the rendered HTML in AR and EN by
-`scripts/verify-render.mjs`. Final sections: 01 reasons **3 of 4** (authored, → `/about`), 02 offers
-**3** (WP, 4th row fetched only as the "more exist" probe, → `/offers`), 03 branches **3** (WP office
-blocks, → `/branches`), 04 journal **3** (WP posts, → `/blogs`), then one CTA band.
+Every card list on Home renders at most 3 cards (`HOME_CARDS` in `src/components/home/HomeBody.tsx:60`)
+plus a "View all" link **only when records are left out** — the three branches are the whole network, so
+that band carries no dead link; both the cap and the link's presence/absence are asserted against the
+rendered HTML in AR and EN by `scripts/verify-render.mjs`. Final sections: 01 WordPress introduction row +
+02 services **3 of 12** (→ `/services`), 03 offers **3** (WP, 4th row fetched only as the "more exist"
+probe, → `/offers`), 04 branches **3** (WP office blocks, → `/branches`), 05 journal **3** (WP posts,
+→ `/blogs`), then one CTA band. Why services took the differentiators' place, and the measured height
+before/after, is `docs/HOME-PRIORITY.md`.
 
 | Section | source |
 |---------|--------|
 | Hero photos (backdrop slider) | WP — the `rs-slide` images of page 622's Revolution Slider, parsed from the **raw** rendered body (`src/lib/wp/hero.ts`), mirrored to `/wp/*.webp`; `images.hero` only when the page has no slider |
-| Hero headline, sub, CTAs | STATIC — the slider's own captions ("Book Now", "Shop Now") are per-slide button labels and are dropped by design |
-| Short about block (heading, lead, 3 differentiators + "All reasons") | STATIC — hand-authored claims from the client brief; page 32 has no "why choose us" list (its copy is wired on `/about` itself) |
-| Offers (max 3) + "All offers" | WP:offers (WooCommerce Store API, the products that language's base returns, in WP order — nothing merged or filtered) |
-| Branches strip (max 3) with call / WhatsApp | WP — page 622 `.ws-contact-office-item` blocks (name EN, address, phone, photo) over `src/data/branches.ts` for the Arabic side |
-| Latest journal (max 3) + "All blogs" | WP:posts (3 most recent, both subsites) |
+| Hero headline, sub, CTAs | STATIC — the slider's own captions ("Book Now", "Shop Now") are per-slide button labels and are dropped by design; the headline sentence "The Best Aesthetic Center" is genuine client copy but lives only inside the slider markup, see `docs/STATIC-SWEEP.md` |
+| 01 introduction (heading + lead) | WP — page 622 row 1 (`The Best Aesthetic Center` + "Discover the highest standards…"), parsed by `src/lib/wp/home-prose.ts` through `getHomeIntro()`; the authored `homeIntroFallback` only when the dashboard changes the row beyond recognition |
+| 02 services (max 3) + "All services" | WP:pages/696 order, first three whose card renders with a photo and an intro (`getFeaturedServices` in `src/lib/wp/treatments.ts`); `featuredServiceSlugs` in `src/config/home.ts` overrides, empty means computed. Selection rule and the current three slugs in `docs/HOME-PRIORITY.md` |
+| 03 Offers (max 3) + "All offers" | WP:offers (WooCommerce Store API, the products that language's base returns, in WP order — nothing merged or filtered) |
+| 04 Branches strip (max 3) with call / WhatsApp | WP — page 622 `.ws-contact-office-item` blocks (name EN, address, phone, photo) over `src/data/branches.ts` for the Arabic side |
+| 05 Latest journal (max 3) + "All blogs" | WP:posts (4 fetched, 3 shown, both subsites) |
 | One strong CTA band | STATIC |
 
 ## Services (`/services` + `/services/[slug]`, aliases of `/treatments*`)
@@ -127,9 +131,14 @@ the `/branches` band headline. `clinicData.branches` and `getBranch()` were dele
 ## About (`/about`)
 WP — page 32 parsed by `src/lib/wp/about.ts`: the intro becomes the hero lead, "The Story"/قصتنا and
 "The Process"/عمليتنا plus their 5 `<br>` lines and the process photo become the two editorial splits.
-`src/data/about.ts` is now only the outage fallback. STATIC with no WP source: the three "what we stand
-by" values, the two teasers, the 100٪ female-staff figure. Branch and treatment counters count the
-WordPress lists.
+Those two splits come from page **622** (the homepage rows `#process` and the story band) through
+`getHomeProseSections()` — the dashboard writes them on the homepage, and the About page shows them so
+the copy is not stranded on Home; the client's own Arabic homepage serves those rows in English, which is
+why the English line stands in for Arabic there (`docs/STATIC-SWEEP.md`). `src/data/about.ts` is now only
+the outage fallback. STATIC with no WP source: the four "why clients choose Shamah" reasons — Home no
+longer spends a section on them (`docs/HOME-PRIORITY.md`), so `/about` holds the full list, reached from
+Home's introduction row — the three "what we stand by" values, the two teasers, the 100٪ female-staff
+figure. Branch and treatment counters count the WordPress lists.
 
 ## Contact (`/contact`) + Booking
 STATIC info + contact form UI -> `POST /api/v1/lead`. `LEAD_MODE=whatsapp` (default) returns a prefilled
@@ -159,24 +168,27 @@ list provider, so there is no transport to wire; the copy promises only that the
 
 ## Static content, not editable from the dashboard
 Everything else on the site comes from WordPress. These are the only hand-authored entries, each
-because the live site has no equivalent record (verified against the REST responses in `data/wp/`),
-except the two rows marked *by decision*:
+because the live site has no equivalent record. Two searches stand behind the table: the REST responses
+in `data/wp/`, and the 2026-10-13 sweep of every public URL the sitemaps and internal links disclose
+(200 documents, both languages, 516 searched strings) in `docs/STATIC-SWEEP.md`, except the two rows
+marked *by decision*:
 
 | What | File | Why it cannot come from WP |
 |------|------|---------------------------|
 | Branch ids, Arabic names/addresses, features, hours | `src/data/branches.ts` | no branch CPT/taxonomy; the AR subsite serves the office blocks in English, and no WP record lists a branch's features |
-| Phone 01121880908, WhatsApp 201121880908, email, working hours | `src/data/clinic.ts`, `src/config/site.ts` | `/wp/v2/settings` exposes none of them; the only emails WordPress holds are `info@artday.com` / `press@artday.com` / `shipping@artday.com` on page 67 |
+| Phone 01121880908, WhatsApp 201121880908, email, working hours | `src/data/clinic.ts`, `src/config/site.ts` | `/wp/v2/settings` exposes none of them. The **phone is** in the live HTML (`div.mobile-floating-menu` → `tel:+201121880908`) and matches the authored value, so nothing changes; the only emails WordPress holds are `info@artday.com` / `press@artday.com` / `shipping@artday.com` on page 67, and 0 `mailto:` links exist across 184 posts |
 | FAQ page answers | `src/data/faq.ts` | page 169 is ArtDay demo markup ("What is Artday? …"), no clinic Q&A |
-| Doctors / specialists list | `src/data/specialists.ts` | no doctor page or CPT; 0 name matches in any snapshot; no portrait in `media.json` (23 items) |
-| Before/after result cases | `src/data/results.ts` | no case records and no before/after media; the 7 before/after **titled** posts are journal articles |
-| Hero headline, sub, CTAs | `src/components/home/HomeHero.tsx` | page 622's slider captions are per-slide button labels ("Book Now", "Shop Now"), not this headline. Its **photos** are now WP |
-| Interior/stock photography where WP publishes no image: home section 01, `/services` + `/offers` + `/blogs` + `/about` + `/contact` band photos, `/privacy`/CTA band photo | `src/lib/images.ts`, `public/images/*` | pages 9 and 62 have 0 images and no `featured_media`; 696's 7 images all belong to individual sections (already used per card); `media.json` holds only slider frames, section images, `booking1.png` and the logo |
-| Treatment detail steps, aftercare, benefits, prices, durations | `src/data/treatments.ts` | page 696 gives one intro per section and no prices; the WP botox body (885) is wired separately |
+| Doctors / specialists list | `src/data/specialists.ts` | no doctor page or CPT, and no team URL among the crawled documents; 0 name matches in any snapshot or sweep; no portrait in `data/wp/images.json` (60 entries) |
+| Before/after result cases | `src/data/results.ts` | no case records and no before/after media; the before/after **titled** posts (#974, #964, #1003) each carry 0 `<img>`, so there is nothing to pair |
+| Hero headline, sub, CTAs | `src/components/home/HomeHero.tsx` | page 622's slider captions are per-slide button labels ("Book Now", "Shop Now"), and the one genuine client sentence inside the slider ("The Best Aesthetic Center") is Home's introduction heading instead — the hero already says something else, and putting slider markup in the headline would be a redesign. Its **photos** are WP |
+| The "why clients choose Shamah" reasons (now on `/about`) | `src/data/about.ts`, `src/components/pages/AboutClient.tsx` | 0 hits for the four claims in either language, in the REST bodies or in the sweep — authored from the client brief |
+| Interior/stock photography where WP publishes no image: `/services` + `/offers` + `/blogs` + `/about` + `/contact` band photos, `/privacy`/CTA band photo | `src/lib/images.ts`, `public/images/*` | pages 9 and 62 have 0 images and no `featured_media`; 696's 7 images all belong to individual sections (already used per card); `images.json` holds only slider frames, section images, `booking1.png` and the logo. Home no longer spends a photo slot on its own introduction row |
+| Treatment detail steps, aftercare, benefits, prices, durations | `src/data/treatments.ts` | page 696 gives one intro per section and no prices; the WP botox body (885) is wired separately. The only prices WordPress publishes are two Woo products (899.00 / 500.00 EGP), which are offers rather than a service price list — the service post bodies say the figure comes from a consultation, so `priceStartingAt` stays authored and is flagged for the client |
 | Service category chips | `src/data/treatments.ts` (`treatmentCategories`) | WP has no service taxonomy |
 | Offer package terms + the 3 card labels | `src/components/pages/OffersClient.tsx`, `OfferDetailClient.tsx`, `cards/OfferCard.tsx` | the Store API returns name, price, image, description only — 0 products carry an inclusion `<li>` |
 | Nav labels + footer link group + booking CTA | `src/data/nav.ts` | *by decision* (2026-10-12): the client wants the menu in one authored file with no WordPress dependency, although a WP menu exists (ids in "Global / shell") |
 | Header logo | `public/images/logo.png` | *by decision*: "Do not change the look of the header or footer" — `media` 722 `Shamah_Header.png` is the alternative |
-| About "what we stand by" values + the two teasers | `src/components/pages/AboutClient.tsx` | page 32 has no values block; page 32's story/process copy is now WP |
+| About "what we stand by" values + the two teasers | `src/components/pages/AboutClient.tsx` | page 32 has no values block; page 32's story/process copy and the two homepage prose rows are now WP |
 | Privacy policy body + last-updated line | `src/components/pages/PrivacyClient.tsx` | page 3 is the WordPress default text ("Who we are Suggested text: …") |
 | `/contact` and `/branches` band headlines, form field labels, booking wizard steps/periods, `.ics` | `ContactClient.tsx`, `BranchesClient.tsx`, `BookingModal.tsx` | contact/booking copy is UI; page 67 is demo text and page 837 is only a CF7 form, which the site must not submit |
 | Newsletter field + confirmations | `src/components/layout/Footer.tsx` | WordPress exposes no subscriber endpoint and no provider is authorised |
@@ -210,6 +222,18 @@ is the **route this site serves**: `/blogs/<slug>` for posts (`lib/wp/mappers.ts
 `mapArticleCard`) and `/services` for a WordPress service section, which is a section of page 696
 rather than a page of its own.
 
+## Missing or inconsistent WordPress data
+Nothing on the site assumes a complete record: a section, block, badge, price or byline renders only when
+its own field has content, and a missing image falls back to the gold-tone logo frame instead of an empty
+box. `src/app/[lang]/preview-missing-fields/page.tsx` is a **dev-only** fixture route (`force-dynamic`,
+`noindex`, `notFound()` in a production build) that renders the real card and Home components against
+synthetic records — no photo, no tagline, no price, no excerpt, no author, 600-character titles, an
+English title served to the Arabic locale, and Home with every list empty. `node
+scripts/test-missing-fields.mjs` reads that HTML and fails on an empty heading, a text-less section, an
+`img[src=""]`, an unmirrored WP image, `undefined`/`NaN` in the copy, or a "View all" link with nothing
+behind it (86 checks). The design-neutral fixes themselves are in `SectionHeading`, `Photo`,
+`TreatmentCard`, `OfferCard`, `ArticleCard`, `ResultCaseCard`, `HomeBody` and `Swiper`.
+
 ## Home cuts (removed vs the previous full home — everything dropped is still on its own page)
 Verified against `git diff` of `src/components/home/HomeBody.tsx` (7 numbered sections -> 4 + CTA):
 1. Section 01 "Editorial intro, asymmetric split" (long about) -> condensed short about block with the
@@ -221,4 +245,8 @@ Verified against `git diff` of `src/components/home/HomeBody.tsx` (7 numbered se
 6. Section 05 "Featured offer" (one) -> up to 3 live WP offer cards + "All offers" (now position 02).
 7. Section 06 "Branches as cards" -> compact strip with call / WhatsApp actions (max 3, WP offices).
 8. Section 07 "Blog" -> up to 3 latest WP posts + "All blogs".
-Home is now: hero, short about (3 reasons), offers (<=3), branches strip (<=3), journal (<=3), one CTA.
+9. 2026-10-13: the short about block's four "why choose us" reasons -> `/about` (`docs/HOME-PRIORITY.md`);
+   the same band now shows 3 WordPress service cards + "All services", and the WordPress introduction row
+   is its heading column.
+Home is now: hero, WordPress introduction + services (<=3 cards), offers (<=3), branches strip (<=3),
+journal (<=3), one CTA.

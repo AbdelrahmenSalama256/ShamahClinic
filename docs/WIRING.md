@@ -39,18 +39,20 @@ authored Arabic; the fallbacks are listed in §17.
 
 ## 1. Counts
 
-The tables in §2–§13 hold **162 element rows**, covering shared chrome, the booking overlay and all
-15 route surfaces in AR and EN. Classified by the `source now` column:
+The tables in §2–§13 hold **164 element rows**, covering shared chrome, the booking overlay and all
+15 route surfaces in AR and EN. The 2026-10-13 Home pass moved the total from 162: four rows left with
+the reasons block (its photo, index, heading/lead and cards) and six arrived with the WordPress
+introduction row and the three service cards. Classified by the `source now` column:
 
 | verdict | rows | how counted |
 |---|---|---|
-| rendered from WordPress | **65** | 52 rows are WordPress only (the 2 WP-only service cards and the AR heading row joined them in `495409e`); 13 more are WordPress-primary with an authored fallback for the gap named in §17 |
-| authored, and no WordPress source exists | **74** | `WordPress source?` begins with `no` |
+| rendered from WordPress | **68** | 52 rows are WordPress only (the 2 WP-only service cards and the AR heading row joined them in `495409e`), 13 more are WordPress-primary with an authored fallback for the gap named in §17, and 3 joined from the Home pass (the introduction row, the services heading title, the three service cards) |
+| authored, and no WordPress source exists | **73** | `WordPress source?` begins with `no` — the Home pass deleted four such rows (the reasons block's photo, index, heading/lead and cards) and added three label rows (`/about` link, "All services", "Branch details") |
 | authored although WordPress holds it — by the client's decision (nav, header/footer look) | **4** | `action` says "by decision" |
 | authored because the WordPress content is theme demo text (§15) | **5** | contact H1 + lead, FAQ lead + Q&A groups, privacy body |
 | authored, WP holds adjacent data but not this literal (auto-excerpt leads, slide captions, metadata copy, teasers) | **10** | `WordPress source?` says `partial` / `yes but unusable` |
 | cross-references and rule rows (no source of their own) | **4** | OfferCard-as-a-unit, the no-price/no-`Offer` rule, blank validity line, EN-based read time |
-| wired by this audit, static copy deleted or made unreachable | **19 rows / 10 groups** | every row whose `action` starts with `wired`/`fixed`, grouped in §14 |
+| wired by this audit, static copy deleted or made unreachable | **21 rows / 12 groups** | every row whose `action` starts with `wired`/`fixed`, grouped in §14 |
 | dead code found by this audit | **4** | §16 |
 
 One row is one element and covers both languages, except where the Arabic and English sides resolve
@@ -83,8 +85,9 @@ from different places (nav titles, the AR office blocks, page 885's body), which
 
 ## 3. Home — `src/app/[lang]/page.tsx`
 
-Data: `getHome({offers:4, articles:4})` (`page.tsx:30`) + `getMergedTreatments()` + `getHeroPhotos()`;
-every card list is capped at `HOME_CARDS = 3` (`src/components/home/HomeBody.tsx:46`).
+Data: `getHome({offers:4, articles:4})` (`page.tsx:29`) + `getMergedTreatments()` + `getFeaturedServices(3)`
++ `getHomeIntro()` + `getHeroPhotos()`; every card list is capped at `HOME_CARDS = 3`
+(`src/components/home/HomeBody.tsx:60`).
 
 | element | source now | WordPress source? | action |
 |---|---|---|---|
@@ -97,17 +100,19 @@ every card list is capped at `HOME_CARDS = 3` (`src/components/home/HomeBody.tsx
 | "Branches" counter (`HomeHero.tsx:163-169`, value `home.settings.branches`) | WP | yes — `PAGE(622)` yields 3 `.ws-contact-office-item` blocks; unknown offices are appended (`branches.ts:82-94`), so the number moves with the dashboard | kept WP |
 | "Treatments" counter (`HomeHero.tsx:174-177`, value `treatments.length`) | WP-merged list length, which is authored-driven | yes for names — `PAGE(696)` has **7** `<h2>` sections; but `getMergedTreatments()` only renames the 5 aliased rows and never adds any, so the count is `treatmentsData.length` = 10 | kept as is; recorded in `docs/inventory.md` as the one known counter/list mismatch. Making it 7 would delete 3 catalog rows the client sees on `/services` |
 | "Female staff 100٪" (`HomeHero.tsx:182-185`) | STATIC literal | no | kept STATIC |
-| Section 01 photo (`HomeBody.tsx:119-121`) | STATIC `images.interiors.reception` | no — no reception/interior image in `MEDIA` or in 622/32 bodies | kept STATIC |
-| Section 01 index/heading/lead (`HomeBody.tsx:129-135`) | STATIC literals | no | kept STATIC |
-| Reason cards ×3 of 4 authored items (`HomeBody.tsx:69-105`, rendered `:155`) | STATIC literals | no — 696 has section intros but only 7 treatments, no "why choose us" list; 622 has none | kept STATIC; **capped to 3 + "كل الأسباب / All reasons" → `/about`** by Decision 2 (`e9b6497`) |
-| Section 02 heading/lead + "All offers" (`HomeBody.tsx:178-188`) | STATIC literals | no | kept STATIC |
-| Offer cards ×3 (`HomeBody.tsx:191-199` → `cards/OfferCard.tsx`) | WP `PRODUCTS` → `offerToUI` (`src/lib/wp/ui.ts:104`) | yes — 4 rows, first 3 shown, `#offers` count asserted in rendered HTML | kept WP; cap added by Decision 2 |
-| Section 03 heading/lead + "Branch details" (`HomeBody.tsx:202-212`) | STATIC literals — the heading says "three" | yes for the data — the office block count is WP | kept STATIC text; the number it implies is asserted against the rendered card count by `scripts/verify-render.mjs` |
-| Branch cards ×3: photo (`HomeBody.tsx:216-224`), name (`:233-235`), area (`:240`), address (`:241-244`), phone (`:253`) | WP (`PAGE(622)` blocks) over `STATIC branchesData` for the Arabic side | yes — `.ws-contact-office-item` `strong`/address/`P:`/`img`; the AR subsite serves these blocks in English (169 Arabic chars in a 40 KB body), so `branches.ts:71-78` keeps authored Arabic names/addresses | wired in this audit (`e96b700`); `clinicData.branches` and `getBranch()` deleted |
-| Branch badge "فرع / Branch N" (`HomeBody.tsx:229-231`) | STATIC literal, N = index | no | kept STATIC |
-| Branch WhatsApp label + message (`HomeBody.tsx:255-268`) | STATIC literals wrapping the WP name | no | kept STATIC |
-| Section 04 heading/lead + "All blogs" (`HomeBody.tsx:288-298`) | STATIC literals | no | kept STATIC |
-| Journal cards ×3 (`HomeBody.tsx:301-303` → `cards/ArticleCard.tsx`) | WP `POSTS` → `cardToUIArticle` | yes — 92 posts | kept WP; cap by Decision 2 |
+| 01 introduction heading + lead (`HomeBody.tsx:85`) | WP — page 622 row 1 via `getHomeIntro()` (`src/lib/wp/index.ts:433`), parsed by `src/lib/wp/home-prose.ts`; `homeIntroFallback` only when the dashboard row is unrecognisable | yes — "The Best Aesthetic Center" + "Discover the highest standards of cosmetic procedures…" found in the live HTML by the 2026-10-13 sweep (`docs/STATIC-SWEEP.md`) | wired by Task A; the authored heading/lead pair became the outage fallback |
+| 01 "Why clients choose Shamah" link (`HomeBody.tsx:86-88`) | STATIC label → `/about` | no — the four reasons have no WP source (0 hits in the sweep) | kept STATIC; they left Home for `/about` per `docs/HOME-PRIORITY.md` |
+| 02 services heading (`HomeBody.tsx:95-102`) | WP title (`getPageTitle("our-services")`, page 696) + STATIC lead sentence | title yes; the lead is UI copy | title wired; lead kept STATIC |
+| 02 service cards ×3 (`HomeBody.tsx:112-127` → `getFeaturedServices(3)`, `src/lib/wp/treatments.ts`) | WP — page 696 order, the first three sections whose card renders with a photo and an intro; `featuredServiceSlugs` (`src/config/home.ts`, empty = computed) overrides | yes — wired by Task C; the rule and the current three slugs are in `docs/HOME-PRIORITY.md` | wired; the authored reasons cards it replaced render on `/about` |
+| 02 "All services" (`HomeBody.tsx:103-107`) | STATIC literal, shown when `servicesTotal > 3` (12 merged rows) | no | kept STATIC; renders only while records are left out |
+| Section 03 heading/lead + "All offers" (`HomeBody.tsx:143-155`) | STATIC literals | no | kept STATIC |
+| Offer cards ×3 (`HomeBody.tsx:158-162` → `cards/OfferCard.tsx`) | WP `PRODUCTS` → `offerToUI` (`src/lib/wp/ui.ts:104`) | yes — 4 rows, first 3 shown, `#offers` count asserted in rendered HTML | kept WP; cap added by Decision 2 |
+| Section 04 heading/lead (`HomeBody.tsx:171-178`) | STATIC literals — the heading says "three" | yes for the data — the office block count is WP | kept STATIC text; the number it implies is asserted against the rendered card count by `scripts/verify-render.mjs` |
+| "Branch details" (`HomeBody.tsx:179-183`) | STATIC literal | no | kept STATIC — and it now renders **only** when `branches.length > 3`, which the client's three offices are not, so the band carries no dead link (asserted by `verify-render.mjs` against the API total) |
+| Branch cards ×3: photo (`HomeBody.tsx:192-205`), badge (`:209`), name (`:213`), area (`:219`), address (`:222`), phone (`:227-232`) | WP (`PAGE(622)` blocks) over `STATIC branchesData` for the Arabic side | yes — `.ws-contact-office-item` `strong`/address/`P:`/`img`; the AR subsite serves these blocks in English (169 Arabic chars in a 40 KB body), so `branches.ts:71-78` keeps authored Arabic names/addresses | wired in this audit (`e96b700`); `clinicData.branches` and `getBranch()` deleted |
+| Branch WhatsApp label + message (`HomeBody.tsx:235-240`) | STATIC literals wrapping the WP name | no | kept STATIC |
+| Section 05 heading/lead + "All blogs" (`HomeBody.tsx:261-272`) | STATIC literals | no | kept STATIC |
+| Journal cards ×3 (`HomeBody.tsx:276-280` → `cards/ArticleCard.tsx`) | WP `POSTS` → `cardToUIArticle` | yes — 92 posts | kept WP; cap by Decision 2 |
 | `<title>` / description / OG | STATIC literals in `page.tsx:11-22` via `buildPageMetadata` (`src/lib/seo.ts:30`) | partial — WP gives the site title via `SETTINGS` and each post/product has its own SEO fields; the brand copy is authored | kept STATIC |
 
 ## 4. `/services` ≡ `/treatments` — `src/app/[lang]/treatments/page.tsx` + `TreatmentsClient`
@@ -305,6 +310,8 @@ Every content element on this route is WordPress; the chrome around it is author
 | 8 | Header menu + footer link group returned to one authored file | `e39f950` | `src/lib/wp/nav.ts` (WP-derived nav) **deleted**; `featuredServices`/`primaryNav` deleted from `src/lib/site.ts`; `src/data/nav.ts` added |
 | 9 | `sanitizeHtmlBody` now mirrors in-body image srcs before link rewriting | `8e647e3` | WP bodies were hot-linking `wp-content` URLs |
 | 10 | The 2 service sections page 696 publishes without an authored row (`glow-brightening-injections`, `mens-aesthetic-services`) — card, detail route, sitemap entry, `availableService` JSON-LD, booking/contact pickers | `495409e` | **no static copy was removed: this was WordPress content the site was not showing.** `priceStartingAt` became `number \| null` and `category` gained `null`, so the card renders no badge and no price instead of a 0 or a made-up chip; `serviceJsonLd` omits `Offer` without a price; `/results` keeps its 10 figure-bearing rows |
+| 11 | Home's introduction row (heading + lead) and the two homepage prose rows the About page carries, both parsed from page 622 by `src/lib/wp/home-prose.ts` | Task A (2026-10-13 sweep) | the introduction's authored heading/lead pair, now `homeIntroFallback`; the story/`#process` copy had no route at all beyond Home |
+| 12 | Three WordPress service cards on Home (`getFeaturedServices(3)`), in the order page 696 lists them, replacing the authored reasons block | Task C (`docs/HOME-PRIORITY.md`) | no static copy deleted — the four reasons moved to `/about` whole, and the band keeps its heading style, container, reveal timing and carousel |
 
 ## 15. WordPress is theme demo here — authored copy kept, with the quoted sample
 
@@ -356,8 +363,27 @@ Not a defect to hide — the reason each exists is the TranslatePress gap or a m
 | `src/lib/wp/ui.ts:99-100`, `:111`, `:114`, `:116` | no discount, no bullets, no expiry | "عرض/Offer" badge, empty includes block, hidden validity line |
 | `src/lib/seo.ts:41-42`, `:49-53` | title/description/image missing for a language | other language; `/images/clinic-reception.jpg` as OG |
 | `getPageTitle` (`src/lib/wp/index.ts:422-432`) | page absent from `PAGES`, or AR title untranslated (page 3) | the authored H1 fallback passed by the route |
+| `getHomeIntro()` (`src/lib/wp/index.ts:433-447`) | page 622 has no recognizable introduction row (dashboard rewrite or outage) | `homeIntroFallback` in `src/data/about.ts` |
+| `homeProseSections()` (`src/lib/wp/about.ts:146`) | the story / `#process` rows are missing from the homepage body | that split is not rendered, and the English line stands in for Arabic because the client's own `/ar/` homepage serves those rows in English (`docs/STATIC-SWEEP.md`) |
+| `getFeaturedServices()` (`src/lib/wp/treatments.ts`) | fewer than three sections carry both a photo and an intro, or page 696 is unavailable | the rows that do render; if none, the whole services block is absent rather than filled with authored cards (`docs/HOME-PRIORITY.md`) |
 
 ## 18. Re-verification evidence (production build, `npx next start -p 3100`)
+
+### 2026-10-13 — the sweep, the missing-data pass and Home's services band
+
+| check | result |
+|---|---|
+| `npm run sync:wp` | **did not complete**: the origin failed the same way twice — homepage HTTP 500 after 15.5 s, REST `per_page=20` timed out at 90 s, `per_page=100` at 120 s. `data/wp/` and `public/wp/` are untouched (`git status` clean for both), so the site served the existing snapshot throughout; this is the outage case §"Origin outage is the normal worst case" of `docs/api/DECISIONS.md` describes |
+| live sweep that replaced it | `scripts/wp-sweep.mjs` — 217 GET requests, 19.4 MB, 200 documents (193 with status 200, 7 aborted), concurrency 2 with a 300 ms gap, 516 strings searched across both languages; evidence table in `docs/STATIC-SWEEP.md` |
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 (2 `no-explicit-any` and 2 unused-import findings fixed on the way) |
+| `npm run build` | exit 0, `[wp] live` = 0 and 0 `shamahclinics.com` hits in the build log — every one of the 300+ `[wp] snapshot … (build)` lines is a `data/wp/*.json` read |
+| `node scripts/verify-render.mjs http://localhost:3100` | **151 checks passed, 0 failed** in AR + EN. The Home card rule is now asserted both ways: at most 3 cards per section, and a "View all" link present **exactly when** the API total is above 3 — which for `#branches` means it must be *absent*, since three offices are the whole network |
+| `node scripts/test-missing-fields.mjs` | **86 checks passed, 0 failed** over the dev-only fixture route in both locales: no empty heading, no text-less section, no `img[src=""]`, no unmirrored WP image, no `undefined`/`NaN`, no "0 EGP" for a price WordPress never published, no orphan "View all", and a Home with every list empty renders no band at all |
+| Home height, measured with Playwright at 1440 and 390 px | `docs/HOME-PRIORITY.md` §4 — desktop got 98-124 px **shorter**; the phone layout grew 105-113 px (1.6 %) because three service cards stack one-per-view where the reasons block showed one card at a time |
+| rendered H1s, hotlinks, server-side language | unchanged from the run below: 0 `wp-content` hotlinks in served HTML, `<html lang>`/`dir` decided by the route segment |
+
+### 2026-10-12 — the services wiring audit
 
 | check | result |
 |---|---|

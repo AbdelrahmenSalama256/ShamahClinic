@@ -305,12 +305,17 @@ rendered header order/labels against that file in both languages, so a future "w
 change cannot pass the gate unnoticed.
 
 ## Home card sections are capped at three, with a "View all"
-`HOME_CARDS = 3` in `src/components/home/HomeBody.tsx:46` applies to every list Home renders: reasons
-3 of 4, offers 3, branches 3, journal 3. The full lists stay on `/offers`, `/branches`, `/blogs` (and
-`/about` for the reasons) with their existing pagination. Home still fetches a 4th offer and article
-(`page.tsx:30` `{offers: 4, articles: 4}`) — that row is only the probe that more content exists, so
-the "All offers"/"All blogs" links are honest instead of decorative. Asserted in rendered HTML, AR+EN,
-by `scripts/verify-render.mjs`.
+`HOME_CARDS = 3` in `src/components/home/HomeBody.tsx:60` applies to every list Home renders: services
+3 of 12, offers 3, branches 3, journal 3. The full lists stay on `/services`, `/offers`, `/branches`,
+`/blogs` (and `/about` for the reasons) with their existing pagination. Home still fetches a 4th offer
+and article (`page.tsx:29` `{offers: 4, articles: 4}`) — that row is only the probe that more content
+exists, so the "All offers"/"All blogs" links are honest instead of decorative.
+
+The link is **conditional in both directions**: it renders only when records are left out, so the
+branches band carries no "View all" at all — the dashboard holds exactly three offices, and a link to a
+list the page already shows is decoration. `scripts/verify-render.mjs` asserts that both ways against the
+rendered HTML in AR and EN, taking each section's total from the same `/api/v1/*` endpoints the page reads
+(presence when total > 3, absence when it is not).
 
 ## Interior page headings follow their WordPress page title
 `getPageTitle(slug, authored)` (`src/lib/wp/index.ts:422-432`) reads the same `getAllPages()` list the
@@ -363,9 +368,44 @@ a dropped word, and the verification script prints both strings so the substitut
 `scripts/verify-render.mjs` parses `src/data/nav.ts` (bracket depth separates top-level lines from
 dropdown children), reads page 696 out of `data/wp/pages.{en,ar}.json` for the service sections, fetches
 the built pages for both locales, and asserts header order and labels, the footer link group, the
-booking CTA, the four card sections at ≤3 cards with their "View all" links, all 7 WordPress service
-titles rendered on `/services` (12 cards), and — per WP-only service — a 200 detail route with the
-WordPress intro, a mirrored photo, `MedicalProcedure` JSON-LD that carries no `Offer`, no price fact and
-no empty Benefits/Steps/Aftercare heading. 117 checks, AR + EN, against `npx next start -p 3100`.
+booking CTA, the four card sections at ≤3 cards with their "View all" links present exactly when a
+total exceeds the cap, all 7 WordPress service titles rendered on `/services` (12 cards), and — per
+WP-only service — a 200 detail route with the WordPress intro, a mirrored photo, `MedicalProcedure`
+JSON-LD that carries no `Offer`, no price fact and no empty Benefits/Steps/Aftercare heading. 151 checks,
+AR + EN, against `npx next start -p 3100`.
+
+## What Home shows is what the dashboard holds
+The reasons block was Home's 01 section for the whole project: four authored claims, no WordPress source,
+and `docs/STATIC-SWEEP.md` found none in 200 live documents either. Task C replaced it with three service
+cards drawn from page 696, in the dashboard's own order, keeping the band's heading style, container,
+reveal timing and carousel. The claims are not deleted — they moved to `/about`, which already had a
+"why us" surface, and Home's introduction row links there. Selection rule, decision table and the
+measured height before/after are `docs/HOME-PRIORITY.md`.
+
+The cap and the section count are the constraint that made this possible rather than a compromise: Home
+still has four card bands, and the desktop page came out shorter.
+
+## A missing WordPress field is a rendering case, not an error state
+The content policy forbids dropping records, so the UI has to survive the shapes WordPress actually
+returns: a service with no price, an offer with no inclusion list, an article with no author, a branch
+whose image 404s, a 600-character title, an English string served to the Arabic locale. `src/app/[lang]
+/preview-missing-fields/page.tsx` renders the **real** card and section components against synthetic
+records for each of those cases (dev-only, `noindex`, `notFound()` in a production build), and `node
+scripts/test-missing-fields.mjs` reads that HTML and fails on an empty heading, a text-less section, an
+`img[src=""]`, an unmirrored `wp-content` URL, `undefined`/`NaN` in the copy, a "0 EGP" price the
+dashboard never set, or a "View all" with nothing behind it. 86 checks, AR + EN.
+
+The fixes are deliberately smaller than the report they came out of: `SectionHeading` returns null
+without a title, `Photo` falls back to the gold-tone logo frame instead of an empty box, `Swiper` hides
+its arrows and dots when every slide already fits (dead controls otherwise cost the band its height),
+card tagline slots are reserved rather than collapsed, and mixed-language strings render as stored with
+`dir="auto"`. No new component system, no abstraction layer.
+
+## The live site can be down while this site is not
+`npm run sync:wp` did not complete on 2026-10-13: the homepage answered HTTP 500 after 15.5 s and REST
+requests timed out at 90-120 s on repeat. `data/wp/` and `public/wp/` stayed untouched, the build read the
+existing snapshot, and every verification script ran green against it. That is the snapshot-first design
+doing its job, recorded here so a future run does not read a failed sync as a code defect — and so nobody
+"fixes" it by pointing the render path at the live origin.
 Scroll-dependent visuals still cannot be proven from pixels in this environment (see PROGRESS "not
 verifiable"), so this covers the DOM contract only.

@@ -102,3 +102,21 @@ Serve the build with `npx next start -p 3121` and test against that, never `next
 - Production-host timings: every number is `localhost:3121` + simulated throttling on a network
   where one WP REST call costs 4-6 s and the origin intermittently 522s.
 - Live-origin availability at deploy time (`sync:wp` needs a healthy WordPress).
+
+## Tasks A + B + C (2026-10-13) — sweep, missing-data tolerance, services on Home
+
+| # | Item | Status | Evidence (one line) |
+|---|------|--------|---------------------|
+| A1 | Discover every public URL from robots + sitemaps + internal links, fetch each rendered HTML GET-only (concurrency 2, 300 ms) | done | `scripts/wp-sweep.mjs`: 217 requests, 200 documents (193x200, 7 aborted), 19.4 MB, both locales |
+| A2 | Search every still-authored item in that HTML (516 strings), wire what exists, keep the rest static with evidence | done | `docs/STATIC-SWEEP.md` is the item-by-item table (where searched / found? / URL + selector + quoted snippet / action). FOUND and wired: Home introduction row, the story + `#process` prose rows (now on `/about`). NOT found and left static, each with its negative search: specialists, before/after pairs, service steps/benefits/aftercare/durations, offer terms, emails (0 `mailto:` in 184 posts), hours, socials, FAQ, privacy, differentiators. Theme demo (`What is Artday?`, `Suggested text:`, `placehold.it`) never wired. Phone/WhatsApp found live and already matched the authored value |
+| B | Make the UI survive missing / empty / very long / wrong-language data, design-neutral | done | `SectionHeading` renders nothing without a title, `Photo` → gold-tone logo frame, `Swiper` hides controls when all slides fit, price/tagline rows reserved not collapsed, `dir="auto"`, no `img[src=""]`. Fixture route `src/app/[lang]/preview-missing-fields/` (dev-only, noindex) + `scripts/test-missing-fields.mjs` = **86/86** AR + EN |
+| C | Services on Home without adding a section, replacing the least impactful band | done | `docs/HOME-PRIORITY.md`: the authored reasons block (no WP source, no conversion action, overlaps `/about`) was replaced; Home keeps 4 card bands — services 3 of 12 + "All services", offers 3, branches 3, journal 3. Selection rule + `featuredServiceSlugs` override documented; measured heights at 1440 and 390 px in §4 (desktop −98/−124 px, phone +105/+113 px) |
+| V | Gate: sync:wp, typecheck, lint, build with zero WordPress requests, extended `verify-render.mjs` | done, with one exception | `sync:wp` **blocked by the origin** (HTTP 500 after 15.5 s; REST timeouts at 90-120 s) — snapshot intact, nothing re-fetched. typecheck 0, lint 0, build EXIT 0 with `[wp] live` = 0 (`grep -i shamahclinics` on the build log = no hits), `verify-render.mjs` **151/151** on `next start -p 3100`, including the two-way "View all" rule (absent for the 3 branches) |
+
+Uncommitted leftovers to ignore on resume: `docs/contrast-report*`, `docs/screenshots/`,
+`scripts/audit-contrast.mjs` and any `package.json`/lock drift are not part of this work — stage explicit
+paths only, never `git add -A`.
+
+Also reported, not deleted: `src/components/home/BeforeAfterSection.tsx` has no importer anywhere in
+`src` (WIRING §16). It is a Home component holding authored before/after claims the sweep proved
+WordPress does not publish; deleting a component is a design change, so it waits for the client.
