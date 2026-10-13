@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { getPage } from "./index";
+import { getPage, getHomeProseSections } from "./index";
 import { arabicRatio } from "./lang";
 import { toPhotoSlot } from "./ui-helpers";
 import { aboutFallback, type AboutContent, type AboutSection } from "@/data/about";
@@ -113,22 +113,53 @@ function merge(en: ParsedBlock, ar: ParsedBlock): Pick<AboutContent, "lead" | "s
 
 export async function getAbout(): Promise<AboutContent> {
   let page: Awaited<ReturnType<typeof getPage>> = null;
+  let prose: Awaited<ReturnType<typeof getHomeProseSections>> = [];
   try {
-    page = await getPage("about");
+    [page, prose] = await Promise.all([getPage("about"), getHomeProseSections()]);
   } catch {
     page = null;
   }
-  if (!page) return aboutFallback;
-  const en = parseAboutBody(page.item.html.en);
-  const ar = parseAboutBody(page.item.html.ar);
-  if (!en.sections.length && !en.intro.length) return aboutFallback;
-  const { lead, sections } = merge(en, ar);
-  return {
-    title: {
-      ar: page.item.title.ar || aboutFallback.title.ar,
-      en: page.item.title.en || aboutFallback.title.en,
-    },
-    lead,
-    sections,
-  };
+  const extra = homeProseSections(prose);
+  if (page) {
+    const en = parseAboutBody(page.item.html.en);
+    const ar = parseAboutBody(page.item.html.ar);
+    if (en.sections.length || en.intro.length) {
+      const { lead, sections } = merge(en, ar);
+      return {
+        title: {
+          ar: page.item.title.ar || aboutFallback.title.ar,
+          en: page.item.title.en || aboutFallback.title.en,
+        },
+        lead,
+        sections: [...sections, ...extra],
+      };
+    }
+  }
+  return { ...aboutFallback, sections: [...aboutFallback.sections, ...extra] };
+}
+
+/**
+ * The homepage rows the About page carries (see `getHomeProseSections`). A row's
+ * Arabic heading is empty while the subsite leaves that row in English, so the
+ * English one stands in rather than rendering a headingless section.
+ */
+function homeProseSections(
+  prose: Awaited<ReturnType<typeof getHomeProseSections>>,
+): AboutSection[] {
+  return prose.map((block) => {
+    const heading: Bi = {
+      ar: block.heading.ar || block.heading.en,
+      en: block.heading.en || block.heading.ar,
+    };
+    return {
+      heading,
+      paragraphs: block.paragraphs
+        .filter((paragraph) => paragraph.en || paragraph.ar)
+        .map((paragraph) => ({
+          ar: paragraph.ar || paragraph.en,
+          en: paragraph.en || paragraph.ar,
+        })),
+      image: block.image ? toPhotoSlot(block.image, heading) : null,
+    };
+  });
 }
