@@ -47,8 +47,8 @@ export const AboutClient: React.FC<{
     {
       title: { ar: "ثلاثة فروع قريبة منكِ", en: "Three branches near you" },
       body: {
-        ar: "مدينة نصر، التجمع الخامس، والشيخ زايد — بمواعيد مرنة يومياً من ١٠ ص إلى ١٠ م.",
-        en: "Nasr City, Fifth Settlement and Sheikh Zayed — flexible hours daily, 10am to 10pm.",
+        ar: "مدينة نصر، التجمع الخامس، والشيخ زايد — للحجز في أيٍّ منها تواصلي عبر واتساب أو الهاتف.",
+        en: "Nasr City, Fifth Settlement and Sheikh Zayed — to book at any of them, reach us on WhatsApp or by phone.",
       },
     },
   ];
@@ -71,8 +71,8 @@ export const AboutClient: React.FC<{
     {
       title: { ar: "خصوصية وراحة كاملتان", en: "Complete privacy and comfort" },
       body: {
-        ar: "طاقم نسائي بالكامل، غرف خاصة، ومواعيد مرنة — لتخوضي تجربتكِ بأريحية تامة في أي فرع.",
-        en: "An all-female team, private rooms and flexible hours — so you go through your experience in total comfort at any branch.",
+        ar: "طاقم نسائي بالكامل وغرف خاصة — لتخوضي تجربتكِ بأريحية تامة في أي فرع.",
+        en: "An all-female team and private rooms — so you go through your experience in total comfort at any branch.",
       },
     },
   ];

@@ -592,8 +592,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     </h4>
                     <p className="text-xs text-[var(--text-secondary)]">
                       {t(
-                        "عياداتنا مفتوحة يومياً من ١٠ صباحاً حتى ١٠ مساءً",
-                        "Open daily 10:00 AM – 10:00 PM across all branches",
+                        "نتفق معكِ على اليوم والوقت على واتساب أو الهاتف بعد إرسال الطلب",
+                        "We agree the day and time with you on WhatsApp or by phone after you send the request",
                       )}
                     </p>
                   </div>

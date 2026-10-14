@@ -6,7 +6,6 @@ import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { TreatmentCard } from "@/components/cards/TreatmentCard";
 import {
-  treatmentsData,
   treatmentCategories,
   type Treatment,
   type TreatmentCategory,
@@ -16,19 +15,41 @@ import { images } from "@/lib/images";
 interface Props {
   /** WordPress page 696 heading, with an authored fallback. */
   title: { ar: string; en: string };
-  /** WordPress-titled catalog (pages/696) when available, authored list otherwise. */
-  treatments?: Treatment[];
+  /** WordPress-titled catalog (pages/696). */
+  treatments: Treatment[];
 }
 
-export const TreatmentsClient: React.FC<Props> = ({ title, treatments = treatmentsData }) => {
+type FilterCategory = {
+  id: TreatmentCategory | "all" | "other";
+  name: { ar: string; en: string };
+};
+
+export const TreatmentsClient: React.FC<Props> = ({ title, treatments }) => {
   const { t } = useLanguage();
-  const [active, setActive] = useState<TreatmentCategory | "all">("all");
+  const [active, setActive] = useState<TreatmentCategory | "all" | "other">("all");
+
+  const availableCategories = useMemo(() => {
+    const categories: FilterCategory[] = treatmentCategories.filter(
+      (category) =>
+        category.id === "all" ||
+        treatments.some((treatment) => treatment.category === category.id),
+    );
+    if (treatments.some((treatment) => treatment.category === null)) {
+      categories.push({
+        id: "other",
+        name: { ar: "خدمات أخرى", en: "Other services" },
+      });
+    }
+    return categories;
+  }, [treatments]);
 
   const filtered = useMemo(
     () =>
       active === "all"
         ? treatments
-        : treatments.filter((x) => x.category === active),
+        : active === "other"
+          ? treatments.filter((treatment) => treatment.category === null)
+          : treatments.filter((treatment) => treatment.category === active),
     [active, treatments],
   );
 
@@ -37,8 +58,8 @@ export const TreatmentsClient: React.FC<Props> = ({ title, treatments = treatmen
       <PageHero
         title={title}
         lead={{
-          ar: "جلسات ليزر، عناية بالبشرة، حقن تجميلي، وبروتوكولات نضارة ومكافحة شيخوخة — كلها بإشراف طبي نسائي وبأسعار تبدأ من قيمة واضحة معلنة.",
-          en: "Laser, skincare, injectables and rejuvenation protocols — all under female medical supervision with clear starting prices.",
+          ar: "جلسات ليزر، عناية بالبشرة، حقن تجميلي، وبروتوكولات نضارة ومكافحة شيخوخة — كلها بإشراف طبي نسائي، والسعر يُحدَّد بعد الفحص في الاستشارة.",
+          en: "Laser, skincare, injectables and rejuvenation protocols — all under female medical supervision, with the price set at consultation after examination.",
         }}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
@@ -51,7 +72,7 @@ export const TreatmentsClient: React.FC<Props> = ({ title, treatments = treatmen
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Category filter */}
           <div className="flex flex-wrap gap-2.5 mb-10">
-            {treatmentCategories.map((c) => {
+            {availableCategories.map((c) => {
               const isActive = active === c.id;
               return (
                 <button
@@ -81,8 +102,8 @@ export const TreatmentsClient: React.FC<Props> = ({ title, treatments = treatmen
 
           <p className="mt-12 text-center text-sm text-[var(--text-secondary)]">
             {t(
-              "الأسعار المعروضة استرشادية «تبدأ من» وتختلف حسب المنطقة وعدد الجلسات. الاستشارة الأولى تحدد الخطة والتكلفة بدقة.",
-              "Listed prices are 'starting from' guides and vary by area and number of sessions. The first consultation defines the exact plan and cost.",
+              "لم تنشر العيادة قائمة أسعار ثابتة: السعر يُحدَّد بدقة بعد الفحص حسب المنطقة وحالة البشرة وعدد الجلسات، لذلك تعرض بطاقات الخدمات زر الحجز بدل رقم معلن. باقات العروض المنشورة في صفحة العروض أسعارها كما في المتجر.",
+              "The clinic publishes no fixed price list: the price is set precisely after examination, by area, skin condition and number of sessions, so service cards show the booking action instead of a posted figure. Offer packages on the Offers page carry their store prices.",
             )}
           </p>
         </div>

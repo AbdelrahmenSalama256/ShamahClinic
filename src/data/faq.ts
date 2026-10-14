@@ -128,8 +128,8 @@ export const faqData: FaqItem[] = [
       en: "What are the session prices and are there packages or offers?",
     },
     answer: {
-      ar: "تختلف الأسعار حسب نوع الجلسة والمنطقة وعدد الجلسات، وتجدين على الموقع سعراً استرشادياً «يبدأ من» لكل خدمة. نطرح أيضاً باقات موسمية توفر أكثر عند الجمع بين الجلسات، ويمكنك متابعة صفحة العروض أو سؤالنا على واتساب عن أحدث الباقات.",
-      en: "Prices vary by treatment type, area and number of sessions; the site lists a 'starting from' guide price for each service. We also run seasonal packages that save more when combining treatments — see the Offers page or ask us on WhatsApp for the latest bundles.",
+      ar: "تختلف الأسعار حسب نوع الجلسة والمنطقة وعدد الجلسات، ولم تنشر العيادة قائمة أسعار ثابتة: يُحدَّد السعر بدقة بعد الفحص في الاستشارة. أما باقات العروض فتُعرض بأسعارها في صفحة العروض، ويمكنك سؤالنا على واتساب عن أحدثها.",
+      en: "Prices vary by treatment type, area and number of sessions, and the clinic publishes no fixed price list: the price is set precisely after examination at consultation. Offer packages show their store prices on the Offers page, and you can ask us on WhatsApp about the latest bundles.",
     },
   },
   {

@@ -48,21 +48,22 @@ export const siteConfig = {
     locale: "ar_EG",
     alternateLocale: "en_US",
   },
+  /**
+   * The handles the clinic's own Rank Math `sameAs` array publishes on the live
+   * homepage (`https://www.shamahclinics.com/#organization`). Nothing else goes
+   * here: a profile the dashboard does not name is a link we would be inventing,
+   * which is why there is no YouTube row even though the footer has room for one.
+   */
   socialLinks: [
     {
       id: "facebook",
-      href: "https://facebook.com/shamahclinics",
+      href: "https://www.facebook.com/p/Shamah-Clinic-61572435507530/",
       label: "Facebook",
     },
     {
       id: "instagram",
-      href: "https://instagram.com/shamahclinics",
+      href: "https://www.instagram.com/shamahclinic",
       label: "Instagram",
-    },
-    {
-      id: "youtube",
-      href: "https://youtube.com/@shamahclinics",
-      label: "YouTube",
     },
   ],
 } as const;

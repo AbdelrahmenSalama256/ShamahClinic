@@ -21,7 +21,6 @@ import {
   Globe,
   MessageCircle,
   MapPin,
-  Clock,
   ChevronDown,
   Moon,
   Sun,
@@ -115,10 +114,6 @@ export const Navbar: React.FC = () => {
                   "فروعنا: مدينة نصر • التجمع الخامس • الشيخ زايد",
                   "Branches: Nasr City • New Cairo • Sheikh Zayed",
                 )}
-              </span>
-              <span className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[var(--text-gold)]" />
-                {clinicData.workingHours[language]}
               </span>
             </div>
             <div className="flex items-center gap-4">

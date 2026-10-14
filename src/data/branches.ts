@@ -33,8 +33,8 @@ export const branchesData: BranchDetail[] = [
     phone: "01026788285",
     image: images.interiors.reception,
     intro: {
-      ar: "أول فروع شامه وأكثرها ازدحاماً، في قلب مدينة نصر على بعد دقائق من عباس العقاد. يضم غرفتين ليزر وجناح حقن وصالة انتظار هادئة، ويعمل بطاقم نسائي كامل طوال اليوم.",
-      en: "Shamah's first and busiest branch, in the heart of Nasr City minutes from Abbas El Akkad. It houses two laser rooms, an injectables suite and a quiet waiting lounge, staffed entirely by women all day.",
+      ar: "أول فروع شامه وأكثرها ازدحاماً، في قلب مدينة نصر على بعد دقائق من عباس العقاد. يضم غرفتين ليزر وجناح حقن وصالة انتظار هادئة، ويعمل بطاقم نسائي كامل.",
+      en: "Shamah's first and busiest branch, in the heart of Nasr City minutes from Abbas El Akkad. It houses two laser rooms, an injectables suite and a quiet waiting lounge, staffed entirely by women.",
     },
     features: {
       ar: ["غرفتا ليزر بجهازين مستقلين", "جناح حقن خاص", "صالة انتظار منفصلة للخصوصية", "سهولة وصول من عباس العقاد"],
@@ -73,12 +73,12 @@ export const branchesData: BranchDetail[] = [
     phone: "01121880855",
     image: images.interiors.treatmentRoom,
     intro: {
-      ar: "فرع الجيزة داخل تريفيوم مول بالحي الثاني، بتصميم داخلي دافئ وغرف جلسات مريحة. يخدم قاطني الشيخ زايد وأكتوبر والقرية الذكية، مع مواعيد مسائية مرنة للعاملة.",
-      en: "Our Giza branch inside Trivium Mall in the 2nd District, with a warm interior and comfortable treatment rooms. Serving Sheikh Zayed, October and Smart Village, with flexible evening hours for working clients.",
+      ar: "فرع الجيزة داخل تريفيوم مول بالحي الثاني، بتصميم داخلي دافئ وغرف جلسات مريحة. يخدم قاطني الشيخ زايد وأكتوبر والقرية الذكية.",
+      en: "Our Giza branch inside Trivium Mall in the 2nd District, with a warm interior and comfortable treatment rooms. Serving Sheikh Zayed, October and Smart Village.",
     },
     features: {
-      ar: ["داخل مول بمواقف وأمن", "غرف جلسات مريحة", "مواعيد مسائية مرنة", "يخدم زايد وأكتوبر والقرية الذكية"],
-      en: ["Inside a mall with parking and security", "Comfortable treatment rooms", "Flexible evening hours", "Serves Zayed, October and Smart Village"],
+      ar: ["داخل مول بمواقف وأمن", "غرف جلسات مريحة", "يخدم زايد وأكتوبر والقرية الذكية"],
+      en: ["Inside a mall with parking and security", "Comfortable treatment rooms", "Serves Zayed, October and Smart Village"],
     },
     landmark: { ar: "خلف كابيتال وبارك ستريت، الحي الثاني", en: "Behind Capital & Park Street, 2nd District" },
   },

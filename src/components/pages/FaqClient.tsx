@@ -59,8 +59,8 @@ export const FaqClient: React.FC<{ title: { ar: string; en: string } }> = ({ tit
             </h2>
             <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-lg mx-auto">
               {t(
-                "فريقنا متاح يومياً من ١٠ صباحاً حتى ١٠ مساءً للرد على استفساراتك ومساعدتك في اختيار الجلسة المناسبة.",
-                "Our team is available daily from 10am to 10pm to answer your questions and help you choose the right session."
+                "أسئلتكِ عن الحجز وخدمات العيادة موضع ترحيب: تواصلي عبر واتساب أو الاتصال وسنساعدك في اختيار الجلسة المناسبة.",
+                "Questions about booking and our services are welcome: reach us on WhatsApp or by phone and we will help you choose the right session."
               )}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">

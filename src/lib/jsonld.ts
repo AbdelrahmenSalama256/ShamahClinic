@@ -47,19 +47,11 @@ export async function organizationJsonLd(): Promise<Json> {
     image: `${SITE_URL}${images.interiors.reception.src}`,
     description: lang === "ar" ? siteConfig.metadata.description : siteConfig.metadata.descriptionEn,
     telephone: clinicData.phone,
-    email: clinicData.email,
-    priceRange: "EGP 500 - 6850",
     medicalSpecialty: ["Dermatology", "CosmeticMedicine", "LaserTreatment"],
     areaServed: [
       { "@type": "City", name: lang === "ar" ? "القاهرة" : "Cairo" },
       { "@type": "City", name: lang === "ar" ? "الجيزة" : "Giza" },
     ],
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      opens: "10:00",
-      closes: "22:00",
-    },
     branch: (await getBranchList()).map((b) => branchNode(b, lang)),
     availableService: (await getMergedTreatments()).map((t) => ({
       "@type": "MedicalProcedure",
@@ -96,12 +88,6 @@ export async function branchJsonLd(branch: BranchDetail): Promise<Json> {
     ...branchNode(branch, lang),
     "@context": "https://schema.org",
     description: branch.intro[lang],
-    openingHoursSpecification: {
-      "@type": "OpeningHoursSpecification",
-      dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-      opens: "10:00",
-      closes: "22:00",
-    },
   };
 }
 
@@ -169,19 +155,9 @@ export async function serviceJsonLd(treatment: Treatment): Promise<Json> {
     procedureType: "https://schema.org/CosmeticProcedure",
     inLanguage: OG_LOCALE[lang],
     provider: { "@id": `${SITE_URL}/#organization` },
-    // schema.org wants a real price; a service the dashboard gives no price for
-    // publishes no offer at all rather than a zero.
-    ...(treatment.priceStartingAt === null
-      ? {}
-      : {
-          offers: {
-            "@type": "Offer",
-            price: treatment.priceStartingAt,
-            priceCurrency: "EGP",
-            availability: "https://schema.org/InStock",
-            url: localized(path, lang),
-          },
-        }),
+    // No offer node: the live site prices every service after consultation, and an
+    // authored "from X EGP" would be a number WordPress never gave us. WooCommerce
+    // campaign prices keep their own offerJsonLd.
   };
 }
 

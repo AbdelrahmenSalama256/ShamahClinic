@@ -105,8 +105,6 @@ export const PrivacyClient: React.FC<{ title: { ar: string; en: string } }> = ({
             <h2 className="text-lg font-black text-[var(--text-primary)] mb-2">{t("للتواصل بشأن الخصوصية", "Privacy contact")}</h2>
             <p className="text-sm text-[var(--text-secondary)] mb-4">
               {t("عيادات شامه — ", "Shamah Clinics — ")}
-              <a href={`mailto:${clinicData.email}`} className="text-[var(--gold-end)] hover:underline">{clinicData.email}</a>
-              {" • "}
               <a href={`tel:${clinicData.phone.replace(/\s/g, "")}`} dir="ltr" className="text-[var(--gold-end)] hover:underline">{clinicData.phone}</a>
             </p>
           </Reveal>

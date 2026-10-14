@@ -10,7 +10,7 @@ import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
 import { socialLinks } from "@/lib/site";
 import { navItems } from "@/data/nav";
-import { Phone, Clock, Mail, Send, Check, MessageCircle } from "lucide-react";
+import { Phone, Send, Check, MessageCircle } from "lucide-react";
 
 const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
   const common = {
@@ -70,7 +70,7 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
   )}`;
 
   return (
-    <footer className="bg-[var(--bg-dark)] text-[var(--text-on-dark)] pt-12 pb-[calc(var(--mobile-bar-height)+env(safe-area-inset-bottom))] sm:pb-[calc(var(--floating-control-size)+var(--floating-control-gap))] border-t border-[var(--border-control)]">
+    <footer className="on-dark bg-[var(--bg-dark)] text-[var(--text-on-dark)] pt-12 pb-[calc(var(--mobile-bar-height)+env(safe-area-inset-bottom))] sm:pb-[calc(var(--floating-control-size)+var(--floating-control-gap))] border-t border-[var(--border-control)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-12 border-b border-white/10">
           {/* Brand */}
@@ -99,17 +99,6 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
                 <Phone className="w-4 h-4 text-[var(--text-gold)]" />
                 <span>{clinicData.phone}</span>
               </a>
-              <a
-                href={`mailto:${clinicData.email}`}
-                className="flex items-center gap-2 hover:text-[var(--gold-start)] transition-colors duration-300"
-              >
-                <Mail className="w-4 h-4 text-[var(--text-gold)]" />
-                <span>{clinicData.email}</span>
-              </a>
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[var(--text-gold)]" />
-                <span>{clinicData.workingHours[language]}</span>
-              </div>
               <a
                 href={whatsappUrl}
                 target="_blank"

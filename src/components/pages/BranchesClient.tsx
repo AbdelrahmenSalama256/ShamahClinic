@@ -6,22 +6,20 @@ import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { BranchCard } from "@/components/cards/BranchCard";
 import type { BranchDetail } from "@/data/branches";
-import { clinicData } from "@/data/clinic";
 import { images } from "@/lib/images";
-import { Clock } from "lucide-react";
 
 export const BranchesClient: React.FC<{ branches: BranchDetail[] }> = ({
   branches,
 }) => {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <>
       <PageHero
         title={{ ar: "فروع عيادات شامه", en: "Shamah Clinics branches" }}
         lead={{
-          ar: "ثلاثة فروع في القاهرة والجيزة: مدينة نصر، التجمع الخامس، والشيخ زايد. جميعها بطقم نسائي كامل وغرف خاصة، ومفتوحة يومياً.",
-          en: "Three branches across Cairo and Giza: Nasr City, Fifth Settlement and Sheikh Zayed. All with an all-female team, private rooms and daily hours.",
+          ar: "ثلاثة فروع في القاهرة والجيزة: مدينة نصر، التجمع الخامس، والشيخ زايد. جميعها بطقم نسائي كامل وغرف خاصة.",
+          en: "Three branches across Cairo and Giza: Nasr City, Fifth Settlement and Sheikh Zayed. All with an all-female team and private rooms.",
         }}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
@@ -40,14 +38,6 @@ export const BranchesClient: React.FC<{ branches: BranchDetail[] }> = ({
               </Reveal>
             ))}
           </div>
-
-          <Reveal className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3 text-center rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-6">
-            <Clock className="w-5 h-5 text-[var(--text-gold)] shrink-0" />
-            <p className="text-sm text-[var(--text-secondary)]">
-              {t("مواعيد العمل في كل الفروع: ", "Opening hours at all branches: ")}
-              <strong className="text-[var(--text-primary)]">{clinicData.workingHours[language]}</strong>
-            </p>
-          </Reveal>
         </div>
       </section>
     </>

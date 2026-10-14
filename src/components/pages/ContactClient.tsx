@@ -15,8 +15,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle,
   Phone,
-  Mail,
-  Clock,
   Check,
   Calendar,
   MapPin,
@@ -213,37 +211,6 @@ export const ContactClient: React.FC<{
               </span>
             </a>
 
-            <div className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)]">
-              <span className="w-11 h-11 rounded-full bg-[var(--bg-secondary)] text-[var(--gold-end)] flex items-center justify-center shrink-0">
-                <Mail className="w-5 h-5" />
-              </span>
-              <span>
-                <span className="block font-black text-[var(--text-primary)]">
-                  {t("البريد الإلكتروني", "Email")}
-                </span>
-                <a
-                  href={`mailto:${clinicData.email}`}
-                  className="block text-sm text-[var(--gold-end)] hover:underline"
-                >
-                  {clinicData.email}
-                </a>
-              </span>
-            </div>
-
-            <div className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)]">
-              <span className="w-11 h-11 rounded-full bg-[var(--bg-secondary)] text-[var(--gold-end)] flex items-center justify-center shrink-0">
-                <Clock className="w-5 h-5" />
-              </span>
-              <span>
-                <span className="block font-black text-[var(--text-primary)]">
-                  {t("مواعيد العمل", "Opening hours")}
-                </span>
-                <span className="block text-sm text-[var(--text-secondary)]">
-                  {clinicData.workingHours[language]}
-                </span>
-              </span>
-            </div>
-
             {/* Branch quick call list */}
             <div className="pt-2">
               <h2 className="font-black text-[var(--text-primary)] mb-3">
@@ -285,8 +252,8 @@ export const ContactClient: React.FC<{
                   </h2>
                   <p className="text-sm text-[var(--text-secondary)] max-w-md mx-auto mb-6">
                     {t(
-                      "استلمنا رسالتكِ وسيتواصل معكِ فريقنا خلال دقائق في مواعيد العمل. للاستجابة الفورية اضغطي زر واتساب أدناه.",
-                      "We received your message and our team will contact you within minutes during working hours. For an instant reply, tap WhatsApp below.",
+                      "استلمنا رسالتكِ وسيتواصل معكِ فريقنا لتأكيد الموعد. للاستجابة الفورية اضغطي زر واتساب أدناه.",
+                      "We received your message and our team will get in touch to confirm the appointment. For an instant reply, tap WhatsApp below.",
                     )}
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -363,7 +330,7 @@ export const ContactClient: React.FC<{
                       className={`w-full p-3 rounded-xl border text-sm outline-none transition-colors duration-300 ${
                         errors.name
                           ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
-                          : "border-gray-300 focus:border-[var(--border-control)]"
+                          : "border-[var(--border-control)] focus:border-[var(--border-control)]"
                       }`}
                     />
                     {errors.name && (
@@ -392,7 +359,7 @@ export const ContactClient: React.FC<{
                       className={`w-full p-3 rounded-xl border text-sm outline-none transition-colors duration-300 ${
                         errors.phone
                           ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
-                          : "border-gray-300 focus:border-[var(--border-control)]"
+                          : "border-[var(--border-control)] focus:border-[var(--border-control)]"
                       }`}
                     />
                     {errors.phone && (
@@ -570,7 +537,7 @@ export const ContactClient: React.FC<{
                         "اكتبي استفساركِ أو الوقت المفضل للزيارة...",
                         "Write your question or preferred visit time...",
                       )}
-                      className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--border-control)] text-sm outline-none resize-none transition-colors duration-300"
+                      className="w-full p-3 rounded-xl border border-[var(--border-control)] focus:border-[var(--border-control)] text-sm outline-none resize-none transition-colors duration-300"
                     />
                   </div>
 

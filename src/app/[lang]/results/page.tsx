@@ -3,7 +3,6 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ResultsClient } from "@/components/pages/ResultsClient";
-import { getMergedTreatments } from "@/lib/wp/treatments";
 import { getResultStories } from "@/lib/wp/result-stories";
 import { cardToUIArticle } from "@/lib/wp/ui";
 import { getLocalizedHref } from "@/lib/locale";
@@ -26,11 +25,8 @@ function pageHref(page: number, lang: "ar" | "en"): string {
 async function read(sp: Props["searchParams"]) {
   const s = await sp;
   const requested = Math.max(1, Number(s.page) || 1);
-  const [paged, treatments] = await Promise.all([
-    getResultStories({ page: requested, perPage: PER_PAGE }),
-    getMergedTreatments(),
-  ]);
-  return { paged, treatments, page: paged.page };
+  const paged = await getResultStories({ page: requested, perPage: PER_PAGE });
+  return { paged, page: paged.page };
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -39,8 +35,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
     path: "/results",
     title: { ar: "النتائج — ما ترويه العيادة عن جلساتها", en: "Results — What the Clinic Reports" },
     description: {
-      ar: "مقالات عيادات شامه عن نتائج الجلسات، مع جدول واقعي لمدة كل جلسة وعدد الجلسات وبداية ظهور النتيجة.",
-      en: "Shamah Clinics' own articles on treatment outcomes, with a realistic table of session length, course size and when results appear.",
+      ar: "مقالات عيادات شامه عن نتائج الجلسات، بعنوانها ومقتطفها وصورتها كما نشرتها العيادة.",
+      en: "Shamah Clinics' own articles on treatment outcomes, with the title, excerpt and photo the clinic published.",
     },
     image: "/images/skin-glow.jpg",
   });
@@ -62,7 +58,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function ResultsPage({ searchParams }: Props) {
-  const { paged, treatments, page } = await read(searchParams);
+  const { paged, page } = await read(searchParams);
   const lang = await routeLang();
 
   return (
@@ -80,7 +76,6 @@ export default async function ResultsPage({ searchParams }: Props) {
         page={paged.page}
         total={paged.total}
         totalPages={paged.totalPages}
-        treatments={treatments}
       />
     </>
   );

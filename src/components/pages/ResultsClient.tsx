@@ -11,7 +11,6 @@ import { ArticleCard } from "@/components/cards/ArticleCard";
 import { GoldLink } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
-import type { Treatment } from "@/data/treatments";
 import { images } from "@/lib/images";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
@@ -20,19 +19,10 @@ export const ResultsClient: React.FC<{
   page: number;
   totalPages: number;
   total: number;
-  treatments: Treatment[];
-}> = ({ stories, page, totalPages, total, treatments }) => {
-  const { t, language, formatNumber } = useLanguage();
+}> = ({ stories, page, totalPages, total }) => {
+  const { t, language } = useLanguage();
   const router = useRouter();
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
-
-  // The table compares session length, course and starting price. A service
-  // WordPress publishes only a title and an intro has none of those figures, so
-  // it appears on `/services` and its own page instead of as a row of blanks.
-  const compared = treatments.filter(
-    (x): x is Treatment & { priceStartingAt: number } =>
-      !!x.duration[language] && x.priceStartingAt !== null,
-  );
 
   const pageHref = (n: number) => `${getLocalizedHref("/results", language)}?page=${n}`;
 
@@ -41,8 +31,8 @@ export const ResultsClient: React.FC<{
       <PageHero
         title={{ ar: "النتائج وما يمكن توقعه", en: "Results & what to expect" }}
         lead={{
-          ar: "نفضّل أن تكوني على بيّنة: إليك مقالات العيادة عن نتائج الجلسات، وجدولاً واقعياً لبداية ظهور النتيجة ومدتها لكل خدمة.",
-          en: "We prefer you to be informed: here are the clinic's own articles on treatment results, and a realistic table of onset and duration for each service.",
+          ar: "نفضّل أن تكوني على بيّنة: هذه مقالات العيادة نفسها عن نتائج جلساتها، بعنوانها ومقتطفها وصورتها كما نشرتها الطبيبات.",
+          en: "We prefer you to be informed: these are the clinic's own articles on its treatment results, with the title, excerpt and photo its doctors published.",
         }}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
@@ -122,74 +112,6 @@ export const ResultsClient: React.FC<{
                 <Arrow className="w-3.5 h-3.5" />
               </Link>
             )}
-          </div>
-
-          {/* Realistic expectations table */}
-          <div className="mt-20">
-            <SectionHeading
-              title={{
-                ar: "متى تظهر النتيجة وكم تدوم؟",
-                en: "When do results appear and how long do they last?",
-              }}
-              lead={{
-                ar: "قيَم واقعية لكل خدمة، تُحدَّد تفاصيلها لحالتكِ في الاستشارة.",
-                en: "Realistic figures per service, tailored to your case at consultation.",
-              }}
-            />
-            <div className="mt-10 overflow-x-auto rounded-2xl border border-[var(--border-control)]">
-              <table className="w-full text-sm min-w-[560px]">
-                <thead className="bg-[var(--bg-secondary)]/80 text-[var(--text-primary)]">
-                  <tr>
-                    <th className="text-start font-black px-5 py-4">
-                      {t("الخدمة", "Service")}
-                    </th>
-                    <th className="text-start font-bold px-5 py-4">
-                      {t("مدة الجلسة", "Session")}
-                    </th>
-                    <th className="text-start font-bold px-5 py-4">
-                      {t("الجلسات / المدة", "Sessions / duration")}
-                    </th>
-                    <th className="text-start font-bold px-5 py-4">
-                      {t("تبدأ من", "From")}
-                    </th>
-                    <th className="px-5 py-4" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--gold-border)]/30 bg-[var(--bg-card)]">
-                  {compared.map((x) => (
-                    <tr
-                      key={x.id}
-                      className="hover:bg-[var(--bg-secondary)]/40 transition-colors duration-300"
-                    >
-                      <td className="px-5 py-4 font-bold text-[var(--text-primary)]">
-                        {t(x.name.ar, x.name.en)}
-                      </td>
-                      <td className="px-5 py-4 text-[var(--text-secondary)]">
-                        {t(x.duration.ar, x.duration.en)}
-                      </td>
-                      <td className="px-5 py-4 text-[var(--text-secondary)]">
-                        {t(x.sessionsRecommended.ar, x.sessionsRecommended.en)}
-                      </td>
-                      <td className="px-5 py-4 text-[var(--gold-end)] font-bold tabular-nums">
-                        {formatNumber(x.priceStartingAt)} {t("ج.م", "EGP")}
-                      </td>
-                      <td className="px-5 py-4 text-end">
-                        <Link
-                          href={getLocalizedHref(
-                            `/treatments/${x.id}`,
-                            language,
-                          )}
-                          className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
-                        >
-                          {t("التفاصيل", "Details")}
-                          <Arrow className="w-3.5 h-3.5" />
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
 
           <div className="mt-10 text-center">

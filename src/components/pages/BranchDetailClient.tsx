@@ -9,11 +9,9 @@ import { Photo } from "@/components/ui/Photo";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
 import type { BranchDetail } from "@/data/branches";
-import { clinicData } from "@/data/clinic";
 import {
   MapPin,
   Phone,
-  Clock,
   Check,
   ArrowLeft,
   ArrowRight,
@@ -76,17 +74,6 @@ export const BranchDetailClient: React.FC<{
                       >
                         {branch.phone}
                       </a>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 border-t border-[var(--border-control)] pt-5">
-                    <Clock className="w-5 h-5 text-[var(--text-gold)] mt-0.5 shrink-0" />
-                    <div>
-                      <h2 className="font-black text-[var(--text-primary)] mb-1">
-                        {t("مواعيد العمل", "Opening hours")}
-                      </h2>
-                      <p className="text-sm text-[var(--text-secondary)]">
-                        {clinicData.workingHours[language]}
-                      </p>
                     </div>
                   </div>
                 </div>
