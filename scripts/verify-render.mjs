@@ -6,7 +6,10 @@
  *      "View all" link to its full page exactly when records are left out,
  *   3. every service section page 696 publishes is rendered on /services in both
  *      languages, and a service WordPress gives no price or session data for
- *      renders no price, no empty block and no schema.org Offer.
+ *      renders no price, no empty block and no schema.org Offer, and
+ *   4. an unknown URL answers HTTP 404 with the branded page and the `<html lang
+ *      dir>` the server chose, Arabic by default and English under `/en`, and a slug
+ *      the CMS does not publish answers 404 with `noindex`.
  *
  * Usage: node scripts/verify-render.mjs [origin]   (default http://localhost:3100)
  * Run it against `npm run start`, not `npm run dev`.
@@ -21,7 +24,12 @@ const pass = [];
 const fail = [];
 const check = (cond, msg) => (cond ? pass : fail).push(`${cond ? "ok  " : "FAIL"} ${msg}`);
 
-const navSrc = readFileSync(new URL("../src/data/nav.ts", import.meta.url), "utf8");
+// A commented-out menu line is not a menu line: `nav.ts` keeps the entries the site
+// deliberately does not link yet as comments, and they must not be counted.
+const navSrc = readFileSync(new URL("../src/data/nav.ts", import.meta.url), "utf8")
+  .split("\n")
+  .filter((line) => !line.trim().startsWith("//"))
+  .join("\n");
 
 /** Bracket depth just before a match: 1 = top level, 2 = a dropdown child. */
 function bracketLevel(src, index) {
@@ -327,17 +335,72 @@ for (const lang of ["ar", "en"]) {
     );
   }
 
-  // The authored pages keep their blocks, so the guards are conditional, not global.
-  const authored = await fetch(`${ORIGIN}/${lang}/treatments/botox`, { cache: "no-store" });
-  const authoredHtml = await authored.text();
+  // Every service row `src/data/treatments.ts` used to author is commented out now
+  // that WordPress publishes all of them, so botox is the check that the CMS body
+  // really reaches the detail page — and that no invented price came with it.
+  const detail = await (
+    await fetch(`${ORIGIN}/${lang}/services/botox-injections`, { cache: "no-store" })
+  ).text();
   check(
-    /الفوائد|Benefits/.test(authoredHtml),
-    `${lang}: an authored service still renders its Benefits block`,
+    /عن هذه الجلسة|About this treatment/.test(detail),
+    `${lang}: the botox detail renders its WordPress section heading`,
   );
   check(
-    /[0-9\u0660-\u0669][\s0-9\u0660-\u0669]*\s*(EGP|ج\.م)/.test(authoredHtml.replace(/<[^>]+>/g, " ")),
-    `${lang}: an authored service still renders its price`,
+    /Botox Injections|بوتوكس/.test(detail),
+    `${lang}: the botox detail renders the long-form body of WordPress page 885`,
   );
+  check(
+    !/(EGP|ج\.م)/.test(detail.replace(/<[^>]+>/g, " ")),
+    `${lang}: the botox detail renders no price the CMS does not state`,
+  );
+}
+
+// ── 5. unknown URLs answer with a 404 the server already localized ──
+const NOT_FOUND_CASES = [
+  { path: "/does-not-exist", lang: "ar", dir: "rtl", h1: "غير موجودة" },
+  { path: "/en/does-not-exist", lang: "en", dir: "ltr", h1: "exist" },
+  // `/fr/...` is rewritten onto the Arabic segment by `src/proxy.ts`.
+  { path: "/fr/does-not-exist", lang: "ar", dir: "rtl", h1: "غير موجودة" },
+];
+
+for (const c of NOT_FOUND_CASES) {
+  const res = await fetch(`${ORIGIN}${c.path}`, { cache: "no-store", redirect: "manual" });
+  const html = await res.text();
+  const $ = cheerio.load(html);
+  check(res.status === 404, `${c.path}: HTTP 404 (got ${res.status})`);
+  check(
+    $("html").attr("lang") === c.lang && $("html").attr("dir") === c.dir,
+    `${c.path}: the server renders <html lang="${c.lang}" dir="${c.dir}"> (got "${$("html").attr(
+      "lang",
+    )}" / "${$("html").attr("dir")}")`,
+  );
+  check(
+    $("h1").text().includes(c.h1),
+    `${c.path}: the branded 404 heading is in the response, not only after hydration`,
+  );
+  check(
+    ($("meta[name='robots']").attr("content") || "").includes("noindex"),
+    `${c.path}: noindex`,
+  );
+}
+
+// A slug the CMS does not publish has to answer 404 as well. Those routes fetch at
+// request time, so the framework owns the document: assert the status and the index
+// guard, which is what it controls.
+for (const path of [
+  "/blogs/no-such-article",
+  "/offers/no-such-offer",
+  "/services/no-such-service",
+  "/treatments/no-such-treatment",
+  "/branches/no-such-branch",
+]) {
+  const res = await fetch(`${ORIGIN}${path}`, { cache: "no-store" });
+  const html = await res.text();
+  check(
+    res.status === 404,
+    `${path}: HTTP 404 for a slug WordPress does not have (got ${res.status})`,
+  );
+  check(/noindex/.test(html), `${path}: noindex`);
 }
 
 check(numbered.length > 0, numbered.join("\n  ") || "no dashboard heading needed the numbering trim");

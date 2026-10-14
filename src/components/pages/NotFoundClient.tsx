@@ -3,13 +3,16 @@
 import React from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
+import { getLocalizedHref } from "@/lib/locale";
 import { Reveal } from "@/components/ui/Reveal";
 import { BookButton, GoldLink } from "@/components/shared/Actions";
 import {
   Home,
   Sparkles,
+  Ticket,
   MapPin,
   BookOpen,
+  Phone,
   ArrowRight,
   ArrowLeft,
 } from "lucide-react";
@@ -28,6 +31,12 @@ const destinations = [
     description: { ar: "اكتشفي جلساتنا", en: "Explore our services" },
   },
   {
+    href: "/offers",
+    icon: Ticket,
+    label: { ar: "العروض", en: "Offers" },
+    description: { ar: "أحدث تخفيضات الفروع", en: "Current branch campaigns" },
+  },
+  {
     href: "/branches",
     icon: MapPin,
     label: { ar: "الفروع", en: "Branches" },
@@ -39,6 +48,12 @@ const destinations = [
     label: { ar: "المدونة", en: "Blogs" },
     description: { ar: "مقالات طبية", en: "Medical blogs" },
   },
+  {
+    href: "/contact",
+    icon: Phone,
+    label: { ar: "تواصلي معنا", en: "Contact" },
+    description: { ar: "حجز عبر واتساب أو الهاتف", en: "Book on WhatsApp or by phone" },
+  },
 ];
 
 export const NotFoundClient: React.FC = () => {
@@ -46,7 +61,7 @@ export const NotFoundClient: React.FC = () => {
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
 
   return (
-    <section className="relative overflow-hidden bg-[var(--bg-dark)] min-h-[80vh] flex items-center">
+    <section className="on-dark relative overflow-hidden bg-[var(--bg-dark)] min-h-[80vh] flex items-center">
       {/* Decorative glows */}
       <div
         aria-hidden="true"
@@ -112,13 +127,13 @@ export const NotFoundClient: React.FC = () => {
             {t("أو تصفّحي هذه الوجهات", "Or explore these destinations")}
           </p>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-4xl mx-auto">
             {destinations.map((d) => {
               const Icon = d.icon;
               return (
                 <Link
                   key={d.href}
-                  href={d.href}
+                  href={getLocalizedHref(d.href, language)}
                   className="group relative flex flex-col items-start gap-3 p-5 rounded-2xl border border-[var(--border-on-dark)] bg-white/[0.03] hover:bg-white/[0.06] hover:border-[var(--gold-start)]/40 hover:-translate-y-1 transition-[transform,background-color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] backdrop-blur-sm"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[var(--gold-start)]/10 border border-[var(--gold-start)]/30 flex items-center justify-center group-hover:bg-[var(--gold-start)]/20 transition-colors duration-300">

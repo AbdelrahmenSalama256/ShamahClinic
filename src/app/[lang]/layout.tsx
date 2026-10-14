@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import { Readex_Pro, Montserrat } from "next/font/google";
+import { montserrat, readexPro } from "@/lib/fonts";
 import "../globals.css";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -11,19 +11,6 @@ import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
 import { getBranchList } from "@/lib/wp";
 import { getMergedTreatments } from "@/lib/wp/treatments";
-
-const readexPro = Readex_Pro({
-  subsets: ["arabic"],
-  weight: "variable",
-  variable: "--font-readex-pro",
-  display: "swap",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  variable: "--font-montserrat",
-  display: "swap",
-});
 
 export const viewport: Viewport = {
   width: "device-width",

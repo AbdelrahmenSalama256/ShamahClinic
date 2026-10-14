@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   experimental: {
     // Modest prerender concurrency keeps local CPU/memory predictable.
     cpus: 2,
+    // A not-found render has no layouts above it, and the only layout here is the
+    // `[lang]` dynamic segment — so the 404 document is composed by
+    // `src/app/global-not-found.tsx` instead.
+    globalNotFound: true,
   },
   async redirects() {
     return [

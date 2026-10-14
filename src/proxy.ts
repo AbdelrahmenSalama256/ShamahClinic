@@ -10,11 +10,21 @@ import type { NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const first = pathname.split("/")[1];
-  if (first === "ar" || first === "en") return NextResponse.next();
+  const lang = first === "ar" || first === "en" ? first : "ar";
 
-  const url = request.nextUrl.clone();
-  url.pathname = `/ar${pathname === "/" ? "" : pathname}`;
-  return NextResponse.rewrite(url);
+  // `app/global-not-found.tsx` is rendered by the router instead of the `[lang]`
+  // layout, so it cannot read which language segment was asked for. The prefix is
+  // stamped on the request here and that file reads it back.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-shamah-lang", lang);
+
+  if (first !== "ar" && first !== "en") {
+    const url = request.nextUrl.clone();
+    url.pathname = `/ar${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
+  }
+
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {
