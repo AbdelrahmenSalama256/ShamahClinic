@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
 import { whatsappHref } from "@/components/shared/Actions";
+import { Photo } from "@/components/ui/Photo";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Offer } from "@/data/offers";
 import { Check, Calendar, MessageCircle } from "lucide-react";
@@ -30,7 +31,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
 
   return (
     <article
-      className={`relative flex flex-col h-full rounded-2xl border bg-[var(--bg-card)] overflow-hidden transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 hover:shadow-xl ${
+      className={`group relative flex flex-col h-full rounded-2xl border bg-[var(--bg-card)] overflow-hidden transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 hover:shadow-xl ${
         offer.popular ? "border-[var(--border-control)] shadow-lg" : "border-[var(--border-control)]"
       }`}
     >
@@ -39,6 +40,17 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
           {badge}
         </div>
       )}
+      {/* The product's first image, shown the way the service and journal cards
+          show theirs. A store row that carries no image gets the brand frame, not
+          a broken one. */}
+      <div className="relative overflow-hidden">
+        <Photo
+          slot={offer.image}
+          ratio="landscape"
+          imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+        />
+      </div>
       <div className="p-3 sm:p-5 flex flex-col flex-1">
         {!offer.popular && badge ? (
           <span className="text-xs font-bold text-[var(--gold-end)] tracking-wide">

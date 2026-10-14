@@ -255,7 +255,9 @@ async function main() {
     posts,
     pages,
     media,
-    products: collected["products.en"],
+    // Both store lists, not just English: an Arabic product row can point at an
+    // upload the English rows do not carry, and the Set keeps it to one download.
+    products: [...collected["products.en"], ...collected["products.ar"]],
   });
   const previousImages = (await readIfExists(path.join(OUT_DIR, "images.json"))) || {};
   console.log(`  mirroring ${candidates.length} images the site renders…`);

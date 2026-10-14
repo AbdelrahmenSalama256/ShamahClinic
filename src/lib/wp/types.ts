@@ -50,7 +50,8 @@ export interface WCStoreProduct {
   short_description: string;
   description: string;
   on_sale: boolean;
-  images: Array<{ src: string; alt: string }>;
+  /** The Store API image object, kept as WordPress prints it (id, src, thumbnail, srcset, sizes, name, alt). */
+  images: Array<{ id?: number; src: string; thumbnail?: string; name?: string; alt?: string }>;
   prices: {
     price: string;
     regular_price: string;
@@ -87,6 +88,14 @@ export interface Offer {
   currency: string;
   onSale: boolean;
   discountPercent: number | null;
+  /**
+   * Every image the product's own Store API row carries, in WordPress order and
+   * with nothing merged or de-duplicated. `src` already points at the local
+   * mirror when `npm run sync:wp` downloaded it, and at the live wp-content URL
+   * when it has not, so an upload added after the last sync still renders.
+   */
+  images: Array<{ src: string; alt: Bi }>;
+  /** `images[0]`, or null when the product genuinely has no image. */
   image: string | null;
   imageAlt: Bi;
   href: Bi;

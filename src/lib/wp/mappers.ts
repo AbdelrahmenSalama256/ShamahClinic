@@ -110,13 +110,29 @@ export function mapOffer(primary: WCStoreProduct, other: WCStoreProduct | undefi
   const regular = minorToDecimal(primary.prices?.regular_price, unit);
   const onSale = Boolean(primary.on_sale);
   const discount = onSale && regular > price && price > 0 ? Math.round(((regular - price) / regular) * 100) : null;
-  const img = primary.images?.[0];
   const enRow = primaryLang === "en" ? primary : other;
   const arRow = primaryLang === "ar" ? primary : other;
+  const name = bi(
+    arRow ? decodeEntities(arRow.name) : "",
+    decodeEntities(enRow ? enRow.name : primary.name),
+  );
+  // WooCommerce prints an empty `alt` for most product images, and an image with
+  // no text at all is unreadable to a screen reader, so the product's own name
+  // stands in. Nothing is invented beyond that: the list, its order and its URLs
+  // are exactly what this language's store row returned.
+  const images = (primary.images || [])
+    .filter((img) => typeof img?.src === "string" && img.src.trim())
+    .map((img) => {
+      const alt = (img.alt || "").trim();
+      return {
+        src: mirrorSrc(img.src.trim()),
+        alt: bi(alt || name.ar || name.en, alt || name.en || name.ar),
+      };
+    });
   return {
     id: primary.id,
     slug: primary.slug,
-    name: bi(arRow ? decodeEntities(arRow.name) : "", decodeEntities(enRow ? enRow.name : primary.name)),
+    name,
     excerpt: bi(
       arRow ? htmlToText(arRow.short_description || "") : "",
       htmlToText(enRow ? enRow.short_description || "" : primary.short_description || ""),
@@ -126,8 +142,9 @@ export function mapOffer(primary: WCStoreProduct, other: WCStoreProduct | undefi
     currency: primary.prices?.currency_code || "EGP",
     onSale,
     discountPercent: discount,
-    image: img?.src ? mirrorSrc(img.src) : null,
-    imageAlt: bi(img?.alt || "", img?.alt || ""),
+    images,
+    image: images[0]?.src ?? null,
+    imageAlt: images[0]?.alt ?? bi("", ""),
     href: { en: `/offers/${primary.slug}`, ar: `/offers/${primary.slug}` },
   };
 }

@@ -11,12 +11,15 @@
  *      dir>` the server chose, Arabic by default and English under `/en`, and a slug
  *      the CMS does not publish answers 404 with `noindex`, and
  *   5. /results paginates the posts whose own text names a result — nine per page,
- *      every card indexed, no authored before/after case presented as a result.
+ *      every card indexed, no authored before/after case presented as a result, and
+ *   6. every image the WooCommerce Store API returns for a product renders — on its
+ *      card and on its detail page (one product has one image, three have three),
+ *      served from the local mirror and never hotlinked back to the CMS host.
  *
  * Usage: node scripts/verify-render.mjs [origin]   (default http://localhost:3100)
  * Run it against `npm run start`, not `npm run dev`.
  */
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import * as cheerio from "cheerio";
 
 const ORIGIN = process.argv[2] || "http://localhost:3100";
@@ -472,7 +475,145 @@ for (const { prefix, lang } of [
   );
 }
 
-check(numbered.length > 0, numbered.join("\n  ") || "no dashboard heading needed the numbering trim");console.log("");
+check(numbered.length > 0, numbered.join("\n  ") || "no dashboard heading needed the numbering trim");
+
+// ── 7. every image the Store API returns for a product reaches its card and its gallery ──
+/**
+ * The expectation is read out of the snapshot (`data/wp/products.*.json`, the raw
+ * Store API rows) and the mirror map (`data/wp/images.json`, written by
+ * `collectMirrorCandidates`), so this asserts the data contract rather than a
+ * hand-written count: product 785 has one image, 781/780/581 have three each.
+ */
+const mirrorMap = JSON.parse(
+  readFileSync(new URL("../data/wp/images.json", import.meta.url), "utf8"),
+);
+const uploadsOf = (url) => {
+  const hit = String(url).trim().match(/^(?:https?:)?\/\/[^/]*(\/wp-content\/uploads\/.*)$/);
+  return hit ? `https://www.shamahclinics.com${hit[1].split("?")[0]}` : String(url).split("?")[0];
+};
+const decode = (s) => {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+};
+/** The last path segment of a link, language prefix gone and percent-decoded. */
+const tailOf = (href) => decode((href || "").split("?")[0].split("/").filter(Boolean).pop() || "");
+
+/** One `src`/`srcset` entry resolved to the image `next/image` was handed. */
+function nextTarget(raw) {
+  const value = (raw || "").trim().split(" ")[0];
+  if (!value) return null;
+  return value.startsWith("/_next/image")
+    ? decode(new URL(value, ORIGIN).searchParams.get("url") || "")
+    : value;
+}
+
+/** Every image target on a page, `src` and `srcset`, without duplicates. */
+function imageTargets($) {
+  const out = new Set();
+  $("img").each((_, el) => {
+    const src = nextTarget($(el).attr("src"));
+    if (src) out.add(src);
+    for (const entry of ($(el).attr("srcset") || "").split(",")) {
+      const target = nextTarget(entry);
+      if (target) out.add(target);
+    }
+  });
+  return [...out];
+}
+
+for (const { prefix, lang } of [
+  { prefix: "", lang: "ar" },
+  { prefix: "/en", lang: "en" },
+]) {
+  const rows = JSON.parse(
+    readFileSync(new URL(`../data/wp/products.${lang}.json`, import.meta.url), "utf8"),
+  );
+  const expectedOf = (p) =>
+    (p.images || []).map((img) => mirrorMap[uploadsOf(img.src)] || uploadsOf(img.src));
+
+  const list = await fetch(`${ORIGIN}${prefix}/offers`, { cache: "no-store" });
+  const $list = cheerio.load(await list.text());
+  check(list.ok, `${lang}: ${prefix}/offers returned ${list.status}`);
+
+  // Each product's own card carries an <img> that points at a file on disk.
+  const cardSrcs = [];
+  for (const p of rows) {
+    const card = $list("article")
+      .toArray()
+      .find((a) =>
+        $list(a)
+          .find("a")
+          .toArray()
+          .some((el) => tailOf($list(el).attr("href")) === decode(p.slug)),
+      );
+    const img = card ? $list(card).find("img").first() : null;
+    const target = img && img.length ? nextTarget(img.attr("src")) : null;
+    const src = target || (img && img.length ? "NO IMAGE" : "NO CARD");
+    cardSrcs.push(`${p.id} (${(p.name || "").slice(0, 28)}): ${src}`);
+    check(!!card, `${lang}: /offers renders a card for product ${p.id}`);
+    check(
+      !!img && !!img.length && !!target,
+      `${lang}: product ${p.id} card shows its first image${target ? ` at ${target}` : ""}`,
+    );
+    check(
+      !!target &&
+        (target.startsWith("/wp/")
+          ? existsSync(new URL(`../public${target}`, import.meta.url))
+          // Not mirrored means the sync has not downloaded it yet — then, and only
+          // then, the live WordPress URL is the correct answer.
+          : !mirrorMap[uploadsOf(target)]),
+      `${lang}: product ${p.id} image ${target || "(none)"} ${
+        target?.startsWith("/wp/")
+          ? "is a mirrored file, served from this host"
+          : "is a live CMS URL, which is only allowed for an upload the mirror does not hold"
+      }`,
+    );
+  }
+  console.log(`\n${lang}: /offers card images (one per product the store returns)\n  ${cardSrcs.join("\n  ")}`);
+
+  // Detail pages carry the full list: one image is one photo with no gallery
+  // chrome, three images are three photos.
+  for (const p of rows) {
+    const expected = expectedOf(p);
+    const res = await fetch(`${ORIGIN}${prefix}/offers/${p.slug}`, { cache: "no-store" });
+    const html = await res.text();
+    const $d = cheerio.load(html);
+    const targets = imageTargets($d);
+    const shown = targets.filter((t) => expected.includes(t));
+    check(res.ok, `${lang}: /offers/${p.id} returned ${res.status}`);
+    check(
+      shown.length === expected.length,
+      `${lang}: product ${p.id} detail renders all ${expected.length} of its image(s)${
+        shown.length !== expected.length ? ` (found ${shown.length}: ${shown.join(", ") || "none"})` : ""
+      }`,
+    );
+    // A mirrored upload must never be hotlinked again, and a product with no
+    // image must not print a broken one.
+    const hotlinks = targets.filter(
+      (t) => t.startsWith("http") && t.includes("/wp-content/uploads/") && mirrorMap[uploadsOf(t)],
+    );
+    check(
+      !hotlinks.length,
+      `${lang}: product ${p.id} detail has no hotlink for a mirrored image${
+        hotlinks.length ? ` (${hotlinks.join(", ")})` : ""
+      }`,
+    );
+  }
+
+  const listHotlinks = imageTargets($list).filter(
+    (t) => t.startsWith("http") && t.includes("/wp-content/uploads/") && mirrorMap[uploadsOf(t)],
+  );
+  check(
+    !listHotlinks.length,
+    `${lang}: /offers has no hotlink for a mirrored image${listHotlinks.length ? ` (${listHotlinks.join(", ")})` : ""}`,
+  );
+}
+
+console.log("");
+console.log("");
 for (const line of [...pass, ...fail]) console.log(line);
 console.log(`\n${pass.length} checks passed, ${fail.length} failed.`);
 process.exit(fail.length ? 1 : 0);

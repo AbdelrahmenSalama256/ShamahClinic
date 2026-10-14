@@ -104,6 +104,10 @@ function offerBadge(discount: number | null): { ar: string; en: string } {
 export function offerToUI(offer: WpOffer): UIOffer {
   return {
     id: String(offer.id),
+    image: offer.images.length
+      ? toPhotoSlot(offer.images[0].src, offer.images[0].alt)
+      : toPhotoSlot(null, offer.name),
+    images: offer.images.map((img) => toPhotoSlot(img.src, img.alt)),
     // The badge is an on-sale marker, so it only exists when the data says so.
     badge: offer.onSale ? offerBadge(offer.discountPercent) : { ar: "", en: "" },
     title: offer.name,

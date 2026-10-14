@@ -56,6 +56,8 @@ function treatment(over: Partial<Treatment>): Treatment {
 function offer(over: Partial<Offer>): Offer {
   return {
     id: "fixture-offer",
+    image: slot,
+    images: [slot],
     badge: { ar: "الأكثر طلباً", en: "Most booked" },
     title: { ar: "باقة تجريبية", en: "Fixture package" },
     subtitle: { ar: "وصف.", en: "Subtitle." },
@@ -172,11 +174,13 @@ export default async function PreviewMissingFieldsPage() {
     },
     {
       id: "offer-empty",
-      note: "an offer row with no badge, subtitle, list, validity or price",
+      note: "an offer row with no badge, subtitle, list, validity, price or image",
       body: (
         <OfferCard
           offer={offer({
             id: "f-offer-empty",
+            image: noPhoto,
+            images: [],
             badge: { ar: "", en: "" },
             subtitle: { ar: "", en: "" },
             includes: { ar: [], en: [] },

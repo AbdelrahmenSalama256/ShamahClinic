@@ -64,12 +64,7 @@ export default async function OfferDetailPage({ params }: Props) {
           ]),
         ]}
       />
-      <OfferDetailClient
-        offer={ui}
-        slug={item.slug}
-        html={item.html}
-        image={item.image}
-      />
+      <OfferDetailClient offer={ui} slug={item.slug} html={item.html} />
     </>
   );
 }

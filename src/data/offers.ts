@@ -1,5 +1,15 @@
+import type { PhotoSlot } from "@/lib/images";
+
 export interface Offer {
   id: string;
+  /**
+   * The image the card shows: `images[0]` when WooCommerce returns one, and a
+   * slot with no src when the product truly has none — `Photo` then renders the
+   * brand frame instead of a broken image.
+   */
+  image: PhotoSlot;
+  /** Every image this product's store row carries, in WordPress order. */
+  images: PhotoSlot[];
   badge: {
     ar: string;
     en: string;
