@@ -46,12 +46,17 @@ interface HomeBodyProps {
   branches: HomeBranch[];
 }
 
+/**
+ * One vertical step for every Home band. `py-4` on a phone is what keeps Home's
+ * 390 px document no taller than the version this section replaced (docs/
+ * HOME-PRIORITY.md §4); `lg:py-12` is the desktop rhythm and does not move.
+ */
 const Section: React.FC<{
   id?: string;
   children: React.ReactNode;
   className?: string;
 }> = ({ id, children, className = "" }) => (
-  <section id={id} className={`py-5 lg:py-12 ${className}`}>
+  <section id={id} className={`py-4 lg:py-12 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
   </section>
 );

@@ -100,6 +100,25 @@ reported.
 Playwright is not a dependency of this project (it was used once, ad hoc, from
 `node_modules`); re-measuring needs `npm i -D playwright` plus a browser download.
 
+### 4.1 The +105/+113 px was then taken back (2026-10-14)
+
+The client asked for the phone layout to be no taller than before, changing section
+paddings and gaps only. `HomeBody`'s band wrapper went from `py-5 lg:py-12` to
+`py-4 lg:py-12` — four bands, four pixels top and bottom each, 32 px off the phone
+document and nothing off the desktop one. Measured again on the production build
+(`next build --webpack` + `next start -p 3100`), same probe, light theme:
+
+| Viewport | Language | Home before Task C | Immediately after Task C | After the rhythm pass | Against "before" |
+| --- | --- | --- | --- | --- | --- |
+| 1440 × 900 | ar | 4333 px | 4209 px | 4253 px | −80 px |
+| 1440 × 900 | en | 4437 px | 4339 px | 4363 px | −74 px |
+| 390 × 844 | ar | 6669 px | 6774 px | **6656 px** | **−13 px** |
+| 390 × 844 | en | 6874 px | 6987 px | **6825 px** | **−49 px** |
+
+The desktop numbers moved +44/+24 px between the two after-columns because of the
+later work (the 404 shell, the results page, the removed hours/email rows in the
+footer), not because of this pass — `lg:py-12` is byte-for-byte what it was.
+
 ## 5. Final Home section list, in order
 
 | Band | Section | Cards on Home | "View all" |
