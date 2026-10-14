@@ -119,6 +119,30 @@ The desktop numbers moved +44/+24 px between the two after-columns because of th
 later work (the 404 shell, the results page, the removed hours/email rows in the
 footer), not because of this pass — `lg:py-12` is byte-for-byte what it was.
 
+### 4.2 The offer cards gained their WordPress image (2026-10-14)
+
+The client then reported that the WooCommerce products show no image, which is true:
+the products carry one or three images each in the Store API snapshot and `OfferCard`
+was the only card in the family that never asked for it. Putting it back costs the
+phone layout the same row the three sibling bands already pay for — the offers band is
+now `1834 px` (ar) of a `7367 px` document:
+
+| Viewport | Language | §4.1 (no offer image) | With the card image | Δ |
+| --- | --- | --- | --- | --- |
+| 1440 × 900 | ar | 4253 px | 4507 px | +254 px |
+| 1440 × 900 | en | 4363 px | 4618 px | +255 px |
+| 390 × 844 | ar | 6656 px | 7367 px | **+711 px (+10.7 %)** |
+| 390 × 844 | en | 6825 px | 7537 px | **+712 px (+10.4 %)** |
+
+Desktop pays one image row because three cards sit side by side; phone pays three, one
+per card. Measured on the same production build (`next build --webpack` +
+`next start -p 3100`) at the default theme.
+
+This is the one place where §4.1's "no taller than before" no longer holds, and it is
+deliberate: the height is the client's own imagery, requested explicitly, at the ratio
+every other card on the page already uses. The alternative — an image-less offer card
+on Home and an image on `/offers` — would be the same content shown two ways.
+
 ## 5. Final Home section list, in order
 
 | Band | Section | Cards on Home | "View all" |
