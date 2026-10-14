@@ -84,8 +84,8 @@ export const NotFoundClient: React.FC = () => {
         {/* Centered content */}
         <div className="max-w-2xl mx-auto text-center">
           <Reveal>
-            <span className="inline-flex items-center gap-2 text-[30px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[var(--gold-start)] mb-6 px-4 py-1.5 rounded-full border border-[var(--gold-start)]/30 bg-[var(--gold-start)]/5">
-              <span className="text-[var(--gold-start)] text-[30px]">
+            <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[var(--gold-start)] mb-6 px-4 py-1.5 rounded-full border border-[var(--gold-start)]/30 bg-[var(--gold-start)]/5">
+              <span className="text-[var(--gold-start)]">
                 {t("خطأ ٤٠٤", "Error 404")}
               </span>
             </span>
@@ -134,7 +134,7 @@ export const NotFoundClient: React.FC = () => {
                 <Link
                   key={d.href}
                   href={getLocalizedHref(d.href, language)}
-                  className="group relative flex flex-col items-start gap-3 p-5 rounded-2xl border border-[var(--border-on-dark)] bg-white/[0.03] hover:bg-white/[0.06] hover:border-[var(--gold-start)]/40 hover:-translate-y-1 transition-[transform,background-color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] backdrop-blur-sm"
+                  className="group relative flex flex-col items-start gap-3 p-5 rounded-2xl border border-[var(--border-on-dark)] bg-white/[0.03] text-[var(--text-on-dark)] hover:bg-white/[0.06] hover:border-[var(--gold-start)]/40 hover:-translate-y-1 transition-[transform,background-color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] backdrop-blur-sm"
                 >
                   <div className="w-10 h-10 rounded-xl bg-[var(--gold-start)]/10 border border-[var(--gold-start)]/30 flex items-center justify-center group-hover:bg-[var(--gold-start)]/20 transition-colors duration-300">
                     <Icon className="w-4 h-4 text-[var(--gold-start)]" />

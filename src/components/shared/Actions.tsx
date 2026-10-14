@@ -146,7 +146,9 @@ export const GoldLink: React.FC<GoldLinkProps> = ({
   return (
     <Link
       href={localizedPath}
-      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--gold-mid)] hover:text-[var(--btn-gold-fg)] transition-[background-color,color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 ${pad} ${className}`}
+      // The hover fill is gold, so a gold hairline would vanish into it; the border
+      // takes the label's ink and keeps the control's boundary above 3:1.
+      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--gold-mid)] hover:text-[var(--btn-gold-fg)] hover:border-[var(--btn-gold-fg)] transition-[background-color,color,border-color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 ${pad} ${className}`}
     >
       <span>{children}</span>
       {withArrow && <Arrow className="w-4 h-4" />}
