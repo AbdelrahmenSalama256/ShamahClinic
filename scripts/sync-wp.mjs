@@ -120,6 +120,47 @@ async function collectMedia(posts, pages) {
   return { ids: ordered.length, media: out };
 }
 
+/**
+ * `/results` shows the posts whose own body tells an outcome story. WordPress has
+ * no result records and no before/after media (see docs/RESULTS-SOURCE.md), so the
+ * only data-side signal for "this article is about a result" is the article text
+ * naming one. Membership therefore comes from the body we already downloaded, at
+ * sync time, instead of a second pass over 92 posts on every request. Titles,
+ * excerpts, covers and dates still come from the live API at render time, so a
+ * reworded article is fresh; only the phrase index is snapshot-derived.
+ */
+const RESULT_PHRASES = [
+  "قبل وبعد",
+  "قبل و بعد",
+  "نتيجة العلاج",
+  "نتائج العلاج",
+  "النتائج بعد",
+  "before and after",
+  "before/after",
+  "after treatment",
+  "after results",
+];
+
+function collectResultStories(posts) {
+  const byId = new Map();
+  for (const lang of ["en", "ar"]) {
+    for (const item of posts[lang] || []) {
+      if (!item?.id) continue;
+      const body = `${item.title?.rendered || ""} ${item.excerpt?.rendered || ""} ${item.content?.rendered || ""}`
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\u0640/g, "")
+        .replace(/\s+/g, " ")
+        .toLowerCase();
+      const found = RESULT_PHRASES.filter((p) => body.includes(p.toLowerCase()));
+      if (!found.length) continue;
+      const row = byId.get(item.id) || { id: item.id, slug: item.slug, phrases: [] };
+      row.phrases = [...new Set([...row.phrases, ...found])];
+      byId.set(item.id, row);
+    }
+  }
+  return [...byId.values()];
+}
+
 /** Head meta for a small set of canonical URLs (detail pages fall back to WP title/excerpt). */
 async function collectSeo() {
   const targets = [
@@ -252,6 +293,8 @@ async function main() {
   files.push(await writeJson("media.json", media));
   files.push(await writeJson("images.json", mirror.map));
   files.push(await writeJson("seo.json", seo));
+  const resultStories = collectResultStories(posts);
+  files.push(await writeJson("result-stories.json", resultStories));
 
   const previous = await readIfExists(path.join(OUT_DIR, "meta.json"));
   const meta = {
@@ -266,6 +309,7 @@ async function main() {
       categories: collected["categories.en"].length,
       products: collected["products.en"].length,
       media: media.length,
+      resultStories: resultStories.length,
       imagesMirrored: Object.keys(mirror.map).length,
       seoUrls: seo.length,
     },

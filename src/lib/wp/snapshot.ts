@@ -88,6 +88,20 @@ export function snapshotSeo(url: string, lang: Lang): SeoHeadRow | null {
   return rows.find((r) => r.lang === lang && normalize(r.url) === normalize(url)) || null;
 }
 
+export interface ResultStoryRow {
+  id: number;
+  slug: string;
+  phrases: string[];
+}
+
+/**
+ * `/results` membership, derived from post bodies at sync time (language-neutral:
+ * TranslatePress keeps one id per article across both subsites).
+ */
+export function snapshotResultStories(): ResultStoryRow[] {
+  return parse<ResultStoryRow[]>("result-stories", "result-stories.json") || [];
+}
+
 export function snapshotMeta(): SnapshotMeta | null {
   return parse<SnapshotMeta>("meta", "meta.json") || null;
 }

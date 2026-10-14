@@ -7,6 +7,7 @@ import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { apiCardToUI } from "@/lib/wp/ui-helpers";
+import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
 import type { ArticleCard as WpArticleCard, CategoryTerm } from "@/lib/wp/types";
 import { images } from "@/lib/images";
@@ -60,8 +61,11 @@ export const JournalClient: React.FC<Props> = ({
   activeCategory,
   activeSearch,
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const router = useRouter();
+  // A bare `/blogs` would be rewritten onto `/ar`, so an English reader paginating
+  // the list would land on Arabic pages.
+  const blogBase = getLocalizedHref("/blogs", language);
 
   // `firstPage` is server-rendered for the current query; only pages loaded by
   // "Load more" live in state, so a new server render can't desync the list.
@@ -113,7 +117,7 @@ export const JournalClient: React.FC<Props> = ({
     if (category) params.set("category", category);
     if (activeSearch) params.set("search", activeSearch);
     const qs = params.toString();
-    router.push(qs ? `/blogs?${qs}` : "/blogs", { scroll: false });
+    router.push(`${blogBase}${qs ? `?${qs}` : ""}`, { scroll: false });
   };
 
   const submitSearch = (e: React.FormEvent) => {
@@ -123,7 +127,7 @@ export const JournalClient: React.FC<Props> = ({
     if (activeCategory) params.set("category", activeCategory);
     if (searchInput.trim()) params.set("search", searchInput.trim());
     const qs = params.toString();
-    router.push(qs ? `/blogs?${qs}` : "/blogs", { scroll: false });
+    router.push(`${blogBase}${qs ? `?${qs}` : ""}`, { scroll: false });
   };
 
   const shownCount = useMemo(() => articles.length, [articles.length]);
@@ -234,7 +238,7 @@ export const JournalClient: React.FC<Props> = ({
                 return (
                   <button
                     key={n}
-                    onClick={() => router.push(`/blogs?${buildQuery(n)}`, { scroll: false })}
+                    onClick={() => router.push(`${blogBase}?${buildQuery(n)}`, { scroll: false })}
                     aria-current={n === page ? "page" : undefined}
                     className={`min-w-9 h-9 rounded-full text-sm font-bold border transition-colors ${
                       n === page

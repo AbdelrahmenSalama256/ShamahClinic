@@ -9,7 +9,9 @@
  *      renders no price, no empty block and no schema.org Offer, and
  *   4. an unknown URL answers HTTP 404 with the branded page and the `<html lang
  *      dir>` the server chose, Arabic by default and English under `/en`, and a slug
- *      the CMS does not publish answers 404 with `noindex`.
+ *      the CMS does not publish answers 404 with `noindex`, and
+ *   5. /results paginates the posts whose own text names a result — nine per page,
+ *      every card indexed, no authored before/after case presented as a result.
  *
  * Usage: node scripts/verify-render.mjs [origin]   (default http://localhost:3100)
  * Run it against `npm run start`, not `npm run dev`.
@@ -204,7 +206,7 @@ for (const lang of ["ar", "en"]) {
   );
 
   // ── no empty heading, on the pages WordPress feeds ──
-  for (const path of ["", "/services", "/offers", "/blogs", "/branches", "/about"]) {
+  for (const path of ["", "/services", "/offers", "/blogs", "/results", "/branches", "/about"]) {
     const page = await fetch(`${ORIGIN}/${lang}${path}`, { cache: "no-store" });
     const $p = cheerio.load(await page.text());
     const blanks = $p("main h1, main h2, main h3, main h4")
@@ -403,8 +405,74 @@ for (const path of [
   check(/noindex/.test(html), `${path}: noindex`);
 }
 
-check(numbered.length > 0, numbered.join("\n  ") || "no dashboard heading needed the numbering trim");
-console.log("");
+// ── 6. /results lists the posts whose own text names a result ──
+/**
+ * The membership rule lives in the snapshot (`data/wp/result-stories.json`, written
+ * by `collectResultStories()` during `npm run sync:wp`), so the expectation is
+ * checked against that index rather than against a hand-written count.
+ */
+const PER_PAGE = 9;
+const storyIndex = JSON.parse(
+  readFileSync(new URL("../data/wp/result-stories.json", import.meta.url), "utf8"),
+);
+const storySlugs = new Set(storyIndex.map((s) => s.slug));
+const storySlugsOf = ($) =>
+  $("main a[href*='/blogs/']")
+    .toArray()
+    .map((a) => $(a).attr("href").split("?")[0].split("/").filter(Boolean).pop());
+
+for (const { prefix, lang } of [
+  { prefix: "", lang: "ar" },
+  { prefix: "/en", lang: "en" },
+]) {
+  const one = await fetch(`${ORIGIN}${prefix}/results`, { cache: "no-store" });
+  const $one = cheerio.load(await one.text());
+  check(one.ok, `${lang}: /results returned ${one.status}`);
+
+  const first = storySlugsOf($one);
+  check(
+    first.length === Math.min(PER_PAGE, storyIndex.length),
+    `${lang}: /results page 1 renders ${first.length} story card(s); ${storyIndex.length} posts qualify`,
+  );
+  const foreign = first.filter((s) => !storySlugs.has(s));
+  check(
+    !foreign.length,
+    `${lang}: every /results card is a post the dashboard's own text frames as a result${
+      foreign.length ? ` (not indexed: ${foreign.join(", ")})` : ""
+    }`,
+  );
+  check(
+    !/Acne skincare course|Melasma and pigmentation plan|كورس العناية بالبشرة الحبية|خطة الكلف/.test(
+      $one("main").text(),
+    ),
+    `${lang}: no authored before/after case is presented as a result`,
+  );
+  check(
+    /صور «قبل وبعد»|no before\/after photos/.test($one("main").text()),
+    `${lang}: the page says it shows no before/after imagery, because the CMS holds none`,
+  );
+
+  const two = await fetch(`${ORIGIN}${prefix}/results?page=2`, { cache: "no-store" });
+  const $two = cheerio.load(await two.text());
+  const second = storySlugsOf($two);
+  check(two.ok, `${lang}: /results?page=2 returned ${two.status}`);
+  check(
+    second.length > 0 && !second.some((s) => first.includes(s)),
+    `${lang}: ?page=2 renders the next ${second.length} stories, not page 1 again`,
+  );
+
+  // An out-of-range page clamps to the last real page, exactly as /blogs does, so
+  // it cannot publish a second page-1 under its own canonical.
+  const lastPage = Math.ceil(storyIndex.length / PER_PAGE);
+  const out = await fetch(`${ORIGIN}${prefix}/results?page=999`, { cache: "no-store" });
+  const $out = cheerio.load(await out.text());
+  check(
+    ($out("link[rel='canonical']").attr("href") || "").includes(`page=${lastPage}`),
+    `${lang}: ?page=999 canonicalizes to the last real page (${lastPage})`,
+  );
+}
+
+check(numbered.length > 0, numbered.join("\n  ") || "no dashboard heading needed the numbering trim");console.log("");
 for (const line of [...pass, ...fail]) console.log(line);
 console.log(`\n${pass.length} checks passed, ${fail.length} failed.`);
 process.exit(fail.length ? 1 : 0);
