@@ -182,14 +182,14 @@ export const JournalArticleClient: React.FC<{
               </div>
 
               {/* Inline CTA — mid-article */}
-              <Reveal className="my-12 rounded-2xl bg-gold-gradient p-6 sm:p-8 text-center shadow-lg">
-                <h3 className="text-lg sm:text-xl font-black text-[var(--text-on-dark)] mb-2">
+              <Reveal className="on-gold my-12 rounded-2xl bg-gold-gradient p-6 sm:p-8 text-center shadow-lg">
+                <h3 className="text-lg sm:text-xl font-black text-[var(--ink-on-gold)] mb-2">
                   {t(
                     "محتاجة استشارة شخصية لحالتكِ؟",
                     "Need a personal consultation for your case?",
                   )}
                 </h3>
-                <p className="text-sm text-[var(--text-on-dark-muted)] mb-5 max-w-lg mx-auto">
+                <p className="text-sm text-[var(--ink-on-gold-muted)] mb-5 max-w-lg mx-auto">
                   {t(
                     "احجزي موعدكِ مع إحدى طبيباتنا واستلمي خطة مخصصة لبشرتكِ.",
                     "Book your appointment with one of our doctors and get a plan tailored to your skin.",
@@ -197,7 +197,7 @@ export const JournalArticleClient: React.FC<{
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <BookButton size="lg" />
-                  <WhatsAppButton size="lg" variant="onDark" />
+                  <WhatsAppButton size="lg" />
                 </div>
               </Reveal>
 
@@ -367,7 +367,7 @@ export const JournalArticleClient: React.FC<{
                 )}
 
                 {/* Sidebar CTA */}
-                <div className="rounded-2xl bg-[var(--bg-dark)] p-5 text-center">
+                <div className="on-dark rounded-2xl bg-[var(--bg-dark)] p-5 text-center">
                   <div className="w-12 h-12 rounded-xl bg-gold-gradient mx-auto mb-3 flex items-center justify-center">
                     <BookOpen className="w-5 h-5 text-[var(--text-on-dark)]" />
                   </div>

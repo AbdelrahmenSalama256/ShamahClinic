@@ -280,7 +280,7 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.3, ease, delay: 0.05 }}
-                          className="mx-auto w-full max-w-2xl rounded-lg sm:rounded-xl border border-[var(--border-control)] bg-[var(--bg-dark)]/95 p-3 sm:p-4 lg:p-5 text-[var(--text-on-dark)] shadow-xl backdrop-blur-md"
+                          className="on-dark mx-auto w-full max-w-2xl rounded-lg sm:rounded-xl border border-[var(--border-control)] bg-[var(--bg-dark)]/95 p-3 sm:p-4 lg:p-5 text-[var(--text-on-dark)] shadow-xl backdrop-blur-md"
                         >
                           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[10px] sm:text-[11px]">
                             <span className="inline-flex items-center font-bold text-[var(--gold-start)] bg-[var(--gold-end)]/20 border border-[var(--gold-start)]/30 rounded-full px-2.5 py-1">

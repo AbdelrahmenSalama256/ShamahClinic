@@ -44,7 +44,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
   )}`;
 
   return (
-    <section className="relative overflow-hidden bg-[var(--bg-dark)]">
+    <section className="on-dark relative overflow-hidden bg-[var(--bg-dark)]">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 items-stretch">
           {/* Image side */}

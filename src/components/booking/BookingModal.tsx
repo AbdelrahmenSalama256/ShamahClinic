@@ -354,7 +354,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             ? "bg-gold-gradient shadow-sm scale-110"
                             : currentStep > stepNum
                               ? "bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)]"
-                              : "bg-gray-100 text-[var(--text-muted)]"
+                              : "bg-[var(--bg-secondary)] text-[var(--text-muted)]"
                         }`}
                       >
                         {currentStep > stepNum ? (
@@ -366,7 +366,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     </div>
                   ))}
                 </div>
-                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
+                <div className="w-full bg-[var(--bg-secondary)] h-1.5 rounded-full overflow-hidden">
                   <div
                     className="bg-gold-gradient h-full transition-[width] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
                     style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
@@ -423,7 +423,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                           className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between text-start ${
                             isSelected
                               ? "border-[var(--border-control)] bg-[var(--blush-light)]/60 shadow-sm"
-                              : "border-gray-200 hover:border-[var(--gold-border)] bg-[var(--bg-card)]"
+                              : "border-[var(--border-control)] hover:border-[var(--gold-border)] bg-[var(--bg-card)]"
                           }`}
                         >
                           <div className="text-start">
@@ -442,7 +442,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             className={`w-5 h-5 rounded-full border flex items-center justify-center ${
                               isSelected
                                 ? "bg-[var(--gold-mid)] border-[var(--gold-mid)] text-[var(--btn-gold-fg)]"
-                                : "border-gray-300"
+                                : "border-[var(--border-control)]"
                             }`}
                           >
                             {isSelected && <Check className="w-3.5 h-3.5" />}
@@ -495,14 +495,14 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             className={`w-full p-3 rounded-2xl border text-center transition-all ${
                               isSelected
                                 ? "border-[var(--border-control)] bg-[var(--blush-light)] shadow-sm font-bold text-[var(--gold-end)]"
-                                : "border-gray-200 hover:border-[var(--gold-border)] text-[var(--text-secondary)]"
+                                : "border-[var(--border-control)] hover:border-[var(--gold-border)] text-[var(--text-secondary)]"
                             }`}
                           >
                             <MapPin
                               className={`w-4 h-4 mx-auto mb-1 ${
                                 isSelected
                                   ? "text-[var(--text-gold)]"
-                                  : "text-gray-400"
+                                  : "text-[var(--text-muted)]"
                               }`}
                             />
                             <span className="text-xs block">
@@ -529,7 +529,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         className={`w-full p-3 rounded-2xl border flex items-center justify-between ${
                           selectedSpecialistId === "any"
                             ? "border-[var(--border-control)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
-                            : "border-gray-200 text-[var(--text-secondary)]"
+                            : "border-[var(--border-control)] text-[var(--text-secondary)]"
                         }`}
                       >
                         <span className="text-xs">
@@ -554,7 +554,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             className={`w-full p-3 rounded-2xl border flex items-center justify-between ${
                               isSelected
                                 ? "border-[var(--border-control)] bg-[var(--blush-light)] shadow-xs"
-                                : "border-gray-200 hover:border-gray-300"
+                                : "border-[var(--border-control)] hover:border-[var(--border-control)]"
                             }`}
                           >
                             <div className="text-start">
@@ -626,7 +626,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                               className={`w-full p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
                                 isSelected
                                   ? "border-[var(--border-control)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
-                                  : "border-gray-200 hover:border-gray-300 text-[var(--text-secondary)]"
+                                  : "border-[var(--border-control)] hover:border-[var(--border-control)] text-[var(--text-secondary)]"
                               }`}
                             >
                               <div className="flex items-center gap-3">
@@ -634,7 +634,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                                   className={`w-4 h-4 ${
                                     isSelected
                                       ? "text-[var(--text-gold)]"
-                                      : "text-gray-400"
+                                      : "text-[var(--text-muted)]"
                                   }`}
                                 />
                                 <span className="text-xs">
@@ -693,7 +693,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       className={`w-full p-3 rounded-xl border text-sm outline-none ${
                         errors.fullName
                           ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
-                          : "border-gray-300 focus:border-[var(--border-control)]"
+                          : "border-[var(--border-control)] focus:border-[var(--border-control)]"
                       }`}
                     />
                     {errors.fullName && (
@@ -719,7 +719,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       className={`w-full p-3 rounded-xl border text-sm outline-none ${
                         errors.phoneNumber
                           ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
-                          : "border-gray-300 focus:border-[var(--border-control)]"
+                          : "border-[var(--border-control)] focus:border-[var(--border-control)]"
                       }`}
                     />
                     {errors.phoneNumber && (
@@ -744,7 +744,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         "هل لديكِ حساسية معينة أو أسئلة عن التبريد؟",
                         "Any allergies, previous treatments, or questions?",
                       )}
-                      className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--border-control)] text-sm outline-none resize-none"
+                      className="w-full p-3 rounded-xl border border-[var(--border-control)] focus:border-[var(--border-control)] text-sm outline-none resize-none"
                     />
                   </div>
 
@@ -752,7 +752,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                     <p className="text-[11px] text-[var(--text-danger)] mt-1">{errors.submit}</p>
                   )}
 
-                  <p className="text-[11px] text-[var(--text-muted)] bg-gray-50 p-2.5 rounded-lg border border-gray-200">
+                  <p className="text-[11px] text-[var(--text-muted)] bg-[var(--bg-card-subtle)] p-2.5 rounded-lg border border-[var(--border-control)]">
                     {t(
                       "بمجرد إرسال الطلب، سيتواصل معكِ فريق خدمة العملاء خلال دقائق لتأكيد الموعد النهائي.",
                       "Our concierge team will contact you within minutes to finalize the exact appointment hour.",
@@ -900,11 +900,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
             {/* Modal Footer */}
             {currentStep < 5 && (
-              <div className="p-4 sm:p-6 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+              <div className="p-4 sm:p-6 bg-[var(--bg-card-subtle)] border-t border-[var(--border-control)] flex items-center justify-between">
                 {currentStep > 1 ? (
                   <button
                     onClick={handleBack}
-                    className="px-4 py-2.5 rounded-xl border border-gray-300 text-xs sm:text-sm font-semibold text-[var(--text-secondary)] hover:bg-gray-100 transition-colors flex items-center gap-1 cursor-pointer"
+                    className="px-4 py-2.5 rounded-xl border border-[var(--border-control)] text-xs sm:text-sm font-semibold text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] transition-colors flex items-center gap-1 cursor-pointer"
                   >
                     <ArrowPrev className="w-4 h-4" />
                     <span>{t("السابق", "Back")}</span>

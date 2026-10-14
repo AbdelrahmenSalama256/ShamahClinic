@@ -35,8 +35,14 @@
      Ratios are measured against every stop the theme
      paints (see docs/contrast-report.md).
      -------------------------------------------- */
-  --btn-gold-fg: #211a16;
-  --btn-gold-fg-hover: #211a16;
+  --btn-gold-fg: #17120f;
+  --btn-gold-fg-hover: #17120f;
+
+  /* Ink for the gold band itself. The sweep runs from #f5e6a8 to #a8801f, and only
+     a near-black label clears 4.5:1 at the darkest stop, so a band has no room for
+     a lighter secondary colour — muted text on gold is the same ink. */
+  --ink-on-gold: #17120f;
+  --ink-on-gold-muted: #17120f;
 
   --btn-wa-solid-bg: #0a6636;
   --btn-wa-solid-fg: #ffffff;
@@ -59,6 +65,12 @@
   --border-control: #9c7619;
   --border-control-soft: rgba(133, 100, 15, 0.55);
   --focus-ring: #85640f;
+  /* The same three roles at the strength an always-dark surface needs. No single
+     mid-tone reaches 3:1 against both cream and near-black, so a dark container
+     re-points these through `.on-dark` instead of shipping a second colour. */
+  --border-control-on-dark: #d8b237;
+  --focus-ring-on-dark: #e1c15b;
+  --text-gold-on-dark: #d8b237;
 
   /* Status pairs: an error or confirmation reads on this theme's card surface. */
   --text-success: #0a6636;
@@ -203,6 +215,29 @@ html[data-theme="dark"] textarea {
 
 [dir="ltr"] body {
   font-family: var(--font-montserrat);
+}
+
+/* A container that is dark in both themes (footer, CTA band, 404, photo panels)
+   re-points every surface-relative token: the ring, the hairline and the gold
+   label are all tuned for cream and read at 2:1 on near-black. */
+.on-dark {
+  --focus-ring: var(--focus-ring-on-dark);
+  --border-control: var(--border-control-on-dark);
+  --border-control-soft: rgba(216, 178, 55, 0.55);
+  --gold-border: rgba(216, 178, 55, 0.8);
+  --text-gold: var(--text-gold-on-dark);
+  /* Ink too, not just the accents: anything here that inherits a colour instead
+     of naming one would otherwise take the light theme's near-black and vanish. */
+  --text-primary: var(--text-on-dark);
+  --text-secondary: var(--text-on-dark-muted);
+  --text-muted: var(--text-on-dark-muted);
+}
+
+/* The gold band is light in both themes, so a cream-tuned ring or hairline vanishes
+   into it. Inside .on-gold those roles take the band's own ink. */
+.on-gold {
+  --focus-ring: var(--ink-on-gold);
+  --border-control: var(--ink-on-gold);
 }
 
 /* One focus ring site-wide. Unlayered, so it wins over `focus:outline-none`

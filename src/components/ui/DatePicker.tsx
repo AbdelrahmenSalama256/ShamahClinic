@@ -47,7 +47,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min }) 
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full p-3 rounded-xl border border-gray-300 focus:border-[var(--border-control)] focus:ring-1 focus:ring-[var(--gold-mid)] text-sm font-semibold outline-none bg-[var(--bg-card)] flex items-center justify-between cursor-pointer hover:border-[var(--gold-border)] transition-colors"
+        className="w-full p-3 rounded-xl border border-[var(--border-control)] focus:border-[var(--border-control)] focus:ring-1 focus:ring-[var(--gold-mid)] text-sm font-semibold outline-none bg-[var(--bg-card)] flex items-center justify-between cursor-pointer hover:border-[var(--gold-border)] transition-colors"
       >
         <span className={selected ? "text-[var(--text-primary)]" : "text-[var(--text-muted)]"}>
           {selected ? format(selected, "dd/MM/yyyy") : t("اختاري التاريخ", "Pick a date")}
