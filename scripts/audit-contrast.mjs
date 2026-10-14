@@ -17,7 +17,7 @@
  *
  * `--label` names the output pair (docs/contrast-report-<label>.md/.json) and the
  * screenshot prefix, so a baseline run and an after run never overwrite each other.
- * `--no-shots` skips the 112 screenshots; `--fast` scores only the default state.
+ * `--no-shots` skips the ~140 screenshots; `--fast` scores only the default state.
  * Run it against `npm run build && npm run start`, not `npm run dev`.
  */
 import { mkdir, writeFile } from "node:fs/promises";

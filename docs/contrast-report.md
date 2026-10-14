@@ -11,10 +11,11 @@ photograph is reported as needing the screenshot rather than guessed at.
 | Covered | Value |
 |---|---|
 | Routes | `/`, `/services`, `/services/laser-hair-removal`, `/services/botox-injections`, `/offers`, one live offer, `/blogs`, one live post, `/about`, `/branches`, `/contact`, `/faq`, `/results`, `/doctors`, an unknown URL — plus one offer and one post **discovered from each language's own list page**, so Arabic reads `/blogs/slug` and English `/en/blogs/slug` |
-| Surfaces | every page, and the booking modal opened on `/services/laser-hair-removal` (the densest form surface on the site) |
+| Surfaces | every page, the booking modal opened on `/services/laser-hair-removal` (the densest form surface on the site), and `/contact` with its validation errors rendered |
 | Themes × languages | light + dark × ar + en |
 | States | default, `:hover`, `:focus-visible`, `:disabled` |
 | Thresholds | 4.5:1 body text · 3:1 large text, icons, control borders, focus rings |
+| Photo-backed text | always `REVIEW`, never `FAIL`, and scored at 3:1 — the runner will not certify pixels it cannot read, so the screenshot decides (see below) |
 | Layout | horizontal scroll at 360, 390 and 768 px |
 | Screenshots | 390×844 and 1440×900, both themes, both languages, every route |
 
@@ -41,20 +42,31 @@ Failure classes, as the runner groups them:
 | 1021 | `FAIL: N:N, needs N:N` | literal `text-white` / `text-black` / `text-gray-*` on surfaces that change with the theme |
 | 40 | `FAIL: ink equals its background` | the white-on-white family, below |
 
-**Root cause of the white-on-white WhatsApp button.** All 40 landed on one surface: the dark
-booking card opened from `/services/laser-hair-removal`, measured as ink `rgb(255 255 255)` on
-background `rgb(255 255 255)` — ratio 1.00. The card is dark in both themes, and the button's
-solid variant asked for `text-white` on a fill that came from `bg-gold-gradient`'s light stop, so
-nothing inverted it: white ink, white paper. The same literal ink was behind the sibling
-findings on that card (`احجزي موعدك`, `واتساب`, the branch rows). It was not a token holding the
-wrong value — the component never asked the theme anything. Fixed by giving every button family
-its own `<bg, fg, border>` triple per theme (`--btn-wa-solid-*`, `--btn-wa-outline-*`,
-`--btn-wa-on-dark-*`, `--btn-gold-fg`) in `27afab6`, and by making each control state the surface
-it sits on (`80be744`, `684f7bb`) instead of borrowing white or black from Tailwind.
+The run's 4 layout rows were not sideways scrolling — no route overflowed at 360, 390 or 768 px
+then either. They were `/offers/[detail]` and `/blogs/[detail]` for each Arabic theme: the runner
+could not reach a detail page at all, because it only accepted a three-segment path and Arabic is
+the prefix-less locale. That is the bug `79d658e` fixed.
 
-The baseline also carried `يبدأ من ٣٢٠٠ ج.م` / `From 3200 EGP` as two of its invisible findings
-(`rgb(133 100 15)` on `rgb(139 105 20)`); that text no longer exists on the site — see
-`docs/UNVERIFIED-FACTS.md`, Task G — so those rows left with the content, not with a colour change.
+**Root cause of the white-on-white WhatsApp button.** All 40 `ink equals its background` findings
+were measured on one surface: the booking modal opened from `/services/laser-hair-removal`.
+38 of them are light-theme readings, and they come in two directions of the same mistake:
+
+| Count | Ink | Background | What the numbers say |
+|---:|---|---|---|
+| 20 | `rgb(255 255 255)` | `rgb(255 255 255)` | ratio 1.00 — literal `text-white` over a surface the browser composited to pure white: the modal's card was `bg-white` (`BookingModal.tsx:311` at the baseline commit) while its heading, lead, `احجزي موعدك` / `واتساب` controls and branch links carried `text-white`, `text-white/65` and `border-white/25` — the classes that same markup uses on the dark band |
+| 16 | `rgb(33 26 22)` | `rgb(25 20 18)` | the other direction: the light theme's own `--text-primary` (#211a16) landing on `--bg-dark` (#191412) — the service rows (`العناية بالبشرة`, `حقن الفيلر`, …, ar + en) |
+| 2 | `rgb(133 100 15)` | `rgb(139 105 20)` | `يبدأ من ٣٢٠٠ ج.م` / `From 3200 EGP`: gold ink on the gold fill, light theme |
+| 2 | `rgb(201 164 65)` | `rgb(194 158 60)` | the same two price rows, dark theme |
+
+Neither half was a token holding the wrong value. Both were a component pairing an ink with a
+surface by eye instead of asking the theme for the pair, so no theme switch could rescue it.
+`27afab6` gave every button family its own `<bg, fg, border>` triple per theme
+(`--btn-wa-solid-*`, `--btn-wa-outline-*`, `--btn-wa-on-dark-*`, `--btn-gold-fg`), and `80be744` +
+`684f7bb` made each control state the surface it actually sits on instead of borrowing white or
+black from Tailwind.
+
+The price rows left with the content, not with a colour change: that text no longer exists on the
+site — see `docs/UNVERIFIED-FACTS.md`, Task G.
 
 ## After
 
@@ -81,31 +93,41 @@ The last two fixes (`04fc224`) came out of this loop rather than ahead of it:
 
 ## What the runner refuses to decide, and what the screenshots show
 
-All 594 remaining items are `REVIEW`, not `FAIL`: each one is text whose background is a
-photograph, which arithmetic cannot resolve. They split three ways.
+All 594 remaining items are `REVIEW`, not `FAIL`: each one is text with a photograph somewhere in
+its paint stack. Once image pixels are in the stack the colours computed beneath them are a guess,
+so the runner either reports the scrim it found and no ratio, or a ratio against the last
+non-photographic candidate it can still see. It splits three ways.
 
 | Count | What it is | How it was settled |
 |---:|---|---|
-| 416 | a photo sits somewhere in the ancestry, but every composited background candidate still clears its threshold (most read 12:1–17:1) | no action: the number is already passing, the flag only says the runner will not certify pixels |
-| 154 | the photo is the only background the runner can see, so no ratio is computed (`n/a`); these are the hero and CTA bands, where the design puts a themed scrim in front | read in `docs/screenshots/after-home-*-390.png`, `after-services-*-1440.png`, `after-contact-*` — the ink lands on the dark, low-detail side of each frame |
-| 24 | text over a photo whose measured candidate fell under its threshold: the Home branch cards' `فرع ١` pill and title (ar + en, light) and the four `/about` photo panels' subtitle and outline link | read at 2× crops of the shipped build |
+| 416 | a photo in the ancestry, but every remaining candidate clears its threshold — 4.78:1 at the low end, 14.4:1 median, 17.2:1 best | no action: the number already passes; the flag only says the runner will not certify pixels |
+| 154 | the photo is the only background left, so no ratio is computed (`n/a`); 150 of them sit under a 0% scrim and 4 under 60%, and they are all in the hero/CTA bands of `/contact` (68), `/` (52) and `/services/laser-hair-removal` (34) | read in `docs/screenshots/after-home-*-390.png`, `after-contact-*-1440.png`, `after-services-laser-hair-removal-*-1440.png` — the ink lands on the dark, low-detail side of each frame |
+| 24 | a numeric candidate under its threshold, all of them light theme, ar + en, and all of them white or light ink on a photo: 4 per language on the Home branch band, 8 per language on the two `/about` teaser panels | read at 2× / 3× crops of the shipped build |
 
-The 24 resolve into three honest statements, each checked against a 2× / 3× crop of the shipped
-build rather than against the tool's guess:
+By state the 594 are 390 default, 184 `:focus-visible` and 20 `:hover`; by surface 464 page, 76 the
+contact form with errors shown and 54 the booking modal.
 
-- The `/about` panel links (`تعرّفي عليهن`, `اختاري الفرع`, `Meet them`, `Choose a branch`) are
-  dark-gold ink on a light pill or over a light photo. The runner's 2.42:1 candidate composites the
-  panel's translucent fill against the brightest stop of the gradient; what a reader sees is closer
-  to 5:1. No action.
-- The Home branch band (`فرع ١` … `فرع ٣` and the branch name under it, ar + en) is white ink on a
-  photo whose own pixels are pale — `shamaclinics3/4/5.webp` are bright, overexposed interiors — and
-  the band's bottom gradient is only `from-black/70 via-black/20`, so at the title's baseline the
-  scrim is thin. The `drop-shadow-md` carries it: legible at 1440, marginal at 390. The measurement
-  is recorded here as the design's weakest text; the scrim strength itself is the visual design's,
-  which this brief does not restyle.
-- The `/about` panel subtitles (`استشاريات وأخصائيات يُقدن كل قسم بأنفسهن.`,
-  `مدينة نصر، التجمع الخامس، والشيخ زايد`) are the same family: light ink, bright photo, bottom
-  gradient not yet at its darkest where the line sits.
+Each of the 24 was checked against a crop of the shipped build rather than against the tool's
+guess, and the guess is worth stating precisely: for the titles and subtitles the only candidate
+left after the photo is discarded is the page's own cream (`rgb(244 236 228)`), so the printed
+`1.17` is white ink on cream — a background no reader ever sees — not white ink on the photograph.
+
+- **Home branch band** (the `فرع ١/٢/٣` pills plus the first card's branch name, ar + en): white
+  ink on photos whose own pixels are pale — `shamaclinics3/4/5.webp` are bright, overexposed
+  interiors. The pill sits at the *top* of the card, where the band's
+  `from-black/70 via-black/20 to-transparent` is fully transparent, so its only defence is its own
+  `bg-black/40`; the title sits at the bottom over the 70% stop and carries `drop-shadow-md`.
+  Legible at 1440, marginal at 390. Recorded here as the design's weakest text; the scrim strength
+  is the visual design's, which this brief does not restyle.
+- **`/about` teaser panels** (`الفريق الطبي` / `فروعنا` and their subtitles): the same family one
+  level deeper — the caption block is `absolute bottom-0 p-7`, so the h3 and the line under it sit
+  in the gradient's `via-/30` band while its darkest stop (`from-[var(--bg-dark)]/85`) is the 28 px
+  of padding below them. Light ink (`--text-on-dark`, `--text-on-dark-muted`) on a bright interior
+  photo, above the point where the scrim finishes tightening.
+- **`/about` panel links** (`تعرّفي عليهن`, `اختاري الفرع`, `Meet them`, `Choose a branch`):
+  dark-gold ink `rgb(133 100 15)` on the panel's `bg-card/95` pill, which the runner composites to
+  `rgb(178 171 164)` — 2.42:1 against the 3:1 a large bold label needs. In the crop the pill reads
+  lighter and the label stays legible; no action.
 
 No item in the after run is a wrapper anchor hiding an unread colour: where an inherited colour
 really was near-black on near-black, the component was fixed (`04fc224`) instead of the rule being
@@ -115,10 +137,13 @@ relaxed, so the same strictness still applies to everything else. Disabled contr
 ## Screenshots
 
 `docs/screenshots/` holds both runs, named `<label>-<route>-<lang>-<theme>-<width>.png`
-(`after-does-not-exist-ar-light-390.png`, `baseline----en-dark-1440.png` for the home page).
+(`after-does-not-exist-ar-light-390.png`, `baseline-home-en-dark-1440.png` for the home page).
 390×844 and 1440×900, both themes, both languages, every route in the table above, plus the
-booking modal. The directory is gitignored: 112 PNGs per run, ~120 MB, regenerated by
-`node scripts/audit-contrast.mjs http://127.0.0.1:3100 --label=after`.
+booking modal as its own surface (`after-booking-*-1440.png`, 4 shots). The after run is **140
+PNGs** and the baseline **108** — the baseline predates the detail-page fix and the 404 route, so
+it never reached the unknown URL, `/services/botox-injections` or the English offer/post slugs, and
+it carried a service page the route table later dropped. ~240 MB for both. The directory is
+gitignored; regenerate with `node scripts/audit-contrast.mjs http://127.0.0.1:3100 --label=after`.
 
 ## What this audit cannot see
 
