@@ -42,3 +42,7 @@ next-env.d.ts
 
 # scratch output from scripts/wp-sweep.mjs
 /.tmp/
+
+# scripts/audit-contrast.mjs output: ~112 PNGs per run (120 MB), referenced by file
+# name from docs/contrast-report.md instead of being committed
+/docs/screenshots/

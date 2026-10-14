@@ -26,9 +26,23 @@ const fail = [];
 const check = (cond, msg) => (cond ? pass : fail).push(`${cond ? "ok  " : "FAIL"} ${msg}`);
 const text = (el) => el.text().replace(/\s+/g, " ").trim();
 
+/**
+ * The fixture lives in a dev server, and the first request after an edit compiles
+ * the route while answering — that partial pass throws a 500 on a page that renders
+ * in full a second later. Retry the compile before calling it a broken case.
+ */
+async function open(url) {
+  let res = await fetch(url, { cache: "no-store" });
+  for (let attempt = 1; res.status >= 500 && attempt < 3; attempt++) {
+    await new Promise((done) => setTimeout(done, 2500));
+    res = await fetch(url, { cache: "no-store" });
+  }
+  return res;
+}
+
 for (const lang of ["ar", "en"]) {
   const url = `${ORIGIN}/${lang}${PATH}`;
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await open(url);
   if (res.status === 404) {
     console.error(
       `FAIL ${url} returned 404.\n` +
