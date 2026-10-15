@@ -1,7 +1,30 @@
+/**
+ * The single source of the site's absolute URL. Canonical, og:url, og:image,
+ * sitemap, robots `host`/`sitemap`, JSON-LD ids and every hreflang are derived
+ * from it (via `SITE_URL` in `lib/site.ts`), so it must never silently default to
+ * the WordPress import domain — that would publish the CMS host as our canonical.
+ * A production build or `next start` with the variable missing fails with a clear
+ * message; only `next dev` falls back to localhost so a fresh clone still runs.
+ */
+function resolveSiteUrl(): string {
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL || "").trim();
+  if (raw) return raw.replace(/\/+$/, "");
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "NEXT_PUBLIC_SITE_URL is not set. It is the single source of the site's " +
+        "absolute URL (canonical, og:url, sitemap, robots, JSON-LD, hreflang). " +
+        "Set it in .env.local and the Vercel project before building or serving " +
+        "for production — it must point at the deployed site, not the WordPress " +
+        "import origin.",
+    );
+  }
+  return "http://localhost:3000";
+}
+
 export const siteConfig = {
   defaultLanguage: "ar" as "ar" | "en",
   enableDarkmoodOption: true,
-  siteUrl: (process.env.NEXT_PUBLIC_SITE_URL || "https://www.shamahclinics.com").replace(/\/+$/, ""),
+  siteUrl: resolveSiteUrl(),
   brand: {
     name: {
       ar: "عيادات شامه",

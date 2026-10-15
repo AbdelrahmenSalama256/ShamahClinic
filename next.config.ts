@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // A throwaway build dir so a one-off production build (SEO/curl checks, bundle
+  // measurement) can run without rewriting the `.next` cache a live `next dev`
+  // server is watching. Unset means the normal `.next`.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // ISR pages keep serving from cache while the next render refreshes WordPress,
   // so no visitor waits on the CMS host.
   expireTime: 3600,

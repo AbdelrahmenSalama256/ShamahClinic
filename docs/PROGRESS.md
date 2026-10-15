@@ -53,8 +53,13 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (last commit hash on the r
       homeContent, homeLayout)
 - [ ] 1.10 Pinning (featured+order → ≤3 on Home) + afterChange/afterDelete
       revalidate both langs
-- [ ] 1.11 SITE URL: single-source NEXT_PUBLIC_SITE_URL everywhere; build guard when
-      missing; curl verify no www.shamahclinics.com in canonical/og
+- [x] 1.11 SITE URL: single-source NEXT_PUBLIC_SITE_URL everywhere; build guard when
+      missing; curl verify no www.shamahclinics.com in canonical/og — `resolveSiteUrl()`
+      throws in production build/start when unset (dev falls back to localhost);
+      verified on a prod build served at :3210 → robots/sitemap/canonical/og:url/
+      og:image/hreflang/JSON-LD all on the Vercel URL, post page had 0 shamahclinics hits.
+      `next.config.ts` gained an optional `NEXT_DIST_DIR` so checks never clobber the
+      live dev server's `.next`.
 - [ ] 1.12 Measure public JS bundle size before/after admin (must not grow)
 
 ## Phase 2 — seed (on payload-dev)
