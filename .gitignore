@@ -46,3 +46,7 @@ next-env.d.ts
 # scripts/audit-contrast.mjs output: ~140 PNGs per run (~120 MB), referenced by file
 # name from docs/contrast-report.md instead of being committed
 /docs/screenshots/
+
+.vercel
+.env*
+!.env.example
