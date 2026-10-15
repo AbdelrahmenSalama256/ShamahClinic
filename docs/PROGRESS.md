@@ -18,7 +18,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (last commit hash on the r
 - [x] 0.1 Cloud resources created + tested (Neon shamah-cms, Blob shamah-media,
       Vercel env vars, password rotation) — `bab28af`
 - [x] 0.2 Write `docs/PAYLOAD-PLAN.md` + this `docs/PROGRESS.md`; archive old
-      progress as `docs/PROGRESS-site.md`; confirm on `payload-migration` — `<pending>`
+      progress as `docs/PROGRESS-site.md`; confirm on `payload-migration` — `043c654`
 - [ ] 0.3 Read current Payload docs; verify Payload ↔ Next 16.3.6 compatibility
 - [ ] 0.4 Read repo docs (WIRING, inventory, RESULTS-SOURCE, HOME-PRIORITY,
       STATIC-SWEEP, UNVERIFIED-FACTS, api), git log, lib/wp, src/data, pages,
@@ -29,8 +29,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (last commit hash on the r
       required/optional, localized, empty behaviour)
 
 ## Phase 1 — install + data model
-- [ ] 1.1 Set Vercel function region `fra1` via `vercel.json` (`"regions":["fra1"]`)
-- [ ] 1.2 Create Neon branch `payload-dev`; repoint `.env.local` pooled+direct to it
+- [x] 1.1 Set Vercel function region `fra1` via `vercel.json` (`"regions":["fra1"]`)
+      — set; applies on next deploy (not deploying). `vercel regions` not in this CLI
+      version, so region availability confirmed by the standard fra1 region id only.
+- [x] 1.2 Create Neon branch `payload-dev` (`br-twilight-bar-b9h6p80a`, endpoint
+      `ep-muddy-frost-b9k0jshs`); `.env.local` DATABASE_URI(+_DIRECT) point at it;
+      both connect, schema empty. Vercel project vars still point at Neon `main`.
 - [ ] 1.3 Install payload + @payloadcms/db-postgres + richtext-lexical +
       storage-vercel-blob + sharp; admin at `/admin`
 - [ ] 1.4 Middleware/sitemap/hreflang/lang routing exclude `/admin`+Payload routes;
