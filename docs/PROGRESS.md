@@ -19,14 +19,17 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (last commit hash on the r
       Vercel env vars, password rotation) — `bab28af`
 - [x] 0.2 Write `docs/PAYLOAD-PLAN.md` + this `docs/PROGRESS.md`; archive old
       progress as `docs/PROGRESS-site.md`; confirm on `payload-migration` — `043c654`
-- [ ] 0.3 Read current Payload docs; verify Payload ↔ Next 16.3.6 compatibility
-- [ ] 0.4 Read repo docs (WIRING, inventory, RESULTS-SOURCE, HOME-PRIORITY,
-      STATIC-SWEEP, UNVERIFIED-FACTS, api), git log, lib/wp, src/data, pages,
+- [x] 0.3 Read current Payload docs; verify Payload ↔ Next 16.3.6 compatibility
+      — Payload ≥3.73.0 + Next ≥16.2 production-ready; webpack build sidesteps the
+      turbopack HMR issue (discussion #14330). Direct URI for migrate, pooled at runtime.
+- [x] 0.4 Read repo docs (WIRING, inventory, RESULTS-SOURCE, HOME-PRIORITY,
+      STATIC-SWEEP, UNVERIFIED-FACTS, api), git log, lib/wp, src/data, all 18 pages,
       components, /api/v1, scripts
-- [ ] 0.5 Recover removed/hidden sections from git history (do NOT restore the 4
-      "why Shamah" differentiators)
-- [ ] 0.6 Write `docs/DESIGN-CONTENT-MAP.md` (page→section→field→CMS home,
-      required/optional, localized, empty behaviour)
+- [x] 0.5 Recover removed/hidden sections from git history (BeforeAfterSection +
+      orphaned results/doctors bands catalogued; the 4 "why Shamah" differentiators
+      confirmed EXCLUDED — they live on /about, not Home)
+- [x] 0.6 Write `docs/DESIGN-CONTENT-MAP.md` (page→section→field→CMS home,
+      required/optional, localized, empty behaviour + seed/trust roll-up)
 
 ## Phase 1 — install + data model
 - [x] 1.1 Set Vercel function region `fra1` via `vercel.json` (`"regions":["fra1"]`)
