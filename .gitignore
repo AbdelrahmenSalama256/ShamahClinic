@@ -55,3 +55,10 @@ next-env.d.ts
 .vercel
 .env*
 !.env.example
+
+# SiteDash: the scanner's manifest, the baked snapshot and the codemod's backups are
+# generated per machine and per publish. The snapshot is what the public site renders
+# when the database is down, so it is rebuilt by `sitedash db:export` / `publish` —
+# committing a stale copy would let a checkout serve content someone unpublished.
+# Ignoring the folder also keeps Tailwind from scanning the manifest's class-like keys.
+.sitedash/

@@ -31,6 +31,8 @@ export const config = {
   // Static assets, route handlers and file-based metadata (sitemap.xml,
   // robots.txt) must reach their own handlers untouched. `admin` is excluded so
   // the Payload dashboard and its sub-routes are never rewritten onto `/ar/admin`;
-  // Payload's own `/api/payload` and `/api/graphql` already fall under `api/`.
-  matcher: ["/((?!api/|admin|_next/|favicon.ico|.*\\.).*)"],
+  // `manage` is SiteDash's own mount and must reach its page + API the same way —
+  // a rewrite onto `/ar/manage` would render the 404 and the editor would never
+  // load. Payload's own `/api/payload` and `/api/graphql` already fall under `api/`.
+  matcher: ["/((?!api/|admin|manage|_next/|favicon.ico|.*\\.).*)"],
 };
