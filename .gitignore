@@ -21,6 +21,7 @@
 /.next-base/
 /.next-payload/
 /.next-seocheck/
+/.next-local-test/
 
 # production
 /build
