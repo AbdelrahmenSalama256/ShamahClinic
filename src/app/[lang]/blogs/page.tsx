@@ -1,13 +1,14 @@
-import type { Metadata } from "next";
-import { buildPageMetadata } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd } from "@/lib/jsonld";
-import { JournalClient } from "@/components/pages/JournalClient";
-import { getPosts, getCategories, getPageTitle } from "@/lib/wp";
-import { cardToUIArticle } from "@/lib/wp/ui";
-import { getLocalizedHref } from "@/lib/locale";
-import { SITE_URL } from "@/lib/site";
-import { routeLang } from "@/lib/route-lang";
+import type { Metadata } from 'next';
+import { buildPageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd } from '@/lib/jsonld';
+import { JournalClient } from '@/components/pages/JournalClient';
+import { getPosts, getCategories, getPageTitle } from '@/lib/wp';
+import { cardToUIArticle } from '@/lib/wp/ui';
+import { getLocalizedHref } from '@/lib/locale';
+import { SITE_URL } from '@/lib/site';
+import { routeLang } from '@/lib/route-lang';
+import { SDSection } from '@/sitedash/runtime';
 
 export const revalidate = 300;
 
@@ -19,16 +20,16 @@ interface Props {
 const PER_PAGE = 9;
 
 /** `/blogs`, `/blogs?page=2` — always in the current language and keeping filters. */
-function pageHref(page: number, lang: "ar" | "en", category?: string, search?: string): string {
+function pageHref(page: number, lang: 'ar' | 'en', category?: string, search?: string): string {
   const params = new URLSearchParams();
-  if (page > 1) params.set("page", String(page));
-  if (category) params.set("category", category);
-  if (search) params.set("search", search);
+  if (page > 1) params.set('page', String(page));
+  if (category) params.set('category', category);
+  if (search) params.set('search', search);
   const qs = params.toString();
-  return `${SITE_URL}${getLocalizedHref("/blogs", lang)}${qs ? `?${qs}` : ""}`;
+  return `${SITE_URL}${getLocalizedHref('/blogs', lang)}${qs ? `?${qs}` : ''}`;
 }
 
-async function read(sp: Props["searchParams"]) {
+async function read(sp: Props['searchParams']) {
   const s = await sp;
   const page = Math.max(1, Number(s.page) || 1);
   // Concurrent, not sequential: each WordPress call has its own 8 s budget, so
@@ -47,16 +48,16 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const s = await searchParams;
   const lang = await routeLang();
   const base = await buildPageMetadata({
-    path: "/blogs",
+    path: '/blogs',
     title: {
-      ar: "مدونة شامه — مقالات العناية بالبشرة والتجميل",
-      en: "Shamah Blogs — Skincare & Aesthetics",
+      ar: 'مدونة شامه — مقالات العناية بالبشرة والتجميل',
+      en: 'Shamah Blogs — Skincare & Aesthetics',
     },
     description: {
-      ar: "مقالات طبية مبسطة من طبيبات عيادات شامه عن ليزر إزالة الشعر والعناية بالبشرة والبوتوكس والفيلر.",
+      ar: 'مقالات طبية مبسطة من طبيبات عيادات شامه عن ليزر إزالة الشعر والعناية بالبشرة والبوتوكس والفيلر.',
       en: "Clear medical articles from Shamah's doctors on laser hair removal, skincare, Botox and fillers.",
     },
-    image: "/images/blog-flatlay.jpg",
+    image: '/images/blog-flatlay.jpg',
   });
 
   // A page-specific canonical; rel=prev/next is emitted as real <link> elements
@@ -70,8 +71,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
       canonical: pageHref(page, lang, s.category, s.search),
       languages: {
         ...languages,
-        ar: pageHref(page, "ar", s.category, s.search),
-        en: pageHref(page, "en", s.category, s.search),
+        ar: pageHref(page, 'ar', s.category, s.search),
+        en: pageHref(page, 'en', s.category, s.search),
       },
     },
   };
@@ -80,32 +81,36 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 export default async function JournalPage({ searchParams }: Props) {
   const { paged, categories, category, search, page } = await read(searchParams);
   const lang = await routeLang();
-  const title = await getPageTitle("journal", {
-    ar: "مدونة شامه",
-    en: "Shamah Blog",
+  const title = await getPageTitle('journal', {
+    ar: 'مدونة شامه',
+    en: 'Shamah Blog',
   });
 
   return (
     <>
       {page > 1 ? <link rel="prev" href={pageHref(page - 1, lang, category, search)} /> : null}
       {paged.hasMore ? <link rel="next" href={pageHref(page + 1, lang, category, search)} /> : null}
-      <JsonLd
-        data={await breadcrumbJsonLd([
-          { name: { ar: "الرئيسية", en: "Home" }, path: "" },
-          { name: { ar: "المدونة", en: "Blog" }, path: "/blogs" },
-        ])}
-      />
-      <JournalClient
-        title={title}
-        firstPage={paged.items.map(cardToUIArticle)}
-        page={paged.page}
-        perPage={paged.perPage}
-        total={paged.total}
-        totalPages={paged.totalPages}
-        categories={categories}
-        activeCategory={category}
-        activeSearch={search}
-      />
+      <SDSection id="blogs.json-ld">
+        <JsonLd
+          data={await breadcrumbJsonLd([
+            { name: { ar: 'الرئيسية', en: 'Home' }, path: '' },
+            { name: { ar: 'المدونة', en: 'Blog' }, path: '/blogs' },
+          ])}
+        />
+      </SDSection>
+      <SDSection id="blogs.journal-client">
+        <JournalClient
+          title={title}
+          firstPage={paged.items.map(cardToUIArticle)}
+          page={paged.page}
+          perPage={paged.perPage}
+          total={paged.total}
+          totalPages={paged.totalPages}
+          categories={categories}
+          activeCategory={category}
+          activeSearch={search}
+        />
+      </SDSection>
     </>
   );
 }

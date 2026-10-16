@@ -1,16 +1,17 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { useLanguage } from "@/context/LanguageContext";
-import { PageHero } from "@/components/shared/PageHero";
-import { Reveal } from "@/components/ui/Reveal";
-import { SectionHeading } from "@/components/ui/SectionHeading";
-import { TreatmentCard } from "@/components/cards/TreatmentCard";
-import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
-import { getLocalizedHref } from "@/lib/locale";
-import type { Treatment } from "@/data/treatments";
-import { Clock, Repeat, Wallet, Check } from "lucide-react";
+import React from 'react';
+import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import { PageHero } from '@/components/shared/PageHero';
+import { Reveal } from '@/components/ui/Reveal';
+import { SectionHeading } from '@/components/ui/SectionHeading';
+import { TreatmentCard } from '@/components/cards/TreatmentCard';
+import { BookButton, WhatsAppButton } from '@/components/shared/Actions';
+import { getLocalizedHref } from '@/lib/locale';
+import type { Treatment } from '@/data/treatments';
+import { Clock, Repeat, Wallet, Check } from 'lucide-react';
+import { sd } from '@/sitedash/runtime';
 
 export const TreatmentDetailClient: React.FC<{
   treatment: Treatment;
@@ -19,7 +20,7 @@ export const TreatmentDetailClient: React.FC<{
 }> = ({ treatment, related }) => {
   const { t, language, formatNumber } = useLanguage();
 
-  const body = language === "ar" ? treatment.body?.ar : treatment.body?.en;
+  const body = language === 'ar' ? treatment.body?.ar : treatment.body?.en;
 
   // A service whose only source is a WordPress section (page 696) publishes no
   // session length, count or price, so those facts are not shown rather than
@@ -27,17 +28,20 @@ export const TreatmentDetailClient: React.FC<{
   const facts = [
     treatment.duration.ar && {
       icon: Clock,
-      label: { ar: "مدة الجلسة", en: "Session length" },
+      label: sd('treatments-slug-[dynamic].treatment-detail-client.text', { ar: 'مدة الجلسة', en: 'Session length' }),
       value: treatment.duration,
     },
     treatment.sessionsRecommended.ar && {
       icon: Repeat,
-      label: { ar: "الجلسات الموصى بها", en: "Recommended sessions" },
+      label: sd('treatments-slug-[dynamic].treatment-detail-client.text2', {
+        ar: 'الجلسات الموصى بها',
+        en: 'Recommended sessions',
+      }),
       value: treatment.sessionsRecommended,
     },
     treatment.priceStartingAt !== null && {
       icon: Wallet,
-      label: { ar: "السعر يبدأ من", en: "Price from" },
+      label: sd('treatments-slug-[dynamic].treatment-detail-client.text3', { ar: 'السعر يبدأ من', en: 'Price from' }),
       value: {
         ar: `${formatNumber(treatment.priceStartingAt)} ج.م`,
         en: `EGP ${treatment.priceStartingAt}`,
@@ -49,8 +53,7 @@ export const TreatmentDetailClient: React.FC<{
     value: { ar: string; en: string };
   }[];
 
-  const idealFor =
-    treatment.idealFor.ar || treatment.idealFor.en ? treatment.idealFor : null;
+  const idealFor = treatment.idealFor.ar || treatment.idealFor.en ? treatment.idealFor : null;
   const lists = {
     benefits: treatment.benefits[language].length > 0,
     steps: treatment.steps[language].length > 0,
@@ -64,8 +67,14 @@ export const TreatmentDetailClient: React.FC<{
         lead={treatment.tagline}
         photo={treatment.image}
         breadcrumbs={[
-          { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/services", label: { ar: "الخدمات", en: "Treatments" } },
+          {
+            href: '/',
+            label: sd('treatments-slug-[dynamic].treatment-detail-client.text4', { ar: 'الرئيسية', en: 'Home' }),
+          },
+          {
+            href: '/services',
+            label: sd('treatments-slug-[dynamic].treatment-detail-client.text5', { ar: 'الخدمات', en: 'Treatments' }),
+          },
           { href: `/treatments/${treatment.id}`, label: treatment.name },
         ]}
       />
@@ -82,9 +91,7 @@ export const TreatmentDetailClient: React.FC<{
                 >
                   <f.icon className="w-5 h-5 text-[var(--text-gold)] mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-xs text-[var(--text-muted)]">
-                      {t(f.label.ar, f.label.en)}
-                    </p>
+                    <p className="text-xs text-[var(--text-muted)]">{t(f.label.ar, f.label.en)}</p>
                     <p className="mt-1 text-sm font-bold text-[var(--text-primary)] leading-snug">
                       {t(f.value.ar, f.value.en)}
                     </p>
@@ -99,7 +106,10 @@ export const TreatmentDetailClient: React.FC<{
             <div className="lg:col-span-7 space-y-12">
               <Reveal>
                 <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-4">
-                  {t("عن هذه الجلسة", "About this treatment")}
+                  {sd(
+                    'treatments-slug-[dynamic].treatment-detail-client.text6',
+                    t('عن هذه الجلسة', 'About this treatment'),
+                  )}
                 </h2>
                 {body ? (
                   <div
@@ -114,7 +124,7 @@ export const TreatmentDetailClient: React.FC<{
                 {idealFor && (
                   <p className="mt-4 text-base leading-relaxed text-[var(--text-secondary)]">
                     <span className="font-bold text-[var(--text-primary)]">
-                      {t("مناسبة لـ: ", "Ideal for: ")}
+                      {sd('treatments-slug-[dynamic].treatment-detail-client.text7', t('مناسبة لـ: ', 'Ideal for: '))}
                     </span>
                     {t(idealFor.ar, idealFor.en)}
                   </p>
@@ -124,14 +134,11 @@ export const TreatmentDetailClient: React.FC<{
               {lists.benefits && (
                 <Reveal>
                   <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
-                    {t("الفوائد", "Benefits")}
+                    {sd('treatments-slug-[dynamic].treatment-detail-client.text8', t('الفوائد', 'Benefits'))}
                   </h2>
                   <ul className="grid sm:grid-cols-2 gap-3">
                     {treatment.benefits[language].map((b) => (
-                      <li
-                        key={b}
-                        className="flex items-start gap-2.5 text-sm text-[var(--text-primary)]"
-                      >
+                      <li key={b} className="flex items-start gap-2.5 text-sm text-[var(--text-primary)]">
                         <Check className="w-4 h-4 mt-0.5 shrink-0 text-[var(--text-gold)]" />
                         <span>{b}</span>
                       </li>
@@ -143,7 +150,10 @@ export const TreatmentDetailClient: React.FC<{
               {lists.steps && (
                 <Reveal>
                   <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
-                    {t("خطوات الجلسة", "How the session works")}
+                    {sd(
+                      'treatments-slug-[dynamic].treatment-detail-client.text9',
+                      t('خطوات الجلسة', 'How the session works'),
+                    )}
                   </h2>
                   <ol className="space-y-4">
                     {treatment.steps[language].map((s, i) => (
@@ -151,9 +161,7 @@ export const TreatmentDetailClient: React.FC<{
                         <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--border-control)] text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
                           {formatNumber(i + 1)}
                         </span>
-                        <p className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)] pt-1">
-                          {s}
-                        </p>
+                        <p className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)] pt-1">{s}</p>
                       </li>
                     ))}
                   </ol>
@@ -163,14 +171,14 @@ export const TreatmentDetailClient: React.FC<{
               {lists.aftercare && (
                 <Reveal>
                   <h2 className="text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
-                    {t("العناية بعد الجلسة", "Aftercare")}
+                    {sd(
+                      'treatments-slug-[dynamic].treatment-detail-client.text10',
+                      t('العناية بعد الجلسة', 'Aftercare'),
+                    )}
                   </h2>
                   <ul className="space-y-2.5 border-s-2 border-[var(--gold-border)] ps-5">
                     {treatment.aftercare[language].map((a) => (
-                      <li
-                        key={a}
-                        className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)]"
-                      >
+                      <li key={a} className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)]">
                         {a}
                       </li>
                     ))}
@@ -183,32 +191,34 @@ export const TreatmentDetailClient: React.FC<{
             <aside className="lg:col-span-5">
               <div className="lg:sticky lg:top-32 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-6 shadow-sm">
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-                  {t(
-                    "احجزي استشارتكِ لهذه الجلسة، أو أرسلي استفساركِ مباشرة على واتساب وسنرد خلال دقائق.",
-                    "Book your consultation for this treatment, or send your question on WhatsApp and we reply within minutes.",
+                  {sd(
+                    'treatments-slug-[dynamic].treatment-detail-client.text11',
+                    t(
+                      'احجزي استشارتكِ لهذه الجلسة، أو أرسلي استفساركِ مباشرة على واتساب وسنرد خلال دقائق.',
+                      'Book your consultation for this treatment, or send your question on WhatsApp and we reply within minutes.',
+                    ),
                   )}
                 </p>
                 <div className="mt-5 flex flex-col gap-3">
-                  <BookButton
-                    treatmentId={treatment.id}
-                    size="lg"
-                    className="w-full"
-                  />
+                  <BookButton treatmentId={treatment.id} size="lg" className="w-full" />
                   <WhatsAppButton
                     size="lg"
                     variant="outline"
                     className="w-full"
                     custom={
-                      language === "ar"
+                      language === 'ar'
                         ? `مرحباً عيادات شامه، أرغب في الاستفسار عن جلسة ${treatment.name.ar}.`
                         : `Hello Shamah Clinics, I would like to ask about ${treatment.name.en}.`
                     }
                   />
                 </div>
                 <p className="mt-5 text-xs text-[var(--text-muted)] leading-relaxed">
-                  {t(
-                    "الأسعار استرشادية وتُحدد نهائياً بعد الاستشارة حسب الحالة والمنطقة.",
-                    "Prices are indicative and finalised after consultation based on your case and area.",
+                  {sd(
+                    'treatments-slug-[dynamic].treatment-detail-client.text12',
+                    t(
+                      'الأسعار استرشادية وتُحدد نهائياً بعد الاستشارة حسب الحالة والمنطقة.',
+                      'Prices are indicative and finalised after consultation based on your case and area.',
+                    ),
                   )}
                 </p>
               </div>
@@ -219,7 +229,10 @@ export const TreatmentDetailClient: React.FC<{
           {related.length > 0 && (
             <div className="mt-20">
               <SectionHeading
-                title={{ ar: "خدمات ذات صلة", en: "Related treatments" }}
+                title={sd('treatments-slug-[dynamic].treatment-detail-client.title', {
+                  ar: 'خدمات ذات صلة',
+                  en: 'Related treatments',
+                })}
               />
               <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 {related.map((r, i) => (
@@ -230,10 +243,13 @@ export const TreatmentDetailClient: React.FC<{
               </div>
               <div className="mt-8 text-center">
                 <Link
-                  href={getLocalizedHref("/services", language)}
+                  href={getLocalizedHref('/services', language)}
                   className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300 inline-flex items-center gap-1"
                 >
-                  {t("تصفحي كل الخدمات", "Browse all treatments")}
+                  {sd(
+                    'treatments-slug-[dynamic].treatment-detail-client.text13',
+                    t('تصفحي كل الخدمات', 'Browse all treatments'),
+                  )}
                 </Link>
               </div>
             </div>

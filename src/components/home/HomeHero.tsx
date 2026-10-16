@@ -1,17 +1,13 @@
-"use client";
+'use client';
 
-import React, { useEffect, useRef, useState } from "react";
-import {
-  motion,
-  useReducedMotion,
-  useScroll,
-  useTransform,
-} from "framer-motion";
-import { useLanguage } from "@/context/LanguageContext";
-import { Photo } from "@/components/ui/Photo";
-import { Counter } from "@/components/ui/Counter";
-import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
-import type { PhotoSlot } from "@/lib/images";
+import React, { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
+import { useLanguage } from '@/context/LanguageContext';
+import { Photo } from '@/components/ui/Photo';
+import { Counter } from '@/components/ui/Counter';
+import { BookButton, WhatsAppButton } from '@/components/shared/Actions';
+import type { PhotoSlot } from '@/lib/images';
+import { sd } from '@/sitedash/runtime';
 
 /** How long each WordPress slide stays up before the next fades in. */
 const SLIDE_MS = 7000;
@@ -67,13 +63,9 @@ export const HomeHero: React.FC<{
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start start", "end start"],
+    offset: ['start start', 'end start'],
   });
-  const y = useTransform(
-    scrollYProgress,
-    [0, 1],
-    ["0%", reduce ? "0%" : "12%"],
-  );
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', reduce ? '0%' : '12%']);
 
   return (
     <section ref={ref} className="relative overflow-hidden">
@@ -94,10 +86,7 @@ export const HomeHero: React.FC<{
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.28em] text-[var(--gold-start)]"
           >
-            {t(
-              "عيادات شامه · القاهرة والجيزة",
-              "Shamah Clinics · Cairo & Giza",
-            )}
+            {sd('home.home-hero.text', t('عيادات شامه · القاهرة والجيزة', 'Shamah Clinics · Cairo & Giza'))}
           </motion.p>
 
           <motion.h1
@@ -110,11 +99,11 @@ export const HomeHero: React.FC<{
             }}
             className="mt-4 text-[28px] sm:text-5xl lg:text-[64px] font-black leading-[1.05] tracking-tight text-[var(--text-on-dark)] max-w-3xl"
           >
-            {t("بشرةٌ تستحق ", "Skin that deserves ")}
+            {sd('home.home-hero.text2', t('بشرةٌ تستحق ', 'Skin that deserves '))}
             <span className="text-[var(--gold-start)]">
-              {t("عنايةً صادقة", "honest care")}
+              {sd('home.home-hero.text3', t('عنايةً صادقة', 'honest care'))}
             </span>
-            {t("، بأيدي نسائية خبيرة", ", in expert female hands")}
+            {sd('home.home-hero.text4', t('، بأيدي نسائية خبيرة', ', in expert female hands'))}
           </motion.h1>
 
           <motion.p
@@ -127,9 +116,12 @@ export const HomeHero: React.FC<{
             }}
             className="mt-5 text-sm sm:text-base lg:text-lg leading-relaxed text-[var(--text-on-dark-muted)] max-w-2xl"
           >
-            {t(
-              "نبدأ كل حالة باستشارة وتحليل واضح، ونستخدم أجهزة حديثة ومنتجات أصلية، مع طاقم طبي نسائي بالكامل وخصوصية تامة في ثلاثة فروع.",
-              "Every case starts with a clear consultation and analysis, using modern devices and authentic products, with an all-female medical team and full privacy across three branches.",
+            {sd(
+              'home.home-hero.text5',
+              t(
+                'نبدأ كل حالة باستشارة وتحليل واضح، ونستخدم أجهزة حديثة ومنتجات أصلية، مع طاقم طبي نسائي بالكامل وخصوصية تامة في ثلاثة فروع.',
+                'Every case starts with a clear consultation and analysis, using modern devices and authentic products, with an all-female medical team and full privacy across three branches.',
+              ),
             )}
           </motion.p>
 
@@ -156,18 +148,15 @@ export const HomeHero: React.FC<{
           >
             <div>
               <dt className="text-[10px] sm:text-xs text-[var(--text-on-dark-muted)] uppercase tracking-wider">
-                {t("فروع", "Branches")}
+                {sd('home.home-hero.text6', t('فروع', 'Branches'))}
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
-                <Counter
-                  value={branchCount}
-                  format={formatNumber}
-                />
+                <Counter value={branchCount} format={formatNumber} />
               </dd>
             </div>
             <div>
               <dt className="text-[10px] sm:text-xs text-[var(--text-on-dark-muted)] uppercase tracking-wider">
-                {t("خدمة تجميلية", "Treatments")}
+                {sd('home.home-hero.text7', t('خدمة تجميلية', 'Treatments'))}
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
                 <Counter value={treatmentCount} format={formatNumber} />
@@ -175,7 +164,7 @@ export const HomeHero: React.FC<{
             </div>
             <div>
               <dt className="text-[10px] sm:text-xs text-[var(--text-on-dark-muted)] uppercase tracking-wider">
-                {t("طاقم نسائي", "Female staff")}
+                {sd('home.home-hero.text8', t('طاقم نسائي', 'Female staff'))}
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
                 <Counter value={100} suffix="٪" format={formatNumber} />

@@ -1,22 +1,23 @@
-"use client";
+'use client';
 
-import React from "react";
-import Link from "next/link";
-import { useLanguage } from "@/context/LanguageContext";
-import { SectionHeading } from "@/components/ui/SectionHeading";
-import { Reveal } from "@/components/ui/Reveal";
-import { Photo } from "@/components/ui/Photo";
-import { Swiper } from "@/components/ui/Swiper";
-import { GoldLink, whatsappHref } from "@/components/shared/Actions";
-import { ArticleCard } from "@/components/cards/ArticleCard";
-import { OfferCard } from "@/components/cards/OfferCard";
-import { TreatmentCard } from "@/components/cards/TreatmentCard";
-import { getLocalizedHref } from "@/lib/locale";
-import { toPhotoSlot } from "@/lib/wp/ui-helpers";
-import type { Offer as UIOffer } from "@/data/offers";
-import type { Article as UIArticle } from "@/data/journal";
-import type { Treatment } from "@/data/treatments";
-import { MapPin, Phone, MessageCircle } from "lucide-react";
+import React from 'react';
+import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import { SectionHeading } from '@/components/ui/SectionHeading';
+import { Reveal } from '@/components/ui/Reveal';
+import { Photo } from '@/components/ui/Photo';
+import { Swiper } from '@/components/ui/Swiper';
+import { GoldLink, whatsappHref } from '@/components/shared/Actions';
+import { ArticleCard } from '@/components/cards/ArticleCard';
+import { OfferCard } from '@/components/cards/OfferCard';
+import { TreatmentCard } from '@/components/cards/TreatmentCard';
+import { getLocalizedHref } from '@/lib/locale';
+import { toPhotoSlot } from '@/lib/wp/ui-helpers';
+import type { Offer as UIOffer } from '@/data/offers';
+import type { Article as UIArticle } from '@/data/journal';
+import type { Treatment } from '@/data/treatments';
+import { MapPin, Phone, MessageCircle } from 'lucide-react';
+import { sd } from '@/sitedash/runtime';
 
 interface HomeBranch {
   id: string;
@@ -55,7 +56,7 @@ const Section: React.FC<{
   id?: string;
   children: React.ReactNode;
   className?: string;
-}> = ({ id, children, className = "" }) => (
+}> = ({ id, children, className = '' }) => (
   <section id={id} className={`py-4 lg:py-12 ${className}`}>
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
   </section>
@@ -89,25 +90,25 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
               <div className="lg:col-span-4 min-w-0">
                 <SectionHeading index="01" title={intro.title} lead={intro.lead} />
                 <GoldLink href="/about" withArrow size="sm" className="mt-5">
-                  {t("لماذا تختار شامه", "Why clients choose Shamah")}
+                  {sd('home.home-body.text', t('لماذا تختار شامه', 'Why clients choose Shamah'))}
                 </GoldLink>
               </div>
             )}
 
             {!!services.length && (
-              <div className={`${hasIntro ? "lg:col-span-8" : "lg:col-span-12"} min-w-0`}>
+              <div className={`${hasIntro ? 'lg:col-span-8' : 'lg:col-span-12'} min-w-0`}>
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <SectionHeading
                     index="02"
                     title={servicesTitle}
-                    lead={{
-                      ar: "كل خدمة تبدأ بتقييم وخطة مكتوبة، والجلسات تُعرض بوضوح بدل الوعود.",
-                      en: "Every service starts with an assessment and a written plan, with sessions laid out rather than promised.",
-                    }}
+                    lead={sd('home.home-body.lead', {
+                      ar: 'كل خدمة تبدأ بتقييم وخطة مكتوبة، والجلسات تُعرض بوضوح بدل الوعود.',
+                      en: 'Every service starts with an assessment and a written plan, with sessions laid out rather than promised.',
+                    })}
                   />
                   {servicesTotal > services.length && (
                     <GoldLink href="/services" withArrow size="sm" className="mb-1">
-                      {t("كل الخدمات", "All services")}
+                      {sd('home.home-body.text2', t('كل الخدمات', 'All services'))}
                     </GoldLink>
                   )}
                 </div>
@@ -115,10 +116,10 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                     keeps it: 3 cards from `lg` up, 2 on a tablet, 1 on a phone. */}
                 <div className="mt-5 w-full min-w-0 overflow-hidden">
                   <Swiper
-                    label={{
-                      ar: "خدمات عيادات شامه",
-                      en: "Shamah Clinics services",
-                    }}
+                    label={sd('home.home-body.label', {
+                      ar: 'خدمات عيادات شامه',
+                      en: 'Shamah Clinics services',
+                    })}
                     mobilePerView={1}
                     tabletPerView={2}
                     desktopPerView={3}
@@ -126,13 +127,11 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                     autoPlayMs={0}
                     showArrows
                     showDots
-                    slides={services
-                      .slice(0, HOME_CARDS)
-                      .map((service, i) => (
-                        <Reveal key={service.id} delay={i * 0.08} className="h-full min-w-0">
-                          <TreatmentCard treatment={service} />
-                        </Reveal>
-                      ))}
+                    slides={services.slice(0, HOME_CARDS).map((service, i) => (
+                      <Reveal key={service.id} delay={i * 0.08} className="h-full min-w-0">
+                        <TreatmentCard treatment={service} />
+                      </Reveal>
+                    ))}
                   />
                 </div>
               </div>
@@ -147,15 +146,15 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
               index="03"
-              title={{ ar: "باقات الموسم", en: "Seasonal packages" }}
-              lead={{
-                ar: "باقات تجمع أكثر من جلسة بتوفير حقيقي، سارية في الفروع الثلاثة.",
-                en: "Packages combining several sessions at a real saving, valid across all three branches.",
-              }}
+              title={sd('home.home-body.title', { ar: 'باقات الموسم', en: 'Seasonal packages' })}
+              lead={sd('home.home-body.lead2', {
+                ar: 'باقات تجمع أكثر من جلسة بتوفير حقيقي، سارية في الفروع الثلاثة.',
+                en: 'Packages combining several sessions at a real saving, valid across all three branches.',
+              })}
             />
             {offers.length > HOME_CARDS && (
               <GoldLink href="/offers" withArrow className="mb-1">
-                {t("كل العروض", "All offers")}
+                {sd('home.home-body.text3', t('كل العروض', 'All offers'))}
               </GoldLink>
             )}
           </div>
@@ -175,15 +174,15 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
               index="04"
-              title={{ ar: "فروعنا الثلاثة", en: "Our three branches" }}
-              lead={{
-                ar: "اختاري الفرع الأقرب واتصلي مباشرة أو راسلينا على واتساب.",
-                en: "Pick the nearest branch, call directly, or message us on WhatsApp.",
-              }}
+              title={sd('home.home-body.title2', { ar: 'فروعنا الثلاثة', en: 'Our three branches' })}
+              lead={sd('home.home-body.lead3', {
+                ar: 'اختاري الفرع الأقرب واتصلي مباشرة أو راسلينا على واتساب.',
+                en: 'Pick the nearest branch, call directly, or message us on WhatsApp.',
+              })}
             />
             {branches.length > HOME_CARDS && (
               <GoldLink href="/branches" withArrow className="mb-1">
-                {t("تفاصيل الفروع", "Branch details")}
+                {sd('home.home-body.text4', t('تفاصيل الفروع', 'Branch details'))}
               </GoldLink>
             )}
           </div>
@@ -211,17 +210,22 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                       className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
                     />
                     <span className="absolute top-3 start-3 text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--text-on-dark)] bg-black/40 backdrop-blur-sm border border-[var(--border-on-dark)] rounded-full px-2.5 py-1">
-                      {t("فرع", "Branch")} {formatNumber(i + 1)}
+                      {sd('home.home-body.text5', t('فرع', 'Branch'))} {formatNumber(i + 1)}
                     </span>
                     <div className="absolute bottom-0 start-0 end-0 p-4">
-                      <h3 className="text-lg sm:text-xl font-black text-[var(--text-on-dark)] leading-tight drop-shadow-md" dir="auto">
+                      <h3
+                        className="text-lg sm:text-xl font-black text-[var(--text-on-dark)] leading-tight drop-shadow-md"
+                        dir="auto"
+                      >
                         {t(b.name.ar, b.name.en)}
                       </h3>
                     </div>
                   </Link>
 
                   <div className="flex flex-col flex-1 p-4 sm:p-5">
-                    <p className="text-xs text-[var(--text-muted)]" dir="auto">{t(b.area.ar, b.area.en)}</p>
+                    <p className="text-xs text-[var(--text-muted)]" dir="auto">
+                      {t(b.area.ar, b.area.en)}
+                    </p>
                     <div className="mt-2 flex items-start gap-2 text-sm text-[var(--text-secondary)] leading-relaxed">
                       <MapPin className="w-4 h-4 mt-0.5 shrink-0 text-[var(--text-gold)]" />
                       <span dir="auto">{t(b.address.ar, b.address.en)}</span>
@@ -239,7 +243,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                       <a
                         href={whatsappHref(
                           language,
-                          language === "ar"
+                          language === 'ar'
                             ? `مرحباً عيادات شامه، أرغب في الحجز في فرع ${b.name.ar}.`
                             : `Hello Shamah Clinics, I would like to book at the ${b.name.en} branch.`,
                         )}
@@ -248,7 +252,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                         className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full border border-[var(--border-success)] text-[var(--text-success)] text-xs font-bold px-3 py-2.5 hover:bg-[var(--bg-success-soft)] transition-[background-color] duration-300"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
-                        {t("واتساب", "WhatsApp")}
+                        {sd('home.home-body.text6', t('واتساب', 'WhatsApp'))}
                       </a>
                     </div>
                   </div>
@@ -265,15 +269,15 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
               index="05"
-              title={{ ar: "من مدونة شامه", en: "From the Shamah blog" }}
-              lead={{
-                ar: "مقالات طبية مبسطة تصحح المفاهيم الشائعة وتشرح روتين العناية.",
-                en: "Clear medical articles correcting common myths and explaining care routines.",
-              }}
+              title={sd('home.home-body.title3', { ar: 'من مدونة شامه', en: 'From the Shamah blog' })}
+              lead={sd('home.home-body.lead4', {
+                ar: 'مقالات طبية مبسطة تصحح المفاهيم الشائعة وتشرح روتين العناية.',
+                en: 'Clear medical articles correcting common myths and explaining care routines.',
+              })}
             />
             {articles.length > HOME_CARDS && (
               <GoldLink href="/blogs" withArrow className="mb-1">
-                {t("كل المدونات", "All blogs")}
+                {sd('home.home-body.text7', t('كل المدونات', 'All blogs'))}
               </GoldLink>
             )}
           </div>
@@ -284,7 +288,6 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
           </div>
         </Section>
       )}
-
     </>
   );
 };

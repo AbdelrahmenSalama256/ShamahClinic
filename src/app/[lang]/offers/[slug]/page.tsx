@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { buildPageMetadata } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd, offerJsonLd } from "@/lib/jsonld";
-import { getAllOffers, getOffer } from "@/lib/wp";
-import { offerDetailToUI } from "@/lib/wp/ui";
-import { OfferDetailClient } from "@/components/pages/OfferDetailClient";
-import { routeLang } from "@/lib/route-lang";
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { buildPageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, offerJsonLd } from '@/lib/jsonld';
+import { getAllOffers, getOffer } from '@/lib/wp';
+import { offerDetailToUI } from '@/lib/wp/ui';
+import { OfferDetailClient } from '@/components/pages/OfferDetailClient';
+import { routeLang } from '@/lib/route-lang';
+import { SDSection } from '@/sitedash/runtime';
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -47,24 +48,28 @@ export default async function OfferDetailPage({ params }: Props) {
 
   return (
     <>
-      <JsonLd
-        data={[
-          await offerJsonLd({
-            slug: item.slug,
-            name: item.name,
-            price: item.price,
-            currency: item.currency,
-            image: seo.en.ogImage || item.image,
-            description: item.excerpt.en,
-          }),
-          await breadcrumbJsonLd([
-            { name: { ar: "الرئيسية", en: "Home" }, path: "" },
-            { name: { ar: "العروض", en: "Offers" }, path: "/offers" },
-            { name: item.name, path: `/offers/${item.slug}` },
-          ]),
-        ]}
-      />
-      <OfferDetailClient offer={ui} slug={item.slug} html={item.html} />
+      <SDSection id="offers-slug-[dynamic].json-ld">
+        <JsonLd
+          data={[
+            await offerJsonLd({
+              slug: item.slug,
+              name: item.name,
+              price: item.price,
+              currency: item.currency,
+              image: seo.en.ogImage || item.image,
+              description: item.excerpt.en,
+            }),
+            await breadcrumbJsonLd([
+              { name: { ar: 'الرئيسية', en: 'Home' }, path: '' },
+              { name: { ar: 'العروض', en: 'Offers' }, path: '/offers' },
+              { name: item.name, path: `/offers/${item.slug}` },
+            ]),
+          ]}
+        />
+      </SDSection>
+      <SDSection id="offers-slug-[dynamic].offer-detail-client">
+        <OfferDetailClient offer={ui} slug={item.slug} html={item.html} />
+      </SDSection>
     </>
   );
 }

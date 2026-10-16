@@ -1,16 +1,17 @@
-"use client";
+'use client';
 
-import React, { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useLanguage } from "@/context/LanguageContext";
-import { PageHero } from "@/components/shared/PageHero";
-import { Reveal } from "@/components/ui/Reveal";
-import { ArticleCard } from "@/components/cards/ArticleCard";
-import { apiCardToUI } from "@/lib/wp/ui-helpers";
-import { getLocalizedHref } from "@/lib/locale";
-import type { Article } from "@/data/journal";
-import type { ArticleCard as WpArticleCard, CategoryTerm } from "@/lib/wp/types";
-import { images } from "@/lib/images";
+import React, { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useLanguage } from '@/context/LanguageContext';
+import { PageHero } from '@/components/shared/PageHero';
+import { Reveal } from '@/components/ui/Reveal';
+import { ArticleCard } from '@/components/cards/ArticleCard';
+import { apiCardToUI } from '@/lib/wp/ui-helpers';
+import { getLocalizedHref } from '@/lib/locale';
+import type { Article } from '@/data/journal';
+import type { ArticleCard as WpArticleCard, CategoryTerm } from '@/lib/wp/types';
+import { images } from '@/lib/images';
+import { sd } from '@/sitedash/runtime';
 
 interface Paged {
   items: WpArticleCard[];
@@ -65,7 +66,7 @@ export const JournalClient: React.FC<Props> = ({
   const router = useRouter();
   // A bare `/blogs` would be rewritten onto `/ar`, so an English reader paginating
   // the list would land on Arabic pages.
-  const blogBase = getLocalizedHref("/blogs", language);
+  const blogBase = getLocalizedHref('/blogs', language);
 
   // `firstPage` is server-rendered for the current query; only pages loaded by
   // "Load more" live in state, so a new server render can't desync the list.
@@ -73,7 +74,7 @@ export const JournalClient: React.FC<Props> = ({
   const [loadedPage, setLoadedPage] = useState(serverPage);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(serverPage < totalPages);
-  const [searchInput, setSearchInput] = useState(activeSearch || "");
+  const [searchInput, setSearchInput] = useState(activeSearch || '');
 
   const articles = useMemo(() => [...firstPage, ...appended], [firstPage, appended]);
   const page = loadedPage;
@@ -86,10 +87,10 @@ export const JournalClient: React.FC<Props> = ({
 
   const buildQuery = (p: number) => {
     const params = new URLSearchParams();
-    params.set("page", String(p));
-    params.set("per_page", String(perPage));
-    if (activeCategory) params.set("category", activeCategory);
-    if (activeSearch) params.set("search", activeSearch);
+    params.set('page', String(p));
+    params.set('per_page', String(perPage));
+    if (activeCategory) params.set('category', activeCategory);
+    if (activeSearch) params.set('search', activeSearch);
     return params.toString();
   };
 
@@ -99,7 +100,7 @@ export const JournalClient: React.FC<Props> = ({
     const next = page + 1;
     try {
       const res = await fetch(`/api/v1/posts?${buildQuery(next)}`);
-      if (!res.ok) throw new Error("failed");
+      if (!res.ok) throw new Error('failed');
       const data = (await res.json()) as Paged;
       setAppended((prev) => [...prev, ...data.items.map(apiCardToUI)]);
       setLoadedPage(data.page);
@@ -114,20 +115,20 @@ export const JournalClient: React.FC<Props> = ({
   const applyFilters = (category?: string) => {
     resetLoaded(1, totalPages > 1);
     const params = new URLSearchParams();
-    if (category) params.set("category", category);
-    if (activeSearch) params.set("search", activeSearch);
+    if (category) params.set('category', category);
+    if (activeSearch) params.set('search', activeSearch);
     const qs = params.toString();
-    router.push(`${blogBase}${qs ? `?${qs}` : ""}`, { scroll: false });
+    router.push(`${blogBase}${qs ? `?${qs}` : ''}`, { scroll: false });
   };
 
   const submitSearch = (e: React.FormEvent) => {
     e.preventDefault();
     resetLoaded(1, totalPages > 1);
     const params = new URLSearchParams();
-    if (activeCategory) params.set("category", activeCategory);
-    if (searchInput.trim()) params.set("search", searchInput.trim());
+    if (activeCategory) params.set('category', activeCategory);
+    if (searchInput.trim()) params.set('search', searchInput.trim());
     const qs = params.toString();
-    router.push(`${blogBase}${qs ? `?${qs}` : ""}`, { scroll: false });
+    router.push(`${blogBase}${qs ? `?${qs}` : ''}`, { scroll: false });
   };
 
   const shownCount = useMemo(() => articles.length, [articles.length]);
@@ -136,13 +137,13 @@ export const JournalClient: React.FC<Props> = ({
     <>
       <PageHero
         title={title}
-        lead={{
-          ar: "مقالات طبية مبسطة تكتبها طبيباتنا: تصحيح للمفاهيم الشائعة، شرح للجلسات، وروتينات عناية واقعية تناسب مناخ مصر.",
+        lead={sd('blogs.journal-client.lead', {
+          ar: 'مقالات طبية مبسطة تكتبها طبيباتنا: تصحيح للمفاهيم الشائعة، شرح للجلسات، وروتينات عناية واقعية تناسب مناخ مصر.',
           en: "Clear medical articles written by our doctors: correcting common myths, explaining treatments, and realistic care routines for Egypt's climate.",
-        }}
+        })}
         breadcrumbs={[
-          { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/blogs", label: title },
+          { href: '/', label: sd('blogs.journal-client.text', { ar: 'الرئيسية', en: 'Home' }) },
+          { href: '/blogs', label: title },
         ]}
         photo={images.journal.routine}
       />
@@ -157,11 +158,11 @@ export const JournalClient: React.FC<Props> = ({
                 aria-pressed={!activeCategory}
                 className={`rounded-full px-4 py-1.5 text-sm font-bold border transition-colors ${
                   !activeCategory
-                    ? "bg-gold-gradient border-transparent"
-                    : "border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]"
+                    ? 'bg-gold-gradient border-transparent'
+                    : 'border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]'
                 }`}
               >
-                {t("الكل", "All")}
+                {sd('blogs.journal-client.text2', t('الكل', 'All'))}
               </button>
               {categories.map((c) => (
                 <button
@@ -170,8 +171,8 @@ export const JournalClient: React.FC<Props> = ({
                   aria-pressed={activeCategory === c.slug}
                   className={`rounded-full px-4 py-1.5 text-sm font-bold border transition-colors ${
                     activeCategory === c.slug
-                      ? "bg-gold-gradient border-transparent"
-                      : "border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]"
+                      ? 'bg-gold-gradient border-transparent'
+                      : 'border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]'
                   }`}
                 >
                   {t(c.name.ar, c.name.en)}
@@ -183,23 +184,21 @@ export const JournalClient: React.FC<Props> = ({
                 type="search"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t("ابحثي في المدونة…", "Search the blog…")}
-                aria-label={t("بحث", "Search")}
+                placeholder={sd('blogs.journal-client.text3', t('ابحثي في المدونة…', 'Search the blog…'))}
+                aria-label={sd('blogs.journal-client.text4', t('بحث', 'Search'))}
                 className="w-full sm:w-56 rounded-full border border-[var(--border-control)] bg-[var(--bg-card)] px-4 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--border-control)]"
               />
               <button
                 type="submit"
                 className="rounded-full bg-[var(--bg-dark)] text-[var(--text-on-dark)] px-4 py-2 text-sm font-bold hover:opacity-90 transition-opacity"
               >
-                {t("بحث", "Search")}
+                {sd('blogs.journal-client.text5', t('بحث', 'Search'))}
               </button>
             </form>
           </div>
 
-          <h2 className="sr-only">{t("أحدث المدونات", "Latest blog posts")}</h2>
-          <p className="mb-6 text-sm text-[var(--text-muted)]">
-            {t(`${total} مقالاً`, `${total} articles`)}
-          </p>
+          <h2 className="sr-only">{sd('blogs.journal-client.text6', t('أحدث المدونات', 'Latest blog posts'))}</h2>
+          <p className="mb-6 text-sm text-[var(--text-muted)]">{t(`${total} مقالاً`, `${total} articles`)}</p>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
             {articles.map((a, i) => (
@@ -207,8 +206,7 @@ export const JournalClient: React.FC<Props> = ({
                 <ArticleCard article={a} priority={i < 2} />
               </Reveal>
             ))}
-            {loading &&
-              EMPTY.concat(Array.from({ length: 3 })).map((_, i) => <SkeletonCard key={`sk-${i}`} />)}
+            {loading && EMPTY.concat(Array.from({ length: 3 })).map((_, i) => <SkeletonCard key={`sk-${i}`} />)}
           </div>
 
           {/* Load more + real crawlable page links */}
@@ -219,31 +217,38 @@ export const JournalClient: React.FC<Props> = ({
                 disabled={loading}
                 className="inline-flex items-center gap-2 rounded-full bg-gold-gradient font-bold text-sm px-7 py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
               >
-                {loading ? t("جارٍ التحميل…", "Loading…") : t("عرض المزيد", "Load more")}
+                {loading
+                  ? sd('blogs.journal-client.text7', t('جارٍ التحميل…', 'Loading…'))
+                  : sd('blogs.journal-client.text8', t('عرض المزيد', 'Load more'))}
               </button>
             )}
             <p className="text-xs text-[var(--text-muted)]">
-              {t(
-                `عرض ${shownCount} من ${total}`,
-                `Showing ${shownCount} of ${total}`,
-              )}
+              {t(`عرض ${shownCount} من ${total}`, `Showing ${shownCount} of ${total}`)}
             </p>
-            <nav className="flex items-center gap-1" aria-label={t("ترقيم الصفحات", "Pagination")}>
+            <nav
+              className="flex items-center gap-1"
+              aria-label={sd('blogs.journal-client.text9', t('ترقيم الصفحات', 'Pagination'))}
+            >
               {Array.from({ length: totalPages }).map((_, idx) => {
                 const n = idx + 1;
                 if (totalPages > 7 && n > 3 && n < totalPages - 1 && Math.abs(n - page) > 1) {
-                  if (n === 4) return <span key="dots" className="px-2 text-[var(--text-muted)]">…</span>;
+                  if (n === 4)
+                    return (
+                      <span key="dots" className="px-2 text-[var(--text-muted)]">
+                        {sd('blogs.journal-client.text11', '…')}
+                      </span>
+                    );
                   return null;
                 }
                 return (
                   <button
                     key={n}
                     onClick={() => router.push(`${blogBase}?${buildQuery(n)}`, { scroll: false })}
-                    aria-current={n === page ? "page" : undefined}
+                    aria-current={n === page ? 'page' : undefined}
                     className={`min-w-9 h-9 rounded-full text-sm font-bold border transition-colors ${
                       n === page
-                        ? "bg-[var(--bg-dark)] text-[var(--text-on-dark)] border-transparent"
-                        : "border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]"
+                        ? 'bg-[var(--bg-dark)] text-[var(--text-on-dark)] border-transparent'
+                        : 'border-[var(--border-control)] text-[var(--text-secondary)] hover:border-[var(--border-control)]'
                     }`}
                   >
                     {n}
@@ -254,9 +259,12 @@ export const JournalClient: React.FC<Props> = ({
           </div>
 
           <p className="mt-10 text-center text-sm text-[var(--text-secondary)]">
-            {t(
-              "محتوى المدونة للتوعية العامة ولا يغني عن الاستشارة الطبية. لحالتكِ الخاصة، احجزي استشارة مع إحدى طبيباتنا.",
-              "Blog content is for general awareness and does not replace medical advice. For your specific case, book a consultation with one of our doctors.",
+            {sd(
+              'blogs.journal-client.text10',
+              t(
+                'محتوى المدونة للتوعية العامة ولا يغني عن الاستشارة الطبية. لحالتكِ الخاصة، احجزي استشارة مع إحدى طبيباتنا.',
+                'Blog content is for general awareness and does not replace medical advice. For your specific case, book a consultation with one of our doctors.',
+              ),
             )}
           </p>
         </div>

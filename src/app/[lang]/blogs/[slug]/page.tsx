@@ -1,12 +1,13 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { buildPageMetadata } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd, articleJsonLd } from "@/lib/jsonld";
-import { getPost, getAllArticles } from "@/lib/wp";
-import { articleToUI, cardToUIArticle } from "@/lib/wp/ui";
-import type { Article } from "@/data/journal";
-import { JournalArticleClient } from "@/components/pages/JournalArticleClient";
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { buildPageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, articleJsonLd } from '@/lib/jsonld';
+import { getPost, getAllArticles } from '@/lib/wp';
+import { articleToUI, cardToUIArticle } from '@/lib/wp/ui';
+import type { Article } from '@/data/journal';
+import { JournalArticleClient } from '@/components/pages/JournalArticleClient';
+import { SDSection } from '@/sitedash/runtime';
 
 export const revalidate = 300;
 
@@ -38,7 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       en: res.seo.en.description || ui.excerpt.en,
     },
     image: ui.image.src || undefined,
-    type: "article",
+    type: 'article',
   });
 }
 
@@ -61,17 +62,21 @@ export default async function JournalArticlePage({ params }: Props) {
 
   return (
     <>
-      <JsonLd
-        data={[
-          await articleJsonLd(ui),
-          await breadcrumbJsonLd([
-            { name: { ar: "الرئيسية", en: "Home" }, path: "" },
-            { name: { ar: "المدونة", en: "Blog" }, path: "/blogs" },
-            { name: ui.title, path: `/blogs/${ui.slug}` },
-          ]),
-        ]}
-      />
-      <JournalArticleClient article={ui} related={related} />
+      <SDSection id="blogs-slug-[dynamic].json-ld">
+        <JsonLd
+          data={[
+            await articleJsonLd(ui),
+            await breadcrumbJsonLd([
+              { name: { ar: 'الرئيسية', en: 'Home' }, path: '' },
+              { name: { ar: 'المدونة', en: 'Blog' }, path: '/blogs' },
+              { name: ui.title, path: `/blogs/${ui.slug}` },
+            ]),
+          ]}
+        />
+      </SDSection>
+      <SDSection id="blogs-slug-[dynamic].journal-article-client">
+        <JournalArticleClient article={ui} related={related} />
+      </SDSection>
     </>
   );
 }

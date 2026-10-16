@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { buildPageMetadata } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd, serviceJsonLd } from "@/lib/jsonld";
-import { getMergedTreatment, getMergedTreatments } from "@/lib/wp/treatments";
-import { TreatmentDetailClient } from "@/components/pages/TreatmentDetailClient";
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { buildPageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, serviceJsonLd } from '@/lib/jsonld';
+import { getMergedTreatment, getMergedTreatments } from '@/lib/wp/treatments';
+import { TreatmentDetailClient } from '@/components/pages/TreatmentDetailClient';
+import { SDSection } from '@/sitedash/runtime';
 
 export const revalidate = 300;
 
@@ -35,32 +36,30 @@ export default async function TreatmentDetailPage({ params }: Props) {
   const { slug } = await params;
   // `getMergedTreatment` is the variant that also pulls the treatment's own
   // WordPress page (885 for botox) into `body`, which the detail renders.
-  const [treatment, all] = await Promise.all([
-    getMergedTreatment(slug),
-    getMergedTreatments(),
-  ]);
+  const [treatment, all] = await Promise.all([getMergedTreatment(slug), getMergedTreatments()]);
   if (!treatment) notFound();
 
   const related = all
-    .filter(
-      (x) =>
-        x.id !== treatment.id && (x.category === treatment.category || x.featured),
-    )
+    .filter((x) => x.id !== treatment.id && (x.category === treatment.category || x.featured))
     .slice(0, 3);
 
   return (
     <>
-      <JsonLd
-        data={[
-          await serviceJsonLd(treatment),
-          await breadcrumbJsonLd([
-            { name: { ar: "الرئيسية", en: "Home" }, path: "" },
-            { name: { ar: "الخدمات", en: "Services" }, path: "/services" },
-            { name: treatment.name, path: `/treatments/${treatment.id}` },
-          ]),
-        ]}
-      />
-      <TreatmentDetailClient treatment={treatment} related={related} />
+      <SDSection id="treatments-slug-[dynamic].json-ld">
+        <JsonLd
+          data={[
+            await serviceJsonLd(treatment),
+            await breadcrumbJsonLd([
+              { name: { ar: 'الرئيسية', en: 'Home' }, path: '' },
+              { name: { ar: 'الخدمات', en: 'Services' }, path: '/services' },
+              { name: treatment.name, path: `/treatments/${treatment.id}` },
+            ]),
+          ]}
+        />
+      </SDSection>
+      <SDSection id="treatments-slug-[dynamic].treatment-detail-client">
+        <TreatmentDetailClient treatment={treatment} related={related} />
+      </SDSection>
     </>
   );
 }

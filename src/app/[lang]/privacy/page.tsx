@@ -1,37 +1,42 @@
-import type { Metadata } from "next";
-import { buildPageMetadata } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd } from "@/lib/jsonld";
-import { PrivacyClient } from "@/components/pages/PrivacyClient";
-import { getPageTitle } from "@/lib/wp";
+import type { Metadata } from 'next';
+import { buildPageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd } from '@/lib/jsonld';
+import { PrivacyClient } from '@/components/pages/PrivacyClient';
+import { getPageTitle } from '@/lib/wp';
+import { SDSection } from '@/sitedash/runtime';
 
 export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
-    path: "/privacy",
-    title: { ar: "سياسة الخصوصية", en: "Privacy Policy" },
+    path: '/privacy',
+    title: { ar: 'سياسة الخصوصية', en: 'Privacy Policy' },
     description: {
-      ar: "كيف يتعامل موقع عيادات شامه مع معلومات الزائرات: نماذج الحجز والاستفسار، تفضيل اللغة المحفوظ محلياً، وقنوات التواصل الخارجية. سياسة واضحة ومختصرة بدون تعقيد قانوني.",
-      en: "How the Shamah Clinics website handles visitor information: booking and enquiry forms, the locally stored language preference, and external contact channels. Clear and concise.",
+      ar: 'كيف يتعامل موقع عيادات شامه مع معلومات الزائرات: نماذج الحجز والاستفسار، تفضيل اللغة المحفوظ محلياً، وقنوات التواصل الخارجية. سياسة واضحة ومختصرة بدون تعقيد قانوني.',
+      en: 'How the Shamah Clinics website handles visitor information: booking and enquiry forms, the locally stored language preference, and external contact channels. Clear and concise.',
     },
   });
 }
 
 export default async function PrivacyPage() {
-  const title = await getPageTitle("privacy-policy", {
-    ar: "سياسة الخصوصية",
-    en: "Privacy Policy",
+  const title = await getPageTitle('privacy-policy', {
+    ar: 'سياسة الخصوصية',
+    en: 'Privacy Policy',
   });
   return (
     <>
-      <JsonLd
-        data={await breadcrumbJsonLd([
-          { name: { ar: "الرئيسية", en: "Home" }, path: "" },
-          { name: { ar: "سياسة الخصوصية", en: "Privacy" }, path: "/privacy" },
-        ])}
-      />
-      <PrivacyClient title={title} />
+      <SDSection id="privacy.json-ld">
+        <JsonLd
+          data={await breadcrumbJsonLd([
+            { name: { ar: 'الرئيسية', en: 'Home' }, path: '' },
+            { name: { ar: 'سياسة الخصوصية', en: 'Privacy' }, path: '/privacy' },
+          ])}
+        />
+      </SDSection>
+      <SDSection id="privacy.privacy-client">
+        <PrivacyClient title={title} />
+      </SDSection>
     </>
   );
 }

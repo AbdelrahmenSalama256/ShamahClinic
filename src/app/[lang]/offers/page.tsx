@@ -1,23 +1,24 @@
-import type { Metadata } from "next";
-import { buildPageMetadata } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd, offerJsonLd } from "@/lib/jsonld";
-import { OffersClient } from "@/components/pages/OffersClient";
-import { getOffers, getPageTitle } from "@/lib/wp";
-import { offerToUI } from "@/lib/wp/ui";
-import { routeLang } from "@/lib/route-lang";
+import type { Metadata } from 'next';
+import { buildPageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, offerJsonLd } from '@/lib/jsonld';
+import { OffersClient } from '@/components/pages/OffersClient';
+import { getOffers, getPageTitle } from '@/lib/wp';
+import { offerToUI } from '@/lib/wp/ui';
+import { routeLang } from '@/lib/route-lang';
+import { SDSection } from '@/sitedash/runtime';
 
 export const revalidate = 300;
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
-    path: "/offers",
-    title: { ar: "العروض والباقات الموسمية", en: "Offers & Packages" },
+    path: '/offers',
+    title: { ar: 'العروض والباقات الموسمية', en: 'Offers & Packages' },
     description: {
-      ar: "عروض وباقات عيادات شامه الحالية بأسعارها الفعلية، سارية في فروع مدينة نصر والتجمع الخامس والشيخ زايد.",
-      en: "Current Shamah Clinics offers and packages at their real prices, valid across the Nasr City, Fifth Settlement and Zayed branches.",
+      ar: 'عروض وباقات عيادات شامه الحالية بأسعارها الفعلية، سارية في فروع مدينة نصر والتجمع الخامس والشيخ زايد.',
+      en: 'Current Shamah Clinics offers and packages at their real prices, valid across the Nasr City, Fifth Settlement and Zayed branches.',
     },
-    image: "/images/treatment-hydrafacial.jpg",
+    image: '/images/treatment-hydrafacial.jpg',
   });
 }
 
@@ -25,15 +26,15 @@ export default async function OffersPage() {
   const lang = await routeLang();
   const [paged, title] = await Promise.all([
     getOffers({ perPage: 30 }, lang).catch(() => ({ items: [] })),
-    getPageTitle("shop", { ar: "باقات وعروض الموسم", en: "Seasonal packages & offers" }),
+    getPageTitle('shop', { ar: 'باقات وعروض الموسم', en: 'Seasonal packages & offers' }),
   ]);
   const wpOffers = paged.items || [];
   const offers = wpOffers.map(offerToUI);
 
   const jsonLd = await Promise.all([
     breadcrumbJsonLd([
-      { name: { ar: "الرئيسية", en: "Home" }, path: "" },
-      { name: { ar: "العروض", en: "Offers" }, path: "/offers" },
+      { name: { ar: 'الرئيسية', en: 'Home' }, path: '' },
+      { name: { ar: 'العروض', en: 'Offers' }, path: '/offers' },
     ]),
     ...wpOffers.map((o) =>
       offerJsonLd({
@@ -49,8 +50,12 @@ export default async function OffersPage() {
 
   return (
     <>
-      <JsonLd data={jsonLd} />
-      <OffersClient offers={offers} title={title} />
+      <SDSection id="offers.json-ld">
+        <JsonLd data={jsonLd} />
+      </SDSection>
+      <SDSection id="offers.offers-client">
+        <OffersClient offers={offers} title={title} />
+      </SDSection>
     </>
   );
 }

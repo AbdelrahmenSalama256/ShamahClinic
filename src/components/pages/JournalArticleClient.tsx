@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import React, { useMemo, useState, useEffect } from "react";
-import Link from "next/link";
-import { useLanguage } from "@/context/LanguageContext";
-import { PageHero } from "@/components/shared/PageHero";
-import { Reveal } from "@/components/ui/Reveal";
-import { Photo } from "@/components/ui/Photo";
-import { ArticleCard } from "@/components/cards/ArticleCard";
-import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
-import { getLocalizedHref } from "@/lib/locale";
-import type { Article } from "@/data/journal";
-import { getSpecialist } from "@/data/specialists";
+import React, { useMemo, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useLanguage } from '@/context/LanguageContext';
+import { PageHero } from '@/components/shared/PageHero';
+import { Reveal } from '@/components/ui/Reveal';
+import { Photo } from '@/components/ui/Photo';
+import { ArticleCard } from '@/components/cards/ArticleCard';
+import { BookButton, WhatsAppButton } from '@/components/shared/Actions';
+import { getLocalizedHref } from '@/lib/locale';
+import type { Article } from '@/data/journal';
+import { getSpecialist } from '@/data/specialists';
 import {
   Clock,
   CalendarDays,
@@ -23,7 +23,8 @@ import {
   List,
   MessageCircle,
   BookOpen,
-} from "lucide-react";
+} from 'lucide-react';
+import { sd } from '@/sitedash/runtime';
 
 export const JournalArticleClient: React.FC<{
   article: Article;
@@ -31,7 +32,7 @@ export const JournalArticleClient: React.FC<{
 }> = ({ article, related = [] }) => {
   const { t, language, formatNumber } = useLanguage();
   const author = getSpecialist(article.authorId);
-  const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
+  const Arrow = language === 'ar' ? ArrowLeft : ArrowRight;
 
   // ── Build TOC from sections ──
   const toc = useMemo(
@@ -53,15 +54,15 @@ export const JournalArticleClient: React.FC<{
       const h = el.scrollHeight - el.clientHeight;
       setProgress(h > 0 ? (el.scrollTop / h) * 100 : 0);
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   // ── Share ──
   const [copied, setCopied] = useState(false);
-  const pageUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = language === "ar" ? article.title.ar : article.title.en;
+  const pageUrl = typeof window !== 'undefined' ? window.location.href : '';
+  const shareText = language === 'ar' ? article.title.ar : article.title.en;
   const shareLinks = {
     whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText} ${pageUrl}`)}`,
     twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(pageUrl)}`,
@@ -79,17 +80,14 @@ export const JournalArticleClient: React.FC<{
   const [showTop, setShowTop] = useState(false);
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 600);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
     <>
       {/* Reading progress bar */}
-      <div
-        aria-hidden="true"
-        className="fixed top-0 start-0 end-0 h-0.5 z-50 bg-transparent pointer-events-none"
-      >
+      <div aria-hidden="true" className="fixed top-0 start-0 end-0 h-0.5 z-50 bg-transparent pointer-events-none">
         <div
           className="h-full bg-gold-gradient transition-[width] duration-150 ease-out"
           style={{ width: `${progress}%` }}
@@ -102,8 +100,11 @@ export const JournalArticleClient: React.FC<{
         lead={article.excerpt}
         photo={article.image}
         breadcrumbs={[
-          { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/blogs", label: { ar: "المدونة", en: "Blogs" } },
+          { href: '/', label: sd('blogs-slug-[dynamic].journal-article-client.text', { ar: 'الرئيسية', en: 'Home' }) },
+          {
+            href: '/blogs',
+            label: sd('blogs-slug-[dynamic].journal-article-client.text2', { ar: 'المدونة', en: 'Blogs' }),
+          },
           {
             href: `/blogs/${article.slug}`,
             label: { ar: article.title.ar, en: article.title.en },
@@ -125,17 +126,14 @@ export const JournalArticleClient: React.FC<{
                 {article.readMinutes ? (
                   <span className="inline-flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-[var(--text-gold)]" />
-                    {t(
-                      `${formatNumber(article.readMinutes)} دقائق قراءة`,
-                      `${article.readMinutes} min read`,
-                    )}
+                    {t(`${formatNumber(article.readMinutes)} دقائق قراءة`, `${article.readMinutes} min read`)}
                   </span>
                 ) : null}
                 {author && (
                   <span className="inline-flex items-center gap-1.5">
-                    {t("بقلم", "By")}{" "}
+                    {sd('blogs-slug-[dynamic].journal-article-client.text3', t('بقلم', 'By'))}{' '}
                     <Link
-                      href={getLocalizedHref("/doctors", language)}
+                      href={getLocalizedHref('/doctors', language)}
                       className="font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors"
                     >
                       {t(author.name.ar, author.name.en)}
@@ -167,10 +165,7 @@ export const JournalArticleClient: React.FC<{
                       {sec.bullets && (
                         <ul className="mt-5 space-y-2.5 border-s-2 border-[var(--gold-border)] ps-5">
                           {sec.bullets[language].map((b) => (
-                            <li
-                              key={b}
-                              className="text-[15px] sm:text-base leading-relaxed text-[var(--text-primary)]"
-                            >
+                            <li key={b} className="text-[15px] sm:text-base leading-relaxed text-[var(--text-primary)]">
                               {b}
                             </li>
                           ))}
@@ -184,15 +179,18 @@ export const JournalArticleClient: React.FC<{
               {/* Inline CTA — mid-article */}
               <Reveal className="on-gold my-12 rounded-2xl bg-gold-gradient p-6 sm:p-8 text-center shadow-lg">
                 <h3 className="text-lg sm:text-xl font-black text-[var(--ink-on-gold)] mb-2">
-                  {t(
-                    "محتاجة استشارة شخصية لحالتكِ؟",
-                    "Need a personal consultation for your case?",
+                  {sd(
+                    'blogs-slug-[dynamic].journal-article-client.text4',
+                    t('محتاجة استشارة شخصية لحالتكِ؟', 'Need a personal consultation for your case?'),
                   )}
                 </h3>
                 <p className="text-sm text-[var(--ink-on-gold-muted)] mb-5 max-w-lg mx-auto">
-                  {t(
-                    "احجزي موعدكِ مع إحدى طبيباتنا واستلمي خطة مخصصة لبشرتكِ.",
-                    "Book your appointment with one of our doctors and get a plan tailored to your skin.",
+                  {sd(
+                    'blogs-slug-[dynamic].journal-article-client.text5',
+                    t(
+                      'احجزي موعدكِ مع إحدى طبيباتنا واستلمي خطة مخصصة لبشرتكِ.',
+                      'Book your appointment with one of our doctors and get a plan tailored to your skin.',
+                    ),
                   )}
                 </p>
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -208,7 +206,8 @@ export const JournalArticleClient: React.FC<{
                     key={tag}
                     className="text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-control)] rounded-full px-3 py-1 hover:border-[var(--border-control)] hover:text-[var(--gold-end)] transition-colors duration-300"
                   >
-                    #{tag}
+                    {sd('blogs-slug-[dynamic].journal-article-client.text15', '#')}
+                    {tag}
                   </span>
                 ))}
               </div>
@@ -217,14 +216,14 @@ export const JournalArticleClient: React.FC<{
               <Reveal className="mt-8 flex flex-wrap items-center gap-3 py-5 border-t border-b border-[var(--border-control)]">
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[var(--text-primary)]">
                   <Share2 className="w-4 h-4 text-[var(--text-gold)]" />
-                  {t("شاركي المقال:", "Share this article:")}
+                  {sd('blogs-slug-[dynamic].journal-article-client.text6', t('شاركي المقال:', 'Share this article:'))}
                 </span>
                 <div className="flex items-center gap-2">
                   <a
                     href={shareLinks.whatsapp}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Share on WhatsApp"
+                    aria-label={sd('blogs-slug-[dynamic].journal-article-client.ariaLabel', 'Share on WhatsApp')}
                     className="w-9 h-9 rounded-full border border-[var(--border-control)] text-[var(--text-success)] hover:bg-[var(--bg-success-soft)] hover:border-[var(--border-success)] flex items-center justify-center transition-colors"
                   >
                     <MessageCircle className="w-4 h-4" />
@@ -233,14 +232,10 @@ export const JournalArticleClient: React.FC<{
                     href={shareLinks.twitter}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Share on X"
+                    aria-label={sd('blogs-slug-[dynamic].journal-article-client.ariaLabel2', 'Share on X')}
                     className="w-9 h-9 rounded-full border border-[var(--border-control)] text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] flex items-center justify-center transition-colors"
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="w-3.5 h-3.5"
-                    >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                       <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                     </svg>
                   </a>
@@ -248,27 +243,19 @@ export const JournalArticleClient: React.FC<{
                     href={shareLinks.facebook}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Share on Facebook"
+                    aria-label={sd('blogs-slug-[dynamic].journal-article-client.ariaLabel3', 'Share on Facebook')}
                     className="w-9 h-9 rounded-full border border-[var(--border-control)] text-blue-600 hover:bg-blue-50 hover:border-blue-300 flex items-center justify-center transition-colors"
                   >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="w-4 h-4"
-                    >
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                     </svg>
                   </a>
                   <button
                     onClick={copyLink}
-                    aria-label="Copy link"
+                    aria-label={sd('blogs-slug-[dynamic].journal-article-client.ariaLabel4', 'Copy link')}
                     className="w-9 h-9 rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:bg-[var(--bg-secondary)] hover:border-[var(--border-control)] flex items-center justify-center transition-colors cursor-pointer"
                   >
-                    {copied ? (
-                      <Check className="w-4 h-4 text-[var(--text-success)]" />
-                    ) : (
-                      <Link2 className="w-4 h-4" />
-                    )}
+                    {copied ? <Check className="w-4 h-4 text-[var(--text-success)]" /> : <Link2 className="w-4 h-4" />}
                   </button>
                 </div>
               </Reveal>
@@ -277,28 +264,24 @@ export const JournalArticleClient: React.FC<{
               {author && (
                 <Reveal className="mt-12 flex flex-col sm:flex-row gap-5 items-start rounded-2xl border border-[var(--border-control)] bg-[var(--bg-secondary)]/60 p-6">
                   <div className="w-24 h-24 rounded-2xl overflow-hidden shrink-0">
-                    <Photo
-                      slot={author.image}
-                      ratio="square"
-                      className="!aspect-square"
-                      sizes="120px"
-                    />
+                    <Photo slot={author.image} ratio="square" className="!aspect-square" sizes="120px" />
                   </div>
                   <div>
                     <p className="text-xs font-bold text-[var(--gold-end)] mb-1">
-                      {t("الكاتبة", "Author")}
+                      {sd('blogs-slug-[dynamic].journal-article-client.text7', t('الكاتبة', 'Author'))}
                     </p>
                     <h3 className="text-lg font-black text-[var(--text-primary)]">
                       {t(author.name.ar, author.name.en)}
                     </h3>
-                    <p className="text-sm text-[var(--text-secondary)] mt-1">
-                      {t(author.title.ar, author.title.en)}
-                    </p>
+                    <p className="text-sm text-[var(--text-secondary)] mt-1">{t(author.title.ar, author.title.en)}</p>
                     <Link
-                      href={getLocalizedHref("/doctors", language)}
+                      href={getLocalizedHref('/doctors', language)}
                       className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
                     >
-                      {t("تعرّفي على الفريق الطبي", "Meet the medical team")}
+                      {sd(
+                        'blogs-slug-[dynamic].journal-article-client.text8',
+                        t('تعرّفي على الفريق الطبي', 'Meet the medical team'),
+                      )}
                       <Arrow className="w-3.5 h-3.5" />
                     </Link>
                   </div>
@@ -310,13 +293,13 @@ export const JournalArticleClient: React.FC<{
                 <div className="mt-16">
                   <div className="flex items-end justify-between mb-6">
                     <h2 className="text-xl font-black text-[var(--text-primary)]">
-                      {t("مدونات ذات صلة", "Related blogs")}
+                      {sd('blogs-slug-[dynamic].journal-article-client.text9', t('مدونات ذات صلة', 'Related blogs'))}
                     </h2>
                     <Link
-                      href={getLocalizedHref("/blogs", language)}
+                      href={getLocalizedHref('/blogs', language)}
                       className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors"
                     >
-                      {t("كل المدونات", "All blogs")}
+                      {sd('blogs-slug-[dynamic].journal-article-client.text10', t('كل المدونات', 'All blogs'))}
                       <Arrow className="w-3.5 h-3.5" />
                     </Link>
                   </div>
@@ -335,13 +318,16 @@ export const JournalArticleClient: React.FC<{
                 {/* TOC */}
                 {toc.length > 0 && (
                   <nav
-                    aria-label="Table of contents"
+                    aria-label={sd('blogs-slug-[dynamic].journal-article-client.ariaLabel5', 'Table of contents')}
                     className="rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-5"
                   >
                     <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[var(--border-control)]">
                       <List className="w-4 h-4 text-[var(--text-gold)]" />
                       <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                        {t("في هذا المقال", "In this article")}
+                        {sd(
+                          'blogs-slug-[dynamic].journal-article-client.text11',
+                          t('في هذا المقال', 'In this article'),
+                        )}
                       </span>
                     </div>
                     <ul className="space-y-2.5">
@@ -355,9 +341,7 @@ export const JournalArticleClient: React.FC<{
                               {formatNumber(i + 1)}
                             </span>
                             <span className="border-b border-transparent group-hover:border-[var(--gold-border)] transition-colors">
-                              {item.heading
-                                ? t(item.heading.ar, item.heading.en)
-                                : ""}
+                              {item.heading ? t(item.heading.ar, item.heading.en) : ''}
                             </span>
                           </a>
                         </li>
@@ -372,12 +356,18 @@ export const JournalArticleClient: React.FC<{
                     <BookOpen className="w-5 h-5 text-[var(--text-on-dark)]" />
                   </div>
                   <h3 className="text-sm font-black text-[var(--text-on-dark)] mb-2">
-                    {t("استشارة مخصصة", "Personal consultation")}
+                    {sd(
+                      'blogs-slug-[dynamic].journal-article-client.text12',
+                      t('استشارة مخصصة', 'Personal consultation'),
+                    )}
                   </h3>
                   <p className="text-xs text-[var(--text-on-dark-muted)] mb-4 leading-relaxed">
-                    {t(
-                      "خطة علاجية مناسبة لبشرتكِ مع طبيبة متخصصة.",
-                      "A treatment plan tailored to your skin with a specialist doctor.",
+                    {sd(
+                      'blogs-slug-[dynamic].journal-article-client.text13',
+                      t(
+                        'خطة علاجية مناسبة لبشرتكِ مع طبيبة متخصصة.',
+                        'A treatment plan tailored to your skin with a specialist doctor.',
+                      ),
                     )}
                   </p>
                   <BookButton size="sm" />
@@ -385,10 +375,13 @@ export const JournalArticleClient: React.FC<{
 
                 {/* Back to blogs */}
                 <Link
-                  href={getLocalizedHref("/blogs", language)}
+                  href={getLocalizedHref('/blogs', language)}
                   className="block text-center text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--gold-end)] transition-colors"
                 >
-                  {t("→ الرجوع إلى المدونة", "→ Back to all blogs")}
+                  {sd(
+                    'blogs-slug-[dynamic].journal-article-client.text14',
+                    t('→ الرجوع إلى المدونة', '→ Back to all blogs'),
+                  )}
                 </Link>
               </div>
             </aside>
@@ -399,8 +392,8 @@ export const JournalArticleClient: React.FC<{
       {/* Back to top button */}
       {showTop && (
         <button
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          aria-label="Back to top"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label={sd('blogs-slug-[dynamic].journal-article-client.ariaLabel6', 'Back to top')}
           className="fixed bottom-[calc(var(--mobile-bar-height)+var(--floating-control-gap)+env(safe-area-inset-bottom))] sm:bottom-[calc(var(--floating-control-gap)+env(safe-area-inset-bottom))] end-6 z-[45] w-11 h-11 rounded-full bg-gold-gradient shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 flex items-center justify-center cursor-pointer"
         >
           <ChevronUp className="w-5 h-5" />

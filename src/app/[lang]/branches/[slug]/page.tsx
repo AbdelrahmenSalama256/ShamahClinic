@@ -1,10 +1,11 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { buildPageMetadata } from "@/lib/seo";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbJsonLd, branchJsonLd } from "@/lib/jsonld";
-import { BranchDetailClient } from "@/components/pages/BranchDetailClient";
-import { getBranchList } from "@/lib/wp";
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { buildPageMetadata } from '@/lib/seo';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { breadcrumbJsonLd, branchJsonLd } from '@/lib/jsonld';
+import { BranchDetailClient } from '@/components/pages/BranchDetailClient';
+import { getBranchList } from '@/lib/wp';
+import { SDSection } from '@/sitedash/runtime';
 
 interface Props {
   params: Promise<{ lang: string; slug: string }>;
@@ -35,17 +36,21 @@ export default async function BranchDetailPage({ params }: Props) {
 
   return (
     <>
-      <JsonLd
-        data={[
-          await branchJsonLd(branch),
-          await breadcrumbJsonLd([
-            { name: { ar: "الرئيسية", en: "Home" }, path: "" },
-            { name: { ar: "الفروع", en: "Branches" }, path: "/branches" },
-            { name: branch.name, path: `/branches/${branch.id}` },
-          ]),
-        ]}
-      />
-      <BranchDetailClient branch={branch} others={branches.filter((b) => b.id !== branch.id)} />
+      <SDSection id="branches-slug-[dynamic].json-ld">
+        <JsonLd
+          data={[
+            await branchJsonLd(branch),
+            await breadcrumbJsonLd([
+              { name: { ar: 'الرئيسية', en: 'Home' }, path: '' },
+              { name: { ar: 'الفروع', en: 'Branches' }, path: '/branches' },
+              { name: branch.name, path: `/branches/${branch.id}` },
+            ]),
+          ]}
+        />
+      </SDSection>
+      <SDSection id="branches-slug-[dynamic].branch-detail-client">
+        <BranchDetailClient branch={branch} others={branches.filter((b) => b.id !== branch.id)} />
+      </SDSection>
     </>
   );
 }

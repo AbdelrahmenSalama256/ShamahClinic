@@ -1,20 +1,21 @@
-"use client";
+'use client';
 
-import React from "react";
-import { useLanguage } from "@/context/LanguageContext";
-import { PageHero } from "@/components/shared/PageHero";
-import { Reveal } from "@/components/ui/Reveal";
-import { FaqAccordion } from "@/components/shared/FaqAccordion";
-import { WhatsAppButton, CallButton } from "@/components/shared/Actions";
-import { faqData, type FaqItem } from "@/data/faq";
+import React from 'react';
+import { useLanguage } from '@/context/LanguageContext';
+import { PageHero } from '@/components/shared/PageHero';
+import { Reveal } from '@/components/ui/Reveal';
+import { FaqAccordion } from '@/components/shared/FaqAccordion';
+import { WhatsAppButton, CallButton } from '@/components/shared/Actions';
+import { faqData, type FaqItem } from '@/data/faq';
+import { sd } from '@/sitedash/runtime';
 
-const categoryOrder: FaqItem["category"][] = ["laser", "injectables", "skincare", "general"];
+const categoryOrder: FaqItem['category'][] = ['laser', 'injectables', 'skincare', 'general'];
 
-const categoryLabels: Record<FaqItem["category"], { ar: string; en: string }> = {
-  laser: { ar: "الليزر وإزالة الشعر", en: "Laser & hair removal" },
-  injectables: { ar: "الفيلر والبوتوكس", en: "Fillers & Botox" },
-  skincare: { ar: "العناية بالبشرة", en: "Skincare" },
-  general: { ar: "الحجز والعيادات", en: "Booking & clinics" },
+const categoryLabels: Record<FaqItem['category'], { ar: string; en: string }> = {
+  laser: sd('faq.faq-client.text', { ar: 'الليزر وإزالة الشعر', en: 'Laser & hair removal' }),
+  injectables: sd('faq.faq-client.text2', { ar: 'الفيلر والبوتوكس', en: 'Fillers & Botox' }),
+  skincare: sd('faq.faq-client.text3', { ar: 'العناية بالبشرة', en: 'Skincare' }),
+  general: sd('faq.faq-client.text4', { ar: 'الحجز والعيادات', en: 'Booking & clinics' }),
 };
 
 /** `title` is the WordPress page 169 heading, with an authored fallback for
@@ -30,13 +31,13 @@ export const FaqClient: React.FC<{ title: { ar: string; en: string } }> = ({ tit
     <>
       <PageHero
         title={title}
-        lead={{
-          ar: "إجابات مباشرة على أكثر ما تسأل عنه العميلات قبل الحجز. لم تجدي سؤالك؟ راسلينا على واتساب وسنرد خلال دقائق.",
+        lead={sd('faq.faq-client.lead', {
+          ar: 'إجابات مباشرة على أكثر ما تسأل عنه العميلات قبل الحجز. لم تجدي سؤالك؟ راسلينا على واتساب وسنرد خلال دقائق.',
           en: "Direct answers to what clients ask most before booking. Can't find your question? Message us on WhatsApp and we reply within minutes.",
-        }}
+        })}
         breadcrumbs={[
-          { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/faq", label: title },
+          { href: '/', label: sd('faq.faq-client.text5', { ar: 'الرئيسية', en: 'Home' }) },
+          { href: '/faq', label: title },
         ]}
       />
 
@@ -55,12 +56,15 @@ export const FaqClient: React.FC<{ title: { ar: string; en: string } }> = ({ tit
 
           <Reveal className="mt-16 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-8 text-center">
             <h2 className="text-xl font-black text-[var(--text-primary)] mb-2">
-              {t("ما زال لديكِ سؤال؟", "Still have a question?")}
+              {sd('faq.faq-client.text6', t('ما زال لديكِ سؤال؟', 'Still have a question?'))}
             </h2>
             <p className="text-sm text-[var(--text-secondary)] mb-6 max-w-lg mx-auto">
-              {t(
-                "أسئلتكِ عن الحجز وخدمات العيادة موضع ترحيب: تواصلي عبر واتساب أو الاتصال وسنساعدك في اختيار الجلسة المناسبة.",
-                "Questions about booking and our services are welcome: reach us on WhatsApp or by phone and we will help you choose the right session."
+              {sd(
+                'faq.faq-client.text7',
+                t(
+                  'أسئلتكِ عن الحجز وخدمات العيادة موضع ترحيب: تواصلي عبر واتساب أو الاتصال وسنساعدك في اختيار الجلسة المناسبة.',
+                  'Questions about booking and our services are welcome: reach us on WhatsApp or by phone and we will help you choose the right session.',
+                ),
               )}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
