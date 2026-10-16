@@ -9,7 +9,7 @@ Nothing is hand-copied from WordPress and WordPress is never written to.
 
 ```bash
 npm run sync:wp   # refresh data/wp/*.json + public/wp/*.webp from WordPress (run before deploying)
-npm run dev       # dev server — reads live WordPress, snapshot as fallback
+npm run dev       # Webpack dev server — reads live WordPress, snapshot as fallback
 npm run build     # production build — reads ONLY data/wp/*.json
 npm run start     # serve the build
 npm run lint      # eslint (next lint was removed in Next 16)

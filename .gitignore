@@ -16,6 +16,11 @@
 # next.js
 /.next/
 /out/
+# throwaway dist dirs from one-off prod builds (NEXT_DIST_DIR) used to measure the
+# public JS bundle against the pre-Payload baseline; never committed.
+/.next-base/
+/.next-payload/
+/.next-seocheck/
 
 # production
 /build

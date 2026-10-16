@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -19,7 +23,12 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@payload-config": [
+        "./src/payload.config.mts"
+      ]
     }
   },
   "include": [
@@ -28,7 +37,17 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "**/*.mts",
+    ".next-seocheck/types/**/*.ts",
+    ".next-seocheck/dev/types/**/*.ts",
+    ".next-base/types/**/*.ts",
+    ".next-base/dev/types/**/*.ts",
+    ".next-payload/types/**/*.ts",
+    ".next-payload/dev/types/**/*.ts",
+    ".next-local-test/types/**/*.ts",
+    ".next-local-test/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules"
+  ]
 }

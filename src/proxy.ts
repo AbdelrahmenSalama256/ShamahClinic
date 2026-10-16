@@ -29,6 +29,8 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Static assets, route handlers and file-based metadata (sitemap.xml,
-  // robots.txt) must reach their own handlers untouched.
-  matcher: ["/((?!api/|_next/|favicon.ico|.*\\.).*)"],
+  // robots.txt) must reach their own handlers untouched. `admin` is excluded so
+  // the Payload dashboard and its sub-routes are never rewritten onto `/ar/admin`;
+  // Payload's own `/api/payload` and `/api/graphql` already fall under `api/`.
+  matcher: ["/((?!api/|admin|_next/|favicon.ico|.*\\.).*)"],
 };
