@@ -1,0 +1,156 @@
+{
+  "locales": [
+    "ar",
+    "en"
+  ],
+  "appDir": "src/app",
+  "dataDir": "src/data",
+  "bindModule": "@/sitedash/runtime",
+  "adminRoute": "/manage",
+  "dbDialect": "pg",
+  "exclude": [
+    "src/app/(payload)"
+  ],
+  "collections": [
+    {
+      "id": "journal",
+      "label": "Blog articles",
+      "fields": [
+        {
+          "name": "title",
+          "type": "bi"
+        },
+        {
+          "name": "body",
+          "type": "bi"
+        },
+        {
+          "name": "excerpt",
+          "type": "bi"
+        },
+        {
+          "name": "image",
+          "type": "image"
+        },
+        {
+          "name": "imageAlt",
+          "type": "bi",
+          "required": false
+        },
+        {
+          "name": "category",
+          "type": "bi"
+        },
+        {
+          "name": "categorySlug",
+          "type": "text"
+        },
+        {
+          "name": "categoryIds",
+          "type": "text"
+        },
+        {
+          "name": "date",
+          "type": "text"
+        },
+        {
+          "name": "modified",
+          "type": "text"
+        },
+        {
+          "name": "wpId",
+          "type": "number"
+        },
+        {
+          "name": "wpLink",
+          "type": "link"
+        }
+      ]
+    },
+    {
+      "id": "offers",
+      "label": "Offers",
+      "fields": [
+        {
+          "name": "title",
+          "type": "bi"
+        },
+        {
+          "name": "excerpt",
+          "type": "bi"
+        },
+        {
+          "name": "body",
+          "type": "bi"
+        },
+        {
+          "name": "images",
+          "type": "text"
+        },
+        {
+          "name": "price",
+          "type": "number"
+        },
+        {
+          "name": "regularPrice",
+          "type": "number"
+        },
+        {
+          "name": "currency",
+          "type": "text"
+        },
+        {
+          "name": "onSale",
+          "type": "boolean"
+        },
+        {
+          "name": "savingPercent",
+          "type": "number",
+          "required": false
+        },
+        {
+          "name": "enabled",
+          "type": "boolean"
+        },
+        {
+          "name": "order",
+          "type": "number"
+        },
+        {
+          "name": "wpId",
+          "type": "number"
+        },
+        {
+          "name": "wpLink",
+          "type": "link"
+        }
+      ]
+    },
+    {
+      "id": "results",
+      "label": "Result stories",
+      "fields": [
+        {
+          "name": "articleSlug",
+          "type": "text"
+        },
+        {
+          "name": "phrases",
+          "type": "text"
+        },
+        {
+          "name": "enabled",
+          "type": "boolean"
+        },
+        {
+          "name": "order",
+          "type": "number"
+        },
+        {
+          "name": "wpId",
+          "type": "number"
+        }
+      ]
+    }
+  ]
+}

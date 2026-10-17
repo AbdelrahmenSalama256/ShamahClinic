@@ -64,5 +64,7 @@ next-env.d.ts
 # when the database is down, so it is rebuilt by `sitedash db:export` / `publish` —
 # committing a stale copy would let a checkout serve content someone unpublished.
 # Ignoring the folder also keeps Tailwind from scanning the manifest's class-like keys.
-.sitedash/
+.sitedash/*
 /.next-sitedash-pub/
+
+!.sitedash/config.json
