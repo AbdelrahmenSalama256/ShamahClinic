@@ -36,6 +36,18 @@ function isBag(v: unknown): v is { [locale: string]: string | undefined } {
   return v !== null && typeof v === "object";
 }
 
+const ARABIC_SCRIPT = new RegExp("[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]");
+
+/**
+ * The language a SCALAR default is written in, judged by its own script. Bilingual
+ * hosts resolve the locale before calling `sd` (a `t(ar, en)` helper), so a scalar
+ * call site belongs to exactly one language and the published bag has to be read
+ * back in that same language.
+ */
+function sameLanguage(def: unknown, value: unknown): boolean {
+  return typeof value === "string" && value !== "" && ARABIC_SCRIPT.test(value) === ARABIC_SCRIPT.test(String(def));
+}
+
 /**
  * Build the runtime bound to a snapshot. `sd(key, def)` returns `def` untouched
  * when no published value exists — the guarantee behind pixel-identical install.
@@ -58,9 +70,12 @@ export function buildRuntime(snapshot: SdSnapshot): SdRuntime {
     }
 
     if (isBag(ov)) {
-      // Single-value call site (text/attr position) needs a scalar, not a bag.
-      for (const value of Object.values(ov)) if (value !== undefined && value !== null) return value as unknown as T;
-      return def;
+      // Single-value call site (text/attr position) needs a scalar, not a bag — and it
+      // needs the slot written in ITS OWN language. Bilingual hosts resolve the locale
+      // before calling (`t(ar, en)`), so taking the first slot handed every English
+      // page the Arabic text once a snapshot was published.
+      for (const value of Object.values(ov)) if (sameLanguage(def, value)) return value as unknown as T;
+      return def; // only the other language is published: keep the source text rather than swap
     }
 
     return ov as unknown as T;

@@ -22,6 +22,8 @@
 /.next-payload/
 /.next-seocheck/
 /.next-local-test/
+/.next-sitedash/
+/.next-pre/
 
 # production
 /build

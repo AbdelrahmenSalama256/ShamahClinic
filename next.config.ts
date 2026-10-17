@@ -2,6 +2,13 @@ import { withPayload } from "@payloadcms/next/withPayload";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // SiteDash: @sitedash/* ship TypeScript source whose internal imports use Node ESM
+  // `.js` specifiers, so the bundler transpiles them and resolves `.js` -> `.ts`.
+  transpilePackages: ["@sitedash/core", "@sitedash/db", "@sitedash/ui"],
+  webpack: (config) => {
+    config.resolve.extensionAlias = { ".js": [".ts", ".tsx", ".js"], ".mjs": [".mts", ".mjs"] };
+    return config;
+  },
   // A throwaway build dir so a one-off production build (SEO/curl checks, bundle
   // measurement) can run without rewriting the `.next` cache a live `next dev`
   // server is watching. Unset means the normal `.next`.

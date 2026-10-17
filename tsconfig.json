@@ -45,7 +45,11 @@
     ".next-payload/types/**/*.ts",
     ".next-payload/dev/types/**/*.ts",
     ".next-local-test/types/**/*.ts",
-    ".next-local-test/dev/types/**/*.ts"
+    ".next-local-test/dev/types/**/*.ts",
+    ".next-sitedash/types/**/*.ts",
+    ".next-sitedash/dev/types/**/*.ts",
+    ".next-sitedash-pub/types/**/*.ts",
+    ".next-sitedash-pub/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
