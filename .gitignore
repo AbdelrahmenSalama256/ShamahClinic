@@ -65,3 +65,4 @@ next-env.d.ts
 # committing a stale copy would let a checkout serve content someone unpublished.
 # Ignoring the folder also keeps Tailwind from scanning the manifest's class-like keys.
 .sitedash/
+/.next-sitedash-pub/
