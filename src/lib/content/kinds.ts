@@ -1,0 +1,278 @@
+/**
+ * What the console edits, as data.
+ *
+ * One entry per kind names the table it lives in, the column that carries its
+ * public identity (slug, route, item uid) and which columns hold the **draft** an
+ * editor writes versus the **published** copy the site reads. The store, the
+ * publish step and the site read path all work from this map, so adding a kind is
+ * an entry here rather than a fourth copy of the same column list.
+ *
+ * Two rules the columns chosen in `002_content.sql` force:
+ *   - a bilingual row is written **one locale at a time**, so the permission scope
+ *     (`locales`) can name the locale being changed and a single-language editor
+ *     cannot smuggle the other language in through the same request;
+ *   - only the pairs that have a `pub_*` twin are gated by publishing. Fields
+ *     without one (`image`, `price`, `enabled`, `position`) take effect on save,
+ *     and the console labels them as such.
+ */
+import { z } from 'zod';
+import type { Resource } from '../auth/permissions';
+
+export const CONTENT_KINDS = ['article', 'offer', 'page', 'list_item'] as const;
+export type ContentKind = (typeof CONTENT_KINDS)[number];
+export type ContentLocale = 'ar' | 'en';
+export const CONTENT_LOCALES: readonly ContentLocale[] = ['ar', 'en'];
+
+const LONGTEXT = 1_000_000;
+
+/** A bilingual text pair; `pub` is null when the field has no published twin. */
+export interface BiField {
+  name: string;
+  draft: Record<ContentLocale, string>;
+  pub: Record<ContentLocale, string> | null;
+  /** the longest value the columns accept, enforced before the INSERT */
+  max: number;
+  multiline: boolean;
+}
+
+/** A field whose value is one JSON document, optionally with a published twin. */
+export interface JsonField {
+  name: string;
+  draft: string;
+  pub: string | null;
+  required: boolean;
+}
+
+export interface TextField {
+  name: string;
+  column: string;
+  max: number;
+  /** a NOT NULL column needs something to fall back to when the editor clears it */
+  fallback: string | null;
+}
+
+export interface KindSpec {
+  kind: ContentKind;
+  resource: Resource;
+  table: 'articles' | 'offers' | 'pages' | 'list_items';
+  /** the column the console shows in the URL and the permission target names */
+  keyColumn: string;
+  /** writes name a locale; a list item is one JSON document, so it does not */
+  perLocale: boolean;
+  /** list items are scoped by `lists`, everything else by `locales` */
+  scope: 'locales' | 'lists';
+  bi: readonly BiField[];
+  json: readonly JsonField[];
+  text: readonly TextField[];
+  number: readonly { name: string; column: string }[];
+  flag: readonly { name: string; column: string }[];
+}
+
+export const KIND_SPECS: readonly KindSpec[] = [
+  {
+    kind: 'article',
+    resource: 'article',
+    table: 'articles',
+    keyColumn: 'slug',
+    perLocale: true,
+    scope: 'locales',
+    bi: [
+      { name: 'title', draft: { ar: 'title_ar', en: 'title_en' }, pub: { ar: 'pub_title_ar', en: 'pub_title_en' }, max: 500, multiline: false },
+      { name: 'excerpt', draft: { ar: 'excerpt_ar', en: 'excerpt_en' }, pub: { ar: 'pub_excerpt_ar', en: 'pub_excerpt_en' }, max: 1000, multiline: true },
+      { name: 'content', draft: { ar: 'content_ar', en: 'content_en' }, pub: { ar: 'pub_content_ar', en: 'pub_content_en' }, max: LONGTEXT, multiline: true },
+      { name: 'imageAlt', draft: { ar: 'image_alt_ar', en: 'image_alt_en' }, pub: null, max: 500, multiline: false },
+    ],
+    json: [],
+    text: [
+      { name: 'image', column: 'image', max: 512, fallback: null },
+      { name: 'categoryId', column: 'category_id', max: 36, fallback: null },
+    ],
+    number: [],
+    flag: [],
+  },
+  {
+    kind: 'offer',
+    resource: 'offer',
+    table: 'offers',
+    keyColumn: 'slug',
+    perLocale: true,
+    scope: 'locales',
+    bi: [
+      { name: 'name', draft: { ar: 'name_ar', en: 'name_en' }, pub: { ar: 'pub_name_ar', en: 'pub_name_en' }, max: 500, multiline: false },
+      { name: 'excerpt', draft: { ar: 'excerpt_ar', en: 'excerpt_en' }, pub: { ar: 'pub_excerpt_ar', en: 'pub_excerpt_en' }, max: 1000, multiline: true },
+      { name: 'body', draft: { ar: 'body_ar', en: 'body_en' }, pub: { ar: 'pub_body_ar', en: 'pub_body_en' }, max: LONGTEXT, multiline: true },
+    ],
+    json: [{ name: 'images', draft: 'images', pub: null, required: false }],
+    text: [{ name: 'currency', column: 'currency', max: 8, fallback: 'EGP' }],
+    number: [
+      { name: 'price', column: 'price' },
+      { name: 'regularPrice', column: 'regular_price' },
+      { name: 'position', column: 'position' },
+    ],
+    flag: [
+      { name: 'onSale', column: 'on_sale' },
+      { name: 'enabled', column: 'enabled' },
+    ],
+  },
+  {
+    kind: 'page',
+    resource: 'page',
+    table: 'pages',
+    keyColumn: 'route',
+    perLocale: true,
+    scope: 'locales',
+    bi: [
+      { name: 'title', draft: { ar: 'title_ar', en: 'title_en' }, pub: { ar: 'pub_title_ar', en: 'pub_title_en' }, max: 500, multiline: false },
+      { name: 'content', draft: { ar: 'content_ar', en: 'content_en' }, pub: { ar: 'pub_content_ar', en: 'pub_content_en' }, max: LONGTEXT, multiline: true },
+    ],
+    json: [],
+    text: [{ name: 'redirectTo', column: 'redirect_to', max: 512, fallback: null }],
+    number: [],
+    flag: [{ name: 'enabled', column: 'enabled' }],
+  },
+  {
+    kind: 'list_item',
+    resource: 'list',
+    table: 'list_items',
+    keyColumn: 'uid',
+    perLocale: false,
+    scope: 'lists',
+    bi: [],
+    json: [{ name: 'data', draft: 'draft', pub: 'published', required: true }],
+    text: [],
+    number: [{ name: 'position', column: 'position' }],
+    flag: [{ name: 'enabled', column: 'enabled' }],
+  },
+];
+
+const BY_KIND = new Map<ContentKind, KindSpec>(
+  CONTENT_KINDS.map((kind) => {
+    const spec = KIND_SPECS.find((candidate) => candidate.kind === kind);
+    if (!spec) throw new Error(`no kind spec for ${kind}`);
+    return [kind, spec];
+  }),
+);
+
+export function kindSpec(kind: ContentKind): KindSpec {
+  return BY_KIND.get(kind)!;
+}
+
+export function isContentKind(value: string): value is ContentKind {
+  return (CONTENT_KINDS as readonly string[]).includes(value);
+}
+
+export function isContentLocale(value: string): value is ContentLocale {
+  return (CONTENT_LOCALES as readonly string[]).includes(value);
+}
+
+/** The columns a kind owns, so the store can select exactly them and no more. */
+export function columnsOf(spec: KindSpec): string[] {
+  const columns = ['id', spec.keyColumn, 'status', 'version', 'published_at', 'updated_at'];
+  for (const field of spec.bi) {
+    columns.push(field.draft.ar, field.draft.en);
+    if (field.pub) columns.push(field.pub.ar, field.pub.en);
+  }
+  for (const field of spec.json) columns.push(field.draft, ...(field.pub ? [field.pub] : []));
+  for (const field of spec.text) columns.push(field.column);
+  for (const field of spec.number) columns.push(field.column);
+  for (const field of spec.flag) columns.push(field.column);
+  return columns;
+}
+
+const fieldValue = z.union([
+  z.string().max(LONGTEXT),
+  z.number(),
+  z.boolean(),
+  z.null(),
+  z.array(z.unknown()),
+  z.record(z.string(), z.unknown()),
+]);
+
+/** The body the console posts: the row's identity plus this locale's field values. */
+export const writeSchema = z.object({
+  key: z.string().min(1).max(191),
+  fields: z.record(z.string(), fieldValue),
+});
+export type WriteInput = { key: string; fields: Record<string, unknown> };
+export type FieldValue = z.output<typeof fieldValue>;
+
+export type ColumnWrites = Record<string, string | number | null>;
+
+export interface ParseResult {
+  columns: ColumnWrites;
+  issues: { path: string; message: string }[];
+}
+
+/**
+ * Turn the console's flat `{ field: value }` object into column writes.
+ *
+ * A bilingual field writes only the column for the locale the request named; that
+ * is what makes the `locales` scope honest. A JSON field is stringified here,
+ * because MariaDB stores it as LONGTEXT with a `json_valid()` check and a raw
+ * object arrives as SQL text.
+ */
+export function parseWrites(spec: KindSpec, input: WriteInput, locale: ContentLocale): ParseResult {
+  const columns: ColumnWrites = {};
+  const issues: { path: string; message: string }[] = [];
+
+  for (const [name, value] of Object.entries(input.fields)) {
+    const bi = spec.bi.find((field) => field.name === name);
+    if (bi) {
+      if (typeof value !== 'string') issues.push({ path: name, message: 'expected text' });
+      else if (value.length > bi.max) issues.push({ path: name, message: `longer than ${bi.max} characters` });
+      else columns[bi.draft[locale]] = value;
+      continue;
+    }
+
+    const text = spec.text.find((field) => field.name === name);
+    if (text) {
+      if (value !== null && typeof value !== 'string') issues.push({ path: name, message: 'expected text' });
+      else if (typeof value === 'string' && value.length > text.max) issues.push({ path: name, message: `longer than ${text.max} characters` });
+      else columns[text.column] = value === '' || value === null ? text.fallback : (value as string);
+      continue;
+    }
+
+    const number = spec.number.find((field) => field.name === name);
+    if (number) {
+      if (value === null || (typeof value === 'number' && Number.isFinite(value))) columns[number.column] = value;
+      else issues.push({ path: name, message: 'expected a number' });
+      continue;
+    }
+
+    const flag = spec.flag.find((field) => field.name === name);
+    if (flag) {
+      if (typeof value === 'boolean') columns[flag.column] = value ? 1 : 0;
+      else issues.push({ path: name, message: 'expected true or false' });
+      continue;
+    }
+
+    const json = spec.json.find((field) => field.name === name);
+    if (json) {
+      if (value === null || typeof value !== 'object') issues.push({ path: name, message: 'expected an object or an array' });
+      // The published twin is left alone: saving a draft must not unpublish the
+      // copy a visitor is currently reading.
+      else columns[json.draft] = JSON.stringify(value);
+      continue;
+    }
+
+    issues.push({ path: name, message: 'unknown field' });
+  }
+
+  for (const field of spec.json) {
+    // A field that already reported a problem was present but unusable; saying
+    // "required" on top of that tells the editor nothing and contradicts the form.
+    const alreadyReported = issues.some((issue) => issue.path === field.name);
+    if (field.required && columns[field.draft] === undefined && !alreadyReported) {
+      issues.push({ path: field.name, message: 'required' });
+    }
+  }
+
+  return { columns, issues };
+}
+
+/** The fields whose values reach the public site only after a publish. */
+export function publishableColumns(spec: KindSpec, locale: ContentLocale): { draft: string; pub: string }[] {
+  return spec.bi
+    .filter((field) => field.pub !== null)
+    .map((field) => ({ draft: field.draft[locale], pub: field.pub![locale] }));
+}

@@ -1,16 +1,19 @@
 /**
- * npm run db:seed          -> show what the role catalog would change (default, writes nothing)
- * npm run db:seed -- --apply -> write it
+ * npm run db:seed          -> show what the catalogs would change (default, writes nothing)
+ * npm run db:seed -- --apply -> write them
  *
  * Seeds the six roles and their `role_permissions` grants from
- * `src/lib/auth/roles.ts`. It creates no account on purpose: an account needs
- * a password typed by a human, and that is `npm run owner:create`.
+ * `src/lib/auth/roles.ts`, and the `lists` rows from the same file's `LIST_KEYS` —
+ * one command makes the database match both catalogs, so the Editor's scoped grants
+ * and the lists they name cannot drift apart. It creates no account on purpose: an
+ * account needs a password typed by a human, and that is `npm run owner:create`.
  */
 import { loadEnv } from '../../src/lib/db/load-env';
 loadEnv();
 
 import { destroyDb, readDbConfig } from '../../src/lib/db/index';
-import { ROLE_SEEDS, syncRoles } from '../../src/lib/auth/roles';
+import { LIST_KEYS, ROLE_SEEDS, syncRoles } from '../../src/lib/auth/roles';
+import { syncLists } from '../../src/lib/content/lists';
 import { db } from '../../src/lib/db';
 
 async function main(): Promise<void> {
@@ -43,6 +46,20 @@ async function main(): Promise<void> {
   } else {
     const stored = await db.selectFrom('role_permissions').select('id').execute();
     console.log(`Seeded. ${report.rows.filter((row) => !row.existed).length} role(s) created; ${stored.length} grant rows in the database.`);
+  }
+
+  console.log(`\nList catalog — ${LIST_KEYS.length} lists`);
+  const lists = await syncLists({ dryRun: !apply, database });
+  for (const row of lists.rows) {
+    console.log(`  ${row.listKey.padEnd(12)} ${row.existed ? 'exists' : 'will create'} — ${row.label}`);
+  }
+  const missing = lists.rows.filter((row) => !row.existed);
+  if (missing.length === 0) {
+    console.log('Lists already match the catalog.');
+  } else if (lists.dryRun) {
+    console.log(`DRY RUN — ${missing.length} list(s) would be created.`);
+  } else {
+    console.log(`Seeded ${missing.length} list(s).`);
   }
 
   const users = await db.selectFrom('users').select('id').where('deleted_at', 'is', null).execute();

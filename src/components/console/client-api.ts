@@ -13,19 +13,35 @@ export function csrfToken(): string {
   return '';
 }
 
-export interface CallResult {
+export interface CallResult<T = unknown> {
   status: number;
   /** The `error` code the guard answers with, or null when the call succeeded. */
   error: string | null;
+  /** The response body minus `error`, so a caller can read the row it just saved. */
+  data: T | null;
 }
 
-export async function consoleCall(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<CallResult> {
+function dataOf<T>(payload: unknown): T | null {
+  if (payload === null || typeof payload !== 'object') return null;
+  const rest = { ...(payload as Record<string, unknown>) };
+  delete rest.error;
+  return Object.keys(rest).length > 0 ? (rest as T) : null;
+}
+
+export async function consoleCall<T = unknown>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<CallResult<T>> {
   const res = await fetch(path, {
     method,
     headers: { 'Content-Type': 'application/json', [CSRF_HEADER]: csrfToken() },
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: 'same-origin',
   });
-  const data = (await res.json().catch(() => null)) as { error?: string } | null;
-  return { status: res.status, error: data?.error ?? null };
+  const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+  return { status: res.status, error: payload?.error ?? null, data: dataOf<T>(payload) };
+}
+
+/** A read: no CSRF header, because a GET writes nothing. */
+export async function consoleRead<T>(path: string): Promise<CallResult<T>> {
+  const res = await fetch(path, { method: 'GET', credentials: 'same-origin' });
+  const payload = (await res.json().catch(() => null)) as { error?: string } | null;
+  return { status: res.status, error: payload?.error ?? null, data: dataOf<T>(payload) };
 }

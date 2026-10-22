@@ -443,6 +443,10 @@ describe('no console route writes without guard()', () => {
   const TRUSTED = new Map([
     ['@/lib/auth/login', 'src/lib/auth/login.ts'],
     ['@/lib/console/prefs-route', 'src/lib/console/prefs-route.ts'],
+    // Every content and settings route is a one-line delegate to this module, which
+    // puts each request through `guard()`; asserting that here keeps the route files
+    // honest without repeating the import in five of them.
+    ['@/lib/content/api', 'src/lib/content/api.ts'],
   ]);
 
   function routeFiles(dir: string): string[] {

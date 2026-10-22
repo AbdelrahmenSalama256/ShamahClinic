@@ -206,14 +206,25 @@ describe('the sidebar registry', () => {
     }
   });
 
-  it('shows the landing and password screens to any role, and nothing that is not registered', () => {
+  it('shows each role exactly the screens its grants cover', () => {
     const grantsFor = (name: RoleName): Grant[] => {
       const seed = ROLE_SEEDS.find((role) => role.name === name);
       return seed ? permissionsFor(seed).map((row) => ({ ...row })) : [];
     };
-    for (const name of ['Owner', 'Admin', 'Editor', 'SEO', 'Marketer', 'Viewer'] as RoleName[]) {
-      const keys = visibleScreens(grantsFor(name)).map((screen) => screen.key);
-      expect(keys, name).toEqual(['overview', 'password']);
+    // The two screens every role holds, plus what its `read` grants reach. Marketer
+    // has no `list` grant and only Owner/Admin can read `setting`, so those rows are
+    // the proof the sidebar is filtered by the catalog rather than hardcoded.
+    const content = ['overview', 'articles', 'offers', 'pages'];
+    const expected: Record<RoleName, string[]> = {
+      Owner: [...content, 'lists', 'settings', 'password'],
+      Admin: [...content, 'lists', 'settings', 'password'],
+      Editor: [...content, 'lists', 'password'],
+      SEO: [...content, 'lists', 'password'],
+      Marketer: [...content, 'password'],
+      Viewer: [...content, 'lists', 'password'],
+    };
+    for (const name of Object.keys(expected) as RoleName[]) {
+      expect(visibleScreens(grantsFor(name)).map((screen) => screen.key), name).toEqual(expected[name]);
     }
     // No grants at all — an account whose role was never seeded still gets the shell.
     expect(visibleScreens([]).map((screen) => screen.key)).toEqual(['overview', 'password']);
