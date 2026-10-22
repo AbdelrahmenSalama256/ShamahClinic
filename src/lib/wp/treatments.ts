@@ -30,6 +30,12 @@ const SECTION_SLUG: Record<string, string> = {
   fillers: "filler-injections",
   "chemical-peel": "chemical-peeling",
 };
+const TREATMENT_SECTION_SLUG = Object.fromEntries(
+  Object.entries(SECTION_SLUG).map(([sectionSlug, treatmentId]) => [
+    treatmentId,
+    sectionSlug,
+  ]),
+);
 
 const firstSentence = (text: string, max = 150): string => {
   const trimmed = text.trim();
@@ -50,7 +56,7 @@ function normalize(value: string): string {
 
 /** Match a WordPress section to an authored treatment: alias, slug, then title. */
 function matchCard(treatment: Treatment, cards: ServiceCard[]): ServiceCard | undefined {
-  const alias = SECTION_SLUG[treatment.id];
+  const alias = TREATMENT_SECTION_SLUG[treatment.id];
   const byAlias = alias ? cards.find((c) => c.slug === alias) : undefined;
   if (byAlias) return byAlias;
   const bySlug = cards.find((c) => c.slug === treatment.id);
@@ -138,6 +144,19 @@ export async function getMergedTreatments(): Promise<Treatment[]> {
   return [...merged, ...cards.filter((card) => !matched.has(card.slug)).map(fromServiceCard)];
 }
 
+export function getTreatmentSlugs(treatments: Treatment[]): string[] {
+  return [
+    ...new Set(
+      treatments.flatMap((treatment) => [
+        treatment.id,
+        ...(TREATMENT_SECTION_SLUG[treatment.id]
+          ? [TREATMENT_SECTION_SLUG[treatment.id]]
+          : []),
+      ]),
+    ),
+  ];
+}
+
 /**
  * The three services Home shows. The order is WordPress's own: the position of
  * each service among page 696's sections, so the clinic's dashboard decides what
@@ -169,8 +188,8 @@ export async function getFeaturedServices(limit = 3): Promise<Treatment[]> {
     .filter(renders)
     .sort(
       (a, b) =>
-        (rank.get(SECTION_SLUG[a.id] || a.id) ?? Number.MAX_SAFE_INTEGER) -
-        (rank.get(SECTION_SLUG[b.id] || b.id) ?? Number.MAX_SAFE_INTEGER),
+        (rank.get(TREATMENT_SECTION_SLUG[a.id] || a.id) ?? Number.MAX_SAFE_INTEGER) -
+        (rank.get(TREATMENT_SECTION_SLUG[b.id] || b.id) ?? Number.MAX_SAFE_INTEGER),
     );
 
   const picked = pinned.length ? [...pinned] : [];
@@ -191,7 +210,9 @@ export async function getFeaturedServices(limit = 3): Promise<Treatment[]> {
 
 export async function getMergedTreatment(slug: string): Promise<Treatment | null> {
   const all = await getMergedTreatments();
-  const treatment = all.find((t) => t.id === slug);
+  const treatment = all.find(
+    (t) => t.id === slug || SECTION_SLUG[slug] === t.id,
+  );
   if (!treatment) return null;
 
   // WordPress gives a section its own page only when the data team creates one:

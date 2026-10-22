@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, serviceJsonLd } from "@/lib/jsonld";
-import { getMergedTreatment, getMergedTreatments } from "@/lib/wp/treatments";
+import {
+  getMergedTreatment,
+  getMergedTreatments,
+  getTreatmentSlugs,
+} from "@/lib/wp/treatments";
 import { TreatmentDetailClient } from "@/components/pages/TreatmentDetailClient";
 
 export const revalidate = 300;
@@ -15,7 +19,7 @@ interface Props {
 /** Every service the site serves, including the sections page 696 publishes that
  *  we do not author a row for. */
 export async function generateStaticParams() {
-  return (await getMergedTreatments()).map((t) => ({ slug: t.id }));
+  return getTreatmentSlugs(await getMergedTreatments()).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
