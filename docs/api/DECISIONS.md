@@ -67,40 +67,43 @@ sale badge or struck price appears unless the data says `on_sale`.
   in-memory 6-per-minute per-IP rate limit.
 
 ## Env
-WP_BASE_URL (default https://www.shamahclinics.com), REVALIDATE_SECRET, LEAD_MODE, CF7_FORM_ID (568),
-WP_FETCH_TIMEOUT_MS (8000 — live abort before the snapshot serves), WP_MAX_INFLIGHT (3 — global
-semaphore on live requests), WP_TAXONOMY_REVALIDATE (3600 — cache TTL for category/media reads),
-NEXT_PUBLIC_SITE_URL (site-owned canonical origin, drives canonical, hreflang, sitemap, robots).
+WP_BASE_URL (default https://www.shamahclinics.com — only used to rewrite URLs already in the snapshot
+and to reach Contact Form 7; BK-7.3 removed the last runtime read of it), REVALIDATE_SECRET, LEAD_MODE,
+CF7_FORM_ID (568), NEXT_PUBLIC_SITE_URL (site-owned canonical origin, drives canonical, hreflang,
+sitemap, robots).
 The build needs none of them to reach the network: it reads `data/wp/*.json`.
 
-## Transport: snapshot-first (replaces the per-render live fetch)
-Motivation: the client's WordPress host is shared and slow; a build that fetched it would be
-flaky and would hammer the origin, and a runtime fetch with no floor would take pages down
-whenever WP hiccuped.
+## Transport: snapshot-only, then the DB (BK-7.3)
+Motivation (historical): the client's WordPress host is shared and slow; a build that fetched it would be
+flaky and would hammer the origin, and a runtime fetch with no floor would take pages down whenever WP
+hiccuped. That is why the live read was made optional first and then removed.
 
-- `npm run sync:wp` writes the committed snapshot `data/wp/*.json` (both subsites, concurrency 2,
-  300 ms spacing, 30 s timeout, 1 retry with backoff; one batched `/media?include=` per 100 ids)
-  **and** mirrors the images the site renders into `public/wp/*.webp` + `data/wp/images.json`.
-  Run it before every deploy: it is the only step that reaches WordPress for a build.
-- `next build` reads only the snapshot. `lib/wp/http.ts` *rejects* any live call when
-  `NEXT_PHASE === "phase-production-build"` (`[wp] REFUSED live request during build`), so a
-  regression that reintroduces a build-time fetch fails loudly instead of silently slowing builds.
-- Runtime: live first (8 s abort, 1 retry, global semaphore of 3 in-flight, per-URL dedupe),
-  snapshot on error **or on an empty list array** — an empty 200 from a rate-limited WP must not
-  blank a page. Each read logs the winner (`[wp] live en posts-list (92 rows)`).
-- Prerender breadth: `generateStaticParams` emits **every** post per language (92 + 92) plus the
-  4 offers and 20 services per language -> 277 static pages in ~17 s, all from the snapshot;
-  `dynamicParams` stays true so a post published after the build still renders.
-- SEO `<head>` parsing is lazy and cached per URL (`revalidate 86400`, tag `wp:seo`), never fetched
-  for list pages, and never fetched during build; the snapshot pre-seeds the pages whose HTML the
-  sync could read (home AR/EN, contact AR/EN — `/about-us/` and `/services/` 404 on the live host).
-- `_embed` is removed everywhere: lists use `_fields=id,slug,date,modified,link,title,excerpt,categories,featured_media`,
-  images resolve from `media.json`, term names from `categories.{en,ar}`, bodies only on detail.
-- Refresh flow for GitHub-hosted code: run `npm run sync:wp` locally before deploying (documented
-  in README), and use `POST /api/revalidate` (`?secret=` or `x-revalidate-secret`) for on-demand ISR
-  flush between syncs. The route is POST-only (a GET answers 405), answers 401 on a wrong secret and
-  500 with `{"ok":false,"error":"REVALIDATE_SECRET not configured"}` when the variable is unset —
-  which is exactly what happens on a host where it was forgotten, so it must be set before go-live.
+- `npm run sync:wp` (`scripts/sync-wp.mjs`) writes the committed snapshot `data/wp/*.json` (both subsites,
+  concurrency 2, 300 ms spacing, 30 s timeout, 1 retry with backoff; one batched `/media?include=` per
+  100 ids) **and** mirrors the images the site renders into `public/wp/*.webp` + `data/wp/images.json`.
+  It is the **only** code in the repo that talks to WordPress, it is never imported by a route or module,
+  and it is run by hand to cut a new snapshot folder.
+- Since BK-7.3 there is **no live content read anywhere**: `src/lib/wp/http.ts` is deleted, and every
+  reader in `src/lib/wp/index.ts` and `src/lib/wp/seo.ts` returns from the snapshot. The build-time
+  guard (`isBuildPhase()` + `[wp] REFUSED live request during build`) went with it — there is nothing
+  left to refuse. `tests/no-wp-network.test.ts` holds the replacement proof: it spies on `globalThis.fetch`,
+  renders every public reader, and asserts zero requests.
+- Content source is now a **rung**, not a fallback: a kind is served from MariaDB as soon as it holds one
+  published row (`src/lib/content/site.ts`, `hasPublished(kind)`), otherwise from the committed snapshot.
+  So `generateStaticParams` emits the console's published slugs once the console owns the kind, and the
+  92 + 92 snapshot articles until then; `dynamicParams` stays true either way.
+- SEO `<head>` comes from `data/wp/seo.json` only (home + contact, AR + EN). The live parse and cheerio
+  scraper are gone, so detail-page SEO uses the row's own title/excerpt/image until BK-9 gives the
+  console its own seo fields.
+- `_embed`, `_fields` and the per-list REST query strings are gone with the live client; the snapshot
+  already holds exactly those columns.
+- Refresh flow: `npm run sync:wp` locally, commit the snapshot folder, deploy (documented in README);
+  `POST /api/revalidate` (`?secret=` or `x-revalidate-secret`) flushes the `wp:en` / `wp:ar` / `wp:seo`
+  tags between syncs. The route is POST-only (a GET answers 405), answers 401 on a wrong secret and 500
+  with `{"ok":false,"error":"REVALIDATE_SECRET not configured"}` when the variable is unset — which is
+  exactly what happens on a host where it was forgotten, so it must be set before go-live.
+- The one live WordPress call left in the app is the Contact Form 7 forward in `POST /api/v1/lead`,
+  gated behind `LEAD_MODE=cf7` (default `whatsapp` stores nothing). BK-8 replaces lead handling entirely.
 
 ## Arabic excerpts are English (observed, no longer filtered)
 The AR subsite translates titles (91/92) and bodies (91/92) but WordPress regenerates the
@@ -245,11 +248,11 @@ is not real content. Recorded in `docs/inventory.md` under Offers so the mapping
 ## Origin latency budget
 Measured from the development network: **every** WP REST call costs ~4-6 s (even a 118-byte
 `categories` response), which made a cold `/blogs?page=2` render take 12.8 s. Response:
-- Taxonomy + media reads cache for `WP_TAXONOMY_REVALIDATE` (3600 s) instead of 300 — the data team
-  edits posts, not categories.
 - `next.config.ts` `expireTime: 3600` gives ISR routes stale-while-revalidate, so a CDN serves the
-  cached page while WordPress refreshes in the background.
-- Post/product content keeps the 300 s live-first read; the snapshot only answers when live fails.
+  cached page while the content refreshes in the background.
+- BK-7.3 removed the origin from the render path altogether: every read is a local file or the DB, so
+  the budget no longer applies. (Until then the mitigation was a 3600 s cache on taxonomy + media reads
+  and an 8 s abort with snapshot fallback — both deleted with `lib/wp/http.ts`.)
 
 ## sitemap lastmod
 `lastmod` comes from WordPress `modified` (posts) or the page's `modified` for the mapped static

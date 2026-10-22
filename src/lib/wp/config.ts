@@ -1,49 +1,25 @@
 import type { Lang } from "./types";
 
-/** Root of the English WordPress install. Arabic is the same host under `/ar`. */
+/**
+ * The WordPress host the frozen snapshot was taken from. BK-7.3 removed the last
+ * runtime read of it: this is only ever used to *rewrite* URLs already in the
+ * snapshot (`mirror.ts` maps them onto `public/wp/*`, `sanitize.ts` recognises
+ * them), never to fetch from it.
+ */
 export const WP_ORIGIN = (process.env.WP_BASE_URL || "https://www.shamahclinics.com")
   .replace(/\/+$/, "");
 
-/** REST base per language: EN at root, AR at the `/ar` subsite (TranslatePress). */
-export function restBase(lang: Lang): string {
-  return lang === "ar" ? `${WP_ORIGIN}/ar/wp-json` : `${WP_ORIGIN}/wp-json`;
-}
-
-/** Public site origin per language (used to build canonical + hreflang). */
-export function siteOrigin(lang: Lang): string {
-  return lang === "ar" ? `${WP_ORIGIN}/ar` : `${WP_ORIGIN}`;
-}
-
-export const REVALIDATE = 300;
-
-/** Taxonomy/media reads refresh less often than content so a page render waits on fewer WordPress round trips. */
-export const TAXONOMY_REVALIDATE = Number(process.env.WP_TAXONOMY_REVALIDATE || 3600);
 export const DEFAULT_PER_PAGE = 9;
 export const MAX_PER_PAGE = 30;
 
-/**
- * Hard ceiling for a single live WordPress request, including its one retry.
- * On a slow or stalling origin we abort and serve the committed snapshot instead —
- * a page render must never wait on the client's production host.
- */
-export const WP_FETCH_TIMEOUT_MS = Number(process.env.WP_FETCH_TIMEOUT_MS || 8000);
-
-/** Global ceiling on concurrent live WordPress requests (protects the origin). */
-export const WP_MAX_INFLIGHT = Number(process.env.WP_MAX_INFLIGHT || 3);
-
-/** Set by Next while prerendering: the build must make zero WordPress requests. */
-export function isBuildPhase(): boolean {
-  return process.env.NEXT_PHASE === "phase-production-build";
-}
-
-/** One-shot log so the served source (live vs snapshot) is observable. */
+/** One-shot log of what each kind served, so a stale snapshot is visible in the server output. */
 const logged = new Set<string>();
-export function logSource(kind: string, lang: string, source: "live" | "snapshot", detail?: string) {
-  const key = `${kind}:${lang}:${source}:${detail || ""}`;
+export function logSource(kind: string, lang: Lang, detail?: string) {
+  const key = `${kind}:${lang}:${detail || ""}`;
   if (logged.has(key)) return;
   if (logged.size > 200) logged.clear();
   logged.add(key);
-  console.log(`[wp] ${source.padEnd(8)} ${lang} ${kind}${detail ? ` (${detail})` : ""}`);
+  console.log(`[wp] snapshot ${lang} ${kind}${detail ? ` (${detail})` : ""}`);
 }
 
 /** Known WordPress page ids (stable across both subsites). */

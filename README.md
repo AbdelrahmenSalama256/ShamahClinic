@@ -1,16 +1,17 @@
-# Shamah Clinics — Next.js site on a read-only WordPress CMS
+# Shamah Clinics — Next.js site + its own console
 
-Arabic-first (RTL) bilingual site for Shamah Clinics. WordPress
-(https://www.shamahclinics.com) is the **read-only** content source; Next.js is the
-only mapping layer between the WP core REST + WooCommerce Store APIs and the UI.
-Nothing is hand-copied from WordPress and WordPress is never written to.
+Arabic-first (RTL) bilingual site for Shamah Clinics. Content lives in MariaDB and
+is edited in the console at `/console`; the frozen WordPress snapshot
+(`data/wp/*.json`) is what a kind falls back to until the console publishes it, so
+the site never depends on WordPress at build or request time. Nothing is written to
+WordPress.
 
 ## Commands
 
 ```bash
-npm run sync:wp   # refresh data/wp/*.json + public/wp/*.webp from WordPress (run before deploying)
-npm run dev       # dev server — reads live WordPress, snapshot as fallback
-npm run build     # production build — reads ONLY data/wp/*.json
+npm run sync:wp   # refresh data/wp/*.json + public/wp/*.webp from WordPress (hand-run; the only code that reaches WP)
+npm run dev       # dev server — DB for published content, data/wp/*.json for the rest; no network
+npm run build     # production build — same readers, no network
 npm run start     # serve the build
 npm run lint      # eslint (next lint was removed in Next 16)
 npm run typecheck # tsc --noEmit
@@ -18,10 +19,11 @@ npx next start -p 3100 && BASE_URL=http://localhost:3100 node scripts/verify-ren
                   # asserts the authored menu and the 3-card Home limit from rendered HTML (AR + EN)
 ```
 
-## Snapshot-first data flow
+## Data flow — snapshot-only, then the database
 
 `next build` must never depend on the client's production WordPress, so content
-travels through a committed snapshot:
+travels through a committed snapshot, and the console is taking that snapshot over
+row by row:
 
 1. `scripts/sync-wp.mjs` pulls **both** subsites (`/wp-json` and `/ar/wp-json`)
    with concurrency 2, 300 ms spacing, one retry with backoff and a 30 s timeout,
@@ -35,20 +37,24 @@ travels through a committed snapshot:
    `data/wp/images.json`. `src/lib/wp/mirror.ts` applies that map inside the data
    layer, so both the API and the UI serve local files; anything not mirrored
    keeps its live WordPress URL, and the step is idempotent — only new URLs are
-   fetched. **Run `npm run sync:wp` and commit `data/wp/` + `public/wp/` before
-   every deploy**, because the build itself never touches WordPress.
-2. **Build** (`NEXT_PHASE=phase-production-build`): `src/lib/wp` reads the
-   snapshot only. `wpFetch` refuses to run, so a live request during a build is
-   logged as `REFUSED` and fails the page — the build currently makes **zero**
-   WordPress requests.
-3. **Runtime** (ISR, `revalidate = 300`): live WordPress with an 8 s abort and one
-   retry, at most 3 concurrent requests; on any failure the snapshot is served.
-   Each decision is logged once per collection, e.g.
-   `[wp] live     en posts-list (92 rows)` / `[wp] snapshot ar posts (fetch failed)`.
+   fetched. This script is the **only** code in the repo that reaches WordPress,
+   it is never imported by a route, and it is run by hand.
+2. **`npm run wp:import`** (`scripts/db/import-wp.ts`, BK-7.2) loads that snapshot
+   into MariaDB — categories, articles, offers, pages and the result stories that
+   are articles — keeping each row's WordPress id as `legacy_id` and its own
+   publish date. It defaults to a dry run.
+3. **Build and runtime** (`revalidate = 300`): there is **no live WordPress read
+   anywhere**. BK-7.3 deleted `src/lib/wp/http.ts`; every reader in `src/lib/wp`
+   returns from the snapshot, and a content kind is served from the database
+   instead as soon as it holds one published row (`hasPublished()` in
+   `src/lib/content/site.ts`). So a page render waits on the DB or a local file,
+   never on the origin. Each read logs its source, e.g.
+   `[wp] snapshot en posts-list (92 rows)`. `tests/no-wp-network.test.ts` fails if
+   any public reader ever calls `fetch`.
 
-Refresh cadence: run `npm run sync:wp` locally and commit `data/wp/` before a
-deploy; use `POST /api/revalidate` (header `x-revalidate-secret`) for on-demand
-content refresh without a deploy.
+Refresh cadence: content changes are published in the console; use
+`POST /api/revalidate` (header `x-revalidate-secret`) to flush ISR without a
+deploy. Re-run `npm run sync:wp` only to widen the frozen snapshot.
 
 ## Bilingual model
 
@@ -130,18 +136,15 @@ safety net if the hook ever fails.
 ## Environment
 
 Copy `.env.example` → `.env.local`. The build reads the snapshot and needs none of
-these to reach the network; runtime and forms do:
+these to reach the network; only the Contact Form 7 lead forward does (`LEAD_MODE=cf7`):
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `WP_BASE_URL` | `https://www.shamahclinics.com` | WordPress origin; AR is the same host under `/ar` |
+| `WP_BASE_URL` | `https://www.shamahclinics.com` | Origin used to *rewrite* URLs already stored in the snapshot (`data/wp/*.json`) and to reach Contact Form 7 when `LEAD_MODE=cf7`. No page render fetches from it. |
 | `NEXT_PUBLIC_SITE_URL` | `https://shamahclinics.com` | canonical origin for metadata, hreflang, sitemap, robots |
 | `LEAD_MODE` | `whatsapp` | `whatsapp` returns a prefilled `wa.me` link; `cf7` emails the clinic's real inbox — do not set it without confirmation |
 | `CF7_FORM_ID` | `568` | Contact Form 7 form on booking page 837 |
 | `REVALIDATE_SECRET` | — | required by `POST /api/revalidate`; the route 500s if it is unset |
-| `WP_FETCH_TIMEOUT_MS` | `8000` | abort + one retry for a live WP read before the snapshot serves |
-| `WP_MAX_INFLIGHT` | `3` | global cap on concurrent live WordPress requests |
-| `WP_TAXONOMY_REVALIDATE` | `3600` | cache TTL for category/media reads (posts and products stay at 300 s) |
 
 On Vercel set: `NEXT_PUBLIC_SITE_URL`, `REVALIDATE_SECRET`, `WP_BASE_URL` (if the
 canonical host differs), and leave `LEAD_MODE` unset.

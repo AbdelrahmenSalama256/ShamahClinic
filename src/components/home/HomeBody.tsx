@@ -141,7 +141,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
         </Section>
       )}
 
-      {/* 03 — Seasonal offers (live WordPress/WooCommerce, max 3) */}
+      {/* 03 — Seasonal offers (console, else the WooCommerce snapshot, max 3) */}
       {!!offers.length && (
         <Section id="offers" className="bg-[var(--bg-secondary)]/60">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -259,7 +259,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
         </Section>
       )}
 
-      {/* 05 — Latest journal (live WordPress, max 3) */}
+      {/* 05 — Latest journal (console, else the snapshot, max 3) */}
       {!!articles.length && (
         <Section id="blogs" className="bg-[var(--bg-secondary)]/60">
           <div className="flex flex-wrap items-end justify-between gap-4">

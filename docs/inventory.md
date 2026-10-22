@@ -20,12 +20,12 @@ canonical, hreflang, JSON-LD and all copy are decided on the server, not in the 
 Nothing on the site is translated client-side-only: `useLanguage()` reads the same `/en` prefix the
 server does.
 
-## Transport (snapshot-first)
+## Transport (snapshot-only since BK-7.3, DB rung since BK-6)
 | Stage | behaviour |
 |-------|-----------|
-| `npm run sync:wp` (`scripts/sync-wp.mjs`) | pulls both subsites slowly (concurrency 2, 300 ms between requests, 30 s timeout, 1 retry with backoff, max 3 in-flight) into committed `data/wp/*.json`: `posts-list.{en,ar}`, `posts.{en,ar}` (full content), `pages-list.*`, `pages.*`, `categories.*`, `products.*`, `offer-categories.en`, `media.json` (one batched `/media?include=<ids>` per 100 ids), `seo.json`, `meta.json` (generatedAt, request count, byte size, row counts). It then downloads **only the images the site actually renders** (<=140, decided from the same `bestImageSrc` preference the UI uses), encodes them with sharp to `public/wp/<slug>-<hash>.webp` at 1280 px / q72, and records the URL -> file map in `data/wp/images.json`. Last verified run (2026-10-12): 22 WP requests in 82.4 s, 60/60 images encoded into 1.4 MB, `git diff data/wp/` = the `meta.json` timestamp only. |
-| `next build` | reads **only** `data/wp/*.json`. Zero WordPress requests: `src/lib/wp/http.ts` rejects any live fetch while `NEXT_PHASE === "phase-production-build"` and logs `[wp] REFUSED live request during build`. `generateStaticParams` returns **every** post per language (92 + 92) plus all offers and services, so the last page of the journal is prerendered, not paid for by a visitor; `dynamicParams` stays true so anything published after the build still renders. `next.config.ts` caps generation to 2 CPUs with `staticPageGenerationTimeout: 120` and sets `expireTime: 3600` (stale-while-revalidate). Last verified run (2026-10-12): 285 static pages (12 service detail slugs x 2 languages + the `/services` aliases), exit 0, `[wp] live` = 0, 0 REFUSED lines, 334 snapshot reads. |
-| Runtime (ISR 300 s) | live WP with an 8 s abort + 1 retry and a global cap of 3 in-flight requests, deduped by URL; on error **or an empty list response** it falls back to the snapshot. Category + media reads cache for `WP_TAXONOMY_REVALIDATE` (3600 s) because a WP REST round trip here costs 4-6 s and the data team edits posts, not taxonomies. A page's independent reads run in `Promise.all`, so the worst case when the origin stalls is one 8 s budget per URL, not one per await. Every read logs its winner: `[wp] live en posts-list (92 rows)` / `[wp] snapshot ar posts (fetch failed)`. `/api/revalidate` (**POST**, secret-guarded) flushes the `wp:en` / `wp:ar` / `wp:seo` tags and the listed paths; it answers 401 on a wrong secret and 500 when `REVALIDATE_SECRET` is unset. |
+| `npm run sync:wp` (`scripts/sync-wp.mjs`) | pulls both subsites slowly (concurrency 2, 300 ms between requests, 30 s timeout, 1 retry with backoff, max 3 in-flight) into committed `data/wp/*.json`: `posts-list.{en,ar}`, `posts.{en,ar}` (full content), `pages-list.*`, `pages.*`, `categories.*`, `products.*`, `offer-categories.en`, `media.json` (one batched `/media?include=<ids>` per 100 ids), `seo.json`, `meta.json` (generatedAt, request count, byte size, row counts). It then downloads **only the images the site actually renders** (<=140, decided from the same `bestImageSrc` preference the UI uses), encodes them with sharp to `public/wp/<slug>-<hash>.webp` at 1280 px / q72, and records the URL -> file map in `data/wp/images.json`. Hand-run only: never imported by a route or module, so it is the single place in the repo that reaches WordPress. Last verified run (2026-10-12): 22 WP requests in 82.4 s, 60/60 images encoded into 1.4 MB, `git diff data/wp/` = the `meta.json` timestamp only. |
+| `next build` | reads **only** the DB (if a kind is published there) and `data/wp/*.json`. Zero WordPress requests — `src/lib/wp/http.ts` is deleted, so there is no live client left to refuse. `generateStaticParams` returns every post per language (92 + 92) from the snapshot **until the console publishes that kind**, then the published slugs; `dynamicParams` stays true so anything published after the build still renders. `next.config.ts` caps generation to 2 CPUs with `staticPageGenerationTimeout: 120` and sets `expireTime: 3600` (stale-while-revalidate). |
+| Runtime | same as the build: no network. Each content kind is served entirely from MariaDB once it holds one published row (`hasPublished(kind)` in `src/lib/content/site.ts`), otherwise from the committed snapshot — the DB is a rung, not a fallback that can time out. Every read logs its source: `[wp] snapshot en posts-list (92 rows)`. A DB error is treated as an empty DB so `next build` still works without `DATABASE_URL`. `/api/revalidate` (**POST**, secret-guarded) flushes the `wp:en` / `wp:ar` / `wp:seo` tags and the listed paths; it answers 401 on a wrong secret and 500 when `REVALIDATE_SECRET` is unset. |
 
 ### Images
 `data/wp/images.json` maps a WordPress upload URL to its local `/wp/<file>.webp` mirror, and
@@ -36,10 +36,10 @@ file is not mirrored (an image uploaded after the last sync), so an unmirrored i
 Verified on the production build: 0 `src` values pointing at `www.shamahclinics.com/wp-content` on
 home, journal list, journal detail and offer detail; every image goes through `next/image`.
 
-Lists never request bodies: `_fields=id,slug,date,modified,link,title,excerpt,categories,featured_media`.
-`_embed` is not used anywhere — images come from `media.json` (plus a batched live `/media?include=`
-for ids the snapshot does not know), term names from `categories.{en,ar}`. Full `content.rendered`
-is fetched only for detail views.
+Lists never request bodies: the snapshot holds only `id,slug,date,modified,link,title,excerpt,categories,featured_media`
+per list row, full `content.rendered` per detail row, images in `media.json` and term names in
+`categories.{en,ar}`. That shape was chosen by the sync's `_fields` query strings, which the deleted live
+client used to send per read; `scripts/sync-wp.mjs` still sends them.
 
 ## Global / shell
 | UI | source |

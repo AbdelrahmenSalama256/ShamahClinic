@@ -53,10 +53,6 @@ export function readSnapshot<T>(name: SnapshotName, lang: Lang): T | null {
   return parse<T>(`${name}:${lang}`, fileFor(name, lang));
 }
 
-export function snapshotExists(name: SnapshotName, lang: Lang): boolean {
-  return readSnapshot<unknown>(name, lang) !== null;
-}
-
 /** Media map (language-neutral, keyed by attachment id). */
 export function snapshotMedia(): Map<number, WPMediaRow> {
   const cached = cache.get("media");

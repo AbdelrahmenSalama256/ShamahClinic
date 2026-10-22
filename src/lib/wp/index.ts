@@ -1,8 +1,6 @@
-import { DEFAULT_PER_PAGE, MAX_PER_PAGE, PAGE_IDS, TAXONOMY_REVALIDATE, WHATSAPP, isBuildPhase, logSource } from "./config";
-import { wpFetch, type WpFetchOptions } from "./http";
+import { DEFAULT_PER_PAGE, MAX_PER_PAGE, PAGE_IDS, WHATSAPP, logSource } from "./config";
 import {
   readSnapshot,
-  snapshotExists,
   snapshotMedia,
   snapshotMeta,
   type SnapshotName,
@@ -33,7 +31,6 @@ import type {
   ServiceCard,
   Settings,
   WCStoreProduct,
-  WPMedia,
   WPPost,
   WPTerm,
   Lang,
@@ -45,20 +42,6 @@ import { mergeBranches, parseOffices } from "./branches";
 import { heroPhotos } from "./hero";
 import { parseHomeProse, splitHomeProse, type BilingualHomeBlock } from "./home-prose";
 import { homeIntroFallback } from "@/data/about";
-
-// Lists never carry `content` and never use `_embed`; images and term names are
-// hydrated from dedicated batched endpoints (see buildContext).
-const LIST_FIELDS = "id,slug,date,modified,link,title,excerpt,categories,featured_media";
-const DETAIL_FIELDS = `${LIST_FIELDS},content`;
-const PAGE_LIST_FIELDS = "id,slug,date,modified,link,title,excerpt";
-const PAGE_DETAIL_FIELDS = `${PAGE_LIST_FIELDS},content`;
-const MEDIA_FIELDS = "id,source_url,alt_text,media_details";
-
-const POSTS_LIST_REL = `/wp/v2/posts?per_page=100&_fields=${LIST_FIELDS}`;
-const PAGES_LIST_REL = `/wp/v2/pages?per_page=100&_fields=${PAGE_LIST_FIELDS}`;
-const CATEGORIES_REL = "/wp/v2/categories?per_page=100&_fields=id,name,slug,count";
-const PRODUCTS_REL = "/wc/store/v1/products?per_page=100";
-const OFFER_CATEGORIES_REL = "/wc/store/v1/products/categories";
 
 export interface Query {
   page?: number;
@@ -107,39 +90,23 @@ function matches(term: string | undefined, text: string): boolean {
   if (!term) return true;
   return text.includes(term.trim().toLowerCase());
 }
-function reason(err: unknown): string {
-  return err instanceof Error ? err.message.slice(0, 60) : String(err).slice(0, 60);
-}
-
 // ---------------------------------------------------------------------------
-// Snapshot-first selection
+// Snapshot selection
 //
-// Build (`NEXT_PHASE=phase-production-build`): read data/wp/*.json only — the
-// live WordPress host is never contacted, so `next build` cannot stall on it.
-// Runtime: live with a short abort + one retry, snapshot otherwise. The served
-// source is logged once per kind.
+// BK-7.3 took the live WordPress origin out of this file: every read below is
+// the committed `data/wp/*.json` snapshot, which is what a page render waits on
+// — a local file, in the build and at runtime alike. The snapshot is the rung
+// the site falls back to until BK-6.3 hands that kind to the database, so the
+// site answers from it for the same reason it always did: the alternative was
+// the client's production host, and a stalled origin is a stalled page.
+// The one tool that still speaks to WordPress is `scripts/sync-wp.mjs`, run by
+// hand to produce a new snapshot folder.
 // ---------------------------------------------------------------------------
 
-async function selectList<T>(
-  name: SnapshotName,
-  lang: Lang,
-  rel: string,
-  opts?: WpFetchOptions,
-): Promise<T[]> {
-  if (isBuildPhase()) {
-    logSource(name, lang, "snapshot", "build");
-    return readSnapshot<T[]>(name, lang) ?? [];
-  }
-  try {
-    const res = await wpFetch<T[]>(rel, lang, opts);
-    const rows = Array.isArray(res.data) ? res.data : [];
-    if (!rows.length && snapshotExists(name, lang)) throw new Error("empty live response");
-    logSource(name, lang, "live", `${rows.length} rows`);
-    return rows;
-  } catch (err) {
-    logSource(name, lang, "snapshot", reason(err));
-    return readSnapshot<T[]>(name, lang) ?? [];
-  }
+async function selectList<T>(name: SnapshotName, lang: Lang): Promise<T[]> {
+  const rows = readSnapshot<T[]>(name, lang) ?? [];
+  logSource(name, lang, `${rows.length} rows`);
+  return rows;
 }
 
 async function selectBySlug<T extends { slug: string }>(
@@ -147,31 +114,11 @@ async function selectBySlug<T extends { slug: string }>(
   contentName: SnapshotName,
   lang: Lang,
   slug: string,
-  rel: string,
 ): Promise<T | null> {
-  const fromSnapshot = () => {
-    const rows = readSnapshot<T[]>(contentName, lang) || readSnapshot<T[]>(listName, lang) || [];
-    return rows.find((r) => r.slug === slug) || null;
-  };
-  if (isBuildPhase()) {
-    const hit = fromSnapshot();
-    logSource(contentName, lang, "snapshot", hit ? `build ${slug}` : `build missing ${slug}`);
-    return hit;
-  }
-  try {
-    const res = await wpFetch<T[]>(rel, lang);
-    const rows = Array.isArray(res.data) ? res.data : [];
-    const hit = rows.find((r) => r.slug === slug) || (rows.length === 1 ? rows[0] : null);
-    if (hit) {
-      logSource(contentName, lang, "live", slug);
-      return hit;
-    }
-    throw new Error("slug not in live response");
-  } catch (err) {
-    const hit = fromSnapshot();
-    logSource(contentName, lang, "snapshot", hit ? `${slug} (${reason(err)})` : reason(err));
-    return hit;
-  }
+  const rows = readSnapshot<T[]>(contentName, lang) || readSnapshot<T[]>(listName, lang) || [];
+  const hit = rows.find((r) => r.slug === slug) || null;
+  logSource(contentName, lang, hit ? slug : `missing ${slug}`);
+  return hit;
 }
 
 /** Media + taxonomy lookups so list rows can be mapped without `_embed`. */
@@ -179,27 +126,13 @@ async function buildContext(rows: WPPost[]): Promise<MapContext> {
   const media = snapshotMedia();
   const missing = new Set<number>();
   for (const r of rows) if (r.featured_media && !media.has(r.featured_media)) missing.add(r.featured_media);
-  if (missing.size && !isBuildPhase()) {
-    const ids = [...missing].slice(0, 100).join(",");
-    try {
-      const res = await wpFetch<WPMedia[]>(
-        `/wp/v2/media?include=${ids}&per_page=100&_fields=${MEDIA_FIELDS}`,
-        "en",
-        { revalidate: TAXONOMY_REVALIDATE },
-      );
-      for (const m of res.data || []) media.set(m.id, m);
-      logSource("media", "en", "live", `${res.data?.length || 0} of ${missing.size}`);
-    } catch (err) {
-      logSource("media", "en", "snapshot", reason(err));
-    }
-  } else if (missing.size) {
-    logSource("media", "en", "snapshot", `${missing.size} unresolved`);
-  }
+  // A media id the snapshot never captured stays unresolved: the mappers render
+  // that card without a cover rather than paying for a round trip to WordPress.
+  if (missing.size) logSource("media", "en", `${missing.size} unresolved`);
 
-  const taxonomy = { revalidate: TAXONOMY_REVALIDATE };
   const [termsEn, termsAr] = await Promise.all([
-    selectList<WPTerm>("categories", "en", CATEGORIES_REL, taxonomy),
-    selectList<WPTerm>("categories", "ar", CATEGORIES_REL, taxonomy),
+    selectList<WPTerm>("categories", "en"),
+    selectList<WPTerm>("categories", "ar"),
   ]);
   return { media, termsEn: indexById(termsEn), termsAr: indexById(termsAr) };
 }
@@ -207,13 +140,8 @@ async function buildContext(rows: WPPost[]): Promise<MapContext> {
 /** English rows are authoritative; Arabic rows (same ids) supply the other language. */
 async function pairLists<T extends { id: number }>(
   name: SnapshotName,
-  rel: string,
-  opts?: WpFetchOptions,
 ): Promise<{ en: T[]; ar: Map<number, T> }> {
-  const [en, ar] = await Promise.all([
-    selectList<T>(name, "en", rel, opts),
-    selectList<T>(name, "ar", rel, opts),
-  ]);
+  const [en, ar] = await Promise.all([selectList<T>(name, "en"), selectList<T>(name, "ar")]);
   return { en, ar: indexById(ar) };
 }
 
@@ -304,7 +232,7 @@ export function getSnapshotInfo() {
 // ---------------------------------------------------------------------------
 
 export async function getAllArticles(): Promise<ArticleCard[]> {
-  const { en, ar } = await pairLists<WPPost>("posts-list", POSTS_LIST_REL);
+  const { en, ar } = await pairLists<WPPost>("posts-list");
   const ctx = await buildContext([...en, ...ar.values()]);
   return en
     .map((p) => mapArticleCard(p, ar.get(p.id), ctx))
@@ -324,10 +252,9 @@ export async function getPosts(q: Query = {}): Promise<Paged<ArticleCard>> {
 
 export async function getPost(slug: string): Promise<WithSeo<Article> | null> {
   const decoded = safeDecode(slug);
-  const rel = `/wp/v2/posts?slug=${encodeURIComponent(decoded)}&_fields=${DETAIL_FIELDS}`;
   const [enP, arP] = await Promise.all([
-    selectBySlug<WPPost>("posts-list", "posts", "en", decoded, rel),
-    selectBySlug<WPPost>("posts-list", "posts", "ar", decoded, rel),
+    selectBySlug<WPPost>("posts-list", "posts", "en", decoded),
+    selectBySlug<WPPost>("posts-list", "posts", "ar", decoded),
   ]);
   if (!enP) return null;
   const ctx = await buildContext(arP ? [enP, arP] : [enP]);
@@ -350,7 +277,7 @@ export interface PageCard {
 }
 
 export async function getAllPages(): Promise<PageCard[]> {
-  const { en, ar } = await pairLists<WPPost>("pages-list", PAGES_LIST_REL);
+  const { en, ar } = await pairLists<WPPost>("pages-list");
   return en.map((p) => {
     const a = ar.get(p.id);
     return {
@@ -380,10 +307,9 @@ export async function getPages(q: Query = {}): Promise<Paged<PageCard>> {
 
 export async function getPage(slug: string): Promise<WithSeo<PageContent> | null> {
   const decoded = safeDecode(slug);
-  const rel = `/wp/v2/pages?slug=${encodeURIComponent(decoded)}&_fields=${PAGE_DETAIL_FIELDS}`;
   const [enP, arP] = await Promise.all([
-    selectBySlug<WPPost>("pages-list", "pages", "en", decoded, rel),
-    selectBySlug<WPPost>("pages-list", "pages", "ar", decoded, rel),
+    selectBySlug<WPPost>("pages-list", "pages", "en", decoded),
+    selectBySlug<WPPost>("pages-list", "pages", "ar", decoded),
   ]);
   if (!enP) return null;
   const page = mapPage(enP, arP);
@@ -398,9 +324,7 @@ export async function getPage(slug: string): Promise<WithSeo<PageContent> | null
  * only parsed into images or text by a dedicated reader.
  */
 async function getRawPageHtml(slug: string, lang: Lang = "en"): Promise<string> {
-  const decoded = safeDecode(slug);
-  const rel = `/wp/v2/pages?slug=${encodeURIComponent(decoded)}&_fields=${PAGE_DETAIL_FIELDS}`;
-  const row = await selectBySlug<WPPost>("pages-list", "pages", lang, decoded, rel);
+  const row = await selectBySlug<WPPost>("pages-list", "pages", lang, safeDecode(slug));
   return row?.content?.rendered || "";
 }
 
@@ -461,9 +385,7 @@ export async function getHomeProseSections(): Promise<Array<{ heading: Bi; parag
 // ---------------------------------------------------------------------------
 
 export async function getCategories(): Promise<CategoryTerm[]> {
-  const { en, ar } = await pairLists<WPTerm>("categories", CATEGORIES_REL, {
-    revalidate: TAXONOMY_REVALIDATE,
-  });
+  const { en, ar } = await pairLists<WPTerm>("categories");
   return en.map((t) => mapCategory(t, ar.get(t.id))).sort((a, b) => b.count - a.count);
 }
 
@@ -471,8 +393,6 @@ export async function getOfferCategories(): Promise<CategoryTerm[]> {
   const rows = await selectList<{ id: number; name: string; slug: string; count: number }>(
     "offer-categories",
     "en",
-    OFFER_CATEGORIES_REL,
-    { revalidate: TAXONOMY_REVALIDATE },
   );
   return rows.map((t) => ({ id: t.id, slug: t.slug, name: { ar: t.name, en: t.name }, count: t.count }));
 }
@@ -483,11 +403,11 @@ export async function getOfferCategories(): Promise<CategoryTerm[]> {
 
 export async function getAllOffers(lang: Lang = "en"): Promise<Offer[]> {
   const [enRows, arRows] = await Promise.all([
-    selectList<WCStoreProduct>("products", "en", PRODUCTS_REL),
-    selectList<WCStoreProduct>("products", "ar", PRODUCTS_REL),
+    selectList<WCStoreProduct>("products", "en"),
+    selectList<WCStoreProduct>("products", "ar"),
   ]);
   const other = indexById(lang === "ar" ? enRows : arRows);
-  // Each language renders the products its own REST base returns, in that
+  // Each language renders the products its own language's snapshot holds, in that
   // order, with nothing merged, filtered or de-duplicated.
   const primary = lang === "ar" ? arRows : enRows;
   return primary.map((p) => mapOffer(p, other.get(p.id), lang));
@@ -505,8 +425,8 @@ export async function getOffers(q: Query = {}, lang: Lang = "en"): Promise<Paged
 
 export async function getOffer(slug: string, lang: Lang = "en"): Promise<WithSeo<OfferDetail> | null> {
   const [enRows, arRows] = await Promise.all([
-    selectList<WCStoreProduct>("products", "en", PRODUCTS_REL),
-    selectList<WCStoreProduct>("products", "ar", PRODUCTS_REL),
+    selectList<WCStoreProduct>("products", "en"),
+    selectList<WCStoreProduct>("products", "ar"),
   ]);
   const decoded = safeDecode(slug);
   const primary = lang === "ar" ? arRows : enRows;
@@ -536,10 +456,9 @@ export async function getOffer(slug: string, lang: Lang = "en"): Promise<WithSeo
 // ---------------------------------------------------------------------------
 
 export async function getServiceCards(): Promise<ServiceCard[]> {
-  const rel = `/wp/v2/pages/${PAGE_IDS.services}?_fields=id,slug,link,title,excerpt,content`;
   const [enP, arP] = await Promise.all([
-    selectById<WPPost>("pages", "en", PAGE_IDS.services, rel),
-    selectById<WPPost>("pages", "ar", PAGE_IDS.services, rel),
+    selectById<WPPost>("pages", "en", PAGE_IDS.services),
+    selectById<WPPost>("pages", "ar", PAGE_IDS.services),
   ]);
   if (!enP) return [];
   return mapServiceCards(enP.content?.rendered || "", arP?.content?.rendered || "");
@@ -549,24 +468,10 @@ async function selectById<T extends { id: number }>(
   contentName: SnapshotName,
   lang: Lang,
   id: number,
-  rel: string,
 ): Promise<T | null> {
-  const fromSnapshot = () => (readSnapshot<T[]>(contentName, lang) || []).find((r) => r.id === id) || null;
-  if (isBuildPhase()) {
-    logSource(contentName, lang, "snapshot", `build id ${id}`);
-    return fromSnapshot();
-  }
-  try {
-    const res = await wpFetch<T>(rel, lang);
-    if (res.data && typeof res.data === "object") {
-      logSource(contentName, lang, "live", `id ${id}`);
-      return res.data;
-    }
-    throw new Error("empty live response");
-  } catch (err) {
-    logSource(contentName, lang, "snapshot", `id ${id} (${reason(err)})`);
-    return fromSnapshot();
-  }
+  const hit = (readSnapshot<T[]>(contentName, lang) || []).find((r) => r.id === id) || null;
+  logSource(contentName, lang, hit ? `id ${id}` : `missing id ${id}`);
+  return hit;
 }
 
 // ---------------------------------------------------------------------------
