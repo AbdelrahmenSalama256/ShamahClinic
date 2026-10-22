@@ -1,0 +1,63 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URI")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model SitePage {
+  id        String          @id @default(cuid())
+  slug      String          @unique
+  titleEn   String
+  titleAr   String
+  enabled   Boolean         @default(true)
+  sections  SiteSection[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model SiteSection {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      SitePage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  nameEn    String
+  nameAr    String
+  enabled   Boolean  @default(true)
+  content   Json?
+}
+
+model SeoSettings {
+  id            String   @id @default(cuid())
+  metaTitleEn   String?
+  metaTitleAr   String?
+  metaDescEn    String?
+  metaDescAr    String?
+  ogImage       String?
+  gtmId         String?
+  customScripts String?
+  updatedAt     DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  service   String?
+  branch    String?
+  date      String?
+  status    String   @default("new") // new, contacted, booked, cancelled
+  createdAt DateTime @default(now())
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  permissions String[]
+  requiresApproval Boolean @default(false)
+  color       String   @default("#f43f5e")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
