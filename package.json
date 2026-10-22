@@ -8,21 +8,33 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "sync:wp": "node scripts/sync-wp.mjs"
+    "sync:wp": "node scripts/sync-wp.mjs",
+    "db:local:start": "node scripts/db/local-server.mjs",
+    "db:local:stop": "node --env-file=.env.local scripts/db/local-stop.mjs",
+    "db:local:provision": "node scripts/db/provision-local.mjs",
+    "db:migrate": "tsx scripts/db/migrate.ts",
+    "db:seed": "tsx scripts/db/seed.ts",
+    "owner:create": "tsx scripts/db/owner-create.ts",
+    "doctor": "tsx scripts/doctor.ts",
+    "test": "vitest run"
   },
   "dependencies": {
+    "bcryptjs": "^3.0.2",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^13.4.4",
+    "kysely": "^0.28.7",
     "lucide-react": "^1.48.0",
+    "mysql2": "^3.14.1",
     "next": "16.3.6",
     "react": "19.2.8",
     "react-day-picker": "^10.0.2",
     "react-dom": "19.2.8",
     "sanitize-html": "^2.18.0",
     "swiper": "^14.2.0",
-    "tailwind-merge": "^3.7.0"
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -30,9 +42,12 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/sanitize-html": "^2.16.2",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "tsx": "^4.20.6",
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }
