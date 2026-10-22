@@ -12,6 +12,7 @@ WordPress.
 npm run sync:wp   # refresh data/wp/*.json + public/wp/*.webp from WordPress (hand-run; the only code that reaches WP)
 npm run dev       # dev server — DB for published content, data/wp/*.json for the rest; no network
 npm run build     # production build — same readers, no network
+npm run prove:no-wp  # starts the build with a fetch guard and crawls every public route: 0 requests to WordPress
 npm run start     # serve the build
 npm run lint      # eslint (next lint was removed in Next 16)
 npm run typecheck # tsc --noEmit
