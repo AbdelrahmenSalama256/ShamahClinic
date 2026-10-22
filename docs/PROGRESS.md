@@ -40,10 +40,10 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 ## BK-0 — clean room
 - [x] 0.1 New tree from the last clean site commit (`e3c19e3`), branch `cms-clean`, deps installed,
       `D:\shamah` verified untouched
-- [~] 0.2 Baseline gate: `lint` and `typecheck` are green on the site as cloned. `next build` compiled and
-      typechecked, then failed at page-data for two separate reasons: `NEXT_PUBLIC_SITE_URL` was unset (fixed —
-      `.env.example` now documents it) and, since then, no DNS from this shell for the fonts. **Re-run
-      `npm run build` with network before calling BK-0 done.**
+- [x] 0.2 Baseline gate: `lint`, `typecheck`, `vitest` and `next build` are green. `next build` once failed at
+      page-data for two separate reasons: `NEXT_PUBLIC_SITE_URL` was unset (fixed — `.env.example` now
+      documents it) and, while this shell had no DNS, `next/font/google` could not reach the font CDN.
+      With network back it builds clean — BK-3's commit `08b790e` ran the full gate set.
 - [x] 0.3 This ledger; the dead Payload ledger archived as `docs/PROGRESS-payload-archived.md`
 
 ## BK-1 — the database that will actually be deployed
@@ -63,11 +63,19 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 - [x] 2.6 `npm run doctor` — env names, connectivity, migration state, checksums, content counts — `a1afdd9`
 
 ## BK-3 — auth core
-- [ ] 3.1 bcryptjs cost 12, opaque session tokens (SHA-256 hash stored, raw one only in the cookie)
-- [ ] 3.2 httpOnly + SameSite=Lax + Secure cookies, CSRF token per session, login throttle via `login_attempts`
-- [ ] 3.3 `authenticate()` → `can(resource, action, scope)` → zod → execute → audit. **One** path; no route may
-      write without it
-- [ ] 3.4 `npm run owner:create` / `owner:reset` (and the password is never a CLI argument)
+- [x] 3.1 bcryptjs cost 12 with a real decoy hash, so an unknown address and a wrong password cost the same and
+      the answer never says which half was wrong; passwords over bcrypt's 72-byte truncation point are refused
+      by policy. Opaque 32-byte session tokens — only the SHA-256 hex is stored, the raw one exists in the
+      cookie alone — sliding 14-day expiry, 5-minute `last_seen` throttle, renewal under 2 days. — `08b790e`
+- [x] 3.2 httpOnly + SameSite=Lax session cookie (Secure wherever the request is https, which `cookiesRequireSecure`
+      decides from the request URL so cPanel's proxy terminates TLS correctly), readable CSRF cookie, per-session
+      CSRF token, and two login budgets per 15-minute window (8 per email, 25 per IP) via `login_attempts` — `08b790e`
+- [x] 3.3 `guard()` is the one enforcement path: `authenticate()` → csrf → `can(resource, action, scope)` →
+      must-change-password → zod → execute → one audit row. Permission before body parsing, so an unauthorized
+      caller gets 403 and learns nothing about the payload. Proven by `tests/auth.test.ts`. — `08b790e`
+- [x] 3.4 `npm run owner:create` / `npm run owner:reset`: dry-run until `--apply`, the password comes from a
+      muted raw-mode prompt or `--password-stdin` and is never a CLI argument, and only variable names are
+      printed. `owner:create` grants the Owner role and writes a `cli:owner:*` audit row. — `08b790e`
 
 ## BK-4 — roles
 - [ ] 4.1 Seed Owner / Admin / Editor / SEO / Marketer / Viewer with `role_permissions` scopes
@@ -122,3 +130,21 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
+
+### Things MariaDB and Kysely do differently (each one cost debugging time)
+- **No `INSERT … ON CONFLICT (cols) DO NOTHING`.** That is Postgres syntax; Kysely's
+  `onConflict().doNothing()` emits it and MariaDB rejects the statement. Use check-then-insert —
+  `assignRole()` in `src/lib/auth/users.ts:105` does.
+- **JSON columns read back already parsed.** MariaDB stores them as LONGTEXT with a `json_valid()` check and
+  `mysql2` type-casts on read, so `after_json` is an object, not a string. Write with `json(value)`, read
+  without `JSON.parse` — an assertion that parsed twice threw `"[object Object]" is not valid JSON`.
+- **`Database` must not extend `Record<string, unknown>`.** The index signature collapses `keyof Database` to
+  `string`, and every qualified join reference then infers as `never` ("argument not assignable to never").
+  Fixed in `src/lib/db/types.ts` in `08b790e`; schema drift is caught by `src/lib/db/schema.test.ts`.
+
+### Console auth surface (BK-5 builds the UI on this)
+- `POST /api/console/auth` login · `DELETE` logout · `GET /api/console/auth/me` · `POST /api/console/auth/password`.
+- The core (`src/lib/auth/*`) takes a plain `Request` and returns a `Response` — no Next imports — so it runs
+  under vitest without a server and the route files are one-liners. Keep it that way.
+- `npm run doctor` reports `users — 0 rows` until an Owner is created; the dev database still has no real
+  account (`shamah_cms`, not `_test`).
