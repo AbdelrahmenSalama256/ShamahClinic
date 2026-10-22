@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, offerJsonLd } from "@/lib/jsonld";
 import { OffersClient } from "@/components/pages/OffersClient";
-import { getOffers, getPageTitle } from "@/lib/wp";
+import { getOffers, getPageTitle } from "@/lib/content/site";
 import { offerToUI } from "@/lib/wp/ui";
 import { routeLang } from "@/lib/route-lang";
 

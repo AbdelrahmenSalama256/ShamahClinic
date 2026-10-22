@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, articleJsonLd } from "@/lib/jsonld";
-import { getPost, getAllArticles } from "@/lib/wp";
+import { getPost, getAllArticles } from "@/lib/content/site";
 import { articleToUI, cardToUIArticle } from "@/lib/wp/ui";
 import type { Article } from "@/data/journal";
 import { JournalArticleClient } from "@/components/pages/JournalArticleClient";

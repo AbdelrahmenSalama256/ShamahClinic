@@ -1,4 +1,4 @@
-import { getPosts } from "@/lib/wp";
+import { getPosts } from "@/lib/content/site";
 import { ok, fail, readQuery } from "@/lib/http-api";
 
 export async function GET(req: Request) {

@@ -1,4 +1,4 @@
-import { getCategories } from "@/lib/wp";
+import { getCategories } from "@/lib/content/site";
 import { ok, fail } from "@/lib/http-api";
 
 export async function GET() {

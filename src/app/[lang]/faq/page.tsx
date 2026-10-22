@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/jsonld";
 import { FaqClient } from "@/components/pages/FaqClient";
-import { getPageTitle } from "@/lib/wp";
+import { getPageTitle } from "@/lib/content/site";
 
 export const revalidate = 300;
 

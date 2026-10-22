@@ -19,7 +19,7 @@ import {
   type MapContext,
 } from "./mappers";
 import { htmlToText, decodeEntities } from "./sanitize";
-import { hrefPair, arabicRatio } from "./lang";
+import { hrefPair } from "./lang";
 import type {
   Article,
   ArticleCard,
@@ -456,24 +456,6 @@ export async function getHomeProseSections(): Promise<Array<{ heading: Bi; parag
   return sections.filter((section) => section.paragraphs.length > 0);
 }
 
-/**
- * A page's heading as the data team writes it in WordPress, used for the hero title
- * and breadcrumb of the matching route. `authored` stays in charge of Arabic where
- * the TranslatePress subsite never translated the title (page 3 is "Privacy Policy"
- * in both languages), so an Arabic page never opens with an English heading.
- */
-export async function getPageTitle(
-  slug: string,
-  authored: Bi,
-): Promise<Bi> {
-  const card = (await getAllPages()).find((p) => p.slug === slug);
-  if (!card) return authored;
-  return {
-    ar: arabicRatio(card.title.ar) > 0.3 ? card.title.ar : authored.ar,
-    en: card.title.en || authored.en,
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Categories (post taxonomies) + offer categories
 // ---------------------------------------------------------------------------
@@ -585,32 +567,6 @@ async function selectById<T extends { id: number }>(
     logSource(contentName, lang, "snapshot", `id ${id} (${reason(err)})`);
     return fromSnapshot();
   }
-}
-
-// ---------------------------------------------------------------------------
-// Home aggregate (shorter home: offers <=4, journal <=3, branches, settings)
-// ---------------------------------------------------------------------------
-
-export interface HomeData {
-  settings: Settings;
-  offers: Offer[];
-  articles: ArticleCard[];
-  branches: BranchView[];
-}
-
-export async function getHome(
-  opts: { offers?: number; articles?: number; lang?: Lang } = {},
-): Promise<HomeData> {
-  const offersCount = opts.offers ?? 4;
-  const articlesCount = opts.articles ?? 3;
-  const lang = opts.lang ?? "en";
-  const [settings, offersPaged, articlesPaged, branches] = await Promise.all([
-    getSettings(lang),
-    getOffers({ perPage: offersCount }, lang),
-    getPosts({ perPage: articlesCount }),
-    getBranches(),
-  ]);
-  return { settings, offers: offersPaged.items, articles: articlesPaged.items, branches };
 }
 
 // ---------------------------------------------------------------------------

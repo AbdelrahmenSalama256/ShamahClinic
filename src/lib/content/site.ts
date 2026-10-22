@@ -1,0 +1,457 @@
+/**
+ * The site's one read path.
+ *
+ * WordPress is on the way out, but its committed snapshot (`data/wp/*.json`) stays
+ * as the second rung until BK-7 imports the articles, offers and pages into this
+ * database. So every read asks the database first and takes the snapshot only when
+ * the database holds nothing published of that kind — decided once per kind, never
+ * per row, so a slug that genuinely does not exist is a 404 rather than something
+ * the stale snapshot happens to contain. The two rungs are provable separately:
+ * today the development database holds zero content rows, so the site renders what
+ * it rendered yesterday; the day the import lands, the same calls return database
+ * rows and no WordPress origin is contacted.
+ *
+ * Each function keeps the name, arguments and returned shape of the `../wp` reader
+ * it replaces, so rewiring a route is an import path. Where the two rungs cannot
+ * agree — the numeric id a WordPress card carried — the shape is kept and the value
+ * is documented at its maker.
+ */
+import * as wp from '../wp';
+import type { BranchView, PageCard, Query, WithSeo } from '../wp';
+import { arabicRatio, hrefPair } from '../wp/lang';
+import { decodeEntities, firstParagraph, htmlToText, sanitizeHtmlBody } from '../wp/sanitize';
+import type { Article, ArticleCard, Bi, CategoryTerm, Lang, Offer, OfferDetail, PageContent, Paged, SeoMeta, Settings } from '../wp/types';
+import { db } from '../db';
+import { SITE_URL } from '../site';
+import { getLocalizedHref } from '../locale';
+import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
+import type { ContentKind } from './kinds';
+
+export type { PageCard, Query, WithSeo };
+
+// --- which rung answered ------------------------------------------------------
+
+const logged = new Set<string>();
+function note(rung: 'db' | 'snapshot', kind: string, detail = ''): void {
+  const key = `${rung}:${kind}:${detail}`;
+  if (logged.has(key)) return;
+  if (logged.size > 100) logged.clear();
+  logged.add(key);
+  console.log(`[site] ${rung.padEnd(8)} ${kind}${detail ? ` (${detail})` : ''}`);
+}
+
+function reason(err: unknown): string {
+  return err instanceof Error ? err.message.slice(0, 60) : String(err).slice(0, 60);
+}
+
+/**
+ * Read a kind from the database when it has published rows, and from the snapshot
+ * otherwise. A database that cannot be reached is the same answer as an empty one:
+ * the site keeps rendering, which is the whole reason the snapshot is committed.
+ */
+async function rung<T>(kind: ContentKind, fromDb: () => Promise<T>, fromSnapshot: () => Promise<T>): Promise<T> {
+  try {
+    if (await hasPublished(kind)) {
+      note('db', kind);
+      return await fromDb();
+    }
+    note('snapshot', kind, 'nothing published');
+  } catch (err) {
+    note('snapshot', kind, reason(err));
+  }
+  return fromSnapshot();
+}
+
+// --- reading a row's values ---------------------------------------------------
+
+function pair(row: PublicRow, name: string): Bi {
+  const value: PublicValue | undefined = row.values[name];
+  if (!value || value.kind !== 'bi') return { ar: '', en: '' };
+  return { ar: value.ar || value.en, en: value.en || value.ar };
+}
+
+/** WordPress hands the site HTML-encoded titles; an editor's text is already decoded. */
+function decoded(source: Bi): Bi {
+  return { ar: decodeEntities(source.ar), en: decodeEntities(source.en) };
+}
+
+/** An excerpt, whichever way it was authored: plain text or a paragraph of HTML. */
+function htmlPair(row: PublicRow, name: string): Bi {
+  const value = pair(row, name);
+  return { ar: htmlToText(value.ar), en: htmlToText(value.en) };
+}
+
+function text(row: PublicRow, name: string): string | null {
+  const value = row.values[name];
+  return value && value.kind === 'text' ? value.value : null;
+}
+
+function number(row: PublicRow, name: string): number | null {
+  const value = row.values[name];
+  return value && value.kind === 'number' ? value.value : null;
+}
+
+function flag(row: PublicRow, name: string): boolean {
+  const value = row.values[name];
+  return Boolean(value && value.kind === 'flag' && value.value);
+}
+
+function json(row: PublicRow, name: string): unknown {
+  const value = row.values[name];
+  return value && value.kind === 'json' ? value.value : null;
+}
+
+/** A body as the site renders it — the same sanitizer the WordPress body went through. */
+function body(row: PublicRow, name: string): Bi {
+  const value = pair(row, name);
+  return { ar: sanitizeHtmlBody(value.ar), en: sanitizeHtmlBody(value.en) };
+}
+
+/**
+ * The UI's cards key on a number because a WordPress post id was one. An imported
+ * row keeps its WordPress id; a row the console created gets a negative one, so a
+ * locally written article can never be mistaken for a WordPress post by anything
+ * that reads the API.
+ */
+function numericId(row: PublicRow, index: number): number {
+  const legacy = Number(row.legacyId);
+  if (row.legacyId && Number.isInteger(legacy) && legacy > 0) return legacy;
+  return -(index + 1);
+}
+
+function lookupKey(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
+function haystack(...parts: (string | null | undefined)[]): string {
+  return parts.filter(Boolean).join(' ').toLowerCase();
+}
+
+function matches(term: string | undefined, text: string): boolean {
+  if (!term) return true;
+  return text.includes(term.trim().toLowerCase());
+}
+
+/** SEO built from the row's own published copy. Nothing is fetched from WordPress. */
+function publicSeo(path: string, title: Bi, description: Bi, ogImage: string | null): { en: SeoMeta; ar: SeoMeta | null } {
+  const forLocale = (locale: Lang): SeoMeta => {
+    const other: Lang = locale === 'ar' ? 'en' : 'ar';
+    const heading = title[locale] || title[other];
+    return {
+      title: heading,
+      description: description[locale] || description[other] || heading,
+      canonical: `${SITE_URL}${getLocalizedHref(path, locale)}`,
+      ogImage,
+    };
+  };
+  return { en: forLocale('en'), ar: forLocale('ar') };
+}
+
+// --- journal ------------------------------------------------------------------
+
+interface CategoryRef {
+  slug: string;
+  name: Bi;
+}
+
+/** The `categories` rows an article's `category_id` can point at. */
+async function categoryIndex(): Promise<Map<string, CategoryRef>> {
+  const rows = await db
+    .selectFrom('categories')
+    .select(['id', 'slug', 'name_ar', 'name_en'])
+    .where('deleted_at', 'is', null)
+    .execute();
+  return new Map(rows.map((row) => [row.id, { slug: row.slug, name: { ar: row.name_ar || row.name_en, en: row.name_en || row.name_ar } }]));
+}
+
+function articleCard(row: PublicRow, index: number, categories: Map<string, CategoryRef>): ArticleCard {
+  const title = decoded(pair(row, 'title'));
+  const category = text(row, 'categoryId');
+  const ref = category ? categories.get(category) : undefined;
+  return {
+    id: numericId(row, index),
+    slug: row.key,
+    title,
+    excerpt: htmlPair(row, 'excerpt'),
+    image: text(row, 'image'),
+    imageAlt: decoded(pair(row, 'imageAlt')),
+    date: row.publishedAt ?? row.updatedAt,
+    modified: row.updatedAt,
+    category: ref?.name ?? null,
+    categorySlug: ref?.slug ?? null,
+    href: hrefPair(`blogs/${row.key}`),
+  };
+}
+
+export async function getAllArticles(): Promise<ArticleCard[]> {
+  return rung(
+    'article',
+    async () => {
+      const [rows, categories] = await Promise.all([publicRows('article'), categoryIndex()]);
+      return rows.map((row, index) => articleCard(row, index, categories));
+    },
+    () => wp.getAllArticles(),
+  );
+}
+
+export async function getPosts(q: Query = {}): Promise<Paged<ArticleCard>> {
+  let cards = await getAllArticles();
+  if (q.category) cards = cards.filter((card) => card.categorySlug === q.category);
+  if (q.search) {
+    cards = cards.filter((card) => matches(q.search, haystack(card.title.ar, card.title.en, card.excerpt.ar, card.excerpt.en)));
+  }
+  return wp.paginate(cards, q.page, q.perPage);
+}
+
+export async function getPost(slug: string): Promise<WithSeo<Article> | null> {
+  return rung(
+    'article',
+    async () => {
+      const row = await publicRow('article', lookupKey(slug));
+      if (!row) return null;
+      const categories = await categoryIndex();
+      const card = articleCard(row, 0, categories);
+      const content = body(row, 'content');
+      const article: Article = {
+        ...card,
+        // A card with no teaser still needs one, and the body's first paragraph is
+        // what the site shows beside it.
+        excerpt: {
+          ar: card.excerpt.ar || firstParagraph(content.ar),
+          en: card.excerpt.en || firstParagraph(content.en),
+        },
+        content,
+      };
+      return { item: article, seo: publicSeo(`/blogs/${card.slug}`, article.title, article.excerpt, article.image) };
+    },
+    () => wp.getPost(slug),
+  );
+}
+
+export async function getCategories(): Promise<CategoryTerm[]> {
+  try {
+    const [rows, counts] = await Promise.all([
+      db
+        .selectFrom('categories')
+        .select(['id', 'slug', 'name_ar', 'name_en'])
+        .where('deleted_at', 'is', null)
+        .where('enabled', '=', 1)
+        .orderBy('position', 'asc')
+        .execute(),
+      articleCategoryCounts(),
+    ]);
+    if (rows.length) {
+      note('db', 'category');
+      return rows
+        .map((row, index) => ({
+          id: index + 1,
+          slug: row.slug,
+          name: { ar: row.name_ar || row.name_en, en: row.name_en || row.name_ar },
+          count: counts.get(row.id) ?? 0,
+        }))
+        .sort((a, b) => b.count - a.count);
+    }
+    note('snapshot', 'category', 'no categories');
+  } catch (err) {
+    note('snapshot', 'category', reason(err));
+  }
+  return wp.getCategories();
+}
+
+/** How many published articles each category holds — the chip's count. */
+async function articleCategoryCounts(): Promise<Map<string, number>> {
+  const rows = await db
+    .selectFrom('articles')
+    .select(['category_id'])
+    .where('status', '=', 'published')
+    .where('deleted_at', 'is', null)
+    .execute();
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    if (!row.category_id) continue;
+    counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+// --- offers -------------------------------------------------------------------
+
+/** An authored image entry: a URL, or an object with the alt text in both languages. */
+function offerImages(value: unknown, name: Bi): Array<{ src: string; alt: Bi }> {
+  if (!Array.isArray(value)) return [];
+  const out: Array<{ src: string; alt: Bi }> = [];
+  for (const entry of value) {
+    if (typeof entry === 'string') {
+      const src = entry.trim();
+      if (src) out.push({ src, alt: name });
+      continue;
+    }
+    if (!entry || typeof entry !== 'object') continue;
+    const raw = entry as { src?: unknown; alt?: unknown };
+    const src = typeof raw.src === 'string' ? raw.src.trim() : '';
+    if (!src) continue;
+    const alt = typeof raw.alt === 'string' ? raw.alt.trim() : '';
+    // WooCommerce prints an empty alt for most product images, so the product's own
+    // name stands in — an image with no text at all is unreadable to a screen reader.
+    out.push({ src, alt: { ar: alt || name.ar || name.en, en: alt || name.en || name.ar } });
+  }
+  return out;
+}
+
+function offer(row: PublicRow, index: number): Offer {
+  const name = decoded(pair(row, 'name'));
+  const price = number(row, 'price') ?? 0;
+  const regular = number(row, 'regularPrice') || price;
+  const onSale = flag(row, 'onSale');
+  const discount = onSale && regular > price && price > 0 ? Math.round(((regular - price) / regular) * 100) : null;
+  const images = offerImages(json(row, 'images'), name);
+  return {
+    id: numericId(row, index),
+    slug: row.key,
+    name,
+    excerpt: htmlPair(row, 'excerpt'),
+    price,
+    regularPrice: regular,
+    currency: text(row, 'currency') || 'EGP',
+    onSale,
+    discountPercent: discount,
+    images,
+    image: images[0]?.src ?? null,
+    imageAlt: images[0]?.alt ?? { ar: '', en: '' },
+    href: { ar: `/offers/${row.key}`, en: `/offers/${row.key}` },
+  };
+}
+
+/**
+ * Offers in the language being rendered. One database row carries both locales, so
+ * `lang` only decides the fallback's snapshot — the list, its order and its prices
+ * are the published rows either way.
+ */
+export async function getAllOffers(lang: Lang = 'en'): Promise<Offer[]> {
+  return rung(
+    'offer',
+    async () => (await publicRows('offer')).filter((row) => flag(row, 'enabled')).map(offer),
+    () => wp.getAllOffers(lang),
+  );
+}
+
+export async function getOffers(q: Query = {}, lang: Lang = 'en'): Promise<Paged<Offer>> {
+  let offers = await getAllOffers(lang);
+  if (q.search) {
+    offers = offers.filter((offer) => matches(q.search, haystack(offer.name.ar, offer.name.en, offer.excerpt.ar, offer.excerpt.en)));
+  }
+  return wp.paginate(offers, q.page, q.perPage);
+}
+
+export async function getOffer(slug: string, lang: Lang = 'en'): Promise<WithSeo<OfferDetail> | null> {
+  return rung(
+    'offer',
+    async () => {
+      const row = await publicRow('offer', lookupKey(slug));
+      if (!row || !flag(row, 'enabled')) return null;
+      const detail = { ...offer(row, 0), html: body(row, 'body') };
+      return { item: detail, seo: publicSeo(`/offers/${detail.slug}`, detail.name, detail.excerpt, detail.image) };
+    },
+    () => wp.getOffer(slug, lang),
+  );
+}
+
+// --- pages --------------------------------------------------------------------
+
+/** A route as the site spells it in a path segment: no surrounding slashes. */
+function pageSlug(route: string): string {
+  return route.replace(/^\/+/, '').replace(/\/+$/, '');
+}
+
+function pageCard(row: PublicRow, index: number): PageCard {
+  const slug = pageSlug(row.key);
+  const content = pair(row, 'content');
+  return {
+    id: numericId(row, index),
+    slug,
+    modified: row.updatedAt,
+    title: decoded(pair(row, 'title')),
+    // A page has no excerpt column; the body's first paragraph is what a card shows.
+    excerpt: { ar: firstParagraph(content.ar), en: firstParagraph(content.en) },
+    href: hrefPair(slug),
+  };
+}
+
+export async function getAllPages(): Promise<PageCard[]> {
+  return rung(
+    'page',
+    async () => (await publicRows('page')).filter((row) => flag(row, 'enabled')).map(pageCard),
+    () => wp.getAllPages(),
+  );
+}
+
+export async function getPages(q: Query = {}): Promise<Paged<PageCard>> {
+  const cards = await getAllPages();
+  const filtered = q.search
+    ? cards.filter((card) => matches(q.search, haystack(card.title.ar, card.title.en, card.excerpt.en)))
+    : cards;
+  return wp.paginate(filtered, q.page, q.perPage);
+}
+
+export async function getPage(slug: string): Promise<WithSeo<PageContent> | null> {
+  return rung(
+    'page',
+    async () => {
+      const row = await publicRow('page', lookupKey(slug));
+      if (!row || !flag(row, 'enabled')) return null;
+      const page: PageContent = {
+        id: numericId(row, 0),
+        slug: pageSlug(row.key),
+        title: decoded(pair(row, 'title')),
+        html: body(row, 'content'),
+        href: hrefPair(pageSlug(row.key)),
+      };
+      return { item: page, seo: publicSeo(`/${page.slug}`, page.title, { ar: '', en: '' }, null) };
+    },
+    () => wp.getPage(slug),
+  );
+}
+
+/**
+ * A page's heading as its authors write it, for the hero title of the matching
+ * route. Arabic only wins when the row actually holds Arabic — the fallback keeps
+ * the authored heading instead of opening an Arabic page with an English one.
+ */
+export async function getPageTitle(slug: string, authored: Bi): Promise<Bi> {
+  const card = (await getAllPages()).find((page) => page.slug === pageSlug(slug));
+  if (!card) return authored;
+  return {
+    ar: arabicRatio(card.title.ar) > 0.3 ? card.title.ar : authored.ar,
+    en: card.title.en || authored.en,
+  };
+}
+
+// --- home ---------------------------------------------------------------------
+
+export interface HomeData {
+  settings: Settings;
+  offers: Offer[];
+  articles: ArticleCard[];
+  branches: BranchView[];
+}
+
+/**
+ * The homepage's blocks. Its offers and articles come from this read path; its
+ * settings and branches are still WordPress reads until BK-6.3b moves them, so the
+ * page is assembled here rather than in `../wp` to keep the two rungs of the same
+ * page from disagreeing about the journal.
+ */
+export async function getHome(opts: { offers?: number; articles?: number; lang?: Lang } = {}): Promise<HomeData> {
+  const lang = opts.lang ?? 'en';
+  const [settings, offersPaged, articlesPaged, branches] = await Promise.all([
+    wp.getSettings(lang),
+    getOffers({ perPage: opts.offers ?? 4 }, lang),
+    getPosts({ perPage: opts.articles ?? 3 }),
+    wp.getBranches(),
+  ]);
+  return { settings, offers: offersPaged.items, articles: articlesPaged.items, branches };
+}

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, offerJsonLd } from "@/lib/jsonld";
-import { getAllOffers, getOffer } from "@/lib/wp";
+import { getAllOffers, getOffer } from "@/lib/content/site";
 import { offerDetailToUI } from "@/lib/wp/ui";
 import { OfferDetailClient } from "@/components/pages/OfferDetailClient";
 import { routeLang } from "@/lib/route-lang";

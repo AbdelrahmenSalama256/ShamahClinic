@@ -3,7 +3,8 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig } from "@/config/site";
 import { getLocalizedHref, type Locale } from "@/lib/locale";
 import { getMergedTreatments } from "@/lib/wp/treatments";
-import { getAllArticles, getAllOffers, getAllPages, getBranchList } from "@/lib/wp";
+import { getAllArticles, getAllOffers, getAllPages } from "@/lib/content/site";
+import { getBranchList } from "@/lib/wp";
 
 const LANGS: Locale[] = ["ar", "en"];
 

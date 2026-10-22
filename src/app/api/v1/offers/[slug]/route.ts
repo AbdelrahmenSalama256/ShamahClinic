@@ -1,4 +1,4 @@
-import { getOffer } from "@/lib/wp";
+import { getOffer } from "@/lib/content/site";
 import { ok, fail, readQuery, slugParam } from "@/lib/http-api";
 
 export async function GET(req: Request, ctx: { params: Promise<{ slug: string }> }) {
