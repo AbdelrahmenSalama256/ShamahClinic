@@ -10,6 +10,7 @@ loadEnv();
 
 import { destroyDb, getDb, readDbConfig } from '../src/lib/db/index';
 import { migrationFiles, migrate, tableNames } from '../src/lib/db/migrate';
+import { ROLE_SEEDS } from '../src/lib/auth/roles';
 
 const REQUIRED_ENV = [
   'DATABASE_HOST',
@@ -88,10 +89,32 @@ async function checkContent(): Promise<void> {
   }
 }
 
+async function checkRoles(): Promise<void> {
+  console.log('\nRoles');
+  try {
+    const stored = await sql<{ name: string; grants: number }>`
+      SELECT r.name AS name, COUNT(p.id) AS grants
+      FROM roles r LEFT JOIN role_permissions p ON p.role_id = r.id
+      WHERE r.deleted_at IS NULL
+      GROUP BY r.name`.execute(getDb());
+    for (const role of ROLE_SEEDS) {
+      const row = stored.rows.find((entry) => entry.name === role.name);
+      if (!row) {
+        bad(role.name, 'role is not in the database — npm run db:seed -- --apply');
+        continue;
+      }
+      ok(role.name, `${Number(row.grants)} grant(s)${role.isOwner ? ', owner' : ''}`);
+    }
+  } catch (error) {
+    bad('roles', error instanceof Error ? error.message : String(error));
+  }
+}
+
 async function main(): Promise<void> {
   console.log('Shamah console doctor');
   checkEnv();
   await checkDatabase();
+  await checkRoles();
   await checkContent();
   console.log('');
   if (problems.length) {
