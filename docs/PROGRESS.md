@@ -108,10 +108,27 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       exactly the ids they created; a suite run leaves every table in `shamah_cms_test` at 0 rows. — `2c541ca`
 
 ## BK-5 — the console at its own path
-- [ ] 5.1 `/console/**` with its own root layout — the site header, footer and providers must not appear
-- [ ] 5.2 Exclude `console` from the `[lang]` rewrite in `src/proxy.ts` (Next 16 renamed `middleware` to `proxy`;
-      the current matcher would otherwise send `/console` to `/ar/console`)
-- [ ] 5.3 Login, shell, and AR + EN with RTL, light + dark
+- [x] 5.1 `/console/**` with its own root layout — the site header, footer and providers must not appear — `6034d97`
+      `src/app/console/layout.tsx` is a **second root layout** sitting beside `src/app/[lang]/layout.tsx`. The
+      question that blocked this row ("does Next 16 allow two roots?") is answered by the build, not by docs: it
+      compiles and serves both trees. No route group was needed. The layout is `index: false` and sets
+      `data-surface="console"`; `tests/console.test.ts` fails if any file under `src/app/console` or
+      `src/components/console` mentions `SiteShell`, `components/layout`, `SiteHeader` or `SiteFooter`.
+- [x] 5.2 Exclude `console` from the `[lang]` rewrite in `src/proxy.ts` (Next 16 renamed `middleware` to `proxy`;
+      the current matcher would otherwise send `/console` to `/ar/console`) — `2093718`
+      The rule moved out of the proxy into `src/lib/site-routing.ts` (`CONSOLE_PREFIX`, `isConsolePath`,
+      `decideRoute`) so it is testable without Next's middleware types: `decideRoute('/console/blogs/x')` →
+      `{ lang: null, rewriteTo: null }` while `/blogs` → `{ lang: 'ar', rewriteTo: '/ar/blogs' }`. `src/proxy.ts`
+      sets `x-shamah-lang` only when `lang` is non-null and rewrites only when `rewriteTo` is set; the matcher is
+      unchanged. Site routes re-checked after the change: `/`, `/blogs`, `/ar/blogs`, `/en/blogs`, `/offers` all 200.
+- [x] 5.3 Login, shell, and AR + EN with RTL, light + dark — `6034d97`, audit fix in `b8b4430`
+      `src/lib/console/screens.ts` is the nav registry; `src/lib/console/prefs.ts` resolves locale + theme with
+      precedence **account → `shamah_console_prefs` cookie → `Accept-Language` → `ar`/`light`**, and the layout
+      writes `dir`/`data-theme` on the server — no flash, no `localStorage`, so it works with JS off. Login,
+      forced-password and sign-out are exercised over real HTTP in `tests/console.test.ts` (14 tests) and in the
+      browser at 360 and 1000 px, AR-RTL and EN-LTR, light and dark.
+      **BK-6 rule:** a new screen must be added to `CONSOLE_SCREENS` *and* have a page file — the test compares
+      the two sets, so an unregistered page or a dead nav link fails the suite.
 
 ## BK-6 — content CRUD + publish
 - [ ] 6.1 Articles, offers, pages, lists (specialists, branches, FAQ, treatments, results, nav), settings
@@ -174,12 +191,14 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
   failing `tsx` script hangs forever instead of exiting — and piping it through `tail` hides the error,
   because `tail` only flushes at EOF. Call `destroyDb()` in a `finally` and run scripts without a pipe.
 
-### Console auth surface (BK-5 builds the UI on this)
+### Console auth surface (built in BK-3/4, UI in BK-5 — BK-6 runs on this)
 - `POST /api/console/auth` login · `DELETE` logout · `GET /api/console/auth/me` · `POST /api/console/auth/password`.
 - The core (`src/lib/auth/*`) takes a plain `Request` and returns a `Response` — no Next imports — so it runs
   under vitest without a server and the route files are one-liners. Keep it that way.
-- `npm run doctor` reports `users — 0 rows` until an Owner is created; the dev database still has no real
-  account (`shamah_cms`, not `_test`). It does report the roles: 6 rows, one per catalog role, with grants.
+- `npm run doctor` reports the 6 catalog roles with their grant counts and the row counts that matter. The dev
+  database (`shamah_cms`, not `_test`) now has **1 user**: the Owner created to verify BK-5. Its password was
+  generated into the gitignored `.tmp/bk5-dev-owner-pass.txt` and never printed to chat or logs; if that file is
+  gone, recreate the account with `npm run owner:create` rather than hand-editing rows.
 - `npm run db:seed` (dry-run, `--apply`) is the only way roles reach the database — never hand-insert into
   `role_permissions`. `npm run owner:create -- --email … --apply` seeds first, then creates the account, and
   reads the password from a hidden prompt or `--password-stdin`; it is never an argument.
@@ -187,3 +206,25 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
   the site renders (`nav, branches, specialists, treatments, services, faq, results`), `EDITOR_LIST_KEYS`
   drops `nav` (Admin's), and `SITE_LOCALES` is `ar`/`en`. The Editor's scoped grants name those strings, so a
   new `list_key` or locale outside them is silently uneditable by Editors.
+- **The guard writes an audit row only when `status < 400`** (`b8b4430`). Before this, a handler that answered its
+  own 400 — after zod had already passed — still produced an `audit_log` row describing a change that never
+  happened. A handler that refuses is the handler's business; do not re-audit it.
+- `tests/roles.test.ts` fails if a file under `src/app/api` exports a write route without importing the guard,
+  except through the `TRUSTED` map (currently `@/lib/auth/login`, `@/lib/console/prefs-route`), and each trusted
+  module is itself asserted to call `guard()`. Adding a route that bypasses the guard needs a new `TRUSTED`
+  entry *and* a reason.
+
+### Console UI surface (BK-6 adds screens on this)
+- `src/lib/console/screens.ts` is the nav registry and `tests/console.test.ts` asserts it equals the set of page
+  files under `src/app/console`. Register **and** create the page, or the suite fails either way.
+- Prefs and login state are cookies, and cookies can only be set by a Route Handler — that is why the theme/locale
+  toggle posts to `/api/console/prefs` instead of using `localStorage`. Server-rendered `dir`/`data-theme` means
+  no flash and no JS requirement. Keep it that way.
+- Sign-out uses `router.replace('/console/login')`, never `location.assign`: the cookies are already gone so the
+  login page renders cleanly, and a client navigation does not reload the whole frame.
+- **Seeing the console in a browser** (each of these cost a detour): `next start` does not serve files added to
+  `public/` after the build, and `.next/static/**` drops unknown paths with a 404 — so a preview asset has to go
+  through a throwaway same-host proxy (`.tmp/bk5-proxy.mjs`, logs in, injects the session cookies, forwards to the
+  running app; `.tmp/` is gitignored). The in-app automation viewport is fixed near 505 px, so the desktop shots
+  were taken by loading the page in a same-origin iframe and `transform: scale(0.5)`; `matchMedia` works in there.
+  Never paste a real password into that flow — read it from the gitignored file.
