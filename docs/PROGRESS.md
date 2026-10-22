@@ -1,122 +1,124 @@
-# PROGRESS — Payload CMS migration
+# PROGRESS — Shamah backend + console (BK plan)
 
-Resume protocol (do this first, every time):
-1. Read `docs/PAYLOAD-PLAN.md` (the brief), then this file, then
-   `git log --oneline -20`.
-2. Continue from the first row not marked `done`. Do not redo `done` rows.
-3. Never touch `main`; commit only to `payload-migration`. Stage explicit paths,
-   never `git add -A`. Never commit `.env.local` or secrets.
-4. Env for every command: `TEMP=/d/tmp TMP=/d/tmp
-   PLAYWRIGHT_BROWSERS_PATH=/d/playwright-browsers npm_config_cache=/d/npm-cache`;
-   CLIs from `/d/tools/node_modules/.bin`. Never use port 3000.
-5. Do NOT run `payload migrate` or the seed on Neon `main` — only on branch
-   `payload-dev`. `.env.local` points at `payload-dev`.
+The brief, from the owner (2026-10-22):
 
-Legend: `[ ]` todo · `[~]` in progress · `[x]` done (last commit hash on the row).
+> اعمل باك اند للموقع بتاع شامه حتي لو ب nodejs عشان ميبقاش الاعتماد علي ووردبريس خالص محتاج اشيله
+> واعمل داش بورد تكون ثيرد بارتي اضيف من المحتوي للموقع والماركتينج يتابع حاجته من عليها + ال SEO كذلك
+>
+> Build a backend for the Shamah site (Node.js is fine) so there is **no dependency on WordPress at all** —
+> it is being removed. Add a dashboard that is neither paid nor free-SaaS ("من صنعي أنا"), that carries
+> site-wide statistics like WordPress did, and that holds everything the site feeds that nobody currently
+> sees — **leads, configurations**. Marketing must be able to work from it. SEO too.
 
-## Phase 0 — design-first content map
-- [x] 0.1 Cloud resources created + tested (Neon shamah-cms, Blob shamah-media,
-      Vercel env vars, password rotation) — `bab28af`
-- [x] 0.2 Write `docs/PAYLOAD-PLAN.md` + this `docs/PROGRESS.md`; archive old
-      progress as `docs/PROGRESS-site.md`; confirm on `payload-migration` — `043c654`
-- [x] 0.3 Read current Payload docs; verify Payload ↔ Next 16.3.6 compatibility
-      — Payload ≥3.73.0 + Next ≥16.2 production-ready; webpack build sidesteps the
-      turbopack HMR issue (discussion #14330). Direct URI for migrate, pooled at runtime.
-- [x] 0.4 Read repo docs (WIRING, inventory, RESULTS-SOURCE, HOME-PRIORITY,
-      STATIC-SWEEP, UNVERIFIED-FACTS, api), git log, lib/wp, src/data, all 18 pages,
-      components, /api/v1, scripts
-- [x] 0.5 Recover removed/hidden sections from git history (BeforeAfterSection +
-      orphaned results/doctors bands catalogued; the 4 "why Shamah" differentiators
-      confirmed EXCLUDED — they live on /about, not Home)
-- [x] 0.6 Write `docs/DESIGN-CONTENT-MAP.md` (page→section→field→CMS home,
-      required/optional, localized, empty behaviour + seed/trust roll-up)
+Decisions already taken, do not re-open them: the console is this repo at its own path with its own layout
+(no site header); the database is MySQL/MariaDB because cPanel hosts it; content is imported locally now and
+loaded into the console once it exists; `D:\shamah` is left alone.
 
-## Phase 1 — install + data model
-- [x] 1.1 Set Vercel function region `fra1` via `vercel.json` (`"regions":["fra1"]`)
-      — set; applies on next deploy (not deploying). `vercel regions` not in this CLI
-      version, so region availability confirmed by the standard fra1 region id only.
-- [x] 1.2 Create Neon branch `payload-dev` (`br-twilight-bar-b9h6p80a`, endpoint
-      `ep-muddy-frost-b9k0jshs`); `.env.local` DATABASE_URI(+_DIRECT) point at it;
-      both connect, schema empty. Vercel project vars still point at Neon `main`.
-- [ ] 1.3 Install payload + @payloadcms/db-postgres + richtext-lexical +
-      storage-vercel-blob + sharp; admin at `/admin`
-- [ ] 1.4 Middleware/sitemap/hreflang/lang routing exclude `/admin`+Payload routes;
-      robots disallow `/admin`
-- [ ] 1.5 Localization ar(default,rtl)+en per field; data-layer-only fallback
-- [ ] 1.6 Auth: admin/editor roles, no public signup, lockout, strong pw, secure
-      cookies, GraphQL off, REST published-read-only
-- [ ] 1.7 Drafts + versions + autosave on content collections
-- [ ] 1.8 Media: localized alt, focal point, sharp WebP, presets 1600/1400/800/400,
-      8 MB cap, random suffix
-- [ ] 1.9 Collections + globals from content map (posts, categories, offers,
-      services, specialists, results, faqs, branches, pages, media; siteSettings,
-      homeContent, homeLayout)
-- [ ] 1.10 Pinning (featured+order → ≤3 on Home) + afterChange/afterDelete
-      revalidate both langs
-- [x] 1.11 SITE URL: single-source NEXT_PUBLIC_SITE_URL everywhere; build guard when
-      missing; curl verify no www.shamahclinics.com in canonical/og — `resolveSiteUrl()`
-      throws in production build/start when unset (dev falls back to localhost);
-      verified on a prod build served at :3210 → robots/sitemap/canonical/og:url/
-      og:image/hreflang/JSON-LD all on the Vercel URL, post page had 0 shamahclinics hits.
-      `next.config.ts` gained an optional `NEXT_DIST_DIR` so checks never clobber the
-      live dev server's `.next`.
-- [ ] 1.12 Measure public JS bundle size before/after admin (must not grow)
+## Resume protocol (do this first, every time)
+1. Read this file, then `git log --oneline -20`. Continue at the first unchecked row; never redo a `[x]` row.
+2. Work only in `D:\shamah_cms` on branch `cms-clean`. **Never push. Never touch `main`. Never touch
+   `D:\shamah`** (the live site, and another session's `admin-restore` branch lives there too).
+3. Stage explicit paths — never `git add -A`. One commit per finished row, hash on the row.
+4. Secrets: print variable **names** only, never values. `.env.local` / `.env.test` are sourced, never echoed.
+5. `data/wp/*.json` and `public/wp/*` are the frozen WordPress backup (92 articles, 4 offers, 56 result
+   stories). They are read-only until BK-7 imports them and are **never deleted**.
+6. Mutating CLI commands default to dry-run; they only act with `--apply`/`--force`.
+7. Tests run against `shamah_cms_test` only — `src/lib/db/guard.ts` refuses anything not ending in `_test`.
 
-## Phase 2 — seed (on payload-dev)
-- [ ] 2.1 `scripts/seed-cms.ts` idempotent upsert by slug + `seedSource` field
-- [ ] 2.2 wordpress→published (92 posts+cats, 4 products w/ images, 7 services from
-      page 696, branches, about, hero + chosen images)
-- [ ] 2.3 confirmed→published (phone/WhatsApp, branch data matching live site)
-- [ ] 2.4 authored-unverified→DRAFT only (specialists, results, FAQ, treatment
-      details, extra services, offer terms, privacy, AR branch names, email/hours)
-- [ ] 2.5 seed table (collection|lang|published|draft) + `docs/CMS.md` "Needs real
-      content"
+## Gates (all four must be green before a row is marked done)
+`npm run typecheck` · `npm run lint` · `npx vitest run` · `npm run build`
+`npm run doctor` says whether the machine is ready. Local DB: start with `npm run db:local:start`
+(port 3307, loopback only — see `docs/LOCAL-MARIADB.md`).
 
-## Phase 3 — data layer swap + restored sections
-- [ ] 3.1 `lib/cms` mirrors `lib/wp` getters/types/pagination via Local API;
-      Lexical→sanitized HTML; published-only
-- [ ] 3.2 Switch importers to `lib/cms`; delete static content files + dead code
-      (keep nav.ts); `/api/v1` contract preserved
-- [ ] 3.3 Restore designed sections driven by CMS + homeLayout; hidden when empty;
-      Home renders as today with near-empty content
-- [ ] 3.4 `scripts/export-cms.ts` → `data/cms-snapshot.json`; DB-unreachable fallback
-      + log line; build never hangs
-- [ ] 3.5 Archive `lib/wp`/`data/wp`; deprecate `sync:wp` (document)
-- [ ] 3.6 sitemap/JSON-LD/hreflang/canonical/metadata/pagination/load-more/lang
-      switcher work from new data (no empty JSON-LD fields)
+`npm run build` needs outbound network: `next/font/google` fetches Montserrat and Readex Pro at compile time
+(`src/lib/fonts.ts`). Offline it fails with `getaddrinfo ENOTFOUND fonts.googleapis.com` — that is the
+environment, not the code. Self-hosting the two fonts would remove the dependency; do that only if deploys
+turn out to need it.
 
-## Phase 4 — dashboard experience
-- [ ] 4.1 Admin foundation: RTL AR (EN avail), local Tajawal, Shamah logo/icon,
-      gold/ivory CSS-var theme light+dark, spacing/radii/borders, icon family,
-      ≥4.5:1, fill missing AR strings
-- [ ] 4.2 Sidebar groups + AR labels + draft badges, collapsible/drawer
-- [ ] 4.3 Top bar: search, lang switch, "إضافة جديد" dropdown, "عرض الموقع", user menu
-- [ ] 4.4 Custom Dashboard view (greeting, setup checklist from real data, stat
-      cards, quick actions, needs-review, recent edits, help card; no fake analytics)
-- [ ] 4.5 List screens: status pills, translation badges, row actions, filters,
-      bulk publish, drag-reorder, icon empty states, table→cards on mobile
-- [ ] 4.6 Edit screens: sticky action bar, side panel, tabs (SEO collapsed),
-      dropzone+focal, drag repeatables, AR hints/validation, confirms, toasts
-- [ ] 4.7 First-login 3-step welcome (per user, dismissible)
-- [ ] 4.8 Login screen (logo, AR welcome, clinic photo, errors, forgot-password)
-- [ ] 4.9 `docs/ADMIN-GUIDE-AR.md` + rendered as in-admin help page
+Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 
-## Phase 5 — verify
-- [ ] 5.1 lint / typecheck / build clean
-- [ ] 5.2 update verify-render.mjs + test-missing-fields.mjs; AR+EN HTML diff = none
-- [ ] 5.3 prove publish/unpublish doctor → appears/vanishes both langs; anon cannot
-      read drafts; bundle sizes not grown; Lighthouse mobile no regression
-- [ ] 5.4 admin checks AR/EN, light/dark, 1440+390, keyboard, contrast; screenshots
-      in docs/screenshots/admin/
-- [ ] 5.5 `docs/CMS.md` full (collections, page reads, env vars, Vercel deploy,
-      first admin, seed+export, payload-dev→production procedure, Payload limits)
-- [ ] 5.6 `docs/CMS.md` "Hardening before launch" (restore Sensitive type in
-      Production+Preview + exact commands)
-- [ ] 5.7 Final report (resources, seed table, hidden sections, render diff, bundle
-      sizes, screenshots, limits, injection-tool list, unverified items)
+## BK-0 — clean room
+- [x] 0.1 New tree from the last clean site commit (`e3c19e3`), branch `cms-clean`, deps installed,
+      `D:\shamah` verified untouched
+- [~] 0.2 Baseline gate: `lint` and `typecheck` are green on the site as cloned. `next build` compiled and
+      typechecked, then failed at page-data for two separate reasons: `NEXT_PUBLIC_SITE_URL` was unset (fixed —
+      `.env.example` now documents it) and, since then, no DNS from this shell for the fonts. **Re-run
+      `npm run build` with network before calling BK-0 done.**
+- [x] 0.3 This ledger; the dead Payload ledger archived as `docs/PROGRESS-payload-archived.md`
+
+## BK-1 — the database that will actually be deployed
+- [x] 1.1 Portable MariaDB 11.4.13 on `D:\mariadb`, loopback 127.0.0.1:3307, `my.ini` + start/stop scripts — `a1afdd9`
+- [x] 1.2 `npm run db:local:provision` creates `shamah_cms` + `shamah_cms_test`, one app user per database,
+      and writes `.env.local` / `.env.test` (names printed, values never) — `a1afdd9`
+
+## BK-2 — schema, migrations, typed access
+- [x] 2.1 Six migrations, 39 tables: auth, content, SEO, leads, publish, stats — `a1afdd9`
+- [x] 2.2 Checksummed migration runner, dry-run by default, refuses an edited applied file — `a1afdd9`
+- [x] 2.3 Kysely types for all 39 tables; `MysqlDialect` on the callback `mysql2` pool (the promise pool
+      never resolves — see the note in `src/lib/db/index.ts`) — `a1afdd9`
+- [x] 2.4 `Json`/`JsonOr` column types + `json()`: MariaDB JSON is LONGTEXT with a `json_valid()` check, so a
+      raw object arrives as `key = 'value'` SQL text and dies on the constraint. Writes are strings, reads are values — `a1afdd9`
+- [x] 2.5 `src/lib/db/schema.test.ts` — 8 tests, including a drift check that compares every column and every
+      SQL default against `types.ts` — `a1afdd9`
+- [x] 2.6 `npm run doctor` — env names, connectivity, migration state, checksums, content counts — `a1afdd9`
+
+## BK-3 — auth core
+- [ ] 3.1 bcryptjs cost 12, opaque session tokens (SHA-256 hash stored, raw one only in the cookie)
+- [ ] 3.2 httpOnly + SameSite=Lax + Secure cookies, CSRF token per session, login throttle via `login_attempts`
+- [ ] 3.3 `authenticate()` → `can(resource, action, scope)` → zod → execute → audit. **One** path; no route may
+      write without it
+- [ ] 3.4 `npm run owner:create` / `owner:reset` (and the password is never a CLI argument)
+
+## BK-4 — roles
+- [ ] 4.1 Seed Owner / Admin / Editor / SEO / Marketer / Viewer with `role_permissions` scopes
+- [ ] 4.2 Lead field redaction by role (phone/email hidden from Viewer, etc.)
+- [ ] 4.3 Test: every write endpoint answers **403, not 400**, when the caller lacks the permission — i.e.
+      permission is checked before the body is parsed
+
+## BK-5 — the console at its own path
+- [ ] 5.1 `/console/**` with its own root layout — the site header, footer and providers must not appear
+- [ ] 5.2 Exclude `console` from the `[lang]` rewrite in `src/proxy.ts` (Next 16 renamed `middleware` to `proxy`;
+      the current matcher would otherwise send `/console` to `/ar/console`)
+- [ ] 5.3 Login, shell, and AR + EN with RTL, light + dark
+
+## BK-6 — content CRUD + publish
+- [ ] 6.1 Articles, offers, pages, lists (specialists, branches, FAQ, treatments, results, nav), settings
+- [ ] 6.2 Draft → publish in one transaction (draft columns copy to `pub_*`, a revision is written, rollback works)
+- [ ] 6.3 ONE read path for the site: the database, with the baked `data/wp` snapshot as fallback
+- [ ] 6.4 Trash + never-delete: soft delete, restore, and versions that are never garbage-collected
+
+## BK-7 — cut WordPress out
+- [ ] 7.1 Fresh WP dump into a NEW timestamped folder (never overwriting `data/wp/*.json`)
+- [ ] 7.2 Import 92+92 articles, 4 offers, 56 result stories with slugs preserved (`legacy_id` set)
+- [ ] 7.3 Remove every live WordPress read (`src/lib/wp/http.ts`, `src/lib/wp/index.ts:119`) and `sync:wp`
+- [ ] 7.4 Prove it: zero requests to `shamaclinics.com` from a cold render of every public route
+
+## BK-8 — marketing
+- [ ] 8.1 Leads persisted (today `/api/v1/lead` only composes a WhatsApp text and keeps counters in memory)
+- [ ] 8.2 Status pipeline, notes, assignee, CSV export, idempotency key
+- [ ] 8.3 CTAs + follow-up actions, click tracking, optional Google Sheets outbox
+
+## BK-9 — SEO
+- [ ] 9.1 SEO center per entity per locale (title, description, OG, hreflang, JSON-LD, head tags)
+- [ ] 9.2 Redirects table honoured at the edge of the site, with a loop guard
+- [ ] 9.3 sitemap.xml + robots.txt generated from the database, both locales
+
+## BK-10 — statistics
+- [ ] 10.1 First-party `stats_events` capture (no third-party script required), bot filter, hashed visitor id
+- [ ] 10.2 Daily rollups + referrers + CTA clicks, and the console dashboard that reads them
+
+## BK-11 — deploy
+- [ ] 11.1 cPanel + MySQL procedure: `DATABASE_URL` vs discrete vars, migrations on deploy, Node app setup
+- [ ] 11.2 Import the local content into the deployed database (the owner's plan: build locally, then load it up)
+
+## BK-12 — housekeeping
+- [ ] 12.1 Git/GitHub tidy in `D:\shamah`: branch inventory, bundles for the dead lines of work, prune stray
+      worktrees, decide on `psql/` and `start-server.bat` — nothing deleted without a bundle first
+- [ ] 12.2 **Security warning for the owner**: the `admin-restore` branch in `D:\shamah` ships `/admin` and
+      `/api/sitedash/{config,leads}` with no authentication of any kind (no session, no token, no proxy guard).
+      It must not reach a deployment as it stands.
 
 ## Known gaps / notes
-- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the brief do not exist.
-- Vercel stored DATABASE_URI/_DIRECT/PAYLOAD_SECRET as Sensitive (write-only) by
-  default; re-added as Config so `vercel env pull` works. Phase 5 re-hardens to
-  Sensitive for Production+Preview.
+- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
+- The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
+  use it. `.env.example` documents what this stack actually reads.
