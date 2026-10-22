@@ -184,9 +184,28 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       **Behaviour trap worth knowing:** publishing a locale publishes *everything* pending in that locale. The case
       that tags an article's category has to rewrite the English title too, or the retitle a previous case left
       deliberately unpublished rides into the published copy — correct behaviour, easy to misread as a bug.
-- [ ] 6.3b the same door for the list kinds — `branches`, `services`, `faq`, `specialists`, `results`, `nav`,
-      `getSettings` and the home prose/hero readers — then rewire `about`, `contact`, `layout`, `doctors`,
-      `branches*`, `results`, `treatments*` and `NotFoundDocument`
+- [x] 6.3b the same door for the `branches` and `services` lists — `22e340b`
+      A list item is one JSON document per row, so its shape belongs to the reader, not to a column per field:
+      `docBi`/`docStrings` accept the `{ar,en}` form an editor writes *and* a single string meant for both locales,
+      a missing value falls back instead of throwing, and a row with nothing nameable in it is skipped rather than
+      rendered as an empty card. A branch's photo takes the URL the editor pastes through `toPhotoSlot`, so the rest
+      of the slot comes from the site's defaults. The `uid` *is* the branch id the routes already use.
+      **The rung is now chosen per list, not per kind** (`listRung(listKey, …)`): the branches can be database-backed
+      while the services still come from the snapshot, because "has this been published yet?" is a question about one
+      list, and `hasPublished('list_item', { listKey })` is scoped to it. Asserted both ways: trashing one service
+      keeps the services on the DB rung, trashing the last one hands that list back while the branches stay put.
+      `lib/wp/about`, `treatments` and `result-stories` were rewired to the seam as well — they are *derived* readers
+      (a page plus its service cards, an article plus its result phrases), and reading their inputs from `./index`
+      would have paired database content with snapshot content on one screen. `getHome`'s office blocks come from the
+      seam too; its settings are the last WordPress read on that page.
+      4 more cases in `tests/site.test.ts` (13 total; suite 145 tests / 6 files), typecheck, lint and a clean
+      `next build` (272/272 pages) — with zero content rows in the dev DB the site still renders exactly what it
+      rendered before the seam.
+- [ ] 6.3c the rest of the read path: `getSettings` (a `siteConfig` + WP aggregate, not content),
+      `getHeroPhotos`/`getHomeIntro`/`getHomeProseSections` (all parsed out of one WordPress page body, no list key
+      of their own), `getOfferCategories` (**blocked**: the `categories` table has no taxonomy column, so post and
+      product categories would collide), and the `nav`/`specialists`/`faq`/`results`/`treatments` lists, which have
+      console screens but no public reader yet — each needs one before it can be moved, not invented here.
 - [x] 6.4 Trash + never-delete: soft delete, restore, and versions that are never garbage-collected — `c68eb9d`
       Trashing sets `deleted_at` and keeps the id, version and every revision; the live list and the trash view read
       the same table (`?trash=1`). Trashing needs the delete grant, restoring the write grant, and a row in the trash
