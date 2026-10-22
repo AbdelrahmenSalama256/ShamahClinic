@@ -435,6 +435,16 @@ describe('no console route writes without guard()', () => {
   /** Routes that exist before a session does; they cannot use a session guard. */
   const PRE_AUTH = new Set([join('auth', 'route.ts')]);
 
+  /**
+   * Specifiers a thin route file may delegate a write to instead of importing
+   * `guard` itself. Each one is asserted below to actually reach the guard, so
+   * the allow-list cannot be used to hide an unguarded handler.
+   */
+  const TRUSTED = new Map([
+    ['@/lib/auth/login', 'src/lib/auth/login.ts'],
+    ['@/lib/console/prefs-route', 'src/lib/console/prefs-route.ts'],
+  ]);
+
   function routeFiles(dir: string): string[] {
     return readdirSync(dir).flatMap((entry) => {
       const full = join(dir, entry);
@@ -456,10 +466,14 @@ describe('no console route writes without guard()', () => {
         expect(source, file).not.toMatch(/insertInto|updateTable|deleteFrom/);
         continue;
       }
-      const reachesGuard = /from '@\/lib\/auth\/guard'/.test(source) || /from '@\/lib\/auth\/login'/.test(source);
-      expect(reachesGuard, `${file} must import guard (or a module that does) to export a write`).toBe(true);
+      const reachesGuard =
+        /from '@\/lib\/auth\/guard'/.test(source) ||
+        [...TRUSTED.keys()].some((specifier) => source.includes(`from '${specifier}'`));
+      expect(reachesGuard, `${file} must import the guard or a trusted module to export a write`).toBe(true);
     }
-    // The transitive half of that rule: login.ts is trusted to reach the guard.
-    expect(readFileSync(join(process.cwd(), 'src/lib/auth/login.ts'), 'utf8')).toMatch(/\bguard[<(]/);
+    // The transitive half of that rule: every trusted module reaches the guard.
+    for (const path of TRUSTED.values()) {
+      expect(readFileSync(join(process.cwd(), path), 'utf8'), path).toMatch(/\bguard[<(]/);
+    }
   });
 });

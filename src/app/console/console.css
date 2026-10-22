@@ -1,0 +1,265 @@
+/*
+ * Console layout only. The colour variables come from globals.css and the
+ * `siteTheme` inline style on <html>, so light/dark is the same palette the site
+ * uses; everything here is frame, sidebar, cards and forms.
+ * Logical properties (`-inline-*`) throughout so the same file works in RTL.
+ */
+.console-body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: var(--font-readex-pro), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.console-frame {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+@media (min-width: 900px) {
+  .console-frame {
+    grid-template-columns: 16rem minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+  }
+  .console-header {
+    grid-column: 1 / -1;
+  }
+  .console-side {
+    grid-row: 2;
+  }
+  .console-main {
+    grid-row: 2;
+  }
+}
+
+.console-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem;
+  background: var(--bg-card);
+  border-block-end: 1px solid var(--border-control-soft);
+}
+
+.console-brand {
+  display: flex;
+  flex-direction: column;
+  margin-inline-end: auto;
+}
+
+.console-brand strong {
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.console-brand span {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.console-side {
+  background: var(--bg-card);
+  padding: 1rem 0.75rem;
+  border-inline-end: 1px solid var(--border-control-soft);
+}
+
+.console-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.console-nav a {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.6rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+.console-nav a:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.console-nav a[aria-current='page'] {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.console-main {
+  padding: 1.5rem 1.25rem 3rem;
+  min-width: 0;
+}
+
+.console-heading {
+  margin: 0 0 0.35rem;
+  font-size: 1.4rem;
+}
+
+.console-lede {
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.console-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: 0.85rem;
+}
+
+.console-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.9rem;
+  padding: 0.9rem 1rem;
+}
+
+.console-card dt {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.console-card dd {
+  margin: 0.35rem 0 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.console-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.9rem;
+  padding: 1.1rem 1.15rem;
+  margin-block-end: 1rem;
+  max-width: 34rem;
+}
+
+.console-chip {
+  display: inline-block;
+  padding: 0.15rem 0.55rem;
+  margin-inline-end: 0.3rem;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.console-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.console-account {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-block-start: 1.5rem;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--border-control-soft);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+.console-account-label {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.console-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-block-end: 0.9rem;
+}
+
+.console-field label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.console-field input {
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.6rem;
+  border: 1px solid var(--border-control-soft);
+  background: var(--bg-card-subtle);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.console-field input:focus-visible {
+  outline: 2px solid var(--text-gold);
+  outline-offset: 1px;
+}
+
+.console-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.65rem;
+  border: 1px solid var(--border-control-soft);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.console-button:hover:not(:disabled) {
+  background: var(--bg-secondary);
+}
+
+.console-button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.console-button-primary {
+  background: var(--text-primary);
+  color: var(--bg-card);
+  border-color: transparent;
+}
+
+.console-alert {
+  margin-block: 0.75rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0.6rem;
+  font-size: 0.88rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.console-alert[data-tone='error'] {
+  color: var(--text-danger);
+}
+
+.console-center {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 2rem 1.25rem;
+}
+
+.console-login {
+  width: min(26rem, 100%);
+}
+
+.console-note {
+  margin-block-start: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+html[data-theme='dark'] .console-body {
+  background: var(--bg-primary);
+}

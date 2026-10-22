@@ -1,0 +1,108 @@
+/**
+ * The console's own strings. Arabic is the primary language of this site, so the
+ * Arabic catalog defines the keys and English has to match it — a missing
+ * translation is a type error, not a runtime fallback.
+ */
+import type { ConsoleLocale } from './prefs';
+
+const ar = {
+  'brand.title': 'لوحة تحكم شامه',
+  'brand.subtitle': 'المحتوى والعملاء والإحصارات في مكان واحد',
+  'nav.overview': 'نظرة عامة',
+  'nav.password': 'كلمة المرور',
+  'shell.view_site': 'فتح الموقع',
+  'shell.sign_out': 'تسجيل الخروج',
+  'shell.signed_in_as': 'مسجّل الدخول باسم',
+  'shell.roles': 'الأدوار',
+  'shell.grants': 'صلاحياتك',
+  'shell.theme.light': 'الوضع الفاتح',
+  'shell.theme.dark': 'الوضع الداكن',
+  'shell.locale.switch': 'English',
+  'login.heading': 'الدخول إلى اللوحة',
+  'login.intro': 'تسجّل الدخول بالبريد الإلكتروني وكلمة المرور التي أعطاك إياها المدير.',
+  'login.email': 'البريد الإلكتروني',
+  'login.password': 'كلمة المرور',
+  'login.submit': 'دخول',
+  'login.waiting': 'جارٍ التحقق…',
+  'login.invalid_credentials': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+  'login.account_disabled': 'هذا الحساب موقوف. راسل المدير.',
+  'login.throttled': 'محاولات كثيرة. انتظر قليلاً ثم أعد المحاولة.',
+  'login.invalid_input': 'تحقق من البريد الإلكتروني وكلمة المرور.',
+  'login.network': 'لم تصل الطلب. أعد المحاولة.',
+  'overview.heading': 'نظرة عامة',
+  'overview.intro': 'ما فيه في قاعدة البيانات الآن. الأقسام تصير متاحة واحداً تلو الآخر.',
+  'overview.articles': 'مقالات',
+  'overview.offers': 'عروض',
+  'overview.pages': 'صفحات',
+  'overview.lists': 'قوائم',
+  'overview.media': 'صور',
+  'overview.leads': 'عملاء محتملون',
+  'overview.users': 'حسابات',
+  'overview.not_allowed': 'دورك لا يرى هذا القسم.',
+  'overview.empty': 'لا شيء بعد.',
+  'overview.coming_soon': 'يظهر هنا بعد استيراد المحتوى.',
+  'password.heading': 'كلمة المرور',
+  'password.intro': 'غيّر كلمة مرورك. لن تُطرح كلمة المرور الحالية في أي مكان.',
+  'password.must_change': 'كلمة المرور مؤقتة. غيّرها قبل أي تعديل آخر.',
+  'password.current': 'كلمة المرور الحالية',
+  'password.next': 'كلمة المرور الجديدة',
+  'password.submit': 'حفظ',
+  'password.saved': 'تم الحفظ.',
+  'password.weak': 'كلمة المرور الجديدة قصيرة أو ضعيفة.',
+  'password.wrong_current': 'كلمة المرور الحالية غير صحيحة.',
+} satisfies Record<string, string>;
+
+export type MessageKey = keyof typeof ar;
+
+const en: Record<MessageKey, string> = {
+  'brand.title': 'Shamah Console',
+  'brand.subtitle': 'Content, leads and statistics in one place',
+  'nav.overview': 'Overview',
+  'nav.password': 'Password',
+  'shell.view_site': 'Open the site',
+  'shell.sign_out': 'Sign out',
+  'shell.signed_in_as': 'Signed in as',
+  'shell.roles': 'Roles',
+  'shell.grants': 'Your permissions',
+  'shell.theme.light': 'Light mode',
+  'shell.theme.dark': 'Dark mode',
+  'shell.locale.switch': 'العربية',
+  'login.heading': 'Sign in to the console',
+  'login.intro': 'Use the email and password your administrator gave you.',
+  'login.email': 'Email',
+  'login.password': 'Password',
+  'login.submit': 'Sign in',
+  'login.waiting': 'Checking…',
+  'login.invalid_credentials': 'That email or password is wrong.',
+  'login.account_disabled': 'This account is disabled. Contact your administrator.',
+  'login.throttled': 'Too many attempts. Wait a minute and try again.',
+  'login.invalid_input': 'Check the email and password.',
+  'login.network': 'The request did not reach the server. Try again.',
+  'overview.heading': 'Overview',
+  'overview.intro': 'What is in the database right now. Sections appear as they are built.',
+  'overview.articles': 'Articles',
+  'overview.offers': 'Offers',
+  'overview.pages': 'Pages',
+  'overview.lists': 'Lists',
+  'overview.media': 'Images',
+  'overview.leads': 'Leads',
+  'overview.users': 'Accounts',
+  'overview.not_allowed': 'Your role cannot see this section.',
+  'overview.empty': 'Nothing yet.',
+  'overview.coming_soon': 'Shows up here once content is imported.',
+  'password.heading': 'Password',
+  'password.intro': 'Change your password. The current one is never shown anywhere.',
+  'password.must_change': 'This password is temporary. Change it before making any other edit.',
+  'password.current': 'Current password',
+  'password.next': 'New password',
+  'password.submit': 'Save',
+  'password.saved': 'Saved.',
+  'password.weak': 'The new password is too short or too weak.',
+  'password.wrong_current': 'The current password is wrong.',
+};
+
+const catalog: Record<ConsoleLocale, Record<MessageKey, string>> = { ar, en };
+
+export function message(key: MessageKey, locale: ConsoleLocale): string {
+  return catalog[locale][key];
+}
