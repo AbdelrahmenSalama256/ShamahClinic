@@ -21,7 +21,8 @@ loaded into the console once it exists; `D:\shamah` is left alone.
 3. Stage explicit paths — never `git add -A`. One commit per finished row, hash on the row.
 4. Secrets: print variable **names** only, never values. `.env.local` / `.env.test` are sourced, never echoed.
 5. `data/wp/*.json` and `public/wp/*` are the frozen WordPress backup (92 articles, 4 offers, 56 result
-   stories). They are read-only until BK-7 imports them and are **never deleted**.
+   stories). They are read-only and **never deleted**. BK-7.2 imports the content kinds out of them; they stay the
+   site's fallback rung, and `result-stories.json` / `seo.json` are still read directly, until BK-7.3 replaces them.
 6. Mutating CLI commands default to dry-run; they only act with `--apply`/`--force`.
 7. Tests run against `shamah_cms_test` only — `src/lib/db/guard.ts` refuses anything not ending in `_test`.
 
@@ -220,8 +221,36 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 
 ## BK-7 — cut WordPress out
 - [ ] 7.1 Fresh WP dump into a NEW timestamped folder (never overwriting `data/wp/*.json`)
-- [ ] 7.2 Import 92+92 articles, 4 offers, 56 result stories with slugs preserved (`legacy_id` set)
-- [ ] 7.3 Remove every live WordPress read (`src/lib/wp/http.ts`, `src/lib/wp/index.ts:119`) and `sync:wp`
+- [x] 7.2 Import the snapshot as console rows: 92 articles, 4 offers, 27 pages + their categories, slugs preserved (`legacy_id` set) — `43fdf45`
+      `src/lib/content/import-wp.ts` reads `data/wp/*.json` — never the live site — and pairs each English post with
+      its Arabic twin **by post id** (all 92 share one id), so a translation WordPress kept as a separate post lands in
+      the same row's two locales. English is authoritative for the shared fields (image, category, price); each locale
+      keeps its own title, excerpt and body.
+      Three rules shaped it. **Rows keep their legacy post id** — the site's cards are built on it, so a reader-visible
+      id changing at cut-over would be a bug (`numericId` returns `legacy_id` when there is one). **Articles publish
+      stamped with their own date** (`publishRow`'s new `at`), because `published_at` is what a card shows as `date`;
+      naive WordPress stamps are read as UTC so the day a reader saw does not shift. **Everything goes through
+      `createRow` → `saveDraft` → `publishRow`**, so an imported row is not a special state: it is a draft that happens
+      to be published, normally editable, and `parseWrites` validates every snapshot value before a byte is written
+      (longest body 40,866 chars against a 1,000,000 limit — nothing truncated; an oversized row is reported `skipped`).
+      `createRow`'s `legacyId` and `publishRow`'s `at` exist only for the import and neither is reachable from the
+      console request shape (`api.ts` builds both inputs by hand), so an editor cannot claim a post id or backdate one.
+      `npm run wp:import` defaults to a dry run and refuses a database not named `*_test`. A row already saying what the
+      snapshot says is left alone: the second pass reports `created 0, updated 0, unchanged 123` and adds no revision.
+      Offer keys are stored decoded — the snapshot reader resolved either spelling of an Arabic slug, and decoded
+      storage keeps that parity on the DB rung.
+      **Not covered by 7.2, and still WordPress data:** the 56 result stories ride along because a story *is* an article
+      (its card now comes from the imported rows), but its membership is the phrase index in `data/wp/result-stories.json`;
+      `seo.json`, the offer categories and the kinds 6.3c still lists are the same kind of leftover.
+      13 cases in `tests/import-wp.test.ts` (suite 158 tests / 7 files) compare the rendered journal, offers and pages
+      against the snapshot row for row, assert the dry run writes nothing, and re-check ordering, dates and both Arabic
+      slug spellings. Typecheck, lint, `next build` 272/272. Cleanup deletes exactly the snapshot keys' rows — the test
+      DB is left at zero content rows, zero categories, zero revisions. Note for the next suite: the files share one
+      process, so `afterAll` must call `destroyDb()`, not `db.destroy()` — the latter leaves a destroyed pool cached in
+      the global and breaks whichever file runs after it.
+- [ ] 7.3 Remove every live WordPress read (`src/lib/wp/http.ts`, `src/lib/wp/index.ts:119`) and `sync:wp`,
+      and the snapshot-**file** reads the import has not replaced: `data/wp/result-stories.json` membership, `seo.json`,
+      `offer-categories`, and the `data/wp/*.json` fallback rung itself.
 - [ ] 7.4 Prove it: zero requests to `shamaclinics.com` from a cold render of every public route
 
 ## BK-8 — marketing
