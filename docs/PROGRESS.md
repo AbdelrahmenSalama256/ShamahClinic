@@ -78,10 +78,34 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       printed. `owner:create` grants the Owner role and writes a `cli:owner:*` audit row. — `08b790e`
 
 ## BK-4 — roles
-- [ ] 4.1 Seed Owner / Admin / Editor / SEO / Marketer / Viewer with `role_permissions` scopes
-- [ ] 4.2 Lead field redaction by role (phone/email hidden from Viewer, etc.)
-- [ ] 4.3 Test: every write endpoint answers **403, not 400**, when the caller lacks the permission — i.e.
-      permission is checked before the body is parsed
+- [x] 4.1 Seed Owner / Admin / Editor / SEO / Marketer / Viewer with `role_permissions` scopes — `798511d`
+      `src/lib/auth/roles.ts` is the single catalog (6 roles, 102 grants in the dev database);
+      `npm run db:seed` syncs it, dry-run first, and a second `--apply` changes nothing.
+      Two rules that cost a redesign:
+      - **A scope belongs on a write, not a read.** `can()` refuses when the request does not name every
+        dimension a grant mentions, so an Editor with `{locales:['ar']}` would 403 on a list that spans both
+        languages for the wrong reason. Reads are seeded unscoped and filter in the query; `locales`, `lists`,
+        `pages` and `leadSources` are exercised on writes.
+      - **Seed before you create an account.** `owner:create` ran first against a role that existed with zero
+        `role_permissions` rows and produced an account that could log in and do nothing. It now calls
+        `syncRoles()` before `createUser()`, and `npm run doctor` prints each catalog role with its grant count
+        so an unseeded role is visible without logging in.
+      Account writes (`user.*`) are Owner-only by design — Admin edits content, not people.
+- [x] 4.2 Lead field redaction by role (phone/email hidden from Viewer, etc.) — `798511d`
+      `src/lib/auth/redaction.ts`: a lead's `name/phone/email/message/fields` are visible only when the caller
+      holds `lead.update` **or** `lead.export` for that lead's source; otherwise they are blanked and
+      `contact_hidden: true` says why. **BK-8 must route every lead surface through `redactLead()`** — table,
+      detail panel, CSV and the Sheets outbox — and must always write a non-empty `leads.source`
+      (`VARCHAR(64)`, default `contact-form`): an empty source matches no scoped grant, so those leads are
+      redacted for everyone except a globally-granted role.
+- [x] 4.3 Test: every write endpoint answers **403, not 400**, when the caller lacks the permission — i.e.
+      permission is checked before the body is parsed — `798511d`
+      `tests/roles.test.ts` (60 tests) drives the guard over all 75 resource x unsafe-action write routes for
+      every catalog role, with a 400 control as Admin, and proves the redaction counts per role. The scan also
+      fails if a future route file skips `guard()`, excepting only the pre-auth login routes.
+- [x] 4.4 Test hygiene, found by using the database: `schema.test.ts` leaked its fixture rows (12 stale users,
+      10 stale lists had piled up) and `auth.test.ts` left one `login_attempts` row per run. Both now delete
+      exactly the ids they created; a suite run leaves every table in `shamah_cms_test` at 0 rows. — `2c541ca`
 
 ## BK-5 — the console at its own path
 - [ ] 5.1 `/console/**` with its own root layout — the site header, footer and providers must not appear
@@ -141,10 +165,25 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 - **`Database` must not extend `Record<string, unknown>`.** The index signature collapses `keyof Database` to
   `string`, and every qualified join reference then infers as `never` ("argument not assignable to never").
   Fixed in `src/lib/db/types.ts` in `08b790e`; schema drift is caught by `src/lib/db/schema.test.ts`.
+- **`numUpdatedRows` / `numDeletedRows` only exist on `executeTakeFirst()`.** On this dialect the plain
+  `execute()` of an update or delete resolves to an *array* of result headers, so `result.numDeletedRows`
+  is `undefined` and `Number(x ?? 0)` always reports 0 — a purge script can print "deleted 0 rows" while
+  having deleted every row. Use `.executeTakeFirst().numDeletedRows`, or count before and after. Those counts
+  are `BigInt`, so `JSON.stringify` on the result throws `Do not know how to serialize a BigInt`.
+- **A CLI script that throws leaves the process alive.** The mysql2 pool keeps the event loop busy, so a
+  failing `tsx` script hangs forever instead of exiting — and piping it through `tail` hides the error,
+  because `tail` only flushes at EOF. Call `destroyDb()` in a `finally` and run scripts without a pipe.
 
 ### Console auth surface (BK-5 builds the UI on this)
 - `POST /api/console/auth` login · `DELETE` logout · `GET /api/console/auth/me` · `POST /api/console/auth/password`.
 - The core (`src/lib/auth/*`) takes a plain `Request` and returns a `Response` — no Next imports — so it runs
   under vitest without a server and the route files are one-liners. Keep it that way.
 - `npm run doctor` reports `users — 0 rows` until an Owner is created; the dev database still has no real
-  account (`shamah_cms`, not `_test`).
+  account (`shamah_cms`, not `_test`). It does report the roles: 6 rows, one per catalog role, with grants.
+- `npm run db:seed` (dry-run, `--apply`) is the only way roles reach the database — never hand-insert into
+  `role_permissions`. `npm run owner:create -- --email … --apply` seeds first, then creates the account, and
+  reads the password from a hidden prompt or `--password-stdin`; it is never an argument.
+- **BK-6 must use the vocabulary in `roles.ts`, not invent its own:** `LIST_KEYS` is exactly the seven lists
+  the site renders (`nav, branches, specialists, treatments, services, faq, results`), `EDITOR_LIST_KEYS`
+  drops `nav` (Admin's), and `SITE_LOCALES` is `ar`/`en`. The Editor's scoped grants name those strings, so a
+  new `list_key` or locale outside them is silently uneditable by Editors.
