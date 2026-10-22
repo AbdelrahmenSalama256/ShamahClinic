@@ -111,7 +111,9 @@ export async function guard<I, R>(
 
   const result = await handler({ auth, input, req, requestId, target, ipHash });
 
-  if (rule.action !== 'read') {
+  // A handler that refuses the request (its own 400, after the schema passed)
+  // changed nothing, so an audit row would record a change that never happened.
+  if (rule.action !== 'read' && (result.status ?? 200) < 400) {
     const audit = result.audit ?? {};
     await writeAudit({
       actorId: auth.user.id,
