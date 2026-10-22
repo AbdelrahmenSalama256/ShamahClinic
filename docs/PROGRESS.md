@@ -354,9 +354,29 @@ Four answers taken from the owner, binding for these sections:
 
 ## BK-13 — console shell: responsive, and one set of screen primitives
 Every screen below lands on this, so it comes first: a bad shell would be copied six times.
-- [ ] 13.1 Tokens + layout pass on `src/app/console/console.css` + `ConsoleShell.tsx`: sidebar becomes a drawer under
+- [x] 13.1 Tokens + layout pass on `src/app/console/console.css` + `ConsoleShell.tsx`: sidebar becomes a drawer under
       1024 px and a tab bar under 640 px, touch targets ≥ 44 px, RTL and dark/light still server-decided, content
-      width and dense/comfortable density switch.
+      width and dense/comfortable density switch. — `47d698f`
+      New `ConsoleFrame.tsx` owns the drawer state and `ConsoleShell.tsx` stays on the server, handing it brand,
+      controls and account as nodes. The toggle is an `<a href="#console-side">` upgraded by script rather than a
+      button, because the drawer also opens on `:target` — the BK-5 rule that the console works with JavaScript
+      switched off had to survive a drawer.
+      Density is a third prefs term in the cookie (`locale.theme.density`) and follows the **device**, never the
+      account: `users` has no density column, on purpose, so this row needed no migration. `PATCH
+      /api/console/prefs` requires all three terms now — a body that mentions two is a 400 rather than a silent
+      reset of the one it left out.
+      Two defects only measuring caught, both asserted in `tests/console.test.ts` and commented where they live.
+      `globals.css` puts `transition: all .3s !important` on `*`, and `all` covers `visibility`, so the drawer was
+      still `hidden` a frame after it opened and `ConsoleFrame`'s focus call was a no-op — the drawer's own
+      transition now answers that `!important` with transform only. And a scrim tap left focus inside the subtree
+      that had just gone hidden, dropping the keyboard user to `body`; `close()` hands focus back to the toggle.
+      Measured on the built console at 360 / 640 / 800 / 900 / 1024 / 1440, RTL and LTR: no horizontal overflow,
+      the 44 px floor at both densities (the dense block lowers tokens but never `--console-tap`), exactly one
+      visible nav landmark per width, header 72 px = `--console-topbar-h`, sticky 256 px sidebar at ≥ 1024,
+      Escape and the scrim both close and return focus, and the density click round-trips to
+      `data-density="dense"` plus an `ar.dark.dense` cookie. Caveat, stated plainly: the in-app automation
+      viewport is fixed near 505 px, so every width above is geometry read from a same-origin iframe, not pixels
+      seen in a screenshot.
 - [ ] 13.2 Navigation from the permission catalog, rendered as a tree (group → screen → entity) that hides what the
       role cannot read and greys what it cannot write, plus a command palette (⌘K / Ctrl+K) for screens and records.
 - [ ] 13.3 Shared list primitive: table/card modes, sortable columns, saved filters, search, bulk select → bulk
