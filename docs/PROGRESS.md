@@ -98,7 +98,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 - [x] 4.2 Lead field redaction by role (phone/email hidden from Viewer, etc.) — `798511d`
       `src/lib/auth/redaction.ts`: a lead's `name/phone/email/message/fields` are visible only when the caller
       holds `lead.update` **or** `lead.export` for that lead's source; otherwise they are blanked and
-      `contact_hidden: true` says why. **BK-8 must route every lead surface through `redactLead()`** — table,
+      `contact_hidden: true` says why. **BK-17 must route every lead surface through `redactLead()`** — table,
       detail panel, CSV and the Sheets outbox — and must always write a non-empty `leads.source`
       (`VARCHAR(64)`, default `contact-form`): an empty source matches no scoped grant, so those leads are
       redacted for everyone except a globally-granted role.
@@ -260,7 +260,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       already holds exactly those columns and `scripts/sync-wp.mjs` is the only code left that sends them.
       `seo.ts` lost its cheerio `<head>` scraper: `resolveSeo` now reads `seo.json` and otherwise falls back to the
       row's own title/excerpt/image. That capture holds four landing URLs (home + contact, both languages), so
-      **detail-page SEO has no snapshot entry until BK-9** gives the console its own seo fields — a real loss of
+      **detail-page SEO has no snapshot entry until BK-15** gives the console its own seo fields — a real loss of
       fidelity, recorded here rather than papered over.
       `config.ts` keeps `WP_ORIGIN` for the one job it can actually do: rewriting URLs already inside the snapshot.
       `WP_FETCH_TIMEOUT_MS`, `WP_MAX_INFLIGHT`, `WP_TAXONOMY_REVALIDATE`, `REVALIDATE`, `restBase` and `siteOrigin`
@@ -268,7 +268,7 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       **Two deviations from the row as written, both deliberate.** `sync:wp` is *kept*: it is the only way to cut a
       fresh snapshot for 7.1, it is hand-run, and no route imports it — so it is WordPress tooling, not a WordPress
       dependency. The Contact Form 7 forward in `/api/v1/lead` is also kept (it is a write, gated behind
-      `LEAD_MODE=cf7`, default `whatsapp`) because BK-8 replaces lead handling; 7.4 asserts it is the *only* live call.
+      `LEAD_MODE=cf7`, default `whatsapp`) because BK-17 replaces lead handling; 7.4 asserts it is the *only* live call.
       README, `docs/inventory.md`, `docs/api/DECISIONS.md` and `docs/WIRING.md` each said "live first, snapshot on
       failure"; all four now say what happens, and the 2026-10-12 audit keeps its gate table as a dated record with a
       note on what moved.
@@ -302,15 +302,16 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       `seo.json`, `offer-categories`, and the `data/wp/*.json` fallback rung itself. This is what 7.3 named and did not
       do — the live-read half is closed, the snapshot-retirement half is not.
 
-## BK-8 — marketing
-- [ ] 8.1 Leads persisted (today `/api/v1/lead` only composes a WhatsApp text and keeps counters in memory)
-- [ ] 8.2 Status pipeline, notes, assignee, CSV export, idempotency key
-- [ ] 8.3 CTAs + follow-up actions, click tracking, optional Google Sheets outbox
+## BK-8 — marketing (superseded, do not work these rows)
+Folded into **BK-17** the day the owner's expansion brief arrived (2026-10-22), because that brief
+named the two forms and the Connectors screen. Kept as a pointer, not as a second plan:
+8.1 leads persisted → 17.1 · 8.2 pipeline/notes/assignee/CSV/idempotency → 17.1 + 17.2 ·
+8.3 Sheets outbox → 17.3-17.5, CTA labels → 14.2, CTA click tracking → 10.2.
+The CF7 forward that 7.3 left standing is retired by 17.1.
 
-## BK-9 — SEO
-- [ ] 9.1 SEO center per entity per locale (title, description, OG, hreflang, JSON-LD, head tags)
-- [ ] 9.2 Redirects table honoured at the edge of the site, with a loop guard
-- [ ] 9.3 sitemap.xml + robots.txt generated from the database, both locales
+## BK-9 — SEO (superseded, do not work these rows)
+Folded into **BK-15**: 9.1 per-entity per-locale meta → 15.1 + 15.2 + 15.4 · 9.2 redirects → 15.6 ·
+9.3 sitemap + robots → 15.8. The `seo.json` leftover 7.3 recorded is closed by 15.1, not here.
 
 ## BK-10 — statistics
 - [ ] 10.1 First-party `stats_events` capture (no third-party script required), bot filter, hashed visitor id
