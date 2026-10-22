@@ -12,12 +12,20 @@ interface Labels {
   toLight: string;
   toDark: string;
   switchLocale: string;
+  toComfortable: string;
+  toDense: string;
 }
 
 /**
- * Theme and language are saved on the account, not in localStorage: the next
- * render — this one, after `refresh()` — comes back with the other `dir` and the
- * other colours from the server, so there is no flash and no second source of truth.
+ * Theme, language and density are saved by a Route Handler, not in localStorage: the
+ * next render — this one, after `refresh()` — comes back with the other `dir`, the
+ * other colours and the other spacing from the server, so there is no flash and no
+ * second source of truth.
+ *
+ * `ConsoleFrame` renders this twice: once in the header (shown at ≥1024px) and once
+ * inside the drawer (shown below it). CSS hides the other copy with `display:none`,
+ * which takes it out of both the accessibility tree and the tab order, so a phone
+ * never tabs through two "Sign out" buttons.
  */
 export function ConsoleControls({ prefs, labels }: Readonly<{ prefs: ConsolePrefs; labels: Labels }>) {
   const router = useRouter();
@@ -45,6 +53,14 @@ export function ConsoleControls({ prefs, labels }: Readonly<{ prefs: ConsolePref
       </Link>
       <button type="button" className="console-button" disabled={busy} onClick={() => save({ ...prefs, theme: prefs.theme === 'dark' ? 'light' : 'dark' })}>
         {prefs.theme === 'dark' ? labels.toLight : labels.toDark}
+      </button>
+      <button
+        type="button"
+        className="console-button"
+        disabled={busy}
+        onClick={() => save({ ...prefs, density: prefs.density === 'dense' ? 'comfortable' : 'dense' })}
+      >
+        {prefs.density === 'dense' ? labels.toComfortable : labels.toDense}
       </button>
       <button type="button" className="console-button" disabled={busy} onClick={() => save({ ...prefs, locale: prefs.locale === 'ar' ? 'en' : 'ar' })}>
         {labels.switchLocale}

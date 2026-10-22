@@ -34,6 +34,7 @@ export default async function ConsoleRootLayout({ children }: Readonly<{ childre
       lang={prefs.locale}
       dir={dirOf(prefs.locale)}
       data-theme={prefs.theme}
+      data-density={prefs.density}
       data-surface="console"
       className={`${readexPro.variable} ${montserrat.variable}`}
       style={(prefs.theme === 'dark' ? siteTheme.dark : siteTheme.light) as React.CSSProperties}
