@@ -156,9 +156,37 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       **Behaviour trap worth knowing:** a publish with nothing pending still succeeds — it writes a revision and bumps
       `version`. That is deliberate (the history should show that the editor pressed it), but it means a save that
       failed *after* a publish leaves you holding a stale version, and the next write answers `409 stale_row`.
-- [ ] 6.3 ONE read path for the site: the database, with the baked `data/wp` snapshot as fallback
-      Open on purpose, and now cleanly testable: the dev database holds **zero** content rows, so the DB-first path
-      and the snapshot fallback can each be proven in isolation before BK-7 loads the 92+92 articles into it.
+- [x] 6.3a ONE read path for the articles, offers and pages: the database first, the baked `data/wp` snapshot as fallback — `2441210`
+      `src/lib/content/site.ts` is now the site's only public reader — 18 call sites changed their import line and
+      nothing else, because each function keeps the name, arguments and returned shape of the `../wp` reader it
+      replaces. `src/lib/content/published.ts` reads the published twins (`publicRows` / `publicRow` / `hasPublished`).
+      **The design decision that mattered:** the rung is chosen **per kind, never per row**. A per-query fallback
+      would have served the snapshot's copy of a slug the console deleted — stale content wearing a live URL. So
+      `hasPublished(kind)` answers once and, on the database side, a missing row is a genuine 404.
+      A DB error is treated exactly like an empty DB, which is what keeps `next build` working without
+      `DATABASE_URL`; each answer is logged once per kind (`[site] db article` / `[site] snapshot offer (nothing published)`).
+      `id` stays a number because the UI contracts were built on WordPress post ids: an imported row keeps its
+      `legacy_id`, a console-created row gets a negative one, so no API consumer can mistake one for a post.
+      SEO comes from the row's own published copy (`publicSeo`), never from `resolveSeo`'s live WordPress `<head>` read,
+      and published bodies pass through the same `sanitizeHtmlBody` the WordPress body did — two screens render them
+      with `dangerouslySetInnerHTML`.
+      `getHome` and `getPageTitle` moved here and are **deleted** from `lib/wp`: left there, the homepage would render
+      the snapshot journal while `/blogs` renders the database, and the two rungs of one page must not disagree.
+      `tests/site.test.ts` (9 cases) proves both rungs against the disposable DB: the fallback equals `lib/wp`
+      slug-for-slug; one published row takes the kind over and the snapshot stays untouched; a draft, an unpublished
+      edit, a disabled offer/page and a trashed row never reach a visitor; trashing the last row hands the kind back
+      to the snapshot; `<script>alert(1)</script>` in an authored body does not survive; the Arabic-title rule and
+      the canonical prefixes hold.
+      **Test-infrastructure traps:** the seam's fallback imports `lib/wp`, which uses the app's `@/*` aliases, so
+      `vitest.config.ts` now resolves `@` → `src` (the other suites never reached aliased code). And a suite that
+      reads the fallback rung must not reach the production site — `tests/setup-env.ts` points `WP_BASE_URL` at a
+      dead loopback so the snapshot, the frozen thing under test, is what answers.
+      **Behaviour trap worth knowing:** publishing a locale publishes *everything* pending in that locale. The case
+      that tags an article's category has to rewrite the English title too, or the retitle a previous case left
+      deliberately unpublished rides into the published copy — correct behaviour, easy to misread as a bug.
+- [ ] 6.3b the same door for the list kinds — `branches`, `services`, `faq`, `specialists`, `results`, `nav`,
+      `getSettings` and the home prose/hero readers — then rewire `about`, `contact`, `layout`, `doctors`,
+      `branches*`, `results`, `treatments*` and `NotFoundDocument`
 - [x] 6.4 Trash + never-delete: soft delete, restore, and versions that are never garbage-collected — `c68eb9d`
       Trashing sets `deleted_at` and keeps the id, version and every revision; the live list and the trash view read
       the same table (`?trash=1`). Trashing needs the delete grant, restoring the write grant, and a row in the trash
