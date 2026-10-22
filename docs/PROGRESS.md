@@ -131,10 +131,45 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       the two sets, so an unregistered page or a dead nav link fails the suite.
 
 ## BK-6 — content CRUD + publish
-- [ ] 6.1 Articles, offers, pages, lists (specialists, branches, FAQ, treatments, results, nav), settings
-- [ ] 6.2 Draft → publish in one transaction (draft columns copy to `pub_*`, a revision is written, rollback works)
+- [x] 6.1 Articles, offers, pages, lists (specialists, branches, FAQ, treatments, results, nav), settings — `c68eb9d`
+      `src/lib/content/{kinds,store,api,lists,settings}.ts` hold the whole store and the guarded handlers — no Next
+      imports — so `src/app/api/console/content/**` and `/api/console/settings/**` stay one-line route files and the
+      handlers run under vitest against the real database. Five screens (`articles, offers, pages, lists, settings`)
+      are registered in `CONSOLE_SCREENS` and share one `ContentWorkspace`; screen data comes from
+      `src/lib/console/content-screen.ts`, which computes the per-scope abilities server-side because a grant scope
+      (`{locales:…}` / `{lists:…}`) only means something once the request names the dimension. `tests/content.test.ts`
+      adds 24 tests (suite 132).
+      Three defects only the browser found, all fixed: the list-switcher tabs rendered inside the "a row is selected"
+      branch, so **a list with no rows was unreachable**; a `list_item` owns no title columns, so **every row printed
+      its slug** — `firstText()` now reads `name`/`title`/`question` out of the JSON document, in either locale; and
+      an Arabic console labelled the seven lists in English — tab labels come from `LIST_LABELS[key][locale]`.
+- [x] 6.2 Draft → publish in one transaction (`pub_*` twins copy, a revision is written, rollback works) — `c68eb9d`
+      `src/lib/content/publish.ts`: one transaction reads the row, copies every named locale's `draft → pub_*` pair,
+      moves `status`/`published_at`/`version` under an optimistic lock, and inserts the whole after-image into
+      `revisions`. Rollback rewrites **only** the published twins from a chosen revision and adds a new revision, so
+      it never clobbers the draft somebody is mid-way through writing. A publish asks for the locales it may copy and
+      the handler re-checks the grants — an Arabic-only editor cannot publish the English they cannot write.
+      **MariaDB trap:** a publish copies a JSON column's value straight out of the row, and `mysql2` hands it back
+      *already parsed*; writing that object back unencoded produced `key = 'value', …` SQL text, which the column's
+      `json_valid()` check rejects. `columnValue()` re-encodes any non-string with `json()` — the same rule the draft
+      writer follows, now stated once per module.
+      **Behaviour trap worth knowing:** a publish with nothing pending still succeeds — it writes a revision and bumps
+      `version`. That is deliberate (the history should show that the editor pressed it), but it means a save that
+      failed *after* a publish leaves you holding a stale version, and the next write answers `409 stale_row`.
 - [ ] 6.3 ONE read path for the site: the database, with the baked `data/wp` snapshot as fallback
-- [ ] 6.4 Trash + never-delete: soft delete, restore, and versions that are never garbage-collected
+      Open on purpose, and now cleanly testable: the dev database holds **zero** content rows, so the DB-first path
+      and the snapshot fallback can each be proven in isolation before BK-7 loads the 92+92 articles into it.
+- [x] 6.4 Trash + never-delete: soft delete, restore, and versions that are never garbage-collected — `c68eb9d`
+      Trashing sets `deleted_at` and keeps the id, version and every revision; the live list and the trash view read
+      the same table (`?trash=1`). Trashing needs the delete grant, restoring the write grant, and a row in the trash
+      refuses to publish (`409 in_trash`). `status` only takes `'trash'` for articles/offers/pages — `list_items`
+      keep their own enum, which is why `setTrashed` branches on the table. No console path deletes anything: not a
+      row, not a revision, not a setting (a secret value is never returned in any response body, asserted).
+      Verified end-to-end in the browser over the real routes — create, save, publish, history, rollback, trash,
+      restore — and again from the server render after cleaning up: the dev database is back to zero content rows,
+      7 seeded `lists`, the Owner's prefs restored to `ar`/`light` through `PATCH /api/console/prefs`, and only the
+      auth rows (`session.*`, `self.update`, `owner.create`) left in `audit_log`. `.tmp/bk6-clean.ts` (gitignored)
+      deletes exactly the `bk6-*` fixtures and their revisions/settings/audit rows, dry-run until `--force`.
 
 ## BK-7 — cut WordPress out
 - [ ] 7.1 Fresh WP dump into a NEW timestamped folder (never overwriting `data/wp/*.json`)
@@ -222,6 +257,12 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
   no flash and no JS requirement. Keep it that way.
 - Sign-out uses `router.replace('/console/login')`, never `location.assign`: the cookies are already gone so the
   login page renders cleanly, and a client navigation does not reload the whole frame.
+- **Chrome, not content, follows the console's locale.** Anything the console itself labels — list tabs, section
+  headings, buttons — is read from a catalog keyed by the *console* locale (`LIST_LABELS[key][locale]`), never from
+  the row's own language, which is `en` in the seed data and would print English in an Arabic console.
+- **Offer a control only where the API would honour it.** A write button names a scope, so abilities are computed
+  per scope against the caller's grants (`publish` = publish ∩ update, because `publishHandler` re-tests both). Reads
+  are unscoped: a Viewer can open every screen and press nothing.
 - **Seeing the console in a browser** (each of these cost a detour): `next start` does not serve files added to
   `public/` after the build, and `.next/static/**` drops unknown paths with a 404 — so a preview asset has to go
   through a throwaway same-host proxy (`.tmp/bk5-proxy.mjs`, logs in, injects the session cookies, forwards to the
