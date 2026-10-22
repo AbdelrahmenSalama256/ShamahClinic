@@ -486,7 +486,9 @@ export interface StatsRollupStateTable {
   updated_at: Generated<Date>;
 }
 
-export interface Database extends Record<string, unknown> {
+/** No index signature: `extends Record<string, unknown>` makes Kysely's `keyof Database`
+ * collapse to `string` and every qualified join reference infer as `never`. */
+export interface Database {
   app_migrations: AppMigrationsTable;
   users: UsersTable;
   roles: RolesTable;
