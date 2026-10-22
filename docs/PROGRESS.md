@@ -327,6 +327,134 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       `/api/sitedash/{config,leads}` with no authentication of any kind (no session, no token, no proxy guard).
       It must not reach a deployment as it stands.
 
+## BK-13 → BK-18 — the owner's expansion (brief of 2026-10-22, verbatim)
+> i need add in SEO partation, every single feature in rank math tool, plus enhance this UI to be more useful than
+> this and responsive and make the cms able to edit every single element on website, so the company's team allowed to
+> edit everything on website just via this cms, the website configuration for SEO or anything also from the cms, i need
+> at the end a screen named connectors, have a script for app script if i need to make the appointments or contact
+> forms linked to google sheets and have a toturial to how i use the script and what is the names of columns the
+> website's needs to write it in the sheet, the leads screens catch from appointment's form and the contact form this
+> for the marketar, breifly i need this cms is the bestest cms, any developer or SEO or data entry or marketar is
+> comfortable to controle the website throught it, also the i need users screen to add users or edit roles or give
+> permissions a user or remove user, those gonna controle the site throught there users
+
+Four answers taken from the owner, binding for these sections:
+- **SEO**: "build all there feature … not the 40 features but build the important for the SEO specialist will needs" —
+  so the specialist-facing matrix, built locally, no paid third party.
+- **Editing**: "i mean from a little title to sections and pages not a code or database, i mean what in the option 2
+  but smartly" — every title, section and page editable, and the click-to-edit overlay is wanted, on top of full
+  field coverage (BK-18), not instead of it.
+- **Sheets**: "it will pass to google sheets throught app script also pass at the same time to the cms but it's an
+  option for the marketing team … by default in cms" — the database is always the system of record; Sheets is an
+  optional per-form outbox.
+- **Roles**: keep the six, add a **Roles & permissions** tab where any permission from the catalog can be checked and
+  a brand-new role created, the user's own role rendered as a tree of the screens it reaches, and a request an Owner
+  accepts or denies.
+
+## BK-13 — console shell: responsive, and one set of screen primitives
+Every screen below lands on this, so it comes first: a bad shell would be copied six times.
+- [ ] 13.1 Tokens + layout pass on `src/app/console/console.css` + `ConsoleShell.tsx`: sidebar becomes a drawer under
+      1024 px and a tab bar under 640 px, touch targets ≥ 44 px, RTL and dark/light still server-decided, content
+      width and dense/comfortable density switch.
+- [ ] 13.2 Navigation from the permission catalog, rendered as a tree (group → screen → entity) that hides what the
+      role cannot read and greys what it cannot write, plus a command palette (⌘K / Ctrl+K) for screens and records.
+- [ ] 13.3 Shared list primitive: table/card modes, sortable columns, saved filters, search, bulk select → bulk
+      publish/trash, per-page, all mirrored into the URL so a view is linkable; empty, loading and error states once
+      instead of per screen.
+- [ ] 13.4 Shared editor primitive: split pane (fields / live preview + SEO), sticky save-publish bar, unsaved-changes
+      guard, autosave draft, per-field messages coming from `parseWrites`, keyboard save.
+- [ ] 13.5 Split `ContentWorkspace.tsx` (530 lines today) onto 13.3 + 13.4 and re-point the five existing screens at
+      it — no behaviour change; the existing console SSR/API suites must pass untouched.
+
+## BK-14 — every element of the site editable
+Reality to design against: the copy today sits in three places — database content rows (BK-6, BK-7.2), authored files
+(`src/data/nav.ts`, `treatments.ts`, home sections), and strings hard-coded inside components. This section moves the
+last two into the database so the team never needs a developer for a word.
+- [ ] 14.1 Element registry: an address per editable thing (`screen.element.field`, locale-aware), a type, a validator,
+      and a default equal to today's hard-coded value — so the site renders byte-identical before the row exists.
+      One table, one reader, one permission-checked API.
+- [ ] 14.2 The shell: nav labels, order and dropdown children, footer groups, branch strip, booking CTA labels,
+      phone / WhatsApp / email / hours, brand, tagline, theme colour.
+- [ ] 14.3 Home, section by section: hero slides, intro prose, the three-card blocks and their "View all" labels,
+      the reasons carousel, the CTA band.
+- [ ] 14.4 The other pages: about, contact, faq, results header, privacy, services intro, and each treatment's
+      tagline, steps, benefits and aftercare.
+- [ ] 14.5 Section control: enable, disable, reorder, duplicate, per locale, with the site honouring the order.
+- [ ] 14.6 The remaining component strings, then a gate that fails the build when a user-visible string in
+      `src/components/**` has no registry entry (an explicit allowlist for non-user-facing text).
+
+## BK-15 — SEO center: the specialist's feature set, all local
+New tables: `seo_meta` (per entity per locale), `seo_templates`, `redirects`, `not_found_hits`, `crawl_issues`,
+`sitemap_settings`, `robots_directives`. Every one of these has its column set decided before 15.1 so 15.9 and an
+outside data source can be bolted on without a rewrite.
+- [ ] 15.1 Meta per entity per locale: title, description, canonical, robots (index/follow/nocache/AI), primary image
+      + alt, OG title/description/image, Twitter card, focus keyword, breadcrumb label, and a `noindex` default for
+      drafts. The site's `<head>` reads it, which replaces `resolveSeo`'s snapshot fallback and closes the `seo.json`
+      leftover recorded in 7.5.
+- [ ] 15.2 Template engine: site-wide and per-type patterns (`%%title%% %%sep%% %%sitename%% %%page%% %%tag%%`) with
+      the documented variable set, live preview per locale, applied only where the entity has no manual value.
+- [ ] 15.3 Content analysis, the scored panel a specialist expects: title pixel + character length, description
+      length, keyword in title / H1 / first paragraph / description / URL / image alt, internal and external link
+      counts with `nofollow` detection, heading order, word count, alt coverage, readability — deterministic, and each
+      failure prints the fix it implies rather than a red dot.
+- [ ] 15.4 Structured data builder + validator: `MedicalClinic`, `Physician`, `MedicalService`, `Article`,
+      `Product`/`Offer`, `FAQPage`, `BreadcrumbList`, `AggregateRating`; the site's JSON-LD generated from it, and a
+      local schema.org rules pass (required/expected properties, date and URL formats) over whatever is emitted.
+- [ ] 15.5 Local SEO: NAP per branch, `geo`, `OpeningHoursSpecification`, `sameAs`, logo and brand image — one source
+      feeding both the JSON-LD and the footer, replacing `src/config/site.ts` hand-editing.
+- [ ] 15.6 Redirects manager: 301/302/307/410, exact / prefix / regex, loop guard, case-insensitive flag, hit counter,
+      CSV import-export, enforced at the proxy edge so every old WordPress URL keeps working after cut-over.
+- [ ] 15.7 404 monitor + site crawl: unmatched URLs logged with referrer and count, one-click "create redirect" from
+      the row, and a crawl that reports missing meta, thin content, orphan pages, duplicate canonicals, mixed-locale
+      pages and alt gaps.
+- [ ] 15.8 Sitemap + robots from the database: include/exclude per type per locale, image extension, hreflang
+      alternates, `robots.txt` editable per user-agent with an AI-crawler group, both locales.
+- [ ] 15.9 SEO dashboard: site-wide score, worst 20 pages, keyword coverage, index status, per-type completeness, and
+      the SEO fields reachable inline on every content screen (13.4's right pane) — because an SEO person should not
+      hunt for them.
+Explicitly not shipped, with the reason: live rank tracking (needs a paid SERP API), AI text generation (needs a
+vendor key), Bing/Webmaster and Search Console APIs (need a Google Cloud project the owner has not created). The
+schema leaves room for each, and BK-17's Connectors screen is where a key would go when that changes.
+
+## BK-16 — Users, Roles & permissions
+- [ ] 16.1 Users screen: add an account, set its role and locale, reset a password, disable an account, delete nobody
+      (the never-delete rule), and an audit trail filtered per account.
+- [ ] 16.2 Roles & permissions tab: create a role, and check permissions straight from the catalog (`resource × action
+      × scope`) so a custom role is not limited to the six; the catalog gains human labels grouped by screen, so the
+      list reads "Publish an article" and not `article.publish`.
+- [ ] 16.3 My role: the signed-in user's grants rendered as the tree of screens they reach, with what they cannot do
+      visible and greyed instead of 403-surprised.
+- [ ] 16.4 Access requests: ask for a role or a single permission with a reason → the Owner's approvals inbox → accept
+      or deny, with expiry and an audit row; accept applies the grant through the same seeder path, never by hand.
+- [ ] 16.5 Guardrails: the 403-not-400 ordering, stale-grant repair, Owner protection, locale scope enforced on read
+      *and* write, and a test that a custom role can only ever hold a subset of the catalog.
+
+## BK-17 — Leads + Connectors
+- [ ] 17.1 Both forms into the database: contact form and booking wizard → `leads` with `source`, the appointment
+      fields (date, branch, service, specialist, slot), status, notes, assignee, dedupe and an idempotency key, and
+      role-scoped redaction of phone numbers. Then retire the CF7 forward — `LEAD_MODE=cf7` and the last
+      `wp-json` call in `src/app` disappear with it.
+- [ ] 17.2 Leads screen for the marketer: inbox by source/status, filters, CSV export, per-lead delivery state, and
+      the redaction they are entitled to.
+- [ ] 17.3 Connectors screen: outbound integrations in one place — Google Sheets per form type, a test-send that shows
+      the exact payload, a retry queue with visible attempts and errors, and enable/disable per connector.
+- [ ] 17.4 The Apps Script deliverable: `connectors/google-apps-script.gs` — a Web App that checks the shared secret,
+      creates the sheet with the exact header row if missing, appends with dedupe on the lead id, and returns which
+      row it wrote; the console holds only the URL + secret, never Google credentials.
+- [ ] 17.5 The column contract written twice: in `docs/GOOGLE-SHEETS.md` and on the screen itself — every column name,
+      type, allowed values, which locale the value arrives in, what happens when a column is renamed, and a sample
+      sheet to download; plus the click-by-click tutorial for publishing the script and pasting the URL.
+- [ ] 17.6 Default is the database, always: a lead is committed before any connector runs, and a connector failure can
+      neither block the visitor's confirmation nor lose the lead.
+
+## BK-18 — click-to-edit on the site (last: it needs 14's addresses and 15's panel)
+- [ ] 18.1 Element bridge: in preview mode only, the site tags every registry-backed element with its address.
+- [ ] 18.2 Overlay: open a page from the console, click the element, edit it in the side panel, see the draft on the
+      real page, save or publish — every write through the same guard the API uses; the overlay is a view, never a
+      permission.
+- [ ] 18.3 Section affordances from the overlay: reorder, enable, duplicate, and the 15.3 analysis panel docked to the
+      page being edited.
+
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
