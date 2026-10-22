@@ -377,8 +377,36 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       `data-density="dense"` plus an `ar.dark.dense` cookie. Caveat, stated plainly: the in-app automation
       viewport is fixed near 505 px, so every width above is geometry read from a same-origin iframe, not pixels
       seen in a screenshot.
-- [ ] 13.2 Navigation from the permission catalog, rendered as a tree (group → screen → entity) that hides what the
+- [x] 13.2 Navigation from the permission catalog, rendered as a tree (group → screen → entity) that hides what the
       role cannot read and greys what it cannot write, plus a command palette (⌘K / Ctrl+K) for screens and records.
+      `navTree(grants, locale)` in `screens.ts` reads the three levels straight off the catalog — a screen the role
+      cannot `read` is never emitted, a leaf it cannot `write` renders `aria-disabled` with a dotted underline — so
+      the tree is a *consequence* of `can()` rather than a second permission list that can drift. Entities come from
+      the catalog's own vocabulary (`locales` → `?locale=ar|en`, `lists` → `?list=`) and not from the database: a
+      Marketer's tree must not reveal which lists exist by listing them. The Editor's `nav` leaf is the visible proof
+      of the grey rule — read-only on purpose, so it shows and cannot be opened.
+      The palette searches records too, and that needed one change to the single enforcement path rather than a
+      hand-rolled `authenticate` + `can()`: `Rule.resource` now accepts a **set** of resources, the handler receives
+      `ctx.resources` (the subset actually granted) and a 403 names the whole set (`article+offer+page.read`). A
+      Marketer's search never builds a `pages` query, so it never learns whether a page matched. Record hits are
+      `LIKE`s over the key and the two title columns only, `LIMIT`ed, never `content_ar` — pulling 92 articles'
+      bodies to match a string is how a console goes down on a shared host.
+      Two things only measuring caught. `ContentWorkspace` had no way to open the row a palette hit pointed at, so
+      the content screens take `?key=` and seed the selected row from it (a deep link that lands on a list is half a
+      feature). And the drawer stayed open after a leaf click, because its state was keyed to the pathname alone and
+      `?locale=ar` is the same pathname — it is keyed to pathname+search now, so a query-only navigation closes it
+      without an effect and without tripping `react-hooks/set-state-in-effect`.
+      Navigation still works with JavaScript off: the tree folds with native `<details>`, the strip and drawer are the
+      same markup as 13.1, and the palette is the one **declared** JS-only affordance (its label says so).
+      Measured on the built console at 360 / 640 / 800 / 1024, RTL and LTR: zero horizontal overflow at every width,
+      tap targets ≥ `--console-tap`, strip only < 640, drawer 640–1023 with the scrim at `display:block`/`z-index:35`
+      and a column ≥ 1024 (x=768 RTL, x=0 LTR), leaf indent 23 px on the inline-end side in RTL, leaf click closing
+      the drawer and landing on `/console/articles?locale=ar`, Ctrl+K opening a 608×513 dialog with focus in the
+      input, roving ArrowDown/End/Home/ArrowUp moving it, real Escape closing and returning focus to the trigger, and
+      the record path end-to-end: `er` → السجلات → `/console/articles?key=Sed%20exercitationem%20l` with that row's
+      editor open. Caveat as before: widths are geometry read from a same-origin iframe, not pixels seen — the 360
+      drawer was also screenshotted and read, which is what confirmed the tree's visual hierarchy (group headings,
+      chevrons, greyed leaf) rather than only its box positions.
 - [ ] 13.3 Shared list primitive: table/card modes, sortable columns, saved filters, search, bulk select → bulk
       publish/trash, per-page, all mirrored into the URL so a view is linkable; empty, loading and error states once
       instead of per screen.
