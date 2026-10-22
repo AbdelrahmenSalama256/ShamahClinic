@@ -67,12 +67,25 @@ function declaredColumns(src: string): Map<string, { cols: Set<string>; types: M
   return byTable;
 }
 
+/** Fixture rows created by this file, so `afterAll` can remove exactly them. */
+const inserted: { users: string[]; lists: string[]; list_items: string[]; offers: string[]; articles: string[] } = {
+  users: [],
+  lists: [],
+  list_items: [],
+  offers: [],
+  articles: [],
+};
+
 describe('schema <-> types', () => {
   beforeAll(() => {
     assertTestDb();
   });
 
   afterAll(async () => {
+    for (const [table, ids] of Object.entries(inserted) as [keyof typeof inserted, string[]][]) {
+      if (ids.length > 0) await db.deleteFrom(table).where('id', 'in', ids).execute();
+    }
+    await db.deleteFrom('audit_log').where('action', '=', 'test.write').execute();
     await destroyDb();
   });
 
@@ -120,6 +133,7 @@ describe('schema <-> types', () => {
         status: 'active',
       })
       .execute();
+    inserted.users.push(id);
 
     const row = await db.selectFrom('users').selectAll().where('id', '=', id).executeTakeFirstOrThrow();
     expect(row.email_lc).toBe(email);
@@ -144,6 +158,8 @@ describe('schema <-> types', () => {
       .insertInto('list_items')
       .values({ id: itemId, list_id: listId, uid: 'dr-nourhan', position: 1, draft: json(draft), status: 'draft' })
       .execute();
+    inserted.lists.push(listId);
+    inserted.list_items.push(itemId);
 
     const row = await db.selectFrom('list_items').select('draft').where('id', '=', itemId).executeTakeFirstOrThrow();
     expect(row.draft).toEqual(draft);
@@ -155,6 +171,7 @@ describe('schema <-> types', () => {
       .insertInto('offers')
       .values({ id, slug: `offer-${id}`, name_ar: 'عرض', name_en: 'Offer', price: '1499.99', regular_price: '2000.00' })
       .execute();
+    inserted.offers.push(id);
     const row = await db.selectFrom('offers').select(['price', 'regular_price']).where('id', '=', id).executeTakeFirstOrThrow();
     expect(row.price).toBe('1499.99');
     expect(row.regular_price).toBe('2000.00');
@@ -184,6 +201,7 @@ describe('schema <-> types', () => {
     const slug = `dup-${randomUUID()}`;
     const values = { id: randomUUID(), slug, title_ar: 'أ', title_en: 'a' };
     await db.insertInto('articles').values(values).execute();
+    inserted.articles.push(values.id);
     await expect(db.insertInto('articles').values({ ...values, id: randomUUID() }).execute()).rejects.toThrow(/Duplicate entry/);
   });
 

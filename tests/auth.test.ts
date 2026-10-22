@@ -26,6 +26,7 @@ const PASSWORD = 'Shamah-console-2026';
 const ownerEmail = `bk3-owner-${run}@example.invalid`;
 const writerEmail = `bk3-writer-${run}@example.invalid`;
 const tempEmail = `bk3-temp-${run}@example.invalid`;
+const nobodyEmail = `nobody-${run}@example.invalid`;
 
 const ownerRoleId = { value: '' };
 const writerRoleId = { value: '' };
@@ -117,7 +118,7 @@ afterAll(async () => {
     await db.deleteFrom('audit_log').where('actor_id', 'in', userIds).execute();
     await db
       .deleteFrom('login_attempts')
-      .where('email_lc', 'in', [ownerEmail, writerEmail, tempEmail].map((email) => email.toLowerCase()))
+      .where('email_lc', 'in', [ownerEmail, writerEmail, tempEmail, nobodyEmail].map((email) => email.toLowerCase()))
       .execute();
     await db.deleteFrom('user_roles').where('user_id', 'in', userIds).execute();
     await db.deleteFrom('role_permissions').where('role_id', 'in', [writerRoleId.value, tempRoleId.value]).execute();
@@ -270,7 +271,7 @@ describe('login, me, logout', () => {
   });
 
   it('never says which half of the credentials was wrong, and never for an unknown address', async () => {
-    const unknown = await loginHandler(request('/auth', { method: 'POST', body: JSON.stringify({ email: `nobody-${run}@example.invalid`, password: PASSWORD }) }));
+    const unknown = await loginHandler(request('/auth', { method: 'POST', body: JSON.stringify({ email: nobodyEmail, password: PASSWORD }) }));
     const known = await loginHandler(request('/auth', { method: 'POST', body: JSON.stringify({ email: writerEmail, password: 'wrong-password-1' }) }));
     expect(await unknown.json()).toEqual(await known.json());
   });
