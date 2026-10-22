@@ -4,7 +4,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, branchJsonLd } from "@/lib/jsonld";
 import { BranchDetailClient } from "@/components/pages/BranchDetailClient";
-import { getBranchList } from "@/lib/wp";
+import { getBranchList } from "@/lib/content/site";
 
 interface Props {
   params: Promise<{ lang: string; slug: string }>;

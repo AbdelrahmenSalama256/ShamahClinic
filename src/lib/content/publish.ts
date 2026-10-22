@@ -61,7 +61,8 @@ function toRevisionView(row: {
 }
 
 /** The columns a publish copies for one locale: the text pairs, plus JSON pairs that have a twin. */
-function pairsFor(spec: KindSpec, locale: ContentLocale): { from: string; to: string }[] {  const pairs = publishableColumns(spec, locale).map((column) => ({ from: column.draft, to: column.pub }));
+function pairsFor(spec: KindSpec, locale: ContentLocale): { from: string; to: string }[] {
+  const pairs = publishableColumns(spec, locale).map((column) => ({ from: column.draft, to: column.pub }));
   for (const field of spec.json) {
     if (field.pub) pairs.push({ from: field.draft, to: field.pub });
   }

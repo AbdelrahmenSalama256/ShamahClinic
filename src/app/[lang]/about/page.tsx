@@ -4,7 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { AboutClient } from "@/components/pages/AboutClient";
 import { getAbout } from "@/lib/wp/about";
-import { getBranchList } from "@/lib/wp";
+import { getBranchList } from "@/lib/content/site";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 
 export const revalidate = 300;

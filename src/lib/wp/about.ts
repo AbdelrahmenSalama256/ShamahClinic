@@ -1,5 +1,8 @@
 import * as cheerio from "cheerio";
-import { getPage, getHomeProseSections } from "./index";
+// The page itself comes from the site's read path so /about shows the same article
+// the rest of the site shows; only the prose sections still come from `./index`.
+import { getPage } from "../content/site";
+import { getHomeProseSections } from "./index";
 import { arabicRatio } from "./lang";
 import { toPhotoSlot } from "./ui-helpers";
 import { aboutFallback, type AboutContent, type AboutSection } from "@/data/about";

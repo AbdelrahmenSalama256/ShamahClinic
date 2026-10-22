@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig, siteTheme } from "@/config/site";
 import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
-import { getBranchList } from "@/lib/wp";
+import { getBranchList } from "@/lib/content/site";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 
 export const viewport: Viewport = {

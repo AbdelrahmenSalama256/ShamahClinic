@@ -11,7 +11,9 @@
  *   - a visitor sees the published copy only: a draft, an unpublished edit, a
  *     disabled offer or page and a trashed row never reach the site;
  *   - the published HTML goes through the same sanitizer the WordPress body did, so
- *     an authored `<script>` cannot ride into `dangerouslySetInnerHTML`.
+ *     an authored `<script>` cannot ride into `dangerouslySetInnerHTML`;
+ *   - a list (`branches`, `services`) is chosen per **list**, not per kind: two
+ *     lists of the same table can sit on different rungs at the same time.
  *
  * Every fixture is named `site-<run>` and removed in `afterAll`.
  */
@@ -26,6 +28,8 @@ import {
   getAllArticles,
   getAllOffers,
   getAllPages,
+  getBranches,
+  getBranchList,
   getCategories,
   getHome,
   getOffer,
@@ -34,6 +38,7 @@ import {
   getPageTitle,
   getPost,
   getPosts,
+  getServiceCards,
 } from '../src/lib/content/site';
 import { SITE_URL } from '../src/lib/site';
 import * as wp from '../src/lib/wp';
@@ -72,6 +77,39 @@ async function seed(
   return unwrap(await publishRow(kind, { id: current.id, locales, actor }), `publish ${name}`).row;
 }
 
+/**
+ * A list item's whole content is one JSON document, so the console writes `data`
+ * and the reader decides what the keys mean.
+ */
+async function seedItem(
+  listKey: string,
+  uid: string,
+  data: Record<string, unknown>,
+  options: { position?: number; enabled?: boolean } = {},
+): Promise<ContentRow> {
+  const created = unwrap(await createRow('list_item', { key: uid, listKey, actorId: actor.id }), `create ${listKey}/${uid}`);
+  unwrap(
+    await saveDraft('list_item', {
+      id: created.id,
+      locale: 'en',
+      fields: { data, position: options.position ?? 0, enabled: options.enabled ?? true },
+      expectedVersion: created.version,
+      actorId: actor.id,
+    }),
+    `save ${listKey}/${uid}`,
+  );
+  return unwrap(await publishRow('list_item', { id: created.id, locales: ['en'], actor }), `publish ${listKey}/${uid}`).row;
+}
+
+async function ensureList(listKey: string): Promise<void> {
+  const existing = await db.selectFrom('lists').select('id').where('list_key', '=', listKey).executeTakeFirst();
+  if (existing) return;
+  await db
+    .insertInto('lists')
+    .values({ id: randomUUID(), list_key: listKey, label: listKey, item_schema: JSON.stringify({}), reorderable: 1, is_article_collection: 0 })
+    .execute();
+}
+
 /** Everything this suite can create, so a crashed run leaves no published row behind. */
 async function purge(): Promise<void> {
   const ids = [
@@ -79,11 +117,13 @@ async function purge(): Promise<void> {
     ...(await db.selectFrom('offers').select('id').where('slug', 'like', 'site-%').execute()),
     ...(await db.selectFrom('pages').select('id').where('route', 'like', 'site-%').execute()),
     ...(await db.selectFrom('pages').select('id').where('route', 'like', '/site-%').execute()),
+    ...(await db.selectFrom('list_items').select('id').where('uid', 'like', 'site-%').execute()),
   ].map((row) => row.id);
   await db.deleteFrom('articles').where('slug', 'like', 'site-%').execute();
   await db.deleteFrom('offers').where('slug', 'like', 'site-%').execute();
   await db.deleteFrom('pages').where('route', 'like', 'site-%').execute();
   await db.deleteFrom('pages').where('route', 'like', '/site-%').execute();
+  await db.deleteFrom('list_items').where('uid', 'like', 'site-%').execute();
   await db.deleteFrom('categories').where('slug', 'like', 'site-%').execute();
   if (ids.length > 0) await db.deleteFrom('revisions').where('entity_id', 'in', ids).execute();
 }
@@ -93,6 +133,8 @@ const categoryId = randomUUID();
 beforeAll(async () => {
   assertTestDb();
   await purge();
+  await ensureList('branches');
+  await ensureList('services');
   await db
     .insertInto('categories')
     .values({ id: categoryId, slug: key('laser'), name_ar: 'ليزر', name_en: 'Laser', position: 1, enabled: 1 })
@@ -118,6 +160,15 @@ describe('the fallback rung', () => {
     expect(throughSeam?.seo.en.title).toBeTruthy();
     const title = await getPageTitle('privacy-policy', { ar: 'سياسة الخصوصية', en: 'Privacy Policy' });
     expect(title.en).toBe(throughSeam?.item.title.en);
+  });
+
+  it('renders the WordPress branches and services while their lists hold nothing', async () => {
+    const [fromSite, fromWp] = await Promise.all([getBranches(), wp.getBranches()]);
+    expect(fromWp.length).toBeGreaterThan(0);
+    expect(fromSite.map((branch) => branch.id)).toEqual(fromWp.map((branch) => branch.id));
+    const [cards, wpCards] = await Promise.all([getServiceCards(), wp.getServiceCards()]);
+    expect(wpCards.length).toBeGreaterThan(0);
+    expect(cards.map((card) => card.slug)).toEqual(wpCards.map((card) => card.slug));
   });
 });
 
@@ -285,5 +336,93 @@ describe('the database rung', () => {
     expect(home.offers.map((offer) => offer.slug)).toEqual([key('hydra')]);
     expect(home.branches.length).toBeGreaterThan(0);
     expect(home.settings.name).toBeTruthy();
+  });
+});
+
+describe('the list kinds', () => {
+  it('takes a list over from its published rows, in the console order', async () => {
+    await seedItem(
+      'branches',
+      key('maadi'),
+      { name: 'فرع التجمع', address: { ar: 'التجمع الخامس', en: 'Fifth Settlement' }, phone: '01000000001' },
+      { position: 2 },
+    );
+    await seedItem(
+      'branches',
+      key('nasr'),
+      {
+        name: { ar: 'فرع مدينة نصر', en: 'Nasr City Branch' },
+        area: { ar: 'مدينة نصر', en: 'Nasr City' },
+        address: { ar: '٨ شارع مصطفى حمام', en: '8 Mustafa Hammam Street' },
+        phone: '01000000000',
+        image: '/images/branch-nasr.jpg',
+        intro: { ar: 'عيادات شامه في مدينة نصر', en: 'Shamah Clinics in Nasr City' },
+        features: { ar: ['ليزر', 'بوتوكس'], en: ['Laser', 'Botox'] },
+        landmark: { ar: 'خلف كنتاكي', en: 'Behind KFC' },
+      },
+      { position: 1 },
+    );
+    // Two rows the reader must not turn into a card: one the console disabled, one
+    // an editor saved before writing a name into it.
+    await seedItem('branches', key('hidden'), { name: 'فرع مخفي' }, { enabled: false });
+    await seedItem('branches', key('nameless'), { phone: '01000000002' });
+
+    const list = await getBranchList();
+    expect(list.map((branch) => branch.id)).toEqual([key('nasr'), key('maadi')]);
+    const [nasr, maadi] = list;
+    expect(nasr.name).toEqual({ ar: 'فرع مدينة نصر', en: 'Nasr City Branch' });
+    expect(nasr.phone).toBe('01000000000');
+    expect(nasr.features).toEqual({ ar: ['ليزر', 'بوتوكس'], en: ['Laser', 'Botox'] });
+    expect(nasr.landmark.en).toBe('Behind KFC');
+    // A branch's photo is a slot the site can render, with its own name as the alt.
+    expect(nasr.image.src).toBe('/images/branch-nasr.jpg');
+    expect(nasr.image.alt).toEqual({ ar: 'فرع مدينة نصر', en: 'Nasr City Branch' });
+    // One string is read as both languages, which is how a mono-lingual editor writes it.
+    expect(maadi.name).toEqual({ ar: 'فرع التجمع', en: 'فرع التجمع' });
+    expect(maadi.image.src).toBe('');
+
+    // The list page's view is the same rows with the photo flattened to a URL.
+    const views = await getBranches();
+    expect(views.map((branch) => branch.id)).toEqual([key('nasr'), key('maadi')]);
+    expect(views[0].image).toBe('/images/branch-nasr.jpg');
+    expect(views[1].image).toBeNull();
+  });
+
+  it('gives a service the link the site has, or the one its author wrote', async () => {
+    await seedItem('services', key('laser'), {
+      title: { ar: 'إزالة الشعر بالليزر', en: 'Laser hair removal' },
+      intro: { ar: 'جلسات للإزيل الدائم', en: 'Sessions for permanent reduction' },
+      image: '/images/service-laser.jpg',
+    });
+    await seedItem('services', key('own-link'), { title: 'تقشير', href: { ar: '/peeling', en: '/en/peeling' } });
+
+    const cards = await getServiceCards();
+    expect(cards.map((card) => card.slug)).toEqual([key('laser'), key('own-link')]);
+    expect(cards[0].title.en).toBe('Laser hair removal');
+    expect(cards[0].image).toBe('/images/service-laser.jpg');
+    // A WordPress service is a section of one page, not a route of its own.
+    expect(cards[0].href).toEqual({ ar: '/ar/services', en: '/services' });
+    expect(cards[1].href).toEqual({ ar: '/peeling', en: '/en/peeling' });
+    // And, like every other card, it is numbered apart from a WordPress post.
+    expect(cards.map((card) => card.id)).toEqual([-1, -2]);
+  });
+
+  it('chooses the rung per list, not per kind', async () => {
+    const uids = [key('laser'), key('own-link')];
+    const rows = await db.selectFrom('list_items').select(['id', 'uid']).where('uid', 'in', uids).execute();
+    const one = rows.filter((row) => row.uid === key('own-link'));
+    for (const row of one) unwrap(await setTrashed('list_item', { id: row.id, trashed: true, actorId: actor.id }), 'trash one service');
+    // Still database-backed: the list has another published row, so no fallback.
+    expect((await getServiceCards()).map((card) => card.slug)).toEqual([key('laser')]);
+
+    const last = rows.filter((row) => row.uid === key('laser'));
+    for (const row of last) unwrap(await setTrashed('list_item', { id: row.id, trashed: true, actorId: actor.id }), 'trash the last service');
+    // The services list has nothing published, so it falls back — while the branch
+    // list, which does, keeps answering from the database. Same kind, two rungs.
+    expect((await getServiceCards()).map((card) => card.slug)).toEqual((await wp.getServiceCards()).map((card) => card.slug));
+    expect((await getBranchList()).map((branch) => branch.id)).toEqual([key('nasr'), key('maadi')]);
+
+    for (const row of rows) unwrap(await setTrashed('list_item', { id: row.id, trashed: false, actorId: actor.id }), 'restore the service');
+    expect((await getServiceCards()).map((card) => card.slug)).toEqual([key('laser'), key('own-link')]);
   });
 });

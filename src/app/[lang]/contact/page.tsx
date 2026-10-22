@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ContactClient } from "@/components/pages/ContactClient";
-import { getBranchList } from "@/lib/wp";
+import { getBranchList } from "@/lib/content/site";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 
 export async function generateMetadata(): Promise<Metadata> {

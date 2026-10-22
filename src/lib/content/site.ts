@@ -15,12 +15,18 @@
  * it replaces, so rewiring a route is an import path. Where the two rungs cannot
  * agree — the numeric id a WordPress card carried — the shape is kept and the value
  * is documented at its maker.
+ *
+ * The decision is per kind, and for `list_items` it is per **list**: the branches
+ * can be database-backed while the services still come from the snapshot, because
+ * "has this been published yet?" is a question about one list, not about a table.
  */
 import * as wp from '../wp';
 import type { BranchView, PageCard, Query, WithSeo } from '../wp';
 import { arabicRatio, hrefPair } from '../wp/lang';
 import { decodeEntities, firstParagraph, htmlToText, sanitizeHtmlBody } from '../wp/sanitize';
-import type { Article, ArticleCard, Bi, CategoryTerm, Lang, Offer, OfferDetail, PageContent, Paged, SeoMeta, Settings } from '../wp/types';
+import { toPhotoSlot } from '../wp/ui-helpers';
+import type { BranchDetail } from '../../data/branches';
+import type { Article, ArticleCard, Bi, CategoryTerm, Lang, Offer, OfferDetail, PageContent, Paged, SeoMeta, ServiceCard, Settings } from '../wp/types';
 import { db } from '../db';
 import { SITE_URL } from '../site';
 import { getLocalizedHref } from '../locale';
@@ -430,6 +436,159 @@ export async function getPageTitle(slug: string, authored: Bi): Promise<Bi> {
   };
 }
 
+// --- lists --------------------------------------------------------------------
+
+/**
+ * The site's repeatable lists — branches, services, and the lists still to come —
+ * live in `list_items`: one JSON document per row, so a list's shape is its
+ * reader's business rather than a column per field.
+ *
+ * The document is read defensively because an editor writes it by hand: a bilingual
+ * field may be `{ar, en}` or a single string for both languages, a missing value
+ * falls back instead of throwing, and a row with nothing usable in it is skipped
+ * rather than rendered as an empty card.
+ */
+async function listRung<T>(listKey: string, fromDb: () => Promise<T>, fromFallback: () => Promise<T>): Promise<T> {
+  try {
+    if (await hasPublished('list_item', { listKey })) {
+      note('db', `list ${listKey}`);
+      return await fromDb();
+    }
+    note('snapshot', `list ${listKey}`, 'nothing published');
+  } catch (err) {
+    note('snapshot', `list ${listKey}`, reason(err));
+  }
+  return fromFallback();
+}
+
+function documentOf(row: PublicRow): Record<string, unknown> | null {
+  const value = row.values.data;
+  if (!value || value.kind !== 'json' || !value.value || typeof value.value !== 'object') return null;
+  return value.value as Record<string, unknown>;
+}
+
+function docText(doc: Record<string, unknown>, name: string): string {
+  const value = doc[name];
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+/** A document's bilingual field: `{ ar, en }`, or one string read as both languages. */
+function docBi(doc: Record<string, unknown>, name: string): Bi {
+  const value = doc[name];
+  if (typeof value === 'string') return { ar: value, en: value };
+  if (!value || typeof value !== 'object') return { ar: '', en: '' };
+  const both = value as Record<string, unknown>;
+  const ar = typeof both.ar === 'string' ? both.ar : '';
+  const en = typeof both.en === 'string' ? both.en : '';
+  return { ar: ar || en, en: en || ar };
+}
+
+function docStrings(doc: Record<string, unknown>, name: string): { ar: string[]; en: string[] } {
+  const keep = (list: unknown): string[] => (Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string') : []);
+  const value = doc[name];
+  if (Array.isArray(value)) {
+    const one = keep(value);
+    return { ar: one, en: one };
+  }
+  if (value && typeof value === 'object') {
+    const both = value as Record<string, unknown>;
+    return { ar: keep(both.ar), en: keep(both.en) };
+  }
+  return { ar: [], en: [] };
+}
+
+// branches
+
+/**
+ * A branch row's `uid` is the id the site already uses in `/branches/<id>`, so a
+ * branch keeps its URL when its row moves into the database. The photo is whatever
+ * the editor pasted — a bare URL is enough, the rest of the slot takes the site's
+ * defaults.
+ */
+function branchOf(row: PublicRow): BranchDetail | null {
+  const doc = documentOf(row);
+  if (!doc) return null;
+  const name = docBi(doc, 'name');
+  if (!name.ar && !name.en) return null;
+  const image = docText(doc, 'image');
+  return {
+    id: row.key,
+    name,
+    area: docBi(doc, 'area'),
+    address: docBi(doc, 'address'),
+    phone: docText(doc, 'phone'),
+    image: toPhotoSlot(image || null, name),
+    intro: docBi(doc, 'intro'),
+    features: docStrings(doc, 'features'),
+    landmark: docBi(doc, 'landmark'),
+  };
+}
+
+function toBranchView(b: BranchDetail): BranchView {
+  return {
+    id: b.id,
+    name: b.name,
+    area: b.area,
+    address: b.address,
+    phone: b.phone,
+    image: b.image.src || null,
+    intro: b.intro,
+    features: b.features,
+    landmark: b.landmark,
+  };
+}
+
+export async function getBranchList(): Promise<BranchDetail[]> {
+  return listRung(
+    'branches',
+    async () =>
+      (await publicRows('list_item', { listKey: 'branches' }))
+        .filter((row) => flag(row, 'enabled'))
+        .map(branchOf)
+        .filter((branch): branch is BranchDetail => branch !== null),
+    () => wp.getBranchList(),
+  );
+}
+
+export async function getBranches(): Promise<BranchView[]> {
+  return (await getBranchList()).map(toBranchView);
+}
+
+// services
+
+/**
+ * A service card. WordPress has no route per service — its cards are sections of
+ * one page — so a row with no link of its own points the reader at `/services`,
+ * which is where the fallback's cards point too.
+ */
+function serviceCardOf(row: PublicRow, index: number): ServiceCard | null {
+  const doc = documentOf(row);
+  if (!doc) return null;
+  const title = docBi(doc, 'title');
+  if (!title.ar && !title.en) return null;
+  const href = docBi(doc, 'href');
+  return {
+    id: numericId(row, index),
+    slug: row.key,
+    title,
+    intro: docBi(doc, 'intro'),
+    image: docText(doc, 'image') || null,
+    href: href.ar || href.en ? href : hrefPair('services'),
+  };
+}
+
+export async function getServiceCards(): Promise<ServiceCard[]> {
+  return listRung(
+    'services',
+    async () =>
+      (await publicRows('list_item', { listKey: 'services' }))
+        .filter((row) => flag(row, 'enabled'))
+        .map(serviceCardOf)
+        .filter((card): card is ServiceCard => card !== null),
+    () => wp.getServiceCards(),
+  );
+}
+
 // --- home ---------------------------------------------------------------------
 
 export interface HomeData {
@@ -440,10 +599,10 @@ export interface HomeData {
 }
 
 /**
- * The homepage's blocks. Its offers and articles come from this read path; its
- * settings and branches are still WordPress reads until BK-6.3b moves them, so the
- * page is assembled here rather than in `../wp` to keep the two rungs of the same
- * page from disagreeing about the journal.
+ * The homepage's blocks. Its offers, articles and branches come from this read
+ * path; its settings are still a WordPress read until the next slice moves them, so
+ * the page is assembled here rather than in `../wp` to keep the two rungs of the
+ * same page from disagreeing about the journal.
  */
 export async function getHome(opts: { offers?: number; articles?: number; lang?: Lang } = {}): Promise<HomeData> {
   const lang = opts.lang ?? 'en';
@@ -451,7 +610,7 @@ export async function getHome(opts: { offers?: number; articles?: number; lang?:
     wp.getSettings(lang),
     getOffers({ perPage: opts.offers ?? 4 }, lang),
     getPosts({ perPage: opts.articles ?? 3 }),
-    wp.getBranches(),
+    getBranches(),
   ]);
   return { settings, offers: offersPaged.items, articles: articlesPaged.items, branches };
 }

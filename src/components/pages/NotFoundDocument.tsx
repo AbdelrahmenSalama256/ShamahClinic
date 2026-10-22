@@ -6,7 +6,7 @@ import { NotFoundClient } from "@/components/pages/NotFoundClient";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { siteConfig, siteTheme } from "@/config/site";
 import { normalizeLang } from "@/lib/route-lang";
-import { getBranchList } from "@/lib/wp";
+import { getBranchList } from "@/lib/content/site";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 
 /**

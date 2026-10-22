@@ -1,7 +1,10 @@
-import { getAllArticles, paginate } from "./index";
+import { paginate } from "./index";
+// A result story *is* an article, so its card comes from the site's read path:
+// reading it from `./index` would render the snapshot journal on /results while
+// /blogs showed the database.
+import { getAllArticles } from "../content/site";
 import { snapshotResultStories } from "./snapshot";
 import type { ArticleCard, Paged } from "./types";
-
 /**
  * A result story is a WordPress post whose own text names an outcome. The
  * dashboard holds no result records and no before/after media — see

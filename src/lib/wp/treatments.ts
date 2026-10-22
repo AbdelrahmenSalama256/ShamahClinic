@@ -1,5 +1,7 @@
 import type { ServiceCard } from "./types";
-import { getPage, getServiceCards } from "./index";
+// Both inputs of the merge come from the site's read path, so a treatment page can
+// never pair a database page with a snapshot service list.
+import { getPage, getServiceCards } from "../content/site";
 import { htmlToText } from "./sanitize";
 import { toPhotoSlot } from "./ui-helpers";
 import { arabicRatio } from "./lang";
