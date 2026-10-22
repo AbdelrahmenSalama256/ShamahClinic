@@ -16,7 +16,7 @@ import { json } from '../src/lib/db/json';
 import { loginHandler } from '../src/lib/auth/login';
 import { getOrCreateRole, assignRole, createUser } from '../src/lib/auth/users';
 import { loadGrants } from '../src/lib/auth/sessions';
-import { ROLE_SEEDS, SITE_LOCALES, permissionsFor, type RoleName } from '../src/lib/auth/roles';
+import { ROLE_SEEDS, SITE_LOCALES, LIST_KEYS, permissionsFor, type RoleName } from '../src/lib/auth/roles';
 import type { Grant } from '../src/lib/auth/permissions';
 import { decideRoute, isConsolePath } from '../src/lib/site-routing';
 import {
@@ -27,15 +27,21 @@ import {
   localeFromAcceptLanguage,
   resolvePrefs,
 } from '../src/lib/console/prefs';
-import { CONSOLE_SCREENS, visibleScreens } from '../src/lib/console/screens';
+import { CONSOLE_SCREENS, navStrip, navTree, palettePlaces, visibleScreens } from '../src/lib/console/screens';
 import { message, type MessageKey } from '../src/lib/console/messages';
 import { overviewRows } from '../src/lib/console/overview';
 import { updatePrefsHandler } from '../src/lib/console/prefs-route';
+import { likeOf, searchRows } from '../src/lib/console/search';
+import { searchHandler } from '../src/lib/console/search-route';
+import { createRow, getRow, saveDraft } from '../src/lib/content/store';
 
 const run = randomUUID().slice(0, 8);
 const PASSWORD = 'Shamah-console-2026';
 const ownerEmail = `bk5-owner-${run}@example.invalid`;
 const viewerEmail = `bk5-viewer-${run}@example.invalid`;
+const noReadEmail = `bk13-noread-${run}@example.invalid`;
+/** The one article this file writes, so the palette has a record to find. */
+const searchKey = `bk13-${run}-palette`;
 
 const userIds: string[] = [];
 const roleIds: string[] = [];
@@ -44,6 +50,12 @@ let viewerId = '';
 let ipSeq = 0;
 
 const consoleDir = join(process.cwd(), 'src/app/console');
+
+/** The seed role's grants, as the sidebar sees them. */
+function grantsFor(name: RoleName): Grant[] {
+  const seed = ROLE_SEEDS.find((role) => role.name === name);
+  return seed ? permissionsFor(seed).map((row) => ({ ...row })) : [];
+}
 
 function request(path: string, init: RequestInit & { cookie?: string } = {}): Request {
   const headers = new Headers(init.headers);
@@ -111,24 +123,55 @@ beforeAll(async () => {
     .values(permissionsFor(viewer).map((row) => ({ id: randomUUID(), role_id: viewerId, resource: row.resource, action: row.action, scope: json(row.scope) })))
     .execute();
 
+  // A role that reads leads and nothing titled: the palette's route has to answer 403
+  // for it, because `article`/`offer`/`page` are three resources and it holds none.
+  const noReadRole = `bk13-noread-role-${run}`;
+  const noReadRoleId = await getOrCreateRole(noReadRole, { is_system: false });
+  roleIds.push(noReadRoleId);
+  await db
+    .insertInto('role_permissions')
+    .values({ id: randomUUID(), role_id: noReadRoleId, resource: 'lead', action: 'read', scope: json(null) })
+    .execute();
+
   userIds.push(
     await createUser({ email: ownerEmail, password: PASSWORD, name: 'BK5 Owner' }),
     await createUser({ email: viewerEmail, password: PASSWORD, name: 'BK5 Viewer' }),
+    await createUser({ email: noReadEmail, password: PASSWORD, name: 'BK13 Leads only' }),
   );
   await assignRole(userIds[0], ownerId);
   await assignRole(userIds[1], viewerId);
+  await assignRole(userIds[2], noReadRoleId);
+
+  // One titled row for the palette to find: the search reads the draft columns, and
+  // Arabic is the site's primary language, so a hit must carry the Arabic title and the
+  // path must be the deep link `?key=` that opens the row.
+  const created = await createRow('article', { key: searchKey, actorId: userIds[0] });
+  if (!created.ok) throw new Error(`the article for the palette could not be created: ${created.code}`);
+  for (const [locale, title] of [
+    ['ar', 'دليل الليزر البارد'],
+    ['en', 'cold laser guide'],
+  ] as const) {
+    const row = await getRow('article', created.value.id);
+    if (!row) throw new Error('the article for the palette disappeared');
+    const saved = await saveDraft('article', { id: row.id, locale, fields: { title }, expectedVersion: row.version, actorId: userIds[0] });
+    if (!saved.ok) throw new Error(`the article for the palette could not be saved (${locale}): ${saved.code}`);
+  }
 });
 
 afterAll(async () => {
   if (userIds.length > 0) {
     await db.deleteFrom('sessions').where('user_id', 'in', userIds).execute();
     await db.deleteFrom('audit_log').where('actor_id', 'in', userIds).execute();
-    await db.deleteFrom('login_attempts').where('email_lc', 'in', [ownerEmail, viewerEmail]).execute();
+    await db.deleteFrom('login_attempts').where('email_lc', 'in', [ownerEmail, viewerEmail, noReadEmail]).execute();
     await db.deleteFrom('user_roles').where('user_id', 'in', userIds).execute();
     await db.deleteFrom('role_permissions').where('role_id', 'in', roleIds).execute();
     await db.deleteFrom('roles').where('id', 'in', roleIds).execute();
     await db.deleteFrom('users').where('id', 'in', userIds).execute();
   }
+  // The row this file created for the palette, and the history it wrote.
+  const article = await db.selectFrom('articles').select('id').where('slug', '=', searchKey).executeTakeFirst();
+  if (article) await db.deleteFrom('revisions').where('entity_id', '=', article.id).execute();
+  await db.deleteFrom('articles').where('slug', '=', searchKey).execute();
   await destroyDb();
 });
 
@@ -225,10 +268,6 @@ describe('the sidebar registry', () => {
   });
 
   it('shows each role exactly the screens its grants cover', () => {
-    const grantsFor = (name: RoleName): Grant[] => {
-      const seed = ROLE_SEEDS.find((role) => role.name === name);
-      return seed ? permissionsFor(seed).map((row) => ({ ...row })) : [];
-    };
     // The two screens every role holds, plus what its `read` grants reach. Marketer
     // has no `list` grant and only Owner/Admin can read `setting`, so those rows are
     // the proof the sidebar is filtered by the catalog rather than hardcoded.
@@ -276,9 +315,11 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect(frame).toContain('href="#console-side"');
     expect(frame).toContain('aria-controls="console-side"');
     expect(frame).toContain('data-nav=');
-    // Two `ConsoleNav`s, one of them the strip: CSS shows exactly one per width.
-    expect(frame.match(/<ConsoleNav/g)).toHaveLength(2);
-    expect(frame).toMatch(/<ConsoleNav[^>]*strip/);
+    // One tree (sidebar column and drawer share it) and one phone strip: CSS shows
+    // exactly one of the two per width.
+    expect(frame).toContain('<ConsoleNavTree');
+    expect(frame).toContain('<ConsoleNavStrip');
+    expect((frame.match(/<ConsoleNavTree/g) ?? []).length).toBe(1);
   });
 
   it('holds the 44px tap floor at both densities', () => {
@@ -305,6 +346,152 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
         expect(message(key, locale).length, `${key} ${locale}`).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe('the navigation reads off the grants (BK-13.2)', () => {
+  const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
+  const nav = readFileSync(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'), 'utf8');
+  const frame = readFileSync(join(process.cwd(), 'src/components/console/ConsoleFrame.tsx'), 'utf8');
+
+  it('hides a screen the role cannot read and greys an entity it cannot write', () => {
+    const grants: Grant[] = [
+      { resource: 'article', action: 'read', scope: null },
+      { resource: 'article', action: 'update', scope: { locales: ['ar'] } },
+    ];
+    const content = navTree(grants, 'en').find((group) => group.key === 'content');
+    // Read on one resource only: the other three content screens are absent, not greyed.
+    expect(content?.branches.map((branch) => branch.key)).toEqual(['articles']);
+
+    const articles = content?.branches[0];
+    expect(articles?.leaves.map((leaf) => [leaf.key, leaf.writable])).toEqual([
+      ['ar', true],
+      ['en', false],
+    ]);
+    // One writable entity is enough to make the screen itself writable, and a scoped
+    // grant never matches an unscoped `can(…, {})` — that is why the branch asks its
+    // leaves rather than the catalog.
+    expect(articles?.writable).toBe(true);
+  });
+
+  it('shows a read-only role the whole structure, greyed', () => {
+    const branches = navTree(grantsFor('SEO'), 'en').flatMap((group) => group.branches);
+    const articles = branches.find((branch) => branch.key === 'articles');
+    expect(articles?.leaves).toHaveLength(2);
+    expect(articles?.writable).toBe(false);
+    expect(articles?.leaves.every((leaf) => !leaf.writable)).toBe(true);
+    // The SEO role has no `setting` read, so the Site group is not in the tree at all.
+    expect(navTree(grantsFor('SEO'), 'en').map((group) => group.key)).not.toContain('site');
+  });
+
+  it('greys the navigation list even for the Owner, because the catalog scopes it out', () => {
+    const lists = navTree(grantsFor('Editor'), 'ar')
+      .flatMap((group) => group.branches)
+      .find((branch) => branch.key === 'lists');
+    expect(lists?.leaves.map((leaf) => [leaf.key, leaf.writable])).toEqual([
+      ['nav', false],
+      ['branches', true],
+      ['specialists', true],
+      ['treatments', true],
+      ['services', true],
+      ['faq', true],
+      ['results', true],
+    ]);
+  });
+
+  it('names the scope in every leaf URL, and keeps the strip flat', () => {
+    const grants = grantsFor('Owner');
+    const leaves = navTree(grants, 'ar').flatMap((group) => group.branches.flatMap((branch) => branch.leaves));
+    expect(leaves).toHaveLength(3 * 2 + LIST_KEYS.length);
+    for (const leaf of leaves) {
+      expect(leaf.path).toMatch(/^\/console\/(articles|offers|pages)\?locale=(ar|en)$|^\/console\/lists\?list=[a-z_]+$/);
+    }
+    // The phone bar holds the screens, never the tree: a 640 px strip has no room for it.
+    const strip = navStrip(grants, 'ar');
+    expect(strip.map((branch) => branch.key)).toEqual(navTree(grants, 'ar').flatMap((group) => group.branches.map((branch) => branch.key)));
+    expect(strip.every((branch) => branch.leaves.length === 0)).toBe(true);
+  });
+
+  it('lists both screens and entities for the palette, in the console language', () => {
+    const places = palettePlaces(grantsFor('Editor'), 'ar');
+    expect(places.map((place) => place.path)).toContain('/console/articles?locale=ar');
+    expect(places.map((place) => place.path)).toContain('/console/lists?list=branches');
+    expect(places.every((place) => place.label.length > 0 && place.group.length > 0)).toBe(true);
+    // A place the role cannot write is in the list, marked, not missing — the palette is
+    // also how someone finds the screen they can only read.
+    expect(places.find((place) => place.path === '/console/lists?list=nav')?.writable).toBe(false);
+  });
+
+  it('labels every group and palette string in both languages', () => {
+    const keys = [
+      'nav.group.workspace',
+      'nav.group.content',
+      'nav.group.site',
+      'nav.group.account',
+      'nav.readonly',
+      'palette.open',
+      'palette.placeholder',
+      'palette.screens',
+      'palette.records',
+      'palette.searching',
+      'palette.empty',
+      'palette.shortcut',
+    ] as MessageKey[];
+    for (const key of keys) {
+      for (const locale of SITE_LOCALES) {
+        expect(message(key, locale).length, `${key} ${locale}`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('folds with the browser, not with script', () => {
+    // BK-5's rule: the console's chrome works with JavaScript switched off. The tree's
+    // fold is a native `<details>` and the leaves are ordinary links.
+    expect(nav).toContain('<details');
+    expect(nav).not.toMatch(/useState/);
+    expect(frame).toContain('<ConsolePalette');
+    expect(css).toMatch(/\.console-nav-leaves/);
+    expect(css).toMatch(/\.console-palette\s*\{/);
+    // The greyed state is a cue, not a colour alone: the row keeps its own title text.
+    expect(css).toMatch(/\[data-locked='true'\]/);
+  });
+
+  it('answers 401, 403 and 400 before it reads a single row', async () => {
+    const anon = await searchHandler(request('/search?q=cold'));
+    expect(anon.status).toBe(401);
+
+    const { token } = await login(noReadEmail);
+    const forbidden = await searchHandler(request('/search?q=cold', { cookie: `shamah_session=${token}` }));
+    expect(forbidden.status).toBe(403);
+    expect(await forbidden.json()).toMatchObject({ error: 'forbidden', action: 'article+offer+page.read' });
+
+    const owner = await login(ownerEmail);
+    const short = await searchHandler(request('/search?q=c', { cookie: `shamah_session=${owner.token}` }));
+    expect(short.status).toBe(400);
+    expect(await short.json()).toMatchObject({ error: 'invalid_input' });
+  });
+
+  it('answers with the row the palette can open, and writes no audit row for a read', async () => {
+    const { token } = await login(ownerEmail);
+    const res = await searchHandler(request(`/search?q=${searchKey}`, { cookie: `shamah_session=${token}` }));
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { hits?: { kind: string; title: string; path: string }[] };
+    expect(body.hits).toHaveLength(1);
+    expect(body.hits?.[0]).toMatchObject({
+      kind: 'article',
+      title: 'دليل الليزر البارد',
+      path: `/console/articles?key=${searchKey}`,
+    });
+    // The same term against a resource the row is not: the query is only built for the
+    // kinds the caller holds `read` on, and never for the rest.
+    expect(await searchRows(['page'], searchKey)).toEqual([]);
+    expect(await searchRows([], searchKey)).toEqual([]);
+    expect(await auditCount('article.read', ownerEmail)).toBe(0);
+  });
+
+  it('escapes what LIKE would otherwise treat as a wildcard', () => {
+    expect(likeOf('a%c_d\\e')).toBe('%a\\%c\\_d\\\\e%');
+    expect(likeOf('  cold  ')).toBe('%cold%');
   });
 });
 

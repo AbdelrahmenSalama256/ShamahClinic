@@ -36,10 +36,19 @@ export interface GuardResult<R> {
 
 /** `I` is the parsed shape; omit `schema` on read routes and it stays `unknown`. */
 export interface Rule<I = unknown> {
-  resource: Resource;
+  /**
+   * One resource, or several where a single response aggregates them — the palette's
+   * search reads articles, offers and pages at once. The caller must hold `action` on
+   * at least one to get past this rule, and the handler then filters each section
+   * against `ctx.resources`, so a grant the caller lacks cannot leak through the
+   * section it belongs to.
+   */
+  resource: Resource | readonly Resource[];
   action: Action;
   /** Parsed only after permission is granted. */
   schema?: ZodType<I>;
+  /** Where the payload comes from. Reads take it from the URL; the default is the body. */
+  inputFrom?: (req: Request) => unknown;
   /** From the URL, never the body. A function lets a route derive it from the path. */
   target?: Target | ((req: Request) => Target);
   /** Only for the routes that change the caller's own password or session. */
@@ -52,6 +61,8 @@ export interface HandlerContext<I> {
   req: Request;
   requestId: string;
   target: Target;
+  /** Of `rule.resource`, the resources this caller actually holds `action` on. */
+  resources: readonly Resource[];
   ipHash: string;
 }
 
@@ -92,9 +103,11 @@ export async function guard<I, R>(
   }
 
   const target = typeof rule.target === 'function' ? rule.target(req) : (rule.target ?? {});
-  if (!can(auth.user.grants, rule.resource, rule.action, target)) {
+  const wanted: readonly Resource[] = typeof rule.resource === 'string' ? [rule.resource] : rule.resource;
+  const resources = wanted.filter((resource) => can(auth.user.grants, resource, rule.action, target));
+  if (resources.length === 0) {
     // Answered before the body is read: a caller with no grant learns nothing about the payload.
-    return jsonError(403, 'forbidden', { action: `${rule.resource}.${rule.action}` }, trace);
+    return jsonError(403, 'forbidden', { action: `${wanted.join('+')}.${rule.action}` }, trace);
   }
   if (rule.action !== 'read' && auth.user.mustChangePassword && !rule.allowBeforePasswordChange) {
     return jsonError(403, 'password_change_required', {}, trace);
@@ -102,14 +115,14 @@ export async function guard<I, R>(
 
   let input: I = undefined as I;
   if (rule.schema) {
-    const parsed = rule.schema.safeParse(await readBody(req));
+    const parsed = rule.schema.safeParse(rule.inputFrom ? rule.inputFrom(req) : await readBody(req));
     if (!parsed.success) {
       return jsonError(400, 'invalid_input', { issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) }, trace);
     }
     input = parsed.data;
   }
 
-  const result = await handler({ auth, input, req, requestId, target, ipHash });
+  const result = await handler({ auth, input, req, requestId, target, resources, ipHash });
 
   // A handler that refuses the request (its own 400, after the schema passed)
   // changed nothing, so an audit row would record a change that never happened.
@@ -119,8 +132,8 @@ export async function guard<I, R>(
       actorId: auth.user.id,
       actorEmail: auth.user.email,
       actorKind: 'user',
-      action: `${rule.resource}.${rule.action}`,
-      entityType: audit.entityType ?? rule.resource,
+      action: `${resources[0]}.${rule.action}`,
+      entityType: audit.entityType ?? resources[0],
       entityId: audit.entityId ?? (Object.values(target)[0] ?? ''),
       before: audit.before,
       after: audit.after ?? result.data,

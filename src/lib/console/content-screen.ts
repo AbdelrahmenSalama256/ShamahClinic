@@ -46,6 +46,13 @@ export interface ContentScreenData {
   listKey: string | null;
   lists: { key: string; label: string }[];
   locale: ConsoleLocale;
+  /**
+   * The language tab to open. `?locale=` wins over the console's own locale because
+   * the URL is what a nav leaf, a palette hit or a shared link carries.
+   */
+  activeLocale: ContentLocale;
+  /** The row the URL asked to open, matched against `rows` in the browser. */
+  focusKey: string | null;
   labels: Record<MessageKey, string>;
 }
 
@@ -55,6 +62,14 @@ export interface ContentScreenProps {
   titleKey: MessageKey;
   listKey?: string | null;
   trash?: boolean;
+  contentLocale?: string | null;
+  focusKey?: string | null;
+}
+
+/** `?locale=`, but only the two codes the content actually has. */
+function localeAskedFor(value: string | null | undefined, fallback: ConsoleLocale): ContentLocale {
+  if (value === 'ar' || value === 'en') return value;
+  return fallback === 'en' ? 'en' : 'ar';
 }
 
 function targetOf(scope: ContentScope, named: 'locales' | 'lists'): Target {
@@ -92,16 +107,13 @@ function abilitiesFor(kind: ContentKind, grants: readonly Grant[]): ContentAbili
 /** Rows for one content screen, or `null` when the role cannot read the resource. */
 export async function contentScreenData(
   kind: ContentKind,
-  input: { grants: readonly Grant[]; locale: ConsoleLocale; listKey?: string | null; trash?: boolean },
+  input: { grants: readonly Grant[]; locale: ConsoleLocale; listKey?: string | null; trash?: boolean; contentLocale?: string | null; focusKey?: string | null },
 ): Promise<ContentScreenData | null> {
   const spec = kindSpec(kind);
   if (!can(input.grants, spec.resource, 'read', {})) return null;
 
   const abilities = abilitiesFor(kind, input.grants);
-  const lists =
-    spec.scope === 'lists'
-      ? (await knownListKeys()).map((key) => ({ key, label: LIST_LABELS[key as ListKey]?.[input.locale] ?? key }))
-      : [];
+  const lists = spec.scope === 'lists' ? (await knownListKeys()).map((key) => ({ key, label: LIST_LABELS[key as ListKey]?.[input.locale] ?? key })) : [];
   const listKey = spec.scope === 'lists' ? (input.listKey ?? lists[0]?.key ?? null) : null;
 
   // A list screen edits one list at a time, so it reads only that one. A bilingual
@@ -120,6 +132,8 @@ export async function contentScreenData(
     listKey,
     lists,
     locale: input.locale,
+    activeLocale: localeAskedFor(input.contentLocale, input.locale),
+    focusKey: input.focusKey?.trim() || null,
     labels: catalogFor(input.locale),
   };
 }

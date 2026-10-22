@@ -297,6 +297,199 @@ html[data-theme='dark'] .console-body {
   background: var(--bg-card);
 }
 
+/* --- the permission tree --------------------------------------------------- */
+/* Group → screen → entity, from `navTree()`. The fold is a native `<details>`, so the
+   leaves open with JavaScript switched off; the caret is a border drawn as a chevron
+   because a glyph would need a font that has it in both languages. */
+.console-nav-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.console-nav-heading {
+  margin: 0.85rem 0 0.15rem;
+  padding-inline: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.console-nav-group:first-child .console-nav-heading {
+  margin-block-start: 0;
+}
+
+.console-nav-list,
+.console-nav-leaves {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.console-nav-leaves {
+  gap: 0;
+  margin-block: 0.1rem 0.35rem;
+  margin-inline-start: 1.1rem;
+  padding-inline-start: 0.3rem;
+  border-inline-start: 1px solid var(--border-control-soft);
+}
+
+.console-nav-head {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  list-style: none;
+  cursor: pointer;
+}
+
+.console-nav-head::-webkit-details-marker {
+  display: none;
+}
+
+.console-nav-head .console-nav-link {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.console-nav-caret {
+  flex: none;
+  inline-size: 0.45rem;
+  block-size: 0.45rem;
+  margin-inline: 0.45rem;
+  border-inline-end: 2px solid var(--text-secondary);
+  border-block-end: 2px solid var(--text-secondary);
+  /* closed points forward (right in LTR, left in RTL), open points down */
+  transform: rotate(-45deg);
+  transition: transform 0.12s ease;
+}
+
+[dir='rtl'] .console-nav-caret {
+  transform: rotate(135deg);
+}
+
+details[open] > .console-nav-head .console-nav-caret {
+  transform: rotate(45deg);
+}
+
+.console-nav-leaf {
+  font-size: var(--console-font-small);
+}
+
+/* Readable, not writable: the row is there because the role may read the screen, and
+   greyed because `content-*` would answer 403. `aria-disabled`, not `disabled`, so the
+   row stays in the tab order and the keyboard user can read its title. */
+.console-nav a[data-locked='true'],
+.console-palette-row[data-locked='true'] {
+  color: var(--text-muted);
+  text-decoration: none;
+  border-bottom: 1px dotted var(--border-control-soft);
+  border-radius: 0;
+}
+
+/* --- the command palette --------------------------------------------------- */
+/* The one piece of chrome that does need script: a `<dialog>` gives the focus trap, Esc
+   and an inert background for free, and every place it reaches is also in the nav tree. */
+.console-palette-open {
+  min-height: var(--console-tap);
+  padding: 0.4rem 0.8rem;
+}
+
+.console-palette {
+  inline-size: min(38rem, 92vw);
+  max-block-size: none;
+  margin: 10vh auto auto;
+  padding: 0;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.9rem;
+}
+
+.console-palette::backdrop {
+  background: rgba(20, 14, 10, 0.55);
+}
+
+.console-palette-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.8rem;
+  padding: var(--console-pad);
+  border-block-end: 1px solid var(--border-control-soft);
+}
+
+.console-palette-input {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+}
+
+.console-palette-hint {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--console-font-small);
+}
+
+.console-palette-list {
+  max-block-size: 55vh;
+  overflow-y: auto;
+  padding: 0.4rem var(--console-pad) var(--console-pad);
+}
+
+.console-palette-list section {
+  margin: 0;
+}
+
+.console-palette-section {
+  margin: 0.7rem 0 0.2rem;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.console-palette-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--console-tap);
+  padding: 0.4rem 0.6rem;
+  border-radius: 0.6rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.console-palette-row:hover,
+.console-palette-row:focus-visible {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.console-palette-group {
+  flex: none;
+  max-inline-size: 11rem;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--console-font-small);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.console-palette-label {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.console-palette-empty {
+  margin: 0.8rem 0 0.2rem;
+  color: var(--text-secondary);
+}
+
 .console-scrim {
   display: none;
 }

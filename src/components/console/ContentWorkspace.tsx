@@ -77,8 +77,10 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
   const [rows, setRows] = useState(data.rows);
   const [trash, setTrash] = useState(data.trash);
   const [listKey, setListKey] = useState<string | null>(data.listKey);
-  const [locale, setLocale] = useState<ContentLocale>(data.locale === 'en' ? 'en' : 'ar');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [locale, setLocale] = useState<ContentLocale>(data.activeLocale);
+  // A palette hit or a shared link carries `?key=`: the row it names is the one to
+  // open, and the server already put it in `rows`, so this is a lookup, not a fetch.
+  const [selectedId, setSelectedId] = useState<string | null>(() => data.rows.find((row) => row.key === data.focusKey)?.id ?? null);
   const [form, setForm] = useState<Form>({});
   const [formKey, setFormKey] = useState('');
   const [history, setHistory] = useState<{ id: string; revisions: RevisionView[] } | null>(null);

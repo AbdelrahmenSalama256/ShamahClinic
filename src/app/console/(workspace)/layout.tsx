@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { ConsoleShell } from '@/components/console/ConsoleShell';
-import { visibleScreens } from '@/lib/console/screens';
 import { consoleView } from '@/lib/console/server';
 
 export const dynamic = 'force-dynamic';
@@ -15,7 +14,7 @@ export default async function ConsoleWorkspaceLayout({ children }: Readonly<{ ch
   if (auth.user.mustChangePassword) redirect('/console/password');
 
   return (
-    <ConsoleShell prefs={prefs} user={auth.user} screens={visibleScreens(auth.user.grants)}>
+    <ConsoleShell prefs={prefs} user={auth.user}>
       {children}
     </ConsoleShell>
   );

@@ -8,11 +8,11 @@ import { consoleView } from '@/lib/console/server';
  * and the heading. Four kinds share it because the only difference between them is
  * which columns `src/lib/content/kinds.ts` says they have.
  */
-export async function ContentScreen({ kind, titleKey, listKey, trash }: Readonly<ContentScreenProps>) {
+export async function ContentScreen({ kind, titleKey, listKey, trash, contentLocale, focusKey }: Readonly<ContentScreenProps>) {
   const { auth, prefs } = await consoleView();
   if (!auth) return null; // the workspace layout has already redirected
 
-  const data = await contentScreenData(kind, { grants: auth.user.grants, locale: prefs.locale, listKey, trash });
+  const data = await contentScreenData(kind, { grants: auth.user.grants, locale: prefs.locale, listKey, trash, contentLocale, focusKey });
   if (!data) return <p className="console-lede">{message('content.no_permission', prefs.locale)}</p>;
 
   return (

@@ -1,8 +1,7 @@
 import type { ConsoleUser } from '@/lib/auth/sessions';
-import type { MessageKey } from '@/lib/console/messages';
 import { message } from '@/lib/console/messages';
 import type { ConsolePrefs } from '@/lib/console/prefs';
-import type { ConsoleScreen } from '@/lib/console/screens';
+import { navStrip, navTree, palettePlaces } from '@/lib/console/screens';
 import { ConsoleControls } from './ConsoleControls';
 import { ConsoleFrame } from './ConsoleFrame';
 
@@ -14,20 +13,23 @@ import { ConsoleFrame } from './ConsoleFrame';
  * This half only decides *what* the chrome says: every label is read here, on the
  * server, in the console's own locale, and handed to `ConsoleFrame`, whose only job is
  * where those labels live at each width.
+ *
+ * The navigation comes from the grants, not from a list of screens: what the role may
+ * read decides which rows exist at all, and what it may write decides which are greyed.
+ * See `navTree`.
  */
 export function ConsoleShell({
   prefs,
   user,
-  screens,
   children,
 }: Readonly<{
   prefs: ConsolePrefs;
   user: ConsoleUser;
-  screens: readonly ConsoleScreen[];
   children: React.ReactNode;
 }>) {
-  const items = screens.map((screen) => ({ key: screen.key, path: screen.path, label: message(`nav.${screen.key}` as MessageKey, prefs.locale) }));
-  const screensLabel = message('shell.screens', prefs.locale);
+  const tree = navTree(user.grants, prefs.locale);
+  const strip = navStrip(user.grants, prefs.locale);
+  const places = palettePlaces(user.grants, prefs.locale);
 
   const brand = (
     <span className="console-brand">
@@ -68,8 +70,24 @@ export function ConsoleShell({
 
   return (
     <ConsoleFrame
-      items={items}
-      labels={{ screens: screensLabel, close: message('shell.close', prefs.locale) }}
+      tree={tree}
+      strip={strip}
+      places={places}
+      labels={{
+        screens: message('shell.screens', prefs.locale),
+        close: message('shell.close', prefs.locale),
+        readOnly: message('nav.readonly', prefs.locale),
+        palette: {
+          open: message('palette.open', prefs.locale),
+          placeholder: message('palette.placeholder', prefs.locale),
+          screens: message('palette.screens', prefs.locale),
+          records: message('palette.records', prefs.locale),
+          searching: message('palette.searching', prefs.locale),
+          empty: message('palette.empty', prefs.locale),
+          shortcut: message('palette.shortcut', prefs.locale),
+          readOnly: message('nav.readonly', prefs.locale),
+        },
+      }}
       brand={brand}
       controls={controls}
       account={account}
