@@ -22,7 +22,8 @@ loaded into the console once it exists; `D:\shamah` is left alone.
 4. Secrets: print variable **names** only, never values. `.env.local` / `.env.test` are sourced, never echoed.
 5. `data/wp/*.json` and `public/wp/*` are the frozen WordPress backup (92 articles, 4 offers, 56 result
    stories). They are read-only and **never deleted**. BK-7.2 imports the content kinds out of them; they stay the
-   site's fallback rung, and `result-stories.json` / `seo.json` are still read directly, until BK-7.3 replaces them.
+   site's fallback rung — `result-stories.json` membership, `seo.json` and `offer-categories` are still read
+   directly, which is row 7.5, not 7.3 (7.3 removed the live origin, which is what the dependency actually was).
 6. Mutating CLI commands default to dry-run; they only act with `--apply`/`--force`.
 7. Tests run against `shamah_cms_test` only — `src/lib/db/guard.ts` refuses anything not ending in `_test`.
 
@@ -30,6 +31,8 @@ loaded into the console once it exists; `D:\shamah` is left alone.
 `npm run typecheck` · `npm run lint` · `npx vitest run` · `npm run build`
 `npm run doctor` says whether the machine is ready. Local DB: start with `npm run db:local:start`
 (port 3307, loopback only — see `docs/LOCAL-MARIADB.md`).
+`npm run prove:no-wp` is the BK-7 gate on top of those four: it starts the built server with a fetch guard and crawls
+every public route, and must be re-run whenever a read path changes.
 
 `npm run build` needs outbound network: `next/font/google` fetches Montserrat and Readex Pro at compile time
 (`src/lib/fonts.ts`). Offline it fails with `getaddrinfo ENOTFOUND fonts.googleapis.com` — that is the
@@ -248,10 +251,56 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       DB is left at zero content rows, zero categories, zero revisions. Note for the next suite: the files share one
       process, so `afterAll` must call `destroyDb()`, not `db.destroy()` — the latter leaves a destroyed pool cached in
       the global and breaks whichever file runs after it.
-- [ ] 7.3 Remove every live WordPress read (`src/lib/wp/http.ts`, `src/lib/wp/index.ts:119`) and `sync:wp`,
-      and the snapshot-**file** reads the import has not replaced: `data/wp/result-stories.json` membership, `seo.json`,
-      `offer-categories`, and the `data/wp/*.json` fallback rung itself.
-- [ ] 7.4 Prove it: zero requests to `shamaclinics.com` from a cold render of every public route
+- [x] 7.3 Remove every live WordPress read — `5b9bb5d`
+      `src/lib/wp/http.ts` is deleted, not disabled: no `wpFetch`, no per-read REST path, no 8 s abort, no retry,
+      no in-flight semaphore, and no `isBuildPhase()` guard left standing, because there is nothing to refuse.
+      The three helpers that used to branch — `selectList`, `selectBySlug`, `selectById` — keep their signatures and
+      become plain snapshot lookups, so **no caller, route or component changed**: 66 insertions against 228 deletions
+      in the four source files. The `_fields` / `*_REL` query-string constants went with the client; the snapshot
+      already holds exactly those columns and `scripts/sync-wp.mjs` is the only code left that sends them.
+      `seo.ts` lost its cheerio `<head>` scraper: `resolveSeo` now reads `seo.json` and otherwise falls back to the
+      row's own title/excerpt/image. That capture holds four landing URLs (home + contact, both languages), so
+      **detail-page SEO has no snapshot entry until BK-9** gives the console its own seo fields — a real loss of
+      fidelity, recorded here rather than papered over.
+      `config.ts` keeps `WP_ORIGIN` for the one job it can actually do: rewriting URLs already inside the snapshot.
+      `WP_FETCH_TIMEOUT_MS`, `WP_MAX_INFLIGHT`, `WP_TAXONOMY_REVALIDATE`, `REVALIDATE`, `restBase` and `siteOrigin`
+      had no reader left, so they are out of the file, `.env.example` and `tests/setup-env.ts` too.
+      **Two deviations from the row as written, both deliberate.** `sync:wp` is *kept*: it is the only way to cut a
+      fresh snapshot for 7.1, it is hand-run, and no route imports it — so it is WordPress tooling, not a WordPress
+      dependency. The Contact Form 7 forward in `/api/v1/lead` is also kept (it is a write, gated behind
+      `LEAD_MODE=cf7`, default `whatsapp`) because BK-8 replaces lead handling; 7.4 asserts it is the *only* live call.
+      README, `docs/inventory.md`, `docs/api/DECISIONS.md` and `docs/WIRING.md` each said "live first, snapshot on
+      failure"; all four now say what happens, and the 2026-10-12 audit keeps its gate table as a dated record with a
+      note on what moved.
+- [x] 7.4 Prove it — `8a6ed1b`
+      Two proofs, because either alone can be true for the wrong reason.
+      `tests/no-wp-network.test.ts` (5 cases) replaces `globalThis.fetch` with a recorder that throws, then runs the
+      whole public read path — `site.*` both languages, the kinds still on the snapshot rung, and the derived readers
+      behind `/about`, `/results` and the treatment pages — and expects zero recorded URLs. A second case asserts those
+      same readers still return 92+ articles, 10+ pages, offers, branches, services and treatments, so "zero" cannot be
+      the sound of a reader returning nothing. The third half is structural, because behaviour can only catch a call
+      some test happens to reach: no `fetch(` anywhere under `src/lib`, `http.ts` must stay deleted, and the lead route
+      is asserted by path to be the only file in `src/app` naming `wp-json`.
+      `scripts/prove-no-wp.mjs` + `scripts/wp-guard.mjs` (`npm run prove:no-wp`) are the row as literally written: a
+      cold render of every public route. The guard is `--import`ed into the **server's own process**, so interception
+      happens where rendering happens; the driver crawls the `<loc>` set of `/sitemap.xml` plus the paginated lists,
+      the read-only `/api/v1/*` endpoints (detail slugs taken from the list endpoints) and `/console/login`, then reads
+      the server's stderr. It requires the guard's `armed` line before believing its own zero.
+      Result: 46 sitemap URLs, 79 routes rendered, smallest HTML page 25,334 bytes, **0 blocked requests, 0 mentions of
+      the host**. Coverage caveat, stated plainly: the guard replaces `globalThis.fetch` airtight, but patches
+      `http/https.request` on the exports object, which a `import { request } from 'node:https'` binding taken before
+      it loaded would not see — that gap is why the structural half exists and is not redundant. Scope caveat: this
+      proves the *rendered site* never reaches WordPress. `next build` still fetches Google Fonts
+      (`src/lib/fonts.ts`, see the Gates note above) — a compile-time dependency on a third party, not on the clinic's
+      CMS, and the reason "no WordPress" and "no network" are not yet the same sentence.
+      Gates: typecheck, lint, `vitest run` 163 tests / 8 files, `next build` clean. **The build now prerenders 84 pages,
+      not 272, and that is not a regression**: the dev database holds the owner's own two published console rows (an
+      article and an offer, created and published 2026-10-22 23:11–23:13), and one published row is what takes a kind
+      onto the DB rung — so `generateStaticParams` yields those slugs instead of the 92 snapshot articles. The seam
+      worked exactly as specified; the rows were left untouched.
+- [ ] 7.5 The snapshot-**file** reads the import has not replaced: `data/wp/result-stories.json` membership,
+      `seo.json`, `offer-categories`, and the `data/wp/*.json` fallback rung itself. This is what 7.3 named and did not
+      do — the live-read half is closed, the snapshot-retirement half is not.
 
 ## BK-8 — marketing
 - [ ] 8.1 Leads persisted (today `/api/v1/lead` only composes a WhatsApp text and keeps counters in memory)
