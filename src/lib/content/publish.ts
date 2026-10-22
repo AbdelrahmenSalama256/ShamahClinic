@@ -143,10 +143,14 @@ async function addRevision(
  *
  * A publish with nothing pending still writes a revision: an editor who pressed
  * publish expects the history to show that they did.
+ *
+ * `at` is for the WordPress import, which names the article's original date so the
+ * journal keeps its order; the console's own request shape has no such field, so an
+ * editor's publish is always stamped with the moment they pressed it.
  */
 export async function publishRow(
   kind: ContentKind,
-  input: { id: string; locales: ContentLocale[]; actor: Actor; note?: string },
+  input: { id: string; locales: ContentLocale[]; actor: Actor; note?: string; at?: Date },
 ): Promise<StoreResult<PublishOutcome>> {
   const spec = kindSpec(kind);
   const current = await getRow(kind, input.id);
@@ -165,7 +169,7 @@ export async function publishRow(
 
       const patch: Record<string, unknown> = {
         updated_by: input.actor.id,
-        published_at: new Date(),
+        published_at: input.at ?? new Date(),
         status: 'published',
         version: current.version + 1,
       };

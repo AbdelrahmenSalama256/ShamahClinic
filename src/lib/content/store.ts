@@ -201,7 +201,7 @@ export async function getRow(kind: ContentKind, id: string): Promise<ContentRow 
 
 export async function createRow(
   kind: ContentKind,
-  input: { key: string; listKey?: string; actorId: string },
+  input: { key: string; listKey?: string; actorId: string; legacyId?: string },
 ): Promise<StoreResult<ContentRow>> {
   const spec = kindSpec(kind);
   const listId = spec.table === 'list_items' ? await listIdForKey(input.listKey ?? '') : null;
@@ -225,6 +225,10 @@ export async function createRow(
     updated_by: input.actorId,
     version: 1,
   };
+  // Only the WordPress import supplies one: it is how an imported row keeps the
+  // post id the site's cards were built on. Nothing in the console's own request
+  // shape carries it, so an editor cannot claim a WordPress post id for a new row.
+  if (input.legacyId) values.legacy_id = input.legacyId;
   if (listId) {
     values.list_id = listId;
     values.draft = JSON.stringify({});
