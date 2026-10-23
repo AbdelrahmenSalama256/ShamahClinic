@@ -700,6 +700,12 @@ details[open] > .console-nav-head .console-nav-caret {
   min-width: 0;
 }
 
+/* The list reads its own width, not the viewport's: see `@container console-list`. */
+.console-work-list {
+  container-type: inline-size;
+  container-name: console-list;
+}
+
 .console-work-bar {
   align-items: center;
   margin-block-end: 0.75rem;
@@ -723,38 +729,24 @@ details[open] > .console-nav-head .console-nav-caret {
   scrollbar-width: thin;
 }
 
-.console-row-item {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
 .console-row {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.4rem;
+  display: block;
+  width: 100%;
   min-width: 0;
-  min-height: var(--console-tap);
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.65rem;
-  background: var(--bg-card);
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: var(--text-primary);
   font: inherit;
   font-size: var(--console-font);
   text-align: start;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
-.console-row:hover {
-  background: var(--bg-secondary);
-}
-
-.console-row[data-active] {
-  border-color: var(--text-primary);
-  background: var(--bg-secondary);
+.console-row:hover .console-row-title {
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
 }
 
 .console-row-title {
@@ -843,6 +835,352 @@ details[open] > .console-nav-head .console-nav-caret {
   overflow-wrap: anywhere;
 }
 
+/* --- the content list (BK-13.3) ------------------------------------------- */
+/*
+ * The list is the screen a data-entry person lives in, so it gets the width the editor
+ * is not using, and it keeps a 44px tap floor on every control the way the rest of the
+ * console does. Two rules decide how much of a row is shown:
+ *   `.console-cell-extra` is hidden until its own container is wide enough, because the
+ *   pane's width comes from the split, not from the viewport;
+ *   the table scrolls sideways instead of squeezing a slug into one letter per line.
+ */
+.console-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--console-gap);
+  min-width: 0;
+}
+
+.console-list-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--console-gap-tight) var(--console-gap);
+}
+
+.console-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.console-chip-button {
+  min-height: var(--console-tap);
+  padding: 0.3rem 0.8rem;
+  border: 1px solid var(--border-control-soft);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--console-font-small);
+  cursor: pointer;
+}
+
+.console-chip-button:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.console-chip-button[data-active] {
+  border-color: var(--text-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.console-search {
+  flex: 1 1 11rem;
+  min-width: 0;
+  /* The bar's controls keep `--console-tap`, not `--console-tap-field`: dense lowers that
+     one to 36px for a form you type into, and this is a target you tap on a phone. */
+  min-height: var(--console-tap);
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.65rem;
+  background: var(--bg-card-subtle);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--console-font);
+}
+
+.console-search::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.console-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: var(--console-font-small);
+  color: var(--text-secondary);
+}
+
+.console-inline select {
+  min-height: var(--console-tap);
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.6rem;
+  background: var(--bg-card-subtle);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--console-font);
+}
+
+.console-views {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.console-view-chip {
+  display: inline-flex;
+  /* `stretch`, not `center`: the chip is the capsule and both halves are tapped
+     independently, so each has to fill the 44px the outer box already reserves.
+     `content-box` because the capsule draws a 1px border and the halves sit inside it —
+     with the usual border-box they measured 43 and the floor is the *tappable* height. */
+  box-sizing: content-box;
+  align-items: stretch;
+  min-height: var(--console-tap);
+  border: 1px solid var(--border-control-soft);
+  border-radius: 999px;
+  background: var(--bg-card);
+}
+
+.console-view-chip .console-chip-button {
+  min-height: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.console-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--console-tap);
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.console-chip-x:hover {
+  color: var(--text-danger);
+}
+
+/* Not sticky: the table below it scrolls inside its own box, so the bar stays where the
+   checkmarks were clicked without needing to clear the sticky topbar. */
+.console-bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--console-gap-tight);
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.65rem;
+  background: var(--bg-card);
+  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 12%);
+}
+
+.console-bulk .console-count {
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}
+
+.console-table-wrap {
+  max-block-size: var(--console-list-h);
+  overflow: auto;
+  scrollbar-width: thin;
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.9rem;
+  background: var(--bg-card);
+}
+
+/* `separate`, not `collapse`: a collapsed table drops the border off a sticky header. */
+.console-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--console-font);
+}
+
+.console-table th,
+.console-table td {
+  padding: 0.5rem 0.7rem;
+  text-align: start;
+  vertical-align: baseline;
+  border-block-end: 1px solid var(--border-control-soft);
+  overflow-wrap: anywhere;
+}
+
+.console-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--console-font-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.console-table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+.console-table tbody tr[data-active] {
+  background: var(--bg-secondary);
+}
+
+.console-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  /* the tap floor, not the text height: a column header is the most-clicked control on
+     the list and a 36 px button is a target a phone misses — 13.1's rule, restated */
+  min-height: var(--console-tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--console-font-small);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.console-sort:hover,
+.console-sort[data-active] {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.console-cell-check {
+  inline-size: var(--console-tap);
+  text-align: center;
+}
+
+.console-cell-check input,
+.console-card-check input {
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin: 0;
+  vertical-align: middle;
+}
+
+.console-cell-extra {
+  display: none;
+}
+
+.console-cards-head {
+  display: flex;
+  min-block-size: var(--console-tap);
+  align-items: center;
+}
+
+.console-cards-head .console-inline {
+  min-block-size: var(--console-tap);
+  padding-inline: 0.4rem;
+  cursor: pointer;
+}
+
+.console-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: var(--console-gap);
+  max-block-size: var(--console-list-h);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.console-cards .console-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.7rem;
+}
+
+.console-cards .console-card[data-active] {
+  border-color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.console-card-check {
+  display: flex;
+}
+
+/* A thumb aims at the box and misses its 17-pixel graphic, so the label — not the box —
+   is the target, and it keeps the same floor the chips and rows already keep.
+   `display` has to be a flex container: on the table's inline label, `min-block-size` is
+   ignored and the 44px written here measures 16. */
+.console-cell-check label,
+.console-card-check {
+  display: inline-flex;
+  place-items: center;
+  min-inline-size: var(--console-tap);
+  min-block-size: var(--console-tap);
+  cursor: pointer;
+}
+
+.console-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.console-row-skeleton {
+  min-height: var(--console-tap);
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.65rem;
+  background: linear-gradient(90deg, var(--bg-card-subtle) 25%, var(--bg-secondary) 50%, var(--bg-card-subtle) 75%);
+  background-size: 200% 100%;
+  animation: console-shimmer 1.2s linear infinite;
+}
+
+@keyframes console-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.console-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--console-gap-tight);
+}
+
+.console-pager .console-count {
+  margin-inline-start: 0;
+}
+
+.console-pager .console-controls {
+  margin-inline-start: auto;
+  align-items: center;
+}
+
 /* --- ≥ 1024px: the sidebar is a column ------------------------------------ */
 @media (min-width: 1024px) {
   .console-frame {
@@ -917,9 +1255,28 @@ details[open] > .console-nav-head .console-nav-caret {
 }
 
 /* --- the list/editor split, once the content is wide enough --------------- */
+/* While the editor holds nothing, the list takes the room it would have wasted. The
+   editor pane keeps 18rem because its scope tabs have to stay clickable. */
 @media (min-width: 900px) {
   .console-work {
     grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+  }
+  .console-work:not([data-open]) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
+  }
+}
+
+@media (min-width: 1280px) {
+  .console-work {
+    grid-template-columns: minmax(20rem, 28rem) minmax(0, 1fr);
+  }
+}
+
+/* A kind's own columns are worth a cell only once the pane can show a word, not a
+   letter — measured on the pane, because 900px of viewport can still be a 22rem list. */
+@container console-list (min-width: 34rem) {
+  .console-cell-extra {
+    display: table-cell;
   }
 }
 
@@ -927,5 +1284,8 @@ details[open] > .console-nav-head .console-nav-caret {
   .console-side,
   .console-scrim {
     transition: none !important;
+  }
+  .console-row-skeleton {
+    animation: none;
   }
 }

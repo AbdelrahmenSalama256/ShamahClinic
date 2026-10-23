@@ -26,7 +26,11 @@ import { loginHandler } from '../src/lib/auth/login';
 import { loadGrants } from '../src/lib/auth/sessions';
 import { assignRole, createUser, getOrCreateRole } from '../src/lib/auth/users';
 import { contentActionHandler, contentCollectionHandler, contentItemHandler, settingsHandler } from '../src/lib/content/api';
+import { viewItemHandler, viewsHandler } from '../src/lib/console/views-route';
 import { kindSpec, parseWrites, type ContentLocale } from '../src/lib/content/kinds';
+import type { ListView } from '../src/lib/content/list-view';
+import type { ListPage } from '../src/lib/content/summary';
+import type { SavedView } from '../src/lib/console/views-route';
 import type { ContentRow } from '../src/lib/content/store';
 import { syncLists } from '../src/lib/content/lists';
 import type { RevisionView } from '../src/lib/content/publish';
@@ -85,6 +89,7 @@ function cookieValue(cookies: string[], name: string): string {
 /** The one place a path becomes the handler the route file would have picked. */
 function route(req: Request): Promise<Response> {
   const parts = new URL(req.url).pathname.split('/').filter(Boolean);
+  if (parts[2] === 'views') return parts.length === 3 ? viewsHandler(req) : viewItemHandler(req);
   if (parts[2] === 'settings') return settingsHandler(req);
   const tail = parts.slice(3);
   if (tail.length === 1) return contentCollectionHandler(req);
@@ -112,6 +117,25 @@ class Reply {
   }
   get rows(): ContentRow[] {
     return (this.body.rows ?? []) as ContentRow[];
+  }
+  /** A list endpoint answers with one page of summaries, not with documents. */
+  get page(): ListPage {
+    return this.body.page as ListPage;
+  }
+  get view(): ListView {
+    return this.body.view as ListView;
+  }
+  get done(): string[] {
+    return (this.body.done ?? []) as string[];
+  }
+  get failed(): { id: string; code: string }[] {
+    return (this.body.failed ?? []) as { id: string; code: string }[];
+  }
+  get views(): SavedView[] {
+    return (this.body.views ?? []) as SavedView[];
+  }
+  get viewRow(): SavedView {
+    return this.body.view as SavedView;
   }
   get settings(): SettingView[] {
     return (this.body.rows ?? []) as SettingView[];
@@ -170,6 +194,7 @@ async function purge(): Promise<void> {
   await db.deleteFrom('offers').where('slug', 'like', 'bk6-%').execute();
   await db.deleteFrom('pages').where('route', 'like', '/bk6-%').execute();
   await db.deleteFrom('settings').where('group_name', 'like', 'bk6-%').execute();
+  await db.deleteFrom('console_views').where('name', 'like', 'bk6-%').execute();
   if (ids.length > 0) await db.deleteFrom('revisions').where('entity_id', 'in', ids).execute();
 }
 
@@ -629,7 +654,7 @@ describe('trash hides a row and restore brings it back with its history', () => 
 
   it('moves the row out of the live list and into the trash view', async () => {
     const before = await call('/content/article', read(actors.Owner));
-    expect(before.rows.some((row) => row.id === id)).toBe(true);
+    expect(before.page.rows.some((row) => row.id === id)).toBe(true);
 
     const trashed = await call(`/content/article/${id}?locale=ar`, write(actors.Owner, 'DELETE', { trashed: true }));
     expect(trashed.status).toBe(200);
@@ -638,9 +663,12 @@ describe('trash hides a row and restore brings it back with its history', () => 
     expect(trashed.row.id).toBe(id);
 
     const live = await call('/content/article', read(actors.Owner));
-    expect(live.rows.some((row) => row.id === id)).toBe(false);
+    expect(live.page.rows.some((row) => row.id === id)).toBe(false);
     const inTrash = await call('/content/article?trash=1', read(actors.Owner));
-    expect(inTrash.rows.filter((row) => row.id === id)).toHaveLength(1);
+    expect(inTrash.page.rows.filter((row) => row.id === id)).toHaveLength(1);
+    // A list page is a page of summaries, never the documents: the body of an article is
+    // not something 25 rows should carry to the browser.
+    expect('fields' in inTrash.page.rows[0]).toBe(false);
 
     const save = await call(`/content/article/${id}?locale=ar`, write(actors.Owner, 'PATCH', { fields: { title: 'nope' } }));
     expect(save.status).toBe(409);
@@ -733,6 +761,482 @@ describe('settings keep a secret inside the environment', () => {
   });
 });
 
+// --- one page of rows, decided by MariaDB (BK-13.3) ----------------------------
+
+/** A list request line, built by `URLSearchParams`, so a `%` or an Arabic term reaches the server as it was typed. */
+function listUrl(kind: string, params: Record<string, string> = {}): string {
+  const line = new URLSearchParams(params).toString();
+  return `/content/${kind}${line ? `?${line}` : ''}`;
+}
+
+describe('a list page filters, searches, orders and pages in the database', () => {
+  // Every other describe in this file leaves rows in the same tables, so a count here is
+  // only honest over rows this one can name: the search term is always a fixture prefix.
+  const pg = (n: number): string => `${ar}-pg-${String(n).padStart(2, '0')}`;
+  const st = (name: string): string => `${ar}-st-${name}`;
+  let offerId = '';
+  let branchId = '';
+  let namedId = '';
+
+  beforeAll(async () => {
+    // Twelve, because a page of ten is the smallest set that proves an OFFSET was applied.
+    // The English titles run opposite to the keys, so a title sort cannot pass by key order.
+    for (let n = 1; n <= 12; n++) {
+      await call('/content/article?locale=en', write(actors.Owner, 'POST', { key: pg(n), fields: { title: `t${String(13 - n).padStart(2, '0')}` } }));
+    }
+    for (const [name, title] of [
+      ['pct', 'خصم 20%'],
+      ['word', 'خصم 20 percent'],
+      ['draft', 'مسودة'],
+    ] as const) {
+      await call('/content/article?locale=ar', write(actors.Owner, 'POST', { key: st(name), fields: { title } }));
+    }
+    const published = await call('/content/article?locale=ar', write(actors.Owner, 'POST', { key: st('pub'), fields: { title: 'نشر كامل' } }));
+    await call(`/content/article/${published.row.id}/publish?locale=ar`, write(actors.Owner, 'POST', {}));
+
+    const changed = await call('/content/article?locale=ar', write(actors.Owner, 'POST', { key: st('changed'), fields: { title: 'أول نشر' } }));
+    await call(`/content/article/${changed.row.id}/publish?locale=ar`, write(actors.Owner, 'POST', {}));
+    await call(`/content/article/${changed.row.id}?locale=ar`, write(actors.Owner, 'PATCH', { fields: { title: 'تعديل بعد النشر' } }));
+
+    const offer = await call('/content/offer?locale=ar', write(actors.Editor, 'POST', { key: `${ar}-of-1`, fields: { name: 'عرض قائمة', price: 250, regularPrice: 400, onSale: true, enabled: false } }));
+    offerId = offer.row.id;
+
+    // A list item's columns are read off its own document, so this row is the fixture for
+    // both the sampled column and the search that reaches inside the JSON.
+    const branch = await call('/content/list_item?list=branches', write(actors.Editor, 'POST', { key: st('branch') }));
+    branchId = branch.row.id;
+    await call(
+      `/content/list_item/${branchId}?list=branches`,
+      write(actors.Editor, 'PATCH', { fields: { data: { name_ar: 'فرع المعادي', name_en: 'Maadi branch', phone: '+20 100' } } }),
+    );
+    // A second row whose document holds a city beside its name: the list has to title a
+    // row by the key that names it, not by whichever one the sample happened to meet
+    // first. See `rankOf` in summary.ts.
+    const named = await call('/content/list_item?list=branches', write(actors.Editor, 'POST', { key: st('named') }));
+    namedId = named.row.id;
+    await call(
+      `/content/list_item/${namedId}?list=branches`,
+      write(actors.Editor, 'PATCH', {
+        fields: { data: { city_ar: 'مدينة نصر', city_en: 'Nasr City', name_ar: 'فرع التجمع', name_en: 'New Cairo branch', phone: '+20 111' } },
+      }),
+    );
+  });
+
+  it('answers with the page and the view it actually ran', async () => {
+    const res = await call(listUrl('article', { q: `${ar}-pg` }), read(actors.Owner));
+    expect(res.status).toBe(200);
+    expect(res.body.kind).toBe('article');
+    expect(res.body.trash).toBe(false);
+    // The kind's own defaults, re-stated: the screen and the address bar agree without
+    // the browser having to remember what it did not send.
+    expect(res.view).toEqual({ mode: 'table', sort: 'updated', dir: 'desc', q: `${ar}-pg`, filter: 'all', page: 1, per: 25 });
+    expect(res.page.total).toBe(12);
+    expect(res.page.pages).toBe(1);
+    // An article has no number or flag columns, so the table prints none.
+    expect(res.page.columns).toEqual([]);
+
+    const empty = await call(listUrl('article', { q: `${ar}-no-such-row` }), read(actors.Owner));
+    expect({ rows: empty.page.rows.length, total: empty.page.total, page: empty.page.page, pages: empty.page.pages }).toEqual({ rows: 0, total: 0, page: 1, pages: 1 });
+  });
+
+  it('pages by an offset the server chose and clamps a page past the end', async () => {
+    const first = await call(listUrl('article', { q: `${ar}-pg`, sort: 'key', dir: 'asc', per: '10' }), read(actors.Owner));
+    expect(first.page.rows.map((row) => row.key)).toEqual(Array.from({ length: 12 }, (_, i) => pg(i + 1)).slice(0, 10));
+    expect({ page: first.page.page, pages: first.page.pages, per: first.page.per }).toEqual({ page: 1, pages: 2, per: 10 });
+
+    const second = await call(listUrl('article', { q: `${ar}-pg`, sort: 'key', dir: 'asc', per: '10', page: '2' }), read(actors.Owner));
+    expect(second.page.rows.map((row) => row.key)).toEqual([pg(11), pg(12)]);
+    // Nothing overlaps the two pages, which a shifting order would show at once.
+    expect(second.page.rows.every((row) => !first.page.rows.some((other) => other.id === row.id))).toBe(true);
+
+    const beyond = await call(listUrl('article', { q: `${ar}-pg`, sort: 'key', dir: 'asc', per: '10', page: '99' }), read(actors.Owner));
+    expect(beyond.page.page).toBe(2);
+    expect(beyond.page.rows.map((row) => row.key)).toEqual([pg(11), pg(12)]);
+  });
+
+  it('orders by the column the sort names, in the language the console is drawn in', async () => {
+    const byKey = await call(listUrl('article', { q: `${ar}-pg`, sort: 'key', dir: 'asc' }), read(actors.Owner));
+    expect(byKey.page.rows[0]?.key).toBe(pg(1));
+    const flipped = await call(listUrl('article', { q: `${ar}-pg`, sort: 'key', dir: 'desc' }), read(actors.Owner));
+    expect(flipped.page.rows[0]?.key).toBe(pg(12));
+
+    // `t01` belongs to the last key: an order by title is provably not an order by key.
+    const byTitle = await call(listUrl('article', { q: `${ar}-pg`, sort: 'title', dir: 'asc', locale: 'en' }), read(actors.Owner));
+    expect(byTitle.page.rows.map((row) => row.key)).toEqual(Array.from({ length: 12 }, (_, i) => pg(13 - (i + 1))));
+    expect(byTitle.page.rows[0]).toMatchObject({ titleEn: 't01', titleAr: '' });
+
+    // A term the kind cannot honour is answered with the view that ran, not a lie.
+    const noPosition = await call(listUrl('article', { sort: 'position' }), read(actors.Owner));
+    expect(noPosition.view.sort).toBe('updated');
+    const noOff = await call(listUrl('article', { filter: 'off' }), read(actors.Owner));
+    expect(noOff.view.filter).toBe('all');
+  });
+
+  it('searches the identity and both titles, and escapes what LIKE would read as a wildcard', async () => {
+    const byKey = await call(listUrl('article', { q: st('pub') }), read(actors.Owner));
+    expect(byKey.page.rows.map((row) => row.key)).toEqual([st('pub')]);
+
+    const byEnglish = await call(listUrl('article', { q: 't05' }), read(actors.Owner));
+    expect(byEnglish.page.rows.map((row) => row.key)).toEqual([pg(8)]);
+
+    // The draft title, not the published twin: the list is the editor's, and it must
+    // find the copy they are working on.
+    const byArabic = await call(listUrl('article', { q: 'تعديل بعد' }), read(actors.Owner));
+    expect(byArabic.page.rows.map((row) => row.key)).toEqual([st('changed')]);
+
+    // `20%` is a term a marketer types. Unescaped it also matches `20 percent`, so the
+    // answer here is the one row whose title really holds a percent sign.
+    const percent = await call(listUrl('article', { q: 'خصم 20%' }), read(actors.Owner));
+    expect(percent.page.rows.map((row) => row.key)).toEqual([st('pct')]);
+    // `_` is LIKE's single-character wildcard: unescaped it matches the space in `20 percent`.
+    const underscore = await call(listUrl('article', { q: 'خصم 20_' }), read(actors.Owner));
+    expect(underscore.page.total).toBe(0);
+
+    const long = await call(listUrl('article', { q: 'ط'.repeat(200) }), read(actors.Owner));
+    expect(long.view.q).toHaveLength(80);
+  });
+
+  it('keeps each filter chip to the rows it names', async () => {
+    const keysOf = async (filter: string): Promise<string[]> => (await call(listUrl('article', { q: `${ar}-st`, filter }), read(actors.Owner))).page.rows.map((row) => row.key).sort();
+    const sorted = (names: string[]): string[] => [...names].sort();
+
+    // A published document whose draft has moved on still reads `published`: only a list
+    // item's enum carries `changed`, which is why that chip is a list's and the unpublished
+    // changes of an article are the `pending` flag rather than a status.
+    expect(await keysOf('published')).toEqual(sorted([st('pub'), st('changed')]));
+    expect(await keysOf('draft')).toEqual(sorted([st('draft'), st('pct'), st('word')]));
+    // Pending is computed, not matched: it is the draft differing from the published copy,
+    // so the one row in sync drops out and every unpublished draft stays in.
+    expect(await keysOf('pending')).toEqual(sorted([st('changed'), st('draft'), st('pct'), st('word')]));
+    expect(await keysOf('all')).toHaveLength(5);
+    // The chip a kind cannot honour is answered by the view that ran, not a silent match.
+    const changed = await call(listUrl('article', { q: `${ar}-st`, filter: 'changed' }), read(actors.Owner));
+    expect(changed.view.filter).toBe('all');
+    expect(changed.page.total).toBe(5);
+  });
+
+  it('prints the number and flag columns of an offer as cells, and the row that is off the site', async () => {
+    // The term is the whole key: a shorter one would also match the `-offer` another
+    // describe leaves in the same table.
+    const res = await call(listUrl('offer', { q: `${ar}-of-1` }), read(actors.Editor));
+    expect(res.page.columns).toEqual(['price', 'regularPrice', 'position', 'onSale', 'enabled']);
+    const row = res.page.rows.find((cell) => cell.id === offerId);
+    expect(row?.cells).toMatchObject({ price: '250.00', regularPrice: '400.00', onSale: true, enabled: false });
+    // A DECIMAL column comes back as the column's own text, scale included: the console
+    // prints `250.00` because a float here would lose the price the site has to show.
+    expect(typeof row?.cells.price).toBe('string');
+
+    const off = await call(listUrl('offer', { q: `${ar}-of-1`, filter: 'off' }), read(actors.Editor));
+    expect(off.page.rows.map((cell) => cell.id)).toEqual([offerId]);
+  });
+
+  it('reads the columns and the title of a list item from its own document', async () => {
+    const res = await call(listUrl('list_item', { list: 'branches' }), read(actors.Editor));
+    expect(res.body.listKey).toBe('branches');
+    // `name_ar`/`name_en` name the row, so they are labels, not columns: what is left is
+    // the keys the table can print beside the title.
+    expect(res.page.columns).not.toContain('name_ar');
+    expect(res.page.columns).not.toContain('name_en');
+    expect(res.page.columns).toEqual(expect.arrayContaining(['phone', 'city_ar', 'city_en']));
+    expect(res.page.rows.find((row) => row.id === branchId)).toMatchObject({
+      key: st('branch'),
+      titleAr: 'فرع المعادي',
+      titleEn: 'Maadi branch',
+      cells: { phone: '+20 100' },
+    });
+    // The row that carries a city beside its name is still titled by its name: `city_ar`
+    // ranks with the other `*_ar` keys, so a label chosen by count alone would title the
+    // list with a city and bury the branch's name in a column.
+    expect(res.page.rows.find((row) => row.id === namedId)).toMatchObject({
+      key: st('named'),
+      titleAr: 'فرع التجمع',
+      titleEn: 'New Cairo branch',
+      cells: { city_ar: 'مدينة نصر', phone: '+20 111' },
+    });
+    // An item whose names are nested under `name` gives the list no title at all, and the
+    // console shows the identity instead of inventing one.
+    expect(res.page.rows.find((row) => row.key === `${ar}-dr-sara`)?.titleAr).toBe('');
+
+    const byName = await call(listUrl('list_item', { list: 'branches', q: 'المعادي' }), read(actors.Editor));
+    expect(byName.page.rows.map((row) => row.id)).toEqual([branchId]);
+    // The search reads the draft document: `dr-sara` still holds this phone in its
+    // published copy, so a hit on that row would mean the list was searched over the
+    // wrong column.
+    const byPhone = await call(listUrl('list_item', { list: 'branches', q: '+20 100' }), read(actors.Editor));
+    expect(byPhone.page.rows.map((row) => row.id)).toEqual([branchId]);
+
+    // An unknown list is not an error a read can make: the scope is validated when a row
+    // is written, and a page of nothing is what an unrecognised list reads.
+    expect((await call(listUrl('list_item', { list: 'nope' }), read(actors.Owner))).page.total).toBe(0);
+  });
+});
+
+// --- bulk writes (BK-13.3) ------------------------------------------------------
+
+describe('a bulk action is one permission check per verb, then one row at a time', () => {
+  const bk = (name: string): string => `${ar}-bk-${name}`;
+  const idOf: Record<string, string> = {};
+
+  beforeAll(async () => {
+    for (const name of ['one', 'two', 'three']) {
+      const created = await call('/content/article?locale=ar', write(actors.Owner, 'POST', { key: bk(name), fields: { title: `حجمي ${name}` } }));
+      idOf[name] = created.row.id;
+    }
+    // Two lists, so a request scoped to one can name a row in the other.
+    const specialists = await call('/content/list_item?list=specialists', write(actors.Editor, 'POST', { key: bk('doctor') }));
+    idOf.specialists = specialists.row.id;
+    await call(`/content/list_item/${idOf.specialists}?list=specialists`, write(actors.Editor, 'PATCH', { fields: { data: { name_ar: 'د. نفسية', name_en: 'Dr Nafsia' } } }));
+    const faq = await call('/content/list_item?list=faq', write(actors.Editor, 'POST', { key: bk('question') }));
+    idOf.faq = faq.row.id;
+    await call(`/content/list_item/${idOf.faq}?list=faq`, write(actors.Editor, 'PATCH', { fields: { data: { question_ar: 'سؤال', question_en: 'A question' } } }));
+  });
+
+  it('decides the verb from the path before it reads a single id', async () => {
+    const publish = await call('/content/article/bulk/publish', write(actors.Viewer, 'POST', { ids: ['not-even-a-uuid'] }));
+    expect(publish.status).toBe(403);
+    expect(publish.denied).toBe('article.publish');
+    // A refusal says nothing about the payload it never parsed.
+    expect(publish.body.done).toBeUndefined();
+    expect(publish.body.failed).toBeUndefined();
+
+    // Trash is a delete, restore is a write — the same mapping the single-row routes use.
+    expect((await call('/content/article/bulk/trash', write(actors.Viewer, 'POST', { ids: [idOf.one] }))).denied).toBe('article.delete');
+    expect((await call('/content/article/bulk/restore', write(actors.Viewer, 'POST', { ids: [idOf.one] }))).denied).toBe('article.update');
+  });
+
+  it('publishes every row it was given and writes one audit line for the request', async () => {
+    const before = await auditCount('article.publish', actors.Editor);
+    const res = await call('/content/article/bulk/publish?locale=ar', write(actors.Editor, 'POST', { ids: [idOf.one, idOf.two, idOf.three] }));
+    expect(res.status).toBe(200);
+    expect(res.done).toEqual([idOf.one, idOf.two, idOf.three]);
+    expect(res.failed).toEqual([]);
+    expect(res.body.locales).toEqual(['ar', 'en']);
+
+    const stored = await db.selectFrom('articles').select(['slug', 'status', 'pub_title_ar']).where('slug', 'like', `${ar}-bk-%`).execute();
+    expect(stored).toHaveLength(3);
+    expect(stored.every((row) => row.status === 'published')).toBe(true);
+    expect(stored.every((row) => String(row.pub_title_ar).startsWith('حجمي'))).toBe(true);
+
+    expect(await auditCount('article.publish', actors.Editor)).toBe(before + 1);
+    const trail = await db
+      .selectFrom('audit_log')
+      .select(['entity_type', 'entity_id'])
+      .where('action', '=', 'article.publish')
+      .where('actor_email', '=', actors.Editor.email)
+      .orderBy('id', 'desc')
+      .executeTakeFirstOrThrow();
+    expect(trail).toMatchObject({ entity_type: 'article', entity_id: 'bulk.publish' });
+  });
+
+  it('answers with the rows that did not move, and refuses a request that moved nothing', async () => {
+    await call(`/content/article/${idOf.one}?locale=ar`, write(actors.Owner, 'DELETE', { trashed: true }));
+    const ghost = randomUUID();
+    const before = await auditCount('article.publish', actors.Editor);
+
+    const both = await call('/content/article/bulk/publish?locale=ar', write(actors.Editor, 'POST', { ids: [idOf.one, ghost] }));
+    expect(both.status).toBe(409);
+    expect(both.error).toBe('bulk_nothing_applied');
+    expect(both.body.done).toBeUndefined();
+    expect(both.failed).toEqual([
+      { id: idOf.one, code: 'in_trash' },
+      { id: ghost, code: 'not_found' },
+    ]);
+    // Nothing moved, so the trail must not claim that something did.
+    expect(await auditCount('article.publish', actors.Editor)).toBe(before);
+
+    // Half a page is an ordinary thing to send: the rows that could move, did.
+    const restored = await call('/content/article/bulk/restore', write(actors.Owner, 'POST', { ids: [idOf.one] }));
+    expect(restored.done).toEqual([idOf.one]);
+    const mixed = await call('/content/article/bulk/publish?locale=ar', write(actors.Editor, 'POST', { ids: [idOf.one, ghost] }));
+    expect(mixed.status).toBe(200);
+    expect(mixed.done).toEqual([idOf.one]);
+    expect(mixed.failed).toEqual([{ id: ghost, code: 'not_found' }]);
+  });
+
+  it('keeps a list bulk inside the rows of the list the request named', async () => {
+    // Permission comes first, and an Editor's list grants each name one list: a request
+    // with no `?list=` asks for a scope nobody has given them, so it is a 403, not a 400.
+    const editor = await call('/content/list_item/bulk/publish', write(actors.Editor, 'POST', { ids: [idOf.specialists] }));
+    expect(editor.status).toBe(403);
+    expect(editor.denied).toBe('list.publish');
+
+    // With the grant settled, the missing list is a 400 about the request line.
+    const owner = await call('/content/list_item/bulk/publish', write(actors.Owner, 'POST', { ids: [idOf.specialists] }));
+    expect(owner.status).toBe(400);
+    expect(owner.error).toBe('list_required');
+
+    const res = await call('/content/list_item/bulk/publish?list=specialists', write(actors.Editor, 'POST', { ids: [idOf.specialists, idOf.faq] }));
+    expect(res.status).toBe(200);
+    expect(res.done).toEqual([idOf.specialists]);
+    expect(res.failed).toEqual([{ id: idOf.faq, code: 'out_of_scope' }]);
+
+    // The pasted id changed nothing, whatever the caller's grant over `faq` says.
+    const faq = await call(`/content/list_item/${idOf.faq}?list=faq`, read(actors.Editor));
+    expect(faq.row.status).toBe('draft');
+    expect(faq.row.fields.data.pubJson).toBeNull();
+  });
+
+  it('moves a page of rows to the trash and back, and the list agrees', async () => {
+    const trashed = await call('/content/article/bulk/trash', write(actors.Owner, 'POST', { ids: [idOf.two, idOf.three] }));
+    expect(trashed.done).toEqual([idOf.two, idOf.three]);
+
+    const inTrash = await call(listUrl('article', { q: `${ar}-bk`, trash: '1', sort: 'key', dir: 'asc' }), read(actors.Owner));
+    expect(inTrash.page.rows.map((row) => row.id)).toEqual([idOf.three, idOf.two]);
+    expect(inTrash.page.rows.every((row) => row.trashed)).toBe(true);
+
+    // Every row in Trash is trashed, so a state chip carried in from the live list answers
+    // "nothing" over rows that are plainly there. The screen ignores the chip instead.
+    const trashCarryingAFilter = await call(listUrl('article', { q: `${ar}-bk`, trash: '1', filter: 'draft' }), read(actors.Owner));
+    expect(trashCarryingAFilter.page.total).toBe(2);
+    expect(trashCarryingAFilter.view.filter).toBe('all');
+
+    const live = await call(listUrl('article', { q: `${ar}-bk` }), read(actors.Owner));
+    expect(live.page.total).toBe(1);
+
+    const back = await call('/content/article/bulk/restore', write(actors.Owner, 'POST', { ids: [idOf.two, idOf.three] }));
+    expect(back.done).toEqual([idOf.two, idOf.three]);
+    const again = await call(listUrl('article', { q: `${ar}-bk` }), read(actors.Owner));
+    expect(again.page.total).toBe(3);
+  });
+
+  it('refuses an empty id list, a GET, and a verb that does not exist', async () => {
+    const empty = await call('/content/article/bulk/publish', write(actors.Owner, 'POST', { ids: [] }));
+    expect(empty.status).toBe(400);
+    expect(empty.error).toBe('invalid_input');
+
+    expect((await raw('/content/article/bulk/publish', read(actors.Owner))).status).toBe(405);
+
+    const invented = await call('/content/article/bulk/delete', write(actors.Owner, 'POST', { ids: [idOf.one] }));
+    expect(invented.status).toBe(404);
+    expect(invented.error).toBe('unknown_route');
+  });
+});
+
+// --- saved list views (BK-13.3) -------------------------------------------------
+
+describe('a saved view is the filter one person saved for themselves', () => {
+  const viewName = (name: string): string => `${ar}-view-${name}`;
+
+  it('needs a kind to list, and no content grant at all to read its own', async () => {
+    expect((await call('/views')).status).toBe(401);
+    const noKind = await call('/views', read(actors.Owner));
+    expect(noKind.status).toBe(400);
+    expect(noKind.error).toBe('kind_required');
+    const wrongKind = await call('/views?kind=widgets', read(actors.Owner));
+    expect(wrongKind.status).toBe(400);
+
+    // The view is the caller's own row: the `self` resource answers here, not `list.read`,
+    // which is why a Viewer with no content grants still has a filter bar.
+    const viewer = await call('/views?kind=list_item', read(actors.Viewer));
+    expect(viewer.status).toBe(200);
+    expect(viewer.views).toEqual([]);
+  });
+
+  it('stores what the list would run and drops what the browser added', async () => {
+    const saved = await call('/views', write(actors.Viewer, 'POST', {
+      kind: 'article',
+      name: viewName('card'),
+      query: '?mode=card&sort=title&dir=desc&filter=published&page=4&per=10&q=فرع&key=some-row&bogus=1',
+    }));
+    expect(saved.status).toBe(200);
+    // Re-rendered by the parser, in the address bar order, with the row it opened left out.
+    expect(saved.viewRow).toMatchObject({ kind: 'article', name: viewName('card'), query: '?mode=card&sort=title&dir=desc&q=%D9%81%D8%B1%D8%B9&filter=published&page=4&per=10' });
+
+    const ran = await call(`/content/article${saved.viewRow.query}`, read(actors.Viewer));
+    expect(ran.view).toEqual({ mode: 'card', sort: 'title', dir: 'desc', q: 'فرع', filter: 'published', page: 4, per: 10 });
+  });
+
+  it('keeps the list and scope a view was run over', async () => {
+    const saved = await call('/views', write(actors.Editor, 'POST', {
+      kind: 'list_item',
+      name: viewName('branches'),
+      query: '?list=branches&locale=en&trash=1&key=some-row&filter=draft',
+    }));
+    // The row it opened and the chip that cannot be true in Trash are both dropped: a saved
+    // view stores what the screen actually ran, not what the address bar happened to hold.
+    expect(saved.viewRow.query).toBe('?list=branches&locale=en&trash=1');
+
+    const ran = await call(`/content/list_item${saved.viewRow.query}`, read(actors.Editor));
+    expect(ran.body.listKey).toBe('branches');
+    expect(ran.body.trash).toBe(true);
+    expect(ran.view.filter).toBe('all');
+    expect(ran.view.mode).toBe('table');
+  });
+
+  it('is private: nobody else can list it, and nobody else can delete it', async () => {
+    const mine = await call('/views', write(actors.Editor, 'POST', { kind: 'page', name: viewName('private') }));
+    expect(mine.status).toBe(200);
+    // No terms is the plain default view, and the empty line is what it stores.
+    expect(mine.viewRow.query).toBe('');
+
+    expect((await call('/views?kind=page', read(actors.Viewer))).views).toEqual([]);
+    expect((await call('/views?kind=page', read(actors.Owner))).views).toEqual([]);
+
+    const stolen = await call(`/views/${mine.viewRow.id}`, write(actors.Viewer, 'DELETE'));
+    expect(stolen.status).toBe(404);
+    expect(stolen.error).toBe('not_found');
+    // The 404 alone does not prove the row survived; the owner's list does.
+    expect((await call('/views?kind=page', read(actors.Editor))).views.map((view) => view.id)).toEqual([mine.viewRow.id]);
+
+    const odd = await call(`/views/${mine.viewRow.id}/extra`, write(actors.Editor, 'DELETE'));
+    expect(odd.status).toBe(404);
+    expect(odd.error).toBe('unknown_route');
+
+    expect((await call(`/views/${mine.viewRow.id}`, write(actors.Editor, 'DELETE'))).status).toBe(200);
+    expect((await call('/views?kind=page', read(actors.Editor))).views).toEqual([]);
+  });
+
+  it('revives a filter whose name was already used instead of failing on a hidden chip', async () => {
+    const first = await call('/views', write(actors.Owner, 'POST', { kind: 'offer', name: viewName('ghost'), query: '?filter=pending' }));
+    expect(first.viewRow.query).toBe('?filter=pending');
+    expect((await call(`/views/${first.viewRow.id}`, write(actors.Owner, 'DELETE'))).status).toBe(200);
+
+    // The unique index over (user, kind, name) still holds that name, so a plain insert
+    // here would surface as a 500 for a chip the person can no longer see.
+    const again = await call('/views', write(actors.Owner, 'POST', { kind: 'offer', name: viewName('ghost'), query: '?sort=key' }));
+    expect(again.status).toBe(200);
+    expect(again.viewRow.id).toBe(first.viewRow.id);
+    expect(again.viewRow.query).toBe('?sort=key');
+
+    const stored = await db.selectFrom('console_views').select(['deleted_at', 'query', 'version']).where('id', '=', first.viewRow.id).executeTakeFirstOrThrow();
+    expect(stored.deleted_at).toBeNull();
+    expect(stored.query).toBe('?sort=key');
+    expect(Number(stored.version)).toBe(2);
+    const sameName = await db.selectFrom('console_views').select('id').where('name', '=', viewName('ghost')).execute();
+    expect(sameName).toHaveLength(1);
+  });
+
+  it('refuses a name already in use, a blank one, and a kind that does not exist', async () => {
+    const dupe = await call('/views', write(actors.Owner, 'POST', { kind: 'offer', name: viewName('ghost') }));
+    expect(dupe.status).toBe(409);
+    expect(dupe.error).toBe('name_taken');
+
+    const blank = await call('/views', write(actors.Owner, 'POST', { kind: 'offer', name: '   ' }));
+    expect(blank.status).toBe(400);
+    expect(blank.error).toBe('name_required');
+
+    const wrongKind = await call('/views', write(actors.Owner, 'POST', { kind: 'widgets', name: viewName('bad-kind') }));
+    expect(wrongKind.status).toBe(400);
+    expect(wrongKind.error).toBe('invalid_input');
+    expect(wrongKind.issues[0]?.path).toBe('kind');
+  });
+
+  it('caps one person at twenty-four filters', async () => {
+    const user = await db.selectFrom('users').select('id').where('email', '=', actors.Admin.email).executeTakeFirstOrThrow();
+    await db
+      .insertInto('console_views')
+      .values(Array.from({ length: 24 }, (_, i) => ({ id: randomUUID(), user_id: user.id, kind: 'article', name: `${ar}-cap-${i}`, query: '' })))
+      .execute();
+
+    const full = await call('/views', write(actors.Admin, 'POST', { kind: 'article', name: viewName('one-more') }));
+    expect(full.status).toBe(409);
+    expect(full.error).toBe('views_full');
+
+    await db.deleteFrom('console_views').where('name', 'like', `${ar}-cap-%`).execute();
+    expect((await call('/views?kind=article', read(actors.Admin))).views).toEqual([]);
+  });
+});
+
 // --- what the screens offer ----------------------------------------------------
 
 describe('contentScreenData hands the workspace only the buttons the API honours', () => {
@@ -758,7 +1262,7 @@ describe('contentScreenData hands the workspace only the buttons the API honours
     expect(viewer).not.toBeNull();
     expect(viewer?.writable).toBe(false);
     expect(viewer?.abilities).toEqual({ create: [], update: [], publish: [], remove: [] });
-    expect(viewer?.rows.length).toBeGreaterThan(0);
+    expect(viewer?.page.rows.length).toBeGreaterThan(0);
 
     // A Marketer holds no `list read` at all, so the lists screen is not shown to them.
     // A Marketer holds no `list read` at all, so the lists screen is not shown to them.

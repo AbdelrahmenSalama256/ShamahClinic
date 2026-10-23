@@ -46,14 +46,6 @@ export interface ContentRow {
   fields: Record<string, FieldView>;
 }
 
-export interface ListOptions {
-  /** list items only: the `lists.list_key` they belong to */
-  listKey?: string;
-  /** read the Trash instead of the live rows */
-  trash?: boolean;
-  limit?: number;
-}
-
 export type StoreResult<T> =
   | { ok: true; value: T }
   | { ok: false; status: number; code: string; issues?: { path: string; message: string }[] };
@@ -169,28 +161,45 @@ function mapRow(spec: KindSpec, row: AnyRow): ContentRow {
   };
 }
 
-async function listIdForKey(listKey: string): Promise<string | null> {
+export async function listIdForKey(listKey: string): Promise<string | null> {
   if (!listKey) return null;
   const row = await db.selectFrom('lists').select(['id']).where('list_key', '=', listKey).executeTakeFirst();
   return row?.id ?? null;
 }
 
-/** The rows a kind holds; list items come back in their authored order. */
-export async function listRows(kind: ContentKind, options: ListOptions = {}): Promise<ContentRow[]> {
+/**
+ * The list a `list_item` row belongs to, by key.
+ *
+ * A bulk write names rows by id and the permission scope by `?list=`, so the two have
+ * to be compared before anything moves — otherwise a caller granted one list could
+ * publish another one's rows by pasting their ids.
+ */
+export async function listKeyOfItem(id: string): Promise<string | null> {
+  const row = await db
+    .selectFrom('list_items')
+    .innerJoin('lists', 'lists.id', 'list_items.list_id')
+    .select('lists.list_key')
+    .where('list_items.id', '=', id)
+    .executeTakeFirst();
+  return row?.list_key ?? null;
+}
+
+/**
+ * The row a `?key=` names, as the id the editor loads it by.
+ *
+ * A link can point at a row that is not on the page the list just fetched — the screen
+ * has 92 articles and shows 25 — so the server resolves the identity before rendering
+ * and the browser only ever fetches by id.
+ */
+export async function idForRowKey(kind: ContentKind, key: string, listKey?: string): Promise<string | null> {
   const spec = kindSpec(kind);
-  const listId = spec.table === 'list_items' ? await listIdForKey(options.listKey ?? '') : null;
-  if (spec.table === 'list_items' && !listId) return [];
-
-  let query: QueryShape = db.selectFrom(spec.table).selectAll() as unknown as QueryShape;
+  const listId = spec.table === 'list_items' ? await listIdForKey(listKey ?? '') : null;
+  if (spec.table === 'list_items' && !listId) return null;
+  let query: FilterShape = db.selectFrom(spec.table).select(['id']) as unknown as FilterShape;
+  query = query.where(spec.keyColumn, '=', key);
   if (listId) query = query.where('list_id', '=', listId);
-  query = query.where('deleted_at', options.trash ? 'is not' : 'is', null);
-  query =
-    spec.table === 'list_items'
-      ? query.orderBy('position', 'asc').orderBy('uid', 'asc')
-      : query.orderBy('updated_at', 'desc');
-  if (options.limit) query = query.limit(options.limit);
-
-  return (await query.execute()).map((row) => mapRow(spec, row as AnyRow));
+  const row = await query.executeTakeFirst();
+  return (row as { id?: string } | undefined)?.id ?? null;
 }
 
 export async function getRow(kind: ContentKind, id: string): Promise<ContentRow | null> {

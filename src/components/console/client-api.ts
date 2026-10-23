@@ -15,9 +15,11 @@ export function csrfToken(): string {
 
 export interface CallResult<T = unknown> {
   status: number;
-  /** The `error` code the guard answers with, or null when the call succeeded. */
+  /** The `error` code the guard answers with, or a synthetic `http_<status>` for a
+   *  failure that reached the server and came back with no code to name. */
   error: string | null;
-  /** The response body minus `error`, so a caller can read the row it just saved. */
+  /** The response body minus `error` — null on a failed call, so a screen cannot read a
+   *  row out of a response that never carried one. */
   data: T | null;
 }
 
@@ -28,6 +30,31 @@ function dataOf<T>(payload: unknown): T | null {
   return Object.keys(rest).length > 0 ? (rest as T) : null;
 }
 
+/** A server that fails hard answers with no body to read, and that is not a JSON error. */
+async function payloadOf(res: Response): Promise<unknown> {
+  return await res.json().catch(() => null);
+}
+
+/** The code a guard answers with, when the body is JSON and carries one. */
+function codeOf(payload: unknown): string | undefined {
+  if (payload === null || typeof payload !== 'object') return undefined;
+  const value = (payload as { error?: unknown }).error;
+  return typeof value === 'string' ? value : undefined;
+}
+
+/**
+ * The rule both calls share: the body's code names the failure, and when the body has
+ * none the status does.
+ *
+ * A handler that dies inside MariaDB answers 500 with an empty body, so "the body has no
+ * `error`" cannot mean "it worked" — a screen that read it that way just told the person
+ * their filter was saved while nothing was written.
+ */
+export function callResult<T>(status: number, payload: unknown): CallResult<T> {
+  const error = codeOf(payload) ?? (status >= 200 && status < 300 ? null : `http_${status}`);
+  return { status, error, data: error ? null : dataOf<T>(payload) };
+}
+
 export async function consoleCall<T = unknown>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<CallResult<T>> {
   const res = await fetch(path, {
     method,
@@ -35,13 +62,11 @@ export async function consoleCall<T = unknown>(path: string, method: 'POST' | 'P
     body: body === undefined ? undefined : JSON.stringify(body),
     credentials: 'same-origin',
   });
-  const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-  return { status: res.status, error: payload?.error ?? null, data: dataOf<T>(payload) };
+  return callResult<T>(res.status, await payloadOf(res));
 }
 
 /** A read: no CSRF header, because a GET writes nothing. */
 export async function consoleRead<T>(path: string): Promise<CallResult<T>> {
   const res = await fetch(path, { method: 'GET', credentials: 'same-origin' });
-  const payload = (await res.json().catch(() => null)) as { error?: string } | null;
-  return { status: res.status, error: payload?.error ?? null, data: dataOf<T>(payload) };
+  return callResult<T>(res.status, await payloadOf(res));
 }

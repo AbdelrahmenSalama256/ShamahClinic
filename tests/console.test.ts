@@ -19,6 +19,7 @@ import { loadGrants } from '../src/lib/auth/sessions';
 import { ROLE_SEEDS, SITE_LOCALES, LIST_KEYS, permissionsFor, type RoleName } from '../src/lib/auth/roles';
 import type { Grant } from '../src/lib/auth/permissions';
 import { decideRoute, isConsolePath } from '../src/lib/site-routing';
+import { callResult } from '../src/components/console/client-api';
 import {
   DEFAULT_PREFS,
   decodePrefs,
@@ -31,7 +32,8 @@ import { CONSOLE_SCREENS, navStrip, navTree, palettePlaces, visibleScreens } fro
 import { message, type MessageKey } from '../src/lib/console/messages';
 import { overviewRows } from '../src/lib/console/overview';
 import { updatePrefsHandler } from '../src/lib/console/prefs-route';
-import { likeOf, searchRows } from '../src/lib/console/search';
+import { searchRows } from '../src/lib/console/search';
+import { likeOf } from '../src/lib/db/like';
 import { searchHandler } from '../src/lib/console/search-route';
 import { createRow, getRow, saveDraft } from '../src/lib/content/store';
 
@@ -327,6 +329,17 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect((css.match(/min-height: var\(--console-tap\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
     const dense = css.slice(css.indexOf("[data-density='dense']"));
     expect(dense.slice(0, dense.indexOf('}'))).not.toContain('--console-tap:');
+
+    // Measuring 13.3 caught a 36px column header, 34px saved-view halves and a search box
+    // that dense lowered to 36px — all of which passed the count above. Every control the
+    // list adds takes `--console-tap` by name, and never the field token dense lowers.
+    for (const selector of ['.console-sort', '.console-chip-button', '.console-view-chip', '.console-chip-x', '.console-search', '.console-inline select', '.console-cards-head']) {
+      const start = css.indexOf(`\n${selector} {`);
+      expect(start, `${selector} is styled`).toBeGreaterThan(-1);
+      expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--console-tap\)/);
+    }
+    expect(css).not.toMatch(/min-(?:height|inline-size|block-size): [12]\.[0-9]+rem/);
+    expect((css.match(/min-height: var\(--console-tap-field\)/g) ?? []).length).toBe(1);
   });
 
   it('lets the drawer become visible in the frame it opens, not one later', () => {
@@ -592,5 +605,28 @@ describe('the overview', () => {
     // Viewer reads content and leads, but neither the media library nor the accounts.
     expect(viewerRows.map((row) => row.resource)).toEqual(['article', 'offer', 'page', 'list', 'lead']);
     for (const row of viewerRows) expect(Number.isSafeInteger(row.count)).toBe(true);
+  });
+});
+
+describe('a screen only says saved when the server says saved', () => {
+  // Found by clicking through the console against a database whose table was missing:
+  // the handler died inside MariaDB, answered 500 with an empty body, and the list still
+  // read "Filter saved." A body without an `error` code is therefore only a success when
+  // the status is one.
+  it('names the failure the body carries', () => {
+    expect(callResult(409, { error: 'name_taken' })).toMatchObject({ status: 409, error: 'name_taken' });
+    expect(callResult(200, { view: { id: 'v1' } }).error).toBe(null);
+  });
+
+  it('names it by status when the body has nothing', () => {
+    for (const body of [null, {}, '<html>']) {
+      const result = callResult<{ view?: unknown }>(500, body);
+      expect(result.error, JSON.stringify(body)).toBe('http_500');
+      expect(result.data).toBeNull();
+    }
+  });
+
+  it('does not invent an error for a code the server did answer with', () => {
+    expect(callResult(404, { error: 'not_found' }).error).toBe('not_found');
   });
 });

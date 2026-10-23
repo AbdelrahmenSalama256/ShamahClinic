@@ -3,11 +3,10 @@ import { ContentScreen } from '@/components/console/ContentScreen';
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  /** The URL names the view: `?locale=` the tab, `?key=` the row, `?trash=1` the Trash. */
-  searchParams: Promise<{ locale?: string; key?: string; trash?: string }>;
+/** The URL names the view: `?sort=`, `?q=`, `?filter=` and the scope (`?locale=`, `?key=`, `?trash=1`). */
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function ConsoleSitePagesPage({ searchParams }: Props) {
-  const params = await searchParams;
-  return <ContentScreen kind="page" titleKey="nav.pages" contentLocale={params.locale ?? null} focusKey={params.key ?? null} trash={params.trash === '1'} />;
+  return <ContentScreen kind="page" titleKey="nav.pages" search={await searchParams} />;
 }

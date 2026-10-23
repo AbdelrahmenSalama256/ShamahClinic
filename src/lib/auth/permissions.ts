@@ -62,12 +62,17 @@ export function scopeAllows(scope: PermissionScope | null, target: Target): bool
 }
 
 /**
- * `self` is the caller's own account — password, locale, theme. It is never
- * stored in `role_permissions`: a Viewer who cannot change their own password
- * is an account that never rotates.
+ * `self` is the caller's own account, and the rows that belong to nobody but them:
+ * password, locale, theme, and the saved list filters of ./views-route.ts. It is never
+ * stored in `role_permissions`: a Viewer who cannot change their own password is an
+ * account that never rotates, and a Viewer who cannot save a filter is a console that
+ * makes them retype it every morning. `publish` and `export` are the two actions that
+ * mean nothing for one's own account, so they are the two that answer no.
+ * Every query on a `self` row is scoped to `auth.user.id` by its handler — the grant
+ * says "this is mine to change", the row filter says which one.
  */
 export function can(grants: readonly Grant[], resource: Resource, action: Action, target: Target = {}): boolean {
-  if (resource === 'self') return action === 'read' || action === 'update';
+  if (resource === 'self') return action === 'read' || action === 'create' || action === 'update' || action === 'delete';
   return grants.some(
     (grant) => grantMatches(grant, resource, action) && (grant.scope === null || scopeAllows(grant.scope, target)),
   );

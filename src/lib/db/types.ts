@@ -485,6 +485,19 @@ export interface StatsRollupStateTable {
   last_run_at: Date | null;
   updated_at: Generated<Date>;
 }
+/** 007: one person's saved list filter — a name on the query string that drew it. */
+export interface ConsoleViewsTable {
+  id: string;
+  user_id: string;
+  kind: string;
+  name: string;
+  query: string;
+  position: Generated<number>;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+  deleted_at: Date | null;
+  version: Generated<number>;
+}
 
 /** No index signature: `extends Record<string, unknown>` makes Kysely's `keyof Database`
  * collapse to `string` and every qualified join reference infer as `never`. */
@@ -528,6 +541,7 @@ export interface Database {
   stats_referrers_daily: StatsReferrersDailyTable;
   stats_cta_daily: StatsCtaDailyTable;
   stats_rollup_state: StatsRollupStateTable;
+  console_views: ConsoleViewsTable;
 }
 
 export type Db = Kysely<Database>;

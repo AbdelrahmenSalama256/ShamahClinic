@@ -16,6 +16,7 @@
  */
 import { sql, type SqlBool } from 'kysely';
 import { db } from '../db';
+import { likeOf } from '../db/like';
 import type { Resource } from '../auth/permissions';
 import { kindSpec, type ContentKind } from '../content/kinds';
 
@@ -44,11 +45,6 @@ const SCREEN_OF: Record<ContentKind, string> = {
   page: '/console/pages',
   list_item: '/console/lists',
 };
-
-/** Backslash is MySQL's own `LIKE` escape character, so it has to escape itself first. */
-export function likeOf(term: string): string {
-  return `%${term.trim().replace(/[\\%_]/g, (char) => `\\${char}`)}%`;
-}
 
 interface HitRow {
   id: string;

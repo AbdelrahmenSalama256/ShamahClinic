@@ -447,6 +447,9 @@ describe('no console route writes without guard()', () => {
     // puts each request through `guard()`; asserting that here keeps the route files
     // honest without repeating the import in five of them.
     ['@/lib/content/api', 'src/lib/content/api.ts'],
+    // The saved-filter pair delegates the same way: the chips only ever hold one
+    // person's own query string, so their route files stay one line long.
+    ['@/lib/console/views-route', 'src/lib/console/views-route.ts'],
   ]);
 
   function routeFiles(dir: string): string[] {
