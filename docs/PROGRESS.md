@@ -1049,8 +1049,8 @@ the markup they name.
       The eight console components are re-pointed at them **without changing their props contracts**.
       **This is five sub-rows** — 19.3a the shared vocabulary and the button, 19.3b fields, 19.3c status and
       feedback, 19.3d surfaces, 19.3e overlays — because the audit found the defects in families, and a row that
-      fixed "all primitives" at once would not say which family is still hand-written. 19.3a is closed below;
-      the rest are open and the parent stays unchecked until they are.
+      fixed "all primitives" at once would not say which family is still hand-written. 19.3a and 19.3b are closed
+      below; the rest are open and the parent stays unchecked until they are.
 - [x] 19.3a Shared control tokens + the button primitive — `951346c`
       **What was wrong, in the order it was found.** The console owned a 60-line `.console-button` sheet and the site
       owned none, so the same control was decided twice; `.console-button-primary` had **no hover of its own** and
@@ -1134,6 +1134,117 @@ the markup they name.
       state because `settings` has **0 rows** in the dev database — `readSettings` selects what exists and
       `scripts/db/seed.ts` never inserts any, so the screen has nothing to edit until a write creates a row. That
       belongs to 6.3c-a's row (#201), not here; recorded so nobody reads the empty screen as the primitive failing.
+- [x] 19.3b Field, checkbox and control skin for both surfaces — `457424f`
+      **What was wrong, in the order it was found.** 19.3a left three named debts and this row pays all three. The
+      console owned a `console-field` family — 12 rules over 16 selector lines, in three parts of the sheet —
+      and the site owned none — the same asymmetry, one family later — and the sheet's numbers had already drifted
+      from the tokens it lived beside: `border-radius: 0.6rem` where `--radius-control` is `.65rem`; a **second focus
+      ring** (`outline: 2px solid var(--text-gold)` at offset 1px against the one global ring at offset 2px); a
+      disabled step that gave `[readonly]` the same `cursor: not-allowed` as a dead control; and skin for `input` and
+      `textarea` only — so a `select` was unstyled everywhere except the invalid rule, which *did* reach it. Three
+      checkbox skins were hand-written (`.console-cell-check input`, `.console-card-check input`,
+      `.console-field-flag input`), and the palette's search box carried `console-field` **on the input itself**: the
+      descendant rules that hold the skin never matched it, so it got the wrapper's `margin-block-end` and none of its
+      padding or border — a bare native field at the top of the dialog. `.console-field` is deleted rather than
+      aliased; a test now fails if the name survives in `console.css` or in any of the eight components. The nav's
+      gold `outline` (`console.css:268-272`) is the third place that ring was declared and stays 19.4's: it is a
+      sidebar link's focus, not a field's.
+      **The defect the browser found and the bytes could not.** The first version of the invalid rule was protected,
+      according to its own comment, by being last in the file. Source order is not what protected it:
+      `.ui-control:hover:not(:disabled)` weighs (0,3,0) and `.ui-control[aria-invalid='true']` weighs (0,2,0), so a
+      field with an error **turned gold the moment a cursor crossed it** — the state that most needs the red is the
+      state that lost it. The hover/focus step is now written `.ui-control:where(:hover:not(:disabled), :focus)`;
+      `:where()` zeroes the specificity of its whole argument list, so the invalid rule outranks it by construction
+      and the file's order is no longer load-bearing. The suite asserts `:where(` is present *and* bans the bare
+      `.ui-control:hover`, so the pair cannot silently drift back to a rule that depends on position.
+      **The dark fill is named, not inherited.** `globals.css:442-448` colours every `input`, `select` and
+      `textarea` in dark with `--bg-card`, and its selector is (0,1,2) — heavier than `.ui-control`'s (0,1,0). Left
+      alone, a field read as a hole cut in the panel it sits on. `html[data-theme='dark'] .ui-control` restates the
+      fill as `--bg-card-subtle` (#292522, one step *above* the card), names the theme it is correcting instead of
+      leaving the outcome to which selector happens to be heavier, and deliberately does **not** set `color-scheme`:
+      the native dropdown and calendar glyphs are not the primitive's to colour. **The sheet this replaced had wanted
+      the same well and lost it silently**: `.console-field input` is (0,1,1) — still below (0,1,2) — so the
+      `background: var(--bg-card-subtle)` it declared never reached a dark field. A value in a stylesheet that cannot
+      win is not a decision, which is the reason the primitive states the theme in its selector.
+      **One attribute answers one question.** `aria-invalid="true"` is the control's border hook because it is the
+      attribute the control already carries for a screen reader; the wrapper's `data-invalid` colours the caption.
+      A parallel `data-invalid` on the control would be a second answer to the same question, so the suite bans it.
+      `Field.tsx` keeps the attribute-shaped API `Button` established: `Input`/`Textarea`/`Select` take
+      `{ bar, className }` plus the native props, `bar` becomes `data-bar` (the 44px floor for a control sharing a
+      row with buttons), and there is no `size` prop because `size` is already a real attribute on an input. `Field`
+      cannot be given an orphan label — `htmlFor` is required, since a sibling `<label>` associates by nothing else.
+      `Checkbox` renders the label *around* the input, which is what makes the whole 44×44 row the target instead of
+      the 20×20 box inside it; its `label` prop is optional only for a table cell, where the name goes to
+      `aria-label` and the element stays as the tap target.
+      **A search field drops the browser's clear glyph.** It filters as you type, so the glyph is a second way to do
+      what is already done; it sits on the reading end, cannot be moved or restyled, and on a narrow bar overlaps the
+      text. The rule survives minification as `-webkit-appearance: none` folded into `appearance: none`, which still
+      holds because Blink treats the prefixed name as an alias.
+      **The eight components moved with their props contracts intact** — no prop renamed, no label semantics
+      changed. `console.css` is −136/+27 and keeps the layout it genuinely owns (`.console-search`'s
+      `flex: 1 1 11rem`, `.console-cell-check`'s `inline-size: var(--tap)` column width); those two names are *not*
+      banned, because the ban that matters is on a second **definition** of a field, and the sweep now walks the
+      sheet's selector list and fails on any bare `input`/`textarea`/`select` or any `.ui-*` override. The flag row's
+      caption override — the one that lifted a flag's label back to body size — went with the sheet, because a
+      `Checkbox` label *is* body size by definition, which is what the settings row's box wanted anyway.
+      **Measured in the browser, not only asserted in bytes** (built app, Arabic, via the same-origin iframe harness):
+      at 1280 comfortable and dense — bar controls exactly 44px at **both** densities while dense drops `--tap-field`
+      from 2.75rem to 2.25rem (field 44px comfortable, 36px floor / 39.9px rendered dense), the textarea floor holds
+      96px, and `.ui-field` is a flex column whose measured gap is 5.6px (`--ui-gap-tight`, the one stack number
+      density does **not** touch) under 11.2px between fields (`--ui-stack`: 0.7rem dense, 1rem comfortable) with the
+      label at `--ui-font-small` in `--text-secondary`; the dark field computes #292522 on the card with the soft gold
+      border rgba(213,180,70,.5) → rgb(201,164,65) once focused → rgb(242,160,160) when invalid *inside* the ring, and
+      the ring itself is the one global 2px rgb(225,193,91) because `ui.css` still declares no `outline:` at all; the
+      palette opened with a real Ctrl+K shows its input carrying `--tap-field` and no inherited wrapper margin, which
+      is the palette's own defect from above closed. At 360px RTL the search field is 44×328, the select 44px, all
+      **26** checkbox rows are 44px tall with the box on the reading-start side, and there is no horizontal overflow.
+      Signed-out SSR of `/console/login` (curl, not the SPA) carries two `.ui-field` with `for="email"` and
+      `for="password"`. The built CSS is the shipping check: one chunk carries the layer (19 `.ui-button`, 10
+      `.ui-control`, 6 `.ui-field`, 3 `.ui-check` selector occurrences, `console-field` gone from all three), and the
+      console's own chunk contains `console-search`/`console-panel` and **no `.ui-*` selector at all**.
+      **Two things this pass could not see, stated rather than smoothed over.** The automation page is hidden, so
+      there is no rAF and a real pointer never crosses a control: the hover *state* is proved by computed values and
+      by mutating the CSSOM rule (setting `borderColor` on the rule changed the computed border to
+      rgb(201,164,65), which is what shows the rule is live), not by pixels. And `getComputedStyle(el,
+      '::-webkit-search-cancel-button')` returns the **host's** values — it ignored both a `display: none !important`
+      and a `-webkit-appearance: none !important` injected into it — so the channel is blind and the glyph is a
+      human-pass item for 19.8.
+      **Tests: `vitest run` is now 355 over 12 files** (was 344). `tests/ui-primitives.test.ts` goes 15 → 26 cases,
+      the new `describe` proving the state list, the two tap floors (and that `console.css` may not lower `--tap`),
+      the checkbox's floor on the label, the dark well named rather than inherited with base-before-dark source order,
+      the invalid border surviving hover/ring/disabled, read-only dimming without a "do not touch" cursor, `Field`'s
+      render order (label → control → messages → note), one `role="alert"` per message in the order the server gave,
+      `type` not settable on the box, props → `data-*` with no `size`, and the second-definition sweep across
+      `console.css` and the seven components. `tests/console.test.ts`'s `aria-invalid` case became a **routing**
+      assertion — the server's `issues` reach the field they name — because how a wrong field looks is now the
+      primitive's fact; the two console sheets are additionally asserted to keep no `console-field` and no raw
+      `<input|textarea|select>` in the seven components.
+      Gates: typecheck · lint · `vitest run` 355/355 · `next build` (278 pages) · `npm run prove:no-wp` **5/5** (238
+      sitemap URLs, 271 routes rendered 0 failed, 0 requests to the WordPress origin) — re-run on the same reasoning
+      19.3a recorded: the console markup moved, so the proof is re-earned rather than assumed from the last run.
+      **Deferred on purpose, with the row that owns each.** The public site still hand-writes **ten** controls —
+      `BookingModal.tsx:685,713,739`, `Footer.tsx:203`, `ContactClient.tsx:292,322,350,465,529`,
+      `JournalClient.tsx:182` — as Tailwind utility soup rather than `.ui-control`. `ui.css` already reaches every
+      one of them through `globals.css`, so the primitive is *available* there; converting them is markup work on the
+      site's own surfaces and belongs to 19.7, and that is also why the second-definition sweep is scoped to
+      `console.css` instead of the whole tree — the ban is on a second definition, not on a public section this row
+      has no business restyling. `switch`, `radio`, `combobox` and the date field have **no call site on either
+      surface** (grep: zero `role="switch"`, `type="radio"`, `role="combobox"`, `type="date"` in `src/`); the editor's
+      booleans are checkboxes and the filter bar is a `Select`, so those four wait for the row that first needs them
+      rather than arriving as unused API — the same rule that holds the file drop-zone and rich-text area out of
+      19.3f. Everything 19.3a deferred past 19.3b is unchanged and still owns its row: the `●`/`○`/`—` marks and the
+      badge/alert/toast/progress/skeleton/empty/tooltip family → 19.3c; card/table/tabs/breadcrumbs/avatar and the
+      view chip's literal 999px → 19.3d; the six overlays, three scrims and seven z values → 19.3d/19.3e; the `≡`
+      glyph and the palette's `title=` duplication → 19.4.
+      **Three sentences in `457424f`'s own message are wrong, and this is where the record gets corrected** (the
+      commit is not amended): it says the old console sheet carried "a gold hover border that outranked the error
+      border" — that sheet had **no** hover rule for a field at all, and the defect was in this row's own first
+      `ui.css`, found in the browser pass; it says the palette's input "wore a padding and an outline that were never
+      its own" — it got neither, which is exactly why it was a bare native box; and it names `ContentWorkspace` as
+      carrying a local gold `:focus` rule, when it carried none (its change is the create-form wrapper becoming a
+      `Field`). A commit message written from intent is the same failure mode as a comment written from intent, and
+      both are corrected by the measurement, not by the sentence — so the row above is the version that was checked
+      against the pre-change sheet (`git show 457424f^:src/app/console/console.css`), the diff and the browser.
 - [ ] 19.4 Shell: collapsible sidebar with a shared-layout animated active indicator, tooltips when collapsed, brand
       mark, user area; sticky top bar with breadcrumbs, the existing `ConsolePalette` restyled (Cmd/Ctrl+K, keyboard
       nav), quick actions, animated theme toggle, notifications; drawer/bottom bar on mobile; verified at
