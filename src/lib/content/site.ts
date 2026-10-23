@@ -25,6 +25,10 @@ import type { BranchView, PageCard, Query, WithSeo } from '../wp';
 import { arabicRatio, hrefPair } from '../wp/lang';
 import { decodeEntities, firstParagraph, htmlToText, sanitizeHtmlBody } from '../wp/sanitize';
 import { toPhotoSlot } from '../wp/ui-helpers';
+import { heroPhotos } from '../wp/hero';
+import { parseHomeProse, splitHomeProse, type BilingualHomeBlock } from '../wp/home-prose';
+import { homeIntroFallback } from '../../data/about';
+import type { PhotoSlot } from '../images';
 import type { BranchDetail } from '../../data/branches';
 import type { Article, ArticleCard, Bi, CategoryTerm, Lang, Offer, OfferDetail, PageContent, Paged, SeoMeta, ServiceCard, Settings } from '../wp/types';
 import { db } from '../db';
@@ -692,6 +696,81 @@ export async function getSettings(lang: Lang = 'en'): Promise<Settings> {
     hours: field('hours', siteConfig.contact.workingHours.en),
     branches: branches.length,
   };
+}
+
+// --- the homepage's builder blocks ----------------------------------------------
+
+/**
+ * Three of the homepage's blocks are not fields. Its hero slider and its two prose
+ * rows are parsed out of the page's builder markup, whose `rs-slide` and `<br>` tags a
+ * renderer drops — so this takes the body **raw**, the counterpart of `body()`, and
+ * nothing it reads is ever sent to a browser as HTML.
+ *
+ * The rung is the page kind's, not a per-row decision: once pages come from the
+ * database, a missing `home` row means the authored fallback photo and copy, not a
+ * WordPress page fetched alongside database ones. Same rule that makes an unknown slug
+ * a 404 (`getPage`), and the reason this asks `rung` rather than looking for the row
+ * first.
+ */
+async function rawHomeBodies(): Promise<{ en: string; ar: string }> {
+  return rung(
+    'page',
+    async () => {
+      const row = await publicRow('page', 'home');
+      const content = row ? pair(row, 'content') : null;
+      return { en: content?.en ?? '', ar: content?.ar ?? '' };
+    },
+    async () => {
+      try {
+        const [en, ar] = await Promise.all([wp.getRawPageHtml('home', 'en'), wp.getRawPageHtml('home', 'ar')]);
+        return { en, ar };
+      } catch {
+        return { en: '', ar: '' };
+      }
+    },
+  );
+}
+
+/** Homepage hero backgrounds: the slider the page publishes, or the authored photo. */
+export async function getHeroPhotos(): Promise<PhotoSlot[]> {
+  return heroPhotos((await rawHomeBodies()).en);
+}
+
+/** The homepage's own prose rows, read from the un-sanitized builder body. */
+async function homeProse(): Promise<{ intro: BilingualHomeBlock | null; sections: BilingualHomeBlock[] }> {
+  const { en, ar } = await rawHomeBodies();
+  return splitHomeProse(parseHomeProse(en, ar));
+}
+
+/**
+ * Home's introduction: the `#about` row of the home page — its heading and paragraph.
+ * The Arabic is the authored one while the subsite serves that row untranslated,
+ * and the row publishes no photo, so nothing is placed beside it from outside.
+ */
+export async function getHomeIntro(): Promise<{ title: Bi; lead: Bi }> {
+  const { intro } = await homeProse();
+  if (!intro) return { title: homeIntroFallback.title, lead: homeIntroFallback.lead };
+  const lead = intro.paragraphs.find((p) => p.en);
+  return {
+    title: {
+      ar: intro.heading.ar || homeIntroFallback.title.ar,
+      en: intro.heading.en || homeIntroFallback.title.en,
+    },
+    lead: {
+      ar: lead?.ar || homeIntroFallback.lead.ar,
+      en: lead?.en || homeIntroFallback.lead.en,
+    },
+  };
+}
+
+/**
+ * The homepage rows no other section displays (`#process`, the story band). They
+ * are the data team's own copy about the clinic, so the About page shows them
+ * after its page-32 sections instead of leaving them on the homepage only.
+ */
+export async function getHomeProseSections(): Promise<Array<{ heading: Bi; paragraphs: Bi[]; image: string | null }>> {
+  const { sections } = await homeProse();
+  return sections.filter((section) => section.paragraphs.length > 0);
 }
 
 // --- home ---------------------------------------------------------------------

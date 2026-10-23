@@ -33,7 +33,10 @@ import {
   getBranches,
   getBranchList,
   getCategories,
+  getHeroPhotos,
   getHome,
+  getHomeIntro,
+  getHomeProseSections,
   getOffer,
   getOffers,
   getPage,
@@ -44,6 +47,8 @@ import {
   getSettings,
 } from '../src/lib/content/site';
 import { SITE_URL } from '../src/lib/site';
+import { images } from '../src/lib/images';
+import { homeIntroFallback } from '../src/data/about';
 import { siteConfig } from '../src/config/site';
 import { WHATSAPP } from '../src/lib/wp/config';
 import * as wp from '../src/lib/wp';
@@ -394,6 +399,73 @@ describe('the database rung', () => {
 
     await db.deleteFrom('settings').where('group_name', 'in', ['site', `${run}-settings`]).where('setting_key', 'in', SETTING_KEYS).execute();
     expect((await getSettings('en')).whatsapp).toBe(WHATSAPP);
+  });
+
+  it('parses the homepage blocks out of the published home row, raw', async () => {
+    // The hero slider and the two prose rows are not fields: they are parsed out of the
+    // page's builder markup, which is why this reads a body `body()` would sanitize away.
+    const slide = 'https://shamahclinics.com/wp-content/uploads/2026/01/bk6c-slide.jpg';
+    const body = (heading: string, lead: string): string =>
+      `<div class="vc_row"><rs-module><rs-slide><img data-lazyload="${slide}" alt="Laser hair removal" width="1280" height="720"></rs-slide></rs-module></div>` +
+      `<div class="vc_row" id="about"><h2>${heading}</h2><p>${lead}</p></div>` +
+      `<div class="vc_row" id="process"><h2>The process</h2><p>${lead}</p></div>`;
+    const en = body('Who we are', 'Shamah writes its own introduction into a database row.');
+    const ar = body('Who we are', 'عيادات شامه تكتب مقدمتها هنا في صف من قاعدة البيانات.');
+
+    // Pages are on the database rung already (the `about` row above), and it holds no
+    // `home` row: the authored photo and copy answer, not a WordPress page fetched
+    // beside database ones. Same rule that makes an unknown slug a 404.
+    expect(await getHeroPhotos()).toEqual([images.hero]);
+    expect(await getHomeIntro()).toEqual({ title: homeIntroFallback.title, lead: homeIntroFallback.lead });
+    expect(await getHomeProseSections()).toEqual([]);
+
+    const created = unwrap(await createRow('page', { key: 'home', actorId: actor.id }), 'create home');
+    try {
+      for (const locale of ['ar', 'en'] as const) {
+        const current = await rowOf('page', created.id);
+        unwrap(
+          await saveDraft('page', {
+            id: current.id,
+            locale,
+            fields: { title: locale === 'ar' ? 'من نحن' : 'Home', content: locale === 'ar' ? ar : en },
+            expectedVersion: current.version,
+            actorId: actor.id,
+          }),
+          `save home ${locale}`,
+        );
+      }
+      unwrap(await publishRow('page', { id: created.id, locales: ['ar', 'en'], actor }), 'publish home');
+
+      const [hero] = await getHeroPhotos();
+      expect(hero.src).toContain('/wp-content/uploads/2026/01/bk6c-slide.jpg');
+      expect(hero.alt).toEqual({ ar: 'Laser hair removal', en: 'Laser hair removal' });
+      expect(hero.width).toBe(1280);
+
+      const intro = await getHomeIntro();
+      expect(intro.title.en).toBe('Who we are');
+      // The row's Arabic heading is English text, so the authored Arabic stays — the
+      // rule `parseHomeProse` applies to every untranslated subsite row.
+      expect(intro.title.ar).toBe(homeIntroFallback.title.ar);
+      expect(intro.lead.en).toContain('database row');
+      expect(intro.lead.ar).toContain('قاعدة البيانات');
+
+      const sections = await getHomeProseSections();
+      expect(sections.map((section) => section.heading.en)).toEqual(['The process']);
+      expect(sections[0].paragraphs[0].ar).toContain('قاعدة البيانات');
+
+      // The row is a page as well: rendered through `getPage` its builder tags are gone,
+      // while the hero reader still sees them. Raw on one door, sanitized on the other.
+      const page = await getPage('home');
+      expect(page?.item.html.en).toContain('Shamah writes its own introduction');
+      expect(page?.item.html.en).not.toContain('rs-slide');
+      // The `about` row of the test above is disabled, so this is the only page left.
+      expect((await getAllPages()).map((card) => card.slug)).toEqual(['home']);
+    } finally {
+      await db.deleteFrom('revisions').where('entity_id', '=', created.id).execute();
+      await db.deleteFrom('pages').where('id', '=', created.id).execute();
+    }
+
+    expect(await getHeroPhotos()).toEqual([images.hero]);
   });
 });
 

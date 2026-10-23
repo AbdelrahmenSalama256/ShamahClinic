@@ -35,11 +35,7 @@ import type {
   Lang,
 } from "./types";
 import type { BranchDetail } from "@/data/branches";
-import type { PhotoSlot } from "@/lib/images";
 import { mergeBranches, parseOffices } from "./branches";
-import { heroPhotos } from "./hero";
-import { parseHomeProse, splitHomeProse, type BilingualHomeBlock } from "./home-prose";
-import { homeIntroFallback } from "@/data/about";
 
 export interface Query {
   page?: number;
@@ -307,62 +303,14 @@ export async function getPage(slug: string): Promise<WithSeo<PageContent> | null
  * builder whose tags `sanitizeHtmlBody` discards (the homepage slider), so those
  * are read from the original rendered body. Never sent to the browser as HTML —
  * only parsed into images or text by a dedicated reader.
+ *
+ * This is the snapshot rung. The three readers that used it (`getHeroPhotos`,
+ * `getHomeIntro`, `getHomeProseSections`) moved to the site's read path, where a
+ * published `home` page row can answer first.
  */
-async function getRawPageHtml(slug: string, lang: Lang = "en"): Promise<string> {
+export async function getRawPageHtml(slug: string, lang: Lang = "en"): Promise<string> {
   const row = await selectBySlug<WPPost>("pages-list", "pages", lang, safeDecode(slug));
   return row?.content?.rendered || "";
-}
-
-/** Homepage hero backgrounds: the WordPress slider, or the authored photo if absent. */
-export async function getHeroPhotos(): Promise<PhotoSlot[]> {
-  let raw = "";
-  try {
-    raw = await getRawPageHtml("home");
-  } catch {
-    raw = "";
-  }
-  return heroPhotos(raw);
-}
-
-/** The homepage's own prose rows, read from the un-sanitized builder body. */
-async function readHomeProse(): Promise<{ intro: BilingualHomeBlock | null; sections: BilingualHomeBlock[] }> {
-  try {
-    const [en, ar] = await Promise.all([getRawPageHtml("home", "en"), getRawPageHtml("home", "ar")]);
-    return splitHomeProse(parseHomeProse(en, ar));
-  } catch {
-    return { intro: null, sections: [] };
-  }
-}
-
-/**
- * Home's introduction: the `#about` row of page 622 — its heading and paragraph.
- * The Arabic is the authored one while the subsite serves that row untranslated,
- * and the row publishes no photo, so nothing is placed beside it from outside.
- */
-export async function getHomeIntro(): Promise<{ title: Bi; lead: Bi }> {
-  const { intro } = await readHomeProse();
-  if (!intro) return { title: homeIntroFallback.title, lead: homeIntroFallback.lead };
-  const lead = intro.paragraphs.find((p) => p.en);
-  return {
-    title: {
-      ar: intro.heading.ar || homeIntroFallback.title.ar,
-      en: intro.heading.en || homeIntroFallback.title.en,
-    },
-    lead: {
-      ar: lead?.ar || homeIntroFallback.lead.ar,
-      en: lead?.en || homeIntroFallback.lead.en,
-    },
-  };
-}
-
-/**
- * The homepage rows no other section displays (`#process`, the story band). They
- * are the data team's own copy about the clinic, so the About page shows them
- * after its page-32 sections instead of leaving them on the homepage only.
- */
-export async function getHomeProseSections(): Promise<Array<{ heading: Bi; paragraphs: Bi[]; image: string | null }>> {
-  const { sections } = await readHomeProse();
-  return sections.filter((section) => section.paragraphs.length > 0);
 }
 
 // ---------------------------------------------------------------------------

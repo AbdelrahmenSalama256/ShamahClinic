@@ -1,8 +1,7 @@
 import * as cheerio from "cheerio";
-// The page itself comes from the site's read path so /about shows the same article
-// the rest of the site shows; only the prose sections still come from `./index`.
-import { getPage } from "../content/site";
-import { getHomeProseSections } from "./index";
+// The page and the homepage rows it borrows both come from the site's read path, so
+// /about never pairs a database page with a snapshot body (or the other way round).
+import { getHomeProseSections, getPage } from "../content/site";
 import { arabicRatio } from "./lang";
 import { toPhotoSlot } from "./ui-helpers";
 import { aboutFallback, type AboutContent, type AboutSection } from "@/data/about";
