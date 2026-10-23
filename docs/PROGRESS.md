@@ -1049,8 +1049,8 @@ the markup they name.
       The eight console components are re-pointed at them **without changing their props contracts**.
       **This is five sub-rows** — 19.3a the shared vocabulary and the button, 19.3b fields, 19.3c status and
       feedback, 19.3d surfaces, 19.3e overlays — because the audit found the defects in families, and a row that
-      fixed "all primitives" at once would not say which family is still hand-written. 19.3a and 19.3b are closed
-      below; the rest are open and the parent stays unchecked until they are.
+      fixed "all primitives" at once would not say which family is still hand-written. 19.3a, 19.3b and 19.3c are
+      closed below; the rest are open and the parent stays unchecked until they are.
 - [x] 19.3a Shared control tokens + the button primitive — `951346c`
       **What was wrong, in the order it was found.** The console owned a 60-line `.console-button` sheet and the site
       owned none, so the same control was decided twice; `.console-button-primary` had **no hover of its own** and
@@ -1245,6 +1245,98 @@ the markup they name.
       `Field`). A commit message written from intent is the same failure mode as a comment written from intent, and
       both are corrected by the measurement, not by the sentence — so the row above is the version that was checked
       against the pre-change sheet (`git show 457424f^:src/app/console/console.css`), the diff and the browser.
+- [x] 19.3c Status + feedback primitives — badge, alert, note, empty, skeleton, mark — `aa95fb7`
+      **What was wrong, in the order it was found.** `console.css` answered "how much does this matter" three
+      different ways in three different members — `.console-chip`, `.console-alert` with two tone rules of its own,
+      `.console-note` — and around them sat `.console-meta`, `.console-account-label`, `.console-palette-empty`,
+      `.console-row-skeleton` with its own `@keyframes console-shimmer`, `.console-count[data-tone='error']` and
+      `.console-chip[data-tone='warn']`. Twelve rules and one reduced-motion entry, deleted rather than aliased, so
+      the vocabulary is `src/components/ui/Status.tsx` plus `ui.css`: `Badge`, `Alert`, `Note`, `Empty`, `Skeleton`,
+      `Mark`. The site owned none of them, which is the other half of the 19.3a/19.3b finding: a status pill on a
+      public card was a hand-written `border` and a literal hex, and those ~15 pills are 19.7's markup work — the
+      primitive is now *available* to them through `globals.css`.
+      **One tone, four words.** `[data-tone]` sets `--tone-fg`, `--tone-bg`, `--tone-border` and declares no
+      fallback, so the member decides what neutral means for itself: a badge falls back to secondary text on the
+      secondary surface, an alert to primary text, a note to secondary. `tone="neutral"` renders **no attribute**,
+      because there is no `[data-tone='neutral']` rule to match it — an absent tone and a neutral tone are the same
+      sentence, and a hook nothing styles is a hook that will drift. Measured, not asserted: light badge and alert
+      neutral 5.34, ok 6.15, warn 4.69, danger 5.62; dark badge 8.69 / 7.63 / 9.14 / 7.46, dark alert neutral 13.92,
+      dark notes 9.88 / 10.21 / 10.39 / 8.94. Every tone clears AA on both surfaces at both theme files; the light
+      `warn` is the tight one and it is the pair a human should re-look at in 19.8.
+      **`Alert` derives `role` instead of asking for one**: bad news interrupts (`alert`), confirmation is polite
+      (`status`), and a box that explains a standing fact gets nothing, because a live region that never changes
+      teaches people to ignore live regions. Three consequences are behaviour changes, stated as such:
+      `password.saved` moves from neutral to `ok` — saved is good news; the editor's trashed-row banner and the
+      must-change-your-password banner become `role="alert"` — both block the save; the read-only editor banner
+      stays role-less by design. A call site can still name its own role; the default is only what eight hand-written
+      call sites already said, in the same words.
+      **The badge bug needed a browser, and this is the record of being wrong about it first.** The list's cells
+      declare `overflow-wrap: anywhere` so a 60-character slug cannot widen a column — and `overflow-wrap` is an
+      **inherited** property, so a pill that declared nothing inherited the break and let the column shrink toward
+      one character. A published row measured badge 43×59, cell 65px, row 99px: three lines where the state column
+      had always been one. My first edit deleted the badge's declaration and left the comment saying the surface
+      should decide; against the real stylesheet that changed nothing, because the cells' value still reached the
+      pill. Two `!important` probes in the live DOM separated the two variables (badge `anywhere` + cell `normal` →
+      43×59 / 65 / 99; badge `normal` + cell `anywhere` → 61×26 / 83 / 81), which is what proved the pill's own value
+      is the one the layout reads. `white-space: nowrap` measures the same as `normal` and fails elsewhere — a
+      two-word role name overflows the 16rem sidebar — so `.ui-badge` declares `overflow-wrap: normal` and keeps the
+      sentence-breaking for `Note` and `Alert`, which have no column to collapse. The suite asserts all four
+      declarations in one case (`badge normal`, badge has no `white-space`, cells `anywhere`, note and alert
+      `anywhere`), because the failure only exists as a pair and a test that reads one side cannot see it.
+      **A group's spacing does not live inside a member.** `.console-chip` carried `margin-inline-end: 0.3rem`, so
+      two chips side by side got a trailing gap after the last one and a lone chip in a heading got a margin nobody
+      asked for; the badge now has no margin and the groups own their `gap` (`.console-chips`, the editor header,
+      the pager row, the new `.console-account-roles`). Its radius reads `--radius-pill`, not the `999px` literal
+      that sat three files away from the token.
+      **One tone table for both panes**: `contentStateTone()` in `src/lib/console/editor-form.ts` colours the chip
+      from the word it shows. The list and the editor build that word from different objects (`ListSummary` carries
+      `pendingAr`/`pendingEn`, `ContentRow` carries `pendingLocales`), so they cannot share the first function —
+      sharing this one is the only way a row stops reading greener in one pane than the other. The three `Mark`
+      glyphs got `content.value.yes/no/none` messages so a shape is never the only carrier of the value.
+      **The console keeps placement and nothing else.** `.console-palette-list > .ui-note` is a block with
+      0.8rem/0.2rem margins, a note after a panel or content block earns its stack, and `.console-count` is the
+      auto-margin term of the three rows that place it (`.console-pager`, `.console-bulk`, `.console-editor-bar`) —
+      the whitelist in `ui-primitives.test.ts` allows a surface override to name `display` or a margin and never a
+      colour or a font, which is exactly the failure 19.3a found in `.console-button`. **A margin I added and then
+      removed**: `.console-grid` gained `margin-block-end: var(--ui-stack)` in this pass and lost it again, because
+      the overview renders a `Note` under the `dl` at every locale, the rule's own comment said so, and the gap
+      re-measured at 16px without it. The diff for that selector against `457424f` is empty.
+      **Measured on the built app across the matrix the data allows** — 1280, 768 and 360; Arabic RTL and English
+      LTR; light and dark; comfortable and dense — driven through the real `ConsoleControls` buttons, since a cookie
+      cannot outrank the account row (`resolvePrefs`: locale/theme = account → cookie → header, density = cookie
+      only). No horizontal overflow at any width (360px content box `scrollWidth` 355); zero dead classes in the live
+      DOM; the tap floors intact. Seven `Mark`s in the list (`no` 8×20 secondary, `none` 9×20 muted, each with its
+      sr-only word); `Empty` 680×90 in the list, 984×90 in settings, 288×90 in the editor pane; the palette's `Note`
+      571×22 with its two margins; the login `Alert` from a real wrong password, 379×50 at `--radius-control`
+      (10.4px); the `Skeleton` caught mid-flight at 18ms — six 44px wells, `role="status"`, the shared 1.2s shimmer,
+      "جارٍ التحميل…" — which needed a 0-row state (`?filter=draft`) and a click on الكل, because it only renders
+      while `loading && rows.length === 0`.
+      **Four things this pass could not see, stated rather than smoothed over.** The settings rows' badge, alert and
+      note cannot be seen at all: `settings` has 0 rows in the dev DB (BK-6.3c, and `scripts/db/seed.ts` never
+      inserts settings rows), so their markup is proved by the suite only and **no data was created to fake it**. An
+      alert paired with a button, and `Mark state="yes"`, are likewise suite-only — no current row can produce the
+      `yes` glyph. And a synthetic `Escape` does not close the palette: `ConsolePalette.tsx:90` calls `showModal()`,
+      so native Esc works and the automation event does not; that is an artifact of the harness, not a defect, and a
+      human pass in 19.8 should confirm it. As in 19.3b, the automation page is hidden — no rAF, no real pointer — so
+      hover states are computed-value facts.
+      **Tests: `vitest run` is now 365 over 12 files** (was 355). `tests/ui-primitives.test.ts` goes 26 → 36 cases,
+      and the new `describe` proves the badge's one-word width against the cells' `anywhere`, the tone vocabulary
+      declared once with fallbacks only at the consuming member, no second definition of a status in `console.css`,
+      the deleted names absent from both sheets and the components, `Alert`'s derived role, `Skeleton`'s
+      `role`/`aria-hidden` pair, `Mark`'s glyph-plus-word, the placement-only whitelist, and the token-not-number rule
+      for radius and font. `tests/console.test.ts` changes one comment ("a skeleton's breath"), because the token
+      list it asserts already covered `--dur-shimmer`.
+      Gates: typecheck · lint · `vitest run` 365/365 · `next build` clean · `npm run prove:no-wp` **5/5** (238
+      sitemap URLs, 271 routes rendered 0 failed, smallest HTML 25363 bytes, 0 requests to the WordPress origin, host
+      named 0 times) — re-earned because the console markup moved. Dev prefs restored to what they were (light,
+      comfortable, Arabic) and both disposable preview processes stopped; the pre-existing server on 3320/3322 was
+      left alone.
+      **Deferred on purpose, with the row that owns each.** Three `border-radius: 999px` literals still survive
+      inside the saved-view chips, with `.console-chip-button` and `.console-chip-x`, the `.console-lede` and the six
+      unused `--z-*` tokens → 19.3d. Toast, progress, the modal/confirm/drawer/dropdown family and the fate of
+      `--z-toast` → 19.3e. Tooltip, `switch`, `radio`, `combobox`, the date field (all still without a call site) and
+      the file drop-zone / rich-text area → 19.3f, which has no row yet. The `≡` glyph, `title=` duplication and the
+      `ConsoleFrame` hydration key → 19.4. Push stays on hold per 19.0.
 - [ ] 19.4 Shell: collapsible sidebar with a shared-layout animated active indicator, tooltips when collapsed, brand
       mark, user area; sticky top bar with breadcrumbs, the existing `ConsolePalette` restyled (Cmd/Ctrl+K, keyboard
       nav), quick actions, animated theme toggle, notifications; drawer/bottom bar on mobile; verified at
