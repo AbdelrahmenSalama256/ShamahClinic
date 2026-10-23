@@ -43,6 +43,11 @@ next-env.d.ts
 # scratch output from scripts/wp-sweep.mjs
 /.tmp/
 
+# fresh WordPress dumps from scripts/sync-wp.mjs (BK-7.1). Each sweep writes a new
+# timestamped folder next to the frozen data/wp/ backup; kept on disk as drift
+# evidence, never committed — 3.4 MB per re-sync, re-generable in a minute.
+/data/wp-*/
+
 # scripts/audit-contrast.mjs output: ~140 PNGs per run (~120 MB), referenced by file
 # name from docs/contrast-report.md instead of being committed
 /docs/screenshots/

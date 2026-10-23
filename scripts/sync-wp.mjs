@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 /**
- * Pulls every piece of WordPress content this site renders into `data/wp/*.json`.
- * Run locally before deploying: `npm run sync:wp`
+ * Pulls every piece of WordPress content this site renders into a snapshot folder.
  *
  * `next build` reads ONLY these files (zero requests to the client's production
  * WordPress). At runtime the site tries live WordPress with a short abort and
  * falls back to this snapshot.
+ *
+ * `data/wp/` is the frozen backup the site was built against, so this script writes
+ * somewhere else by default: `data/wp-<UTC timestamp>/`. Pointing it back at the
+ * frozen folder takes `--overwrite-frozen`, which is the operator saying they mean
+ * it. `--json-only` pulls the content without touching `public/wp/` — what BK-7.1
+ * needs is a fresh copy to compare, not a re-encoded media library.
  */
 import { mkdir, writeFile, readFile, stat } from "node:fs/promises";
 import { createHash } from "node:crypto";
@@ -13,7 +18,30 @@ import path from "node:path";
 import sharp from "sharp";
 
 const ORIGIN = (process.env.WP_BASE_URL || "https://www.shamahclinics.com").replace(/\/+$/, "");
-const OUT_DIR = path.resolve(process.cwd(), "data", "wp");
+/** The backup the site ships with. Read to compare, never written without a flag. */
+const FROZEN_DIR = path.resolve(process.cwd(), "data", "wp");
+const FLAGS = new Set(process.argv.slice(2));
+const arg = (name) => process.argv.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
+const JSON_ONLY = FLAGS.has("--json-only");
+
+function resolveOutDir() {
+  const requested = arg("out");
+  const dir = path.resolve(process.cwd(), requested || `data/wp-${new Date().toISOString().replace(/[:.]/g, "-")}`);
+  if (dir === FROZEN_DIR && !FLAGS.has("--overwrite-frozen")) {
+    throw new Error(
+      `${dir} is the frozen backup the build ships with. Write a fresh dump to a new folder (the default) or pass --overwrite-frozen.`,
+    );
+  }
+  return dir;
+}
+
+let OUT_DIR;
+try {
+  OUT_DIR = resolveOutDir();
+} catch (err) {
+  console.error(`sync:wp refused — ${err.message}`);
+  process.exit(1);
+}
 const IMG_DIR = path.resolve(process.cwd(), "public", "wp");
 
 /** Mirroring is bounded so a runaway media library cannot bloat the deploy. */
@@ -98,7 +126,7 @@ async function writeJson(name, value) {
   const file = path.join(OUT_DIR, name);
   const payload = JSON.stringify(value, null, 0);
   await writeFile(file, payload, "utf8");
-  return { file: `data/wp/${name}`, kb: Math.round(payload.length / 1024) };
+  return { file: `${path.relative(process.cwd(), OUT_DIR)}/${name}`, kb: Math.round(payload.length / 1024) };
 }
 
 /** Media objects are language-neutral, so one map covers both subsites. */
@@ -251,22 +279,37 @@ async function main() {
   const seo = await collectSeo();
   console.log(`  ok seo                   ${seo.length} URLs`);
 
-  const candidates = await collectMirrorCandidates({
-    posts,
-    pages,
-    media,
-    // Both store lists, not just English: an Arabic product row can point at an
-    // upload the English rows do not carry, and the Set keeps it to one download.
-    products: [...collected["products.en"], ...collected["products.ar"]],
-  });
-  const previousImages = (await readIfExists(path.join(OUT_DIR, "images.json"))) || {};
-  console.log(`  mirroring ${candidates.length} images the site renders…`);
-  const mirror = await mirrorImages(candidates, previousImages);
-  console.log(
-    `  ok images                ${Object.keys(mirror.map).length}/${mirror.total} on disk ` +
-      `(${mirror.written} encoded, ${mirror.reused} unchanged, ${mirror.skipped} left on WordPress), ` +
-      `${(mirror.bytes / 1024 / 1024).toFixed(1)} MB`,
-  );
+  /**
+   * The pairing this dump reports. `--json-only` re-encodes nothing, so it carries the
+   * frozen map over untouched instead of writing an empty one that would read as
+   * "these images are no longer mirrored".
+   */
+  let mirror;
+  if (JSON_ONLY) {
+    const carried = (await readIfExists(path.join(FROZEN_DIR, "images.json"))) || {};
+    mirror = { map: carried, total: 0, written: 0, reused: 0, skipped: 0, bytes: 0 };
+    console.log(`  images                 left alone (--json-only); ${Object.keys(carried).length} frozen pairings carried over`);
+  } else {
+    const candidates = await collectMirrorCandidates({
+      posts,
+      pages,
+      media,
+      // Both store lists, not just English: an Arabic product row can point at an
+      // upload the English rows do not carry, and the Set keeps it to one download.
+      products: [...collected["products.en"], ...collected["products.ar"]],
+    });
+    // A dump into a new folder still has the frozen map to check digests against, so
+    // a second pull does not re-encode every image again.
+    const previousImages =
+      (await readIfExists(path.join(OUT_DIR, "images.json"))) || (await readIfExists(path.join(FROZEN_DIR, "images.json"))) || {};
+    console.log(`  mirroring ${candidates.length} images the site renders…`);
+    mirror = await mirrorImages(candidates, previousImages);
+    console.log(
+      `  ok images                ${Object.keys(mirror.map).length}/${mirror.total} on disk ` +
+        `(${mirror.written} encoded, ${mirror.reused} unchanged, ${mirror.skipped} left on WordPress), ` +
+        `${(mirror.bytes / 1024 / 1024).toFixed(1)} MB`,
+    );
+  }
 
   // Split the content-bearing lists into a small list view (what listings read)
   // and a content view (what detail pages read), mirroring the live API contract.
@@ -298,11 +341,14 @@ async function main() {
   const resultStories = collectResultStories(posts);
   files.push(await writeJson("result-stories.json", resultStories));
 
-  const previous = await readIfExists(path.join(OUT_DIR, "meta.json"));
+  // The age of the copy this dump is compared against lives in the frozen folder, so a
+  // dump into a new one still reports what it replaced.
+  const previous = await readIfExists(path.join(FROZEN_DIR, "meta.json"));
   const meta = {
     generatedAt: new Date().toISOString(),
     previousGeneratedAt: previous?.generatedAt || null,
     origin: ORIGIN,
+    mode: JSON_ONLY ? "json-only" : "full",
     requests,
     bytes,
     counts: {
@@ -319,9 +365,13 @@ async function main() {
   files.push(await writeJson("meta.json", meta));
 
   console.log(`\nSnapshot written to ${OUT_DIR}`);
-  for (const f of files) console.log(`  ${f.file.padEnd(32)} ${f.kb} KB`);
+  for (const f of files) console.log(`  ${f.file.padEnd(44)} ${f.kb} KB`);
   console.log(`\n${requests} WordPress requests in ${((Date.now() - started) / 1000).toFixed(1)}s`);
-  console.log("Commit data/wp/ so the build stays WordPress-free.");
+  console.log(
+    OUT_DIR === FROZEN_DIR
+      ? "Commit data/wp/ so the build stays WordPress-free."
+      : `This dump is next to the shipped snapshot, not on top of it — the build still reads data/wp/.`,
+  );
 }
 
 async function readIfExists(file) {
