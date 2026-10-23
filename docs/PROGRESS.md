@@ -1047,6 +1047,93 @@ the markup they name.
       badge, avatar, breadcrumbs, progress, skeleton, confirm dialog, validation states, illustrated empties. Every
       one with hover / focus-visible / active / disabled / loading. One icon family (lucide, already the site's).
       The eight console components are re-pointed at them **without changing their props contracts**.
+      **This is five sub-rows** — 19.3a the shared vocabulary and the button, 19.3b fields, 19.3c status and
+      feedback, 19.3d surfaces, 19.3e overlays — because the audit found the defects in families, and a row that
+      fixed "all primitives" at once would not say which family is still hand-written. 19.3a is closed below;
+      the rest are open and the parent stays unchecked until they are.
+- [x] 19.3a Shared control tokens + the button primitive — `951346c`
+      **What was wrong, in the order it was found.** The console owned a 60-line `.console-button` sheet and the site
+      owned none, so the same control was decided twice; `.console-button-primary` had **no hover of its own** and
+      inverted to a light card under a cursor — the one state that existed on the default variant only; the tap
+      numbers were spelled as literals in a surface sheet; and a call-site `py-1` could undo the 44px floor, because
+      the floor lived in a layer that utilities outrank. `--console-tap`, `--console-tap-field`, `--console-ui-*`
+      are renamed to `--tap`, `--tap-field`, `--ui-font`, `--ui-font-small`, `--ui-gap`, `--ui-gap-tight`,
+      `--ui-pad`, `--ui-stack`, declared **once** in `globals.css` `:root` — the unlayered block 19.1 established as
+      the only place a number is written twice. `.console-button` and `.console-palette-open` are deleted, not
+      aliased: a test now fails if the name survives in `console.css` or in any of the eight components.
+      `src/components/ui/ui.css` is `@import`ed by `globals.css` rather than by each document root — a primitive that
+      has to be remembered twice is a primitive that gets forgotten on the third surface — and the primitives are
+      unlayered on purpose, which is the same cascade fact 19.1 recorded. The known cost is written into the file
+      header: restyling a button *from a surface* now needs a later unlayered rule.
+      **The import path is the defect this row found in itself.** The first version read `./components/ui/ui.css`,
+      which is correct English from `src/app/` and wrong as a path, and `npm run build` failed on it — while the
+      string assertion written for it passed. The test now resolves the declared path against the importing file and
+      reads the bytes it points at, so the claim is about resolution and not about the sentence.
+      **State is an attribute, not a modifier class.** `data-variant` / `data-size` / `data-active` / `data-block` /
+      `data-loading` are rendered from props by `src/components/ui/Button.tsx` (`Button` + `ButtonLink`, `clsx` —
+      already a dependency and unused — instead of a hand-rolled `cx`, because a two-argument joiner is not a
+      library worth owning). `loading` implies `disabled` plus `aria-busy`, and `[data-loading]` is placed **after**
+      `:disabled` in source order so the cursor reads `progress` rather than `not-allowed` on a control that is busy
+      rather than dead — the order is asserted, not assumed. The spinner is a logical-border ring on `--dur-spin`
+      (an animation duration, so it is not in the transition list), and the reduced-motion block only neutralises
+      the hover/active `transform`: 19.1's `!important` hammer already zeroes the durations, and out-`!important`-ing
+      it would be dead code.
+      **Gold as primary is a measured call, not a preference.** The darkest gradient stop against `--btn-gold-fg`
+      `#17120f` is 5.19:1 dark / 5.11:1 light, which clears AA for a 600-weight control; the *mid* stop reaches only
+      2.26:1 on cream, which is why the fill carries `--border-control` rather than the softer default border. The
+      danger fill measures 6.39:1 light / 8.14:1 dark against `--bg-card`. Both numbers are the reason the two
+      variants get their own `:hover:not(:disabled)` rules instead of inheriting the default one.
+      **The eight components moved with their contracts intact** — 35 call sites, no prop renamed, no label
+      semantics changed, `console-button-primary` → `variant="primary"`, and a new `variant="danger"` on the two
+      controls that destroy (row trash, bulk trash). `×`, `↑`, `↓` as text glyphs became lucide icons; the pager's
+      chevrons swap with the reading direction (`locale === 'ar' ? ChevronRight : ChevronLeft`) instead of mirroring
+      the control, matching the pattern 19.2 established for the Navbar. `SettingsWorkspace` now tracks *which* row
+      is in flight (`busyId`) rather than whether any row is, so the spinner sits on the control that asked and the
+      other rows stay usable while it waits.
+      **Measured in the browser, not only asserted in bytes** (comfortable and dense, light, Arabic): every rendered
+      `.ui-button` is exactly 44px at both densities while dense drops `--tap-field` to 2.25rem and `--ui-font` to
+      0.83rem — the split the token rename exists to make; the console's comfortable `--ui-font: 0.9rem` reaches the
+      primitive (14.4px computed), proving the surface override still lands after the vocabulary moved. Hover on a
+      default button computes `--bg-secondary` + `--elev-1` + `translateY(-1px)`; hover on the gold primary keeps its
+      seven-stop gradient, adds `--glow-gold` and elevation, holds `rgb(23,18,15)` on the fill, a 156,118,25 border,
+      weight 600 and 44px — the state the old sheet never had. A disabled control computes opacity 0.55 with
+      `not-allowed`. Focus paints the one global ring (2px `rgb(133,100,15)`, offset 2px) because `ui.css` declares
+      no `outline:` at all. Cmd/Ctrl+K still opens the palette and Escape still returns focus to the trigger, which
+      is also the proof that a ref reaches the primitive as a plain prop under React 19.
+      **Tests: `vitest run` is now 344 over 12 files** (was 329 over 11). `tests/ui-primitives.test.ts` is new with
+      15 cases and works the way the other styling suites do — over the bytes of the two files, with no DOM: every
+      state selector present, no `outline:` in the primitive, primary/danger/ghost each with their own hover, sizes
+      never touching `min-height`, `[data-loading]` after `:disabled`, five named transition properties and no
+      `all`, logical properties only, no hex or raw radius or literal duration, and every `var(--x)` the primitive
+      reads defined in `globals.css`. `tests/console.test.ts` re-anchored to the new names and keeps the
+      defined-once list as the guard against the numbers drifting back apart. `tests/typography.test.ts`'s physical
+      direction sweep now strips comments before matching — a class hidden in prose is not a class — and asserts
+      both halves of that pass are load-bearing, because the sweep flagged the phrase "right-click" in a doc comment
+      and the honest fix was the sweep, not the sentence.
+      Gates: typecheck · lint · `vitest run` 344/344 · `next build` · `npm run prove:no-wp` **5/5** (271 routes, 0
+      requests to the WordPress origin) — re-run because the console markup moved, even though no read path did. The
+      built CSS carries 19 `.ui-button` rules with the attribute selectors and the `--tap` floor intact after
+      minification, which is the check that the cross-directory import ships rather than merely compiles.
+      **Deferred on purpose, with the row that owns each:** three checkbox skins and the `.console-palette-input`
+      that misuses `console-field`; the hardcoded `border-radius: .6rem` / `outline: 2px solid var(--text-gold)`
+      inside `.console-field`, and `--focus-ring` for the latter → 19.3b. The `●`/`○`/`—` data marks in
+      `ConsoleList`'s `cellText`, and the badge/alert/toast/progress/skeleton/empty/tooltip family → 19.3c. Card,
+      table, tabs, breadcrumbs, avatar → 19.3d. Six overlay declarations, three scrims, seven z values, the inline
+      "alertdialog" panel and `OfferCard.tsx:34-36`'s identical-armed ternary → 19.3d/19.3e. The `≡` drawer glyph,
+      `title=` duplication on palette rows → 19.4. `--radius-pill` is now consumed by the spinner; the view chip
+      still hardcodes 999px → 19.3d.
+      **Two console warnings observed while verifying, neither from this commit.** `/console/*` logs a React
+      "unique key" warning attributed to `ConsoleFrame` with a child from `ConsoleShell`, but only during hydration:
+      a client-side re-render of the whole shell (trash scope, screen switch) never reproduces it, and neither file
+      is in this diff nor imports the primitive — `ContentScreen` returns a fragment, and every `.map` in the eight
+      touched components is keyed. It is 19.4's, which owns the frame. Separately, dev logs that a `src_*.css` chunk
+      is "preloaded but not used"; commenting the new `@import` out and reloading `/ar` leaves the warning identical,
+      so it is Next's dev chunking of `globals.css` (two chunks, both 120,627 bytes, both already containing the
+      control layer), not a second stylesheet this row added.
+      **One data gap found by the same sweep, and it is not a styling bug:** `/console/settings` renders its empty
+      state because `settings` has **0 rows** in the dev database — `readSettings` selects what exists and
+      `scripts/db/seed.ts` never inserts any, so the screen has nothing to edit until a write creates a row. That
+      belongs to 6.3c-a's row (#201), not here; recorded so nobody reads the empty screen as the primitive failing.
 - [ ] 19.4 Shell: collapsible sidebar with a shared-layout animated active indicator, tooltips when collapsed, brand
       mark, user area; sticky top bar with breadcrumbs, the existing `ConsolePalette` restyled (Cmd/Ctrl+K, keyboard
       nav), quick actions, animated theme toggle, notifications; drawer/bottom bar on mobile; verified at
