@@ -510,12 +510,53 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       `npm run build`, and `npm run prove:no-wp` again because `publicSeo()` now takes its path from `paths.ts`:
       79 routes, 0 requests to the WordPress origin. Dev fixtures were returned to their pre-session values and the
       test rig (3330/3332) and MariaDB are shut down.
-- [ ] 13.5 Finish the split of `ContentWorkspace.tsx` (245 lines today, was 530) onto 13.3 + 13.4 and re-point the
-      screens at it — no behaviour change; the existing console SSR/API suites must pass untouched. Four content
-      screens (`articles`, `offers`, `pages`, `lists`) already reach the workspace through one 28-line
+- [x] 13.5 Finish the split of `ContentWorkspace.tsx` (245 lines today, was 530) onto 13.3 + 13.4 and re-point the
+      screens at it — no behaviour change; the existing console SSR/API suites must pass untouched. `cfc0e9f`
+      **The split had already happened, and the row's real finding was somewhere else.** Reading the tree first, not
+      the plan: `ContentWorkspace.tsx` is 244 lines and is thin glue (list + editor + create + reload, nothing else),
+      and all four content screens (`articles`, `offers`, `pages`, `lists`) already reach it through one 28-line
       `ContentScreen`; `settings` keeps `SettingsWorkspace` on purpose, because a site setting has no draft copy and so
-      no publish step. What is left is the reading: confirm no screen still holds its own copy of the scope, and prove
-      the suites pass unchanged.
+      no publish step. Moving code was not the job — the duplication the row was guarding against had moved out of the
+      file and into the *call sites*. What three components each still did by hand was spell the write-scope either/or:
+      `ConsoleEditor`'s `named ? '?list=…' : '?locale=…'`, `ConsoleList.scopeParam()`, and `ContentWorkspace.query()`.
+      That is now one function, `writeScopeQuery()` in `src/lib/content/list-view.ts`, sitting next to
+      `listScopeParams()` and deliberately not the same thing: the **address** carries every term it knows (`?list=…
+      &locale=…`), a **write** names exactly one, because `guard()` reads the scope off the URL and a request that
+      sends both is answered against whichever the handler reads first — not the one the caller meant. Three chances
+      to invent that rule became one, and the third branch (nothing named → send no term, so the write is refused
+      rather than guessed) exists only in the one place now.
+      Accepted divergence, recorded because it is the only behaviour that moved: a lists screen whose `listKey` were
+      empty used to send `?list=` (an empty scope the guard would reject) and now falls back to `?locale=`. It is
+      unreachable — the lists screen renders a tab only for a validated `listKey` — and sending a scope is safer than
+      sending none. `locale` is also percent-encoded now; the values are `ar` and `en`.
+      Tests 302 → **311 over 10 files**. `list-view.test.ts` gained 4 (the either/or, the empty case, a key needing
+      encoding, and a source walk that fails if any of the three components re-invents `list=${`/`locale=${`);
+      `content.test.ts` gained 2 that go through the real handlers with the line the screen now builds
+      (create → save → bulk trash → bulk restore on `?locale=ar`, create on `?list=branches`), so the function is
+      pinned by the wire, not only by itself; `console.test.ts` gained 3, the structural door tests — no page file
+      imports a primitive or parses a view (`parseListView|parseListScope|URLSearchParams`), and the list keeps its URL
+      state with `history.replaceState` and never `pushState`/`useRouter`. That last one is a finding worth keeping: there
+      is no popstate listener anywhere, so Back leaves a console screen for a server-rendered page instead of walking
+      into a stale forward state, which is what makes 13.3's "the URL is the list's only state" actually true.
+      One trap for whoever writes the next structural test: matching component *names* in page sources false-positives
+      on `ConsoleListsPage`, which is `lists/page.tsx`'s own component name; match the import specifier instead.
+      Live proof through the built console (`next start -p 3330` behind the :3332 proxy, signed in as Owner), read off
+      the request line rather than the DOM: lists screen — `POST …/content/list_item?list=branches` [200] (create),
+      `PATCH …/list_item/<id>?list=branches` [200] (editor save), `POST …/list_item/bulk/trash?list=branches` [200]
+      (bulk), with reads still on `?list=branches&locale=ar` exactly as before; articles screen —
+      `POST …/content/article?locale=ar` [200], autosave `PATCH …?locale=ar` [200], `POST …/publish?locale=ar` [200].
+      Every write one term; every read both. Nothing here was a layout claim, so the fixed ~505px automation viewport
+      cost nothing — the proof is the URL the guard answered, and no new pixels were seen or needed.
+      Gates: `npm run typecheck` · `npm run lint` · `npx vitest run` (311) · `npm run build`.
+      `npm run prove:no-wp` was **not** re-run and that is the honest call, not an oversight: no site read path
+      changed — `writeScopeQuery()` is imported only by console components. Proof fixtures (`bk13-5-spelling` in
+      `branches`, `bk13-5-locale` article) were removed with `.tmp/bk13-clean.mts` (dry-run first: 1 article, 1 list
+      item, 1 revision, 5 audit rows, nothing else), `npm run doctor` is back to 1 article / 1 offer and 0 list items,
+      and the test rig (3330/3332) and MariaDB are shut down.
+
+**BK-13 is closed** (13.1–13.5). The console has one shell, one list primitive, one editor primitive and one write-scope
+spelling; a new screen is built by naming a kind and a scope, not by copying a pane. Still open in this plan, oldest
+first: BK-6 (6.3c), BK-7.5, then BK-14 → BK-18.
 
 ## BK-14 — every element of the site editable
 Reality to design against: the copy today sits in three places — database content rows (BK-6, BK-7.2), authored files
@@ -678,6 +719,11 @@ schema leaves room for each, and BK-17's Connectors screen is where a key would 
   never run from inside the pane. The editor pane is an inline-size container too: the fields/preview split is
   `@container console-edit (min-width: 54rem)`, which dense-on-1920 satisfies and a 1440 comfortable laptop does not —
   measured, so do not lower it to make a split appear on a screen where both halves become unreadable.
+- **A write names one scope term, a read carries both** (BK-13.5). `writeScopeQuery()` in `src/lib/content/list-view.ts`
+  is the only spelling a console write may use; `listScopeParams()`/`listViewQuery()` stay the address-bar form, which
+  keeps both terms. Adding a write action by hand-building `?list=`/`?locale=` is the bug this exists to prevent: the
+  guard reads the scope off the URL, so a request naming a list *and* a locale is answered against whichever it reads
+  first, not the one the caller meant — and a write that names neither is refused rather than guessed.
 - **Two tap tokens, and only one of them shrinks.** `--console-tap` (44px) is for anything a thumb aims at — chips,
   sort headers, checkboxes, the search box, the per-page select — and dense never lowers it. `--console-tap-field`
   drops to 36px in dense for the two fields you type into. `tests/console.test.ts` names each list selector and
