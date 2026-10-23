@@ -457,10 +457,65 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       Gates: `npm run typecheck` · `npm run lint` · `npx vitest run` (231 tests over 9 files) · `npm run build`, and
       because this row added a read path, `npm run prove:no-wp` again: 79 routes, 0 requests to the WordPress origin.
       `ContentWorkspace.tsx` is 512 lines (532 before this row) — 13.5 finishes the split onto 13.3 + 13.4.
-- [ ] 13.4 Shared editor primitive: split pane (fields / live preview + SEO), sticky save-publish bar, unsaved-changes
-      guard, autosave draft, per-field messages coming from `parseWrites`, keyboard save.
-- [ ] 13.5 Split `ContentWorkspace.tsx` (530 lines today) onto 13.3 + 13.4 and re-point the five existing screens at
-      it — no behaviour change; the existing console SSR/API suites must pass untouched.
+- [x] 13.4 Shared editor primitive: split pane (fields / live preview + SEO), sticky save-publish bar, unsaved-changes
+      guard, autosave draft, per-field messages coming from `parseWrites`, keyboard save. — `b35a193`
+      `ConsoleEditor.tsx` (592 lines) owns the session of the row it is handed; `ContentWorkspace.tsx` went 512 → 245
+      and keeps only what the address bar already names — which row is open, which tab, which list, whether Trash is
+      being read — and is the **single navigation gate**. Every action that would throw away unsaved words (another
+      row, a tab, trashing, closing) is handed to `requestNav()`; the workspace holds it and the editor draws the
+      save / discard / keep-editing panel, because only the pane that holds the words can decide what happens to them.
+      Three pure modules sit under it: `editor-form.ts` (a row → the form the fields draw, one language tab at a
+      time), `issues.ts` (a `parseWrites` path → the field it belongs to), `preview.ts` (the preview model, the
+      sandboxed document, the search read-out), and `content/paths.ts`, which is now the only rule for where a row
+      lives — the console's preview link and `publicSeo()` read the same function, so a row cannot be published at one
+      URL and indexed at another.
+      Split pane is a container query, not a media query: `@container console-edit (min-width: 54rem)` gives
+      `minmax(0,1fr) minmax(23rem,27rem)`. Chosen from measured panes, not taste — comfortable density caps the page at
+      `--console-content-w: 72rem`, so the editor pane is 675px at 1440 and 949px at 1920 dense. An earlier 40rem
+      threshold split at 1440 and left the fields 339px and the frame 251px: a squeezed page beside a column too narrow
+      to read a search snippet in. At 1440 comfortable each half therefore gets the whole pane in turn. The cost is
+      stated rather than hidden: **the split is only reachable in dense on a wide display.**
+      Per-field messages ride beside the error code. `client-api.ts` returns `issues` on a failed call as well as on a
+      good one, because `data` is null on a refusal and the field that failed is the one thing still worth showing;
+      `parseWrites` speaks a fixed vocabulary (`kinds.ts`) and every sentence has an AR and EN label. Two decisions
+      about when a message stops being true. A **server** rejection is remembered with the value it was written for
+      (`TrackedIssue.was`) and `liveIssues()` retires it the moment the box holds anything else — the live run wrote
+      `EEEEEEEEE` into `currency`, was refused with `أطول من 8 حرفًا.`, and typing `EGP` made the form equal the saved
+      row again, so autosave never fired and the old sentence would have stood over a corrected value forever. Only a
+      **client** complaint greys Save and Publish: a taken slug or a moved version is something the browser cannot
+      recompute, and disabling the button that would retry it turns advice into a dead end. The reason reads in the
+      status line instead.
+      Autosave is 2s, fires only for `canEditRow && dirty && !invalid && !autosaveStopped && !busy && !pendingNav`,
+      and writes the draft — publishing stays a button, and the status line says so. A `stale_row` answer stops
+      autosave for the session with its own reason (`content.autosave_stopped`) rather than retrying into someone
+      else's edit. Ctrl/Cmd+S saves, and the same handler cancels a held navigation on Escape. The bar is sticky and
+      every control in it is a `--console-tap` target; the preview is the draft's own markup in a `sandbox=""` srcdoc
+      frame — no origin, no scripts, no top-level navigation — and the SEO panel follows `publicSeo()`'s fallbacks, so
+      a missing language borrows the other the way the site will.
+      Live proofs through the built console, in the real UI: autosave moved the draft and left the published twin
+      alone; publish saved first, then published (PATCH then POST, `pub.ar` byte-equal to the typed string, version 8,
+      `pendingLocales []`); Ctrl+S saved; an unsaved row answered a tab switch with the `role="alertdialog"` panel; a
+      hand-typed `{oops` marked its own field with the client's JSON sentence; and a server-only refusal (`longer than
+      8 characters`) marked the field while the DB confirmed the write never landed. Geometry at 360 / 1440 / 1920-dense
+      has zero horizontal overflow. Two defects only a screenshot caught: an ISO date typed into an Arabic sentence
+      rendered `26-10-2026` while `textContent` said `2026-10-23` (bidi reordering — each date is now its own `<bdi>`
+      run; the list needs none, its date is a lone `<td>`), and the sticky bar measures 135.1px tall at a 315px
+      container — three wrapped rows of controls and status, which is the honest cost of never lowering the 44px floor
+      on a phone. Caveat as before: the sandboxed preview is verified through its `srcdoc` attribute and the wide split
+      through measurement, because the in-app automation viewport is fixed near 505px — those pixels were not seen.
+      Recorded for BK-14, not fixed here: `hrefPair()` (`src/lib/wp/lang.ts:29`) spells an English href as a bare
+      `/blogs/<slug>`, and `decideRoute()` rewrites a bare path to `/ar`, so the site's own English links render Arabic
+      until they are prefixed the way `localizedPath()` does.
+      Gates: `npm run typecheck` · `npm run lint` · `npx vitest run` (302 tests over 10 files, 61 in `editor.test.ts`) ·
+      `npm run build`, and `npm run prove:no-wp` again because `publicSeo()` now takes its path from `paths.ts`:
+      79 routes, 0 requests to the WordPress origin. Dev fixtures were returned to their pre-session values and the
+      test rig (3330/3332) and MariaDB are shut down.
+- [ ] 13.5 Finish the split of `ContentWorkspace.tsx` (245 lines today, was 530) onto 13.3 + 13.4 and re-point the
+      screens at it — no behaviour change; the existing console SSR/API suites must pass untouched. Four content
+      screens (`articles`, `offers`, `pages`, `lists`) already reach the workspace through one 28-line
+      `ContentScreen`; `settings` keeps `SettingsWorkspace` on purpose, because a site setting has no draft copy and so
+      no publish step. What is left is the reading: confirm no screen still holds its own copy of the scope, and prove
+      the suites pass unchanged.
 
 ## BK-14 — every element of the site editable
 Reality to design against: the copy today sits in three places — database content rows (BK-6, BK-7.2), authored files
@@ -617,6 +672,12 @@ schema leaves room for each, and BK-17's Connectors screen is where a key would 
   The first page is the one the server already rendered for this exact line, which is why the load effect is guarded
   by a signature ref; a re-read is triggered by the line changing or by the editor bumping `refreshToken`. Anything
   13.4/13.5 adds to a content screen goes through those two terms, not through local state.
+- **The row's session belongs to the editor, the address to the workspace** (BK-13.4). `ContentWorkspace` owns which
+  row/tab/list/trash is showing and is the only place a navigation can start (`requestNav()`); `ConsoleEditor` owns the
+  form, autosave, field messages and preview. A new action that could lose unsaved words must be handed to the gate,
+  never run from inside the pane. The editor pane is an inline-size container too: the fields/preview split is
+  `@container console-edit (min-width: 54rem)`, which dense-on-1920 satisfies and a 1440 comfortable laptop does not —
+  measured, so do not lower it to make a split appear on a screen where both halves become unreadable.
 - **Two tap tokens, and only one of them shrinks.** `--console-tap` (44px) is for anything a thumb aims at — chips,
   sort headers, checkboxes, the search box, the per-page select — and dense never lowers it. `--console-tap-field`
   drops to 36px in dense for the two fields you type into. `tests/console.test.ts` names each list selector and
