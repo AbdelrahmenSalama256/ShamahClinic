@@ -22,6 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { consoleCall, consoleRead } from './client-api';
 import { Button } from '@/components/ui/Button';
+import { Checkbox, Field, Input, Select } from '@/components/ui/Field';
 import type { ContentAbilities } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import {
@@ -308,7 +309,8 @@ export function ConsoleList({
           ))}
         </div>
 
-        <input
+        <Input
+          bar
           className="console-search"
           type="search"
           value={term}
@@ -320,7 +322,8 @@ export function ConsoleList({
         <div className="console-controls">
           <label className="console-inline">
             {labels['content.per_page']}
-            <select
+            <Select
+              bar
               value={String(view.per)}
               onChange={(event) => {
                 const per = LIST_PER_PAGES.find((size) => String(size) === event.target.value) ?? 25;
@@ -332,7 +335,7 @@ export function ConsoleList({
                   {size}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <Button active={view.mode === 'card'} aria-pressed={view.mode === 'card'} onClick={() => setView(withView(view, { mode: view.mode === 'table' ? 'card' : 'table' }))}>
             {labels[view.mode === 'table' ? 'content.mode.card' : 'content.mode.table']}
@@ -366,10 +369,9 @@ export function ConsoleList({
             void saveView();
           }}
         >
-          <div className="console-field">
-            <label htmlFor="view-name">{labels['content.view.name']}</label>
-            <input id="view-name" value={newName} maxLength={80} onChange={(event) => setNewName(event.target.value)} />
-          </div>
+          <Field label={labels['content.view.name']} htmlFor="view-name">
+            <Input id="view-name" value={newName} maxLength={80} onChange={(event) => setNewName(event.target.value)} />
+          </Field>
           <div className="console-controls">
             <Button type="submit" variant="primary" loading={busy} disabled={newName.trim() === ''}>
               {labels['content.view.save']}
@@ -421,17 +423,12 @@ export function ConsoleList({
           {/* Card mode has no header row to hang the page-wide checkbox on, and cards are the
               phone mode — where tapping 25 boxes by hand is the whole job. */}
           <div className="console-cards-head">
-            <label className="console-inline">
-              <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label={labels['content.select.all']} />
-              <span>{labels['content.select.all']}</span>
-            </label>
+            <Checkbox checked={allChecked} onChange={toggleAll} label={labels['content.select.all']} />
           </div>
           <ul className="console-cards">
             {rows.map((row) => (
               <li key={row.id} className="console-card" data-active={row.id === selectedId || undefined}>
-                <label className="console-card-check">
-                  <input type="checkbox" checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
-                </label>
+                <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
                 <button type="button" className="console-card-body" onClick={() => onSelect(row.id === selectedId ? null : row)}>
                   <span className="console-row-title">{titleOf(row, locale)}</span>
                   <span className="console-chip">{labels[stateOf(row)]}</span>
@@ -447,9 +444,7 @@ export function ConsoleList({
             <thead>
               <tr>
                 <th className="console-cell-check">
-                  <label>
-                    <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label={labels['content.select.all']} />
-                  </label>
+                  <Checkbox checked={allChecked} onChange={toggleAll} aria-label={labels['content.select.all']} />
                 </th>
                 {sorts.map((sort) => (
                   <th key={sort} aria-sort={view.sort === sort ? (view.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
@@ -475,9 +470,7 @@ export function ConsoleList({
               {rows.map((row) => (
                 <tr key={row.id} data-active={row.id === selectedId || undefined}>
                   <td className="console-cell-check">
-                    <label>
-                      <input type="checkbox" checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
-                    </label>
+                    <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
                   </td>
                   <td>
                     <button type="button" className="console-row" onClick={() => onSelect(row.id === selectedId ? null : row)}>

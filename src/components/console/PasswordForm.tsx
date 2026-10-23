@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { consoleCall } from './client-api';
 import { Button } from '@/components/ui/Button';
+import { Field, Input } from '@/components/ui/Field';
 import type { MessageKey } from '@/lib/console/messages';
 
 const ERRORS: Record<string, MessageKey> = {
@@ -40,14 +41,12 @@ export function PasswordForm({ labels }: Readonly<{ labels: Record<MessageKey, s
 
   return (
     <form className="console-panel" onSubmit={submit}>
-      <div className="console-field">
-        <label htmlFor="current">{labels['password.current']}</label>
-        <input id="current" name="current" type="password" autoComplete="current-password" required />
-      </div>
-      <div className="console-field">
-        <label htmlFor="next">{labels['password.next']}</label>
-        <input id="next" name="next" type="password" autoComplete="new-password" required />
-      </div>
+      <Field label={labels['password.current']} htmlFor="current">
+        <Input id="current" name="current" type="password" autoComplete="current-password" required />
+      </Field>
+      <Field label={labels['password.next']} htmlFor="next">
+        <Input id="next" name="next" type="password" autoComplete="new-password" required />
+      </Field>
       <Button type="submit" variant="primary" loading={busy}>
         {labels['password.submit']}
       </Button>

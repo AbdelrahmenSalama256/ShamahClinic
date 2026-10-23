@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { Field, Input } from '@/components/ui/Field';
 import type { MessageKey } from '@/lib/console/messages';
 
 /** The login handler's error codes, mapped to the message that explains them. */
@@ -47,14 +48,12 @@ export function LoginForm({ labels }: Readonly<{ labels: Record<MessageKey, stri
 
   return (
     <form className="console-panel" onSubmit={submit}>
-      <div className="console-field">
-        <label htmlFor="email">{labels['login.email']}</label>
-        <input id="email" name="email" type="email" autoComplete="username" required />
-      </div>
-      <div className="console-field">
-        <label htmlFor="password">{labels['login.password']}</label>
-        <input id="password" name="password" type="password" autoComplete="current-password" required />
-      </div>
+      <Field label={labels['login.email']} htmlFor="email">
+        <Input id="email" name="email" type="email" autoComplete="username" required />
+      </Field>
+      <Field label={labels['login.password']} htmlFor="password">
+        <Input id="password" name="password" type="password" autoComplete="current-password" required />
+      </Field>
       <Button type="submit" variant="primary" loading={busy}>
         {busy ? labels['login.waiting'] : labels['login.submit']}
       </Button>

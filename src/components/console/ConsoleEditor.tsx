@@ -42,6 +42,7 @@ import { contentStateKey, fieldsFromForm, formOf, isPendingIn, sameForm, type Fo
 import { previewDocument, previewModel, seoReadout } from '@/lib/console/preview';
 import { writeScopeQuery } from '@/lib/content/list-view';
 import { Button, ButtonLink } from '@/components/ui/Button';
+import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import type { ContentRow, FieldView } from '@/lib/content/store';
@@ -361,7 +362,7 @@ export function ConsoleEditor({
         )}
 
         {row && (
-          <div className="console-fields">
+          <div className="ui-fields">
             {Object.entries(row.fields).map(([name, field]) => (
               <FieldRow
                 key={name}
@@ -529,11 +530,11 @@ function FieldRow({
 
   if (field.kind === 'flag') {
     return (
-      <div className="console-field console-field-flag">
-        <label htmlFor={id}>
-          <input id={id} type="checkbox" checked={Boolean(value)} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
-          <span>{label}</span>
-        </label>
+      <div className="ui-field">
+        {/* The box and its words are one target: `Checkbox` renders the label around the
+            input, which is what gives a flag the 44px row the list's checkboxes already had
+            and this one did not. */}
+        <Checkbox id={id} label={label} checked={Boolean(value)} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
         {/* A checkbox reads the same at a glance whether it is on or off; the words do not. */}
         <span className="console-note">
           {value ? labels['content.flag.on'] : labels['content.flag.off']}
@@ -547,14 +548,20 @@ function FieldRow({
   const pending = !disabled && !invalid && (field.kind === 'bi' ? isPendingIn(field, locale) : field.pending);
 
   return (
-    <div className="console-field" data-invalid={invalid || undefined}>
-      <label htmlFor={id}>
-        {label}
-        {field.kind === 'bi' ? <span className="console-field-locale">{labels[`content.locale.${locale}` as MessageKey]}</span> : null}
-        {pending ? <span className="console-chip">{labels['content.state.pending']}</span> : null}
-      </label>
+    <Field
+      htmlFor={id}
+      errors={errors}
+      note={field.immediate && !invalid ? <span className="console-note">{labels['content.immediate']}</span> : null}
+      label={
+        <>
+          {label}
+          {field.kind === 'bi' ? <span className="ui-label-note">{labels[`content.locale.${locale}` as MessageKey]}</span> : null}
+          {pending ? <span className="console-chip">{labels['content.state.pending']}</span> : null}
+        </>
+      }
+    >
       {field.multiline ? (
-        <textarea
+        <Textarea
           id={id}
           rows={field.kind === 'bi' && name === 'content' ? 14 : 6}
           value={text}
@@ -563,7 +570,7 @@ function FieldRow({
           onChange={(event) => onChange(event.target.value)}
         />
       ) : (
-        <input
+        <Input
           id={id}
           type={field.kind === 'number' ? 'number' : 'text'}
           value={text}
@@ -573,12 +580,6 @@ function FieldRow({
           onChange={(event) => onChange(event.target.value)}
         />
       )}
-      {errors.map((message) => (
-        <span key={message} className="console-field-error" role="alert">
-          {message}
-        </span>
-      ))}
-      {field.immediate && !invalid ? <span className="console-note">{labels['content.immediate']}</span> : null}
-    </div>
+    </Field>
   );
 }

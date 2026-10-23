@@ -341,14 +341,32 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
 
     // Measuring 13.3 caught a 36px column header, 34px saved-view halves and a search box
     // that dense lowered to 36px — all of which passed the count above. Every control the
-    // list adds takes `--tap` by name, and never the field token dense lowers.
-    for (const selector of ['.console-sort', '.console-chip-button', '.console-view-chip', '.console-chip-x', '.console-search', '.console-inline select', '.console-cards-head']) {
+    // list still paints itself takes `--tap` by name, and never the field token dense
+    // lowers. The two that used to be in this list — the search box and the per-page
+    // select — are `.ui-control[data-bar]` now, proved in the file that paints them.
+    for (const selector of ['.console-sort', '.console-chip-button', '.console-view-chip', '.console-chip-x', '.console-cards-head', '.console-editor-bar']) {
       const start = css.indexOf(`\n${selector} {`);
       expect(start, `${selector} is styled`).toBeGreaterThan(-1);
       expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--tap\)/);
     }
     expect(css).not.toMatch(/min-(?:height|inline-size|block-size): [12]\.[0-9]+rem/);
-    expect((css.match(/min-height: var\(--tap-field\)/g) ?? []).length).toBe(1);
+    // BK-19.3b moved the field floor out of this file entirely. A second copy of it is how
+    // a dense step meant for every form ends up applied to one pane and not the other.
+    expect(ui).toMatch(/\.ui-control\s*\{[^}]*min-height: var\(--tap-field\);/);
+    expect(ui).toMatch(/\.ui-control\[data-bar\]\s*\{[^}]*min-height: var\(--tap\);/);
+    expect(ui).toMatch(/\.ui-check\s*\{[^}]*min-block-size: var\(--tap\);/);
+    expect(css).not.toMatch(/min-height: var\(--tap-field\)/);
+    expect((css.match(/min-height: var\(--tap\)/g) ?? []).length).toBeGreaterThanOrEqual(3);
+
+    // Nothing may still paint a field by hand. Anchored to the start of a line because
+    // the comments in both files name the class they replaced — a rule is what must not
+    // come back, and prose about the old one is the thing that keeps it from coming back.
+    expect(css).not.toMatch(/^\.console-field[ ,{]/m);
+    expect(ui).not.toMatch(/^\.console-field[ ,{]/m);
+    for (const component of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
+      const source = readFileSync(join(process.cwd(), 'src/components/console', `${component}.tsx`), 'utf8');
+      expect(source, `${component} has no raw field markup`).not.toMatch(/<(input|textarea|select)\s/);
+    }
   });
 
   it('lets the drawer become visible in the frame it opens, not one later', () => {
@@ -767,10 +785,14 @@ describe('the editor pane is one row, edited (BK-13.4)', () => {
   });
 
   it('marks the field a message belongs to', () => {
-    expect(editor).toContain('aria-invalid');
-    expect(editor).toContain('data-invalid');
-    expect(editor).toMatch(/className="console-field-error" role="alert"/);
-    expect(css).toMatch(/\.console-field-error\s*\{[^}]*var\(--text-danger\)/);
+    // Which box a message lands on is the console's decision; how the box looks when it
+    // is wrong is the primitive's, and `ui-primitives.test.ts` proves that. What is
+    // proved here is the routing: the server's `issues` reach the field they name, and
+    // the console stops hand-painting the second a shared control takes over.
+    expect(editor).toMatch(/errors=\{issues\.byField\[name\] \?\? \[\]\}/);
+    expect(editor).toMatch(/aria-invalid=\{invalid \|\| undefined\}/);
+    expect(editor).toMatch(/<Field\s+htmlFor=\{id\}/);
+    expect(editor).not.toMatch(/console-field/);
   });
 
   it('leaves the row’s scope to the workspace', () => {

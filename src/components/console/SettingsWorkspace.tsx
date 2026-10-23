@@ -12,6 +12,7 @@
 import { useState } from 'react';
 import { consoleCall } from './client-api';
 import { Button } from '@/components/ui/Button';
+import { Field, Textarea } from '@/components/ui/Field';
 import type { MessageKey } from '@/lib/console/messages';
 import type { SettingView } from '@/lib/content/settings';
 
@@ -68,9 +69,8 @@ export function SettingsWorkspace({
             {row.secret ? (
               <p className="console-alert">{labels['content.secret']}</p>
             ) : (
-              <div className="console-field">
-                <label htmlFor={`setting-${id}`}>{id}</label>
-                <textarea
+              <Field label={id} htmlFor={`setting-${id}`}>
+                <Textarea
                   id={`setting-${id}`}
                   rows={6}
                   value={current}
@@ -82,7 +82,7 @@ export function SettingsWorkspace({
                     {labels['content.save']}
                   </Button>
                 )}
-              </div>
+              </Field>
             )}
             <p className="console-note">
               {labels['content.updated_at']}: {row.updatedAt.slice(0, 10)} · {labels['content.version']} {row.version}

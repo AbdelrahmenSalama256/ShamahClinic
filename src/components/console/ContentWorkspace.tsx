@@ -19,6 +19,7 @@
 import { useCallback, useState } from 'react';
 import { ConsoleEditor } from './ConsoleEditor';
 import { Button } from '@/components/ui/Button';
+import { Field, Input } from '@/components/ui/Field';
 import { ConsoleList } from './ConsoleList';
 import { consoleCall } from './client-api';
 import type { ContentScreenData, ContentScope } from '@/lib/console/content-screen';
@@ -157,10 +158,9 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
               void create();
             }}
           >
-            <div className="console-field">
-              <label htmlFor="new-key">{labels[`content.${data.keyColumn}` as MessageKey]}</label>
-              <input id="new-key" value={newKey} onChange={(event) => setNewKey(event.target.value)} placeholder={labels['content.identity_hint']} />
-            </div>
+            <Field label={labels[`content.${data.keyColumn}` as MessageKey]} htmlFor="new-key">
+              <Input id="new-key" value={newKey} onChange={(event) => setNewKey(event.target.value)} placeholder={labels['content.identity_hint']} />
+            </Field>
             <div className="console-controls">
               <Button type="submit" variant="primary" loading={busy} disabled={newKey.trim() === ''}>
                 {labels['content.create']}

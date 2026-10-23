@@ -573,54 +573,14 @@ details[open] > .console-nav-head .console-nav-caret {
   color: var(--text-secondary);
 }
 
-.console-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-block-end: 0.9rem;
-}
-
-.console-field label {
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
-}
-
-.console-field input,
-.console-field textarea {
-  padding: 0.5rem 0.7rem;
-  min-height: var(--tap-field);
-  border-radius: 0.6rem;
-  border: 1px solid var(--border-control-soft);
-  background: var(--bg-card-subtle);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--ui-font);
-}
-
-.console-field textarea {
-  min-height: 6rem;
-  resize: vertical;
-  width: 100%;
-  overflow-wrap: anywhere;
-}
-
-.console-field input:focus-visible,
-.console-field textarea:focus-visible {
-  outline: 2px solid var(--text-gold);
-  outline-offset: 1px;
-}
-
-.console-field input:disabled,
-.console-field textarea:disabled,
-.console-field textarea[readonly] {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-/* Buttons live in `src/components/ui/ui.css` now — one definition, both surfaces, and
- * the pressed state that used to be `.console-button[data-active]` is the primitive's
- * `data-active` too. Nothing here re-paints them: a surface override is how a 44px floor
- * quietly becomes 36px on the third screen someone adds. */
+/* Fields, controls and checkboxes live in `src/components/ui/ui.css` now (BK-19.3b), for
+ * both surfaces. What used to be here painted an input, a textarea, its own focus ring,
+ * its own radius and its own disabled step — six properties the site's forms also painted
+ * elsewhere with different numbers — and the palette's search box carried the wrapper
+ * class by mistake, so it got the wrapper's bottom margin and none of its skin: a bare
+ * native field at the top of the dialog. Nothing here re-paints them, for the same reason
+ * the buttons stopped being re-painted: a surface override is how one screen's 44px floor
+ * quietly becomes another's 36px. */
 
 .console-alert {
   margin-block: 0.75rem;
@@ -761,30 +721,10 @@ details[open] > .console-nav-head .console-nav-caret {
   margin-block-end: 0.9rem;
 }
 
-.console-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.console-field-flag label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-primary);
-  font-size: var(--ui-font);
-}
-
-.console-field-flag input {
-  inline-size: 1.05rem;
-  block-size: 1.05rem;
-}
-
-.console-field-locale {
-  margin-inline-start: 0.4rem;
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
-}
+/* The editor's field stack, its flag rows and the locale word inside a label are all in
+ * the control layer now — `.ui-fields`, `.ui-check`, `.ui-label-note`. The caption override
+ * that used to lift a flag's label back to body size went with them: a `Checkbox` label is
+ * body size by definition, which is the size the settings row's checkbox wanted anyway. */
 
 .console-history {
   margin-block-start: var(--ui-stack);
@@ -853,24 +793,12 @@ details[open] > .console-nav-head .console-nav-caret {
   font-weight: 600;
 }
 
+/* Only the sizing the bar gives it. The skin — boundary, radius, fill, the `--tap` floor
+ * it keeps when dense lowers the fields — is `.ui-control[data-bar]`, because this box and
+ * the one below the filters are the same control in the same situation. */
 .console-search {
   flex: 1 1 11rem;
   min-width: 0;
-  /* The bar's controls keep `--tap`, not `--tap-field`: dense lowers that
-     one to 36px for a form you type into, and this is a target you tap on a phone. */
-  min-height: var(--tap);
-  padding: 0.4rem 0.7rem;
-  border: 1px solid var(--border-control-soft);
-  border-radius: var(--radius-control);
-  background: var(--bg-card-subtle);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--ui-font);
-}
-
-.console-search::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  appearance: none;
 }
 
 .console-inline {
@@ -879,17 +807,6 @@ details[open] > .console-nav-head .console-nav-caret {
   gap: 0.4rem;
   font-size: var(--ui-font-small);
   color: var(--text-secondary);
-}
-
-.console-inline select {
-  min-height: var(--tap);
-  padding: 0.2rem 0.5rem;
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.6rem;
-  background: var(--bg-card-subtle);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--ui-font);
 }
 
 .console-views {
@@ -1031,14 +948,6 @@ details[open] > .console-nav-head .console-nav-caret {
   text-align: center;
 }
 
-.console-cell-check input,
-.console-card-check input {
-  inline-size: 1.25rem;
-  block-size: 1.25rem;
-  margin: 0;
-  vertical-align: middle;
-}
-
 .console-cell-extra {
   display: none;
 }
@@ -1047,12 +956,10 @@ details[open] > .console-nav-head .console-nav-caret {
   display: flex;
   min-block-size: var(--tap);
   align-items: center;
-}
-
-.console-cards-head .console-inline {
-  min-block-size: var(--tap);
+  /* The one number the deleted `.console-cards-head .console-inline` was adding: the
+   * select-all box now takes its floor and its cursor from `.ui-check`, and only this
+   * indent belongs to the head. */
   padding-inline: 0.4rem;
-  cursor: pointer;
 }
 
 .console-cards {
@@ -1079,22 +986,10 @@ details[open] > .console-nav-head .console-nav-caret {
   background: var(--bg-secondary);
 }
 
-.console-card-check {
-  display: flex;
-}
-
-/* A thumb aims at the box and misses its 17-pixel graphic, so the label — not the box —
-   is the target, and it keeps the same floor the chips and rows already keep.
-   `display` has to be a flex container: on the table's inline label, `min-block-size` is
-   ignored and the 44px written here measures 16. */
-.console-cell-check label,
-.console-card-check {
-  display: inline-flex;
-  place-items: center;
-  min-inline-size: var(--tap);
-  min-block-size: var(--tap);
-  cursor: pointer;
-}
+/* The row and card checkboxes are `.ui-check` now: the box's graphic is 20px, the label
+ * around it is the target, and the 44px floor it carries is the primitive's — which is how
+ * the editor's flag rows got a floor at all. `.console-cell-check` above still owns the
+ * column's width. */
 
 .console-card-body {
   flex: 1;
@@ -1213,15 +1108,11 @@ details[open] > .console-nav-head .console-nav-caret {
   border-color: var(--text-danger);
 }
 
-.console-field[data-invalid] :is(input, textarea, select) {
-  border-color: var(--text-danger);
-}
-
-.console-field-error {
-  color: var(--text-danger);
-  font-size: var(--ui-font-small);
-  overflow-wrap: anywhere;
-}
+/* An invalid field, its caption and its message are the control layer's — `.ui-field`
+ * carries `data-invalid`, `.ui-control` answers to `aria-invalid`, and `.ui-field-error`
+ * is the line under it. The editor pane adds nothing, which is the point: the list's
+ * create-form and the login screen use the same primitive and were painted by a rule that
+ * only reached `.console-field` descendants inside this pane. */
 
 /* The draft's own markup, inert: `sandbox=""` in the component gives the frame no origin,
    no scripts and no way to move the window, so no same-origin rule is needed here. */

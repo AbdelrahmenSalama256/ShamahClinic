@@ -6,6 +6,7 @@ import type { PalettePlace } from '@/lib/console/screens';
 import type { SearchHit } from '@/lib/console/search';
 import { consoleRead } from './client-api';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Field';
 
 export type PaletteLabels = {
   open: string;
@@ -123,9 +124,9 @@ export function ConsolePalette({ entries, labels }: Readonly<{ entries: PaletteP
         }}
       >
         <form method="dialog" className="console-palette-form" onSubmit={(event) => event.preventDefault()}>
-          <input
+          <Input
             ref={input}
-            className="console-field console-palette-input"
+            className="console-palette-input"
             type="search"
             value={term}
             placeholder={labels.placeholder}
