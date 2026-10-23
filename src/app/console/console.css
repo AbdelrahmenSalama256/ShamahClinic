@@ -137,7 +137,7 @@ html[data-theme='dark'] .console-body {
   min-height: var(--console-tap);
   padding: 0 0.8rem;
   border: 1px solid var(--border-control-soft);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-control);
   background: var(--bg-card-subtle);
   color: var(--text-primary);
   font-size: var(--console-font);
@@ -172,27 +172,31 @@ html[data-theme='dark'] .console-body {
   position: fixed;
   inset-block: 0;
   inset-inline-start: 0;
-  z-index: 40;
+  z-index: var(--z-drawer);
   width: min(20rem, 88vw);
   padding: 1rem 0.85rem 2rem;
   background: var(--bg-card);
   border-inline-end: 1px solid var(--border-control-soft);
-  box-shadow: 0 0 2.5rem rgb(0 0 0 / 25%);
+  box-shadow: var(--elev-3);
   overflow-y: auto;
   transform: var(--console-off);
   visibility: hidden;
-  /* `!important` because the site stylesheet animates `all` on `*` (globals.css), which
-     includes `visibility` — see the note under the open rule. */
-  transition: transform 0.18s ease !important;
+  /* `transform` only. A drawer that transitions `visibility` cannot hold focus the
+     frame it opens, and `ConsoleFrame` moves focus into it in the same task as the
+     click — this is the rule the old site-wide `transition: all !important` used to
+     break, and the reason it named `!important`. See the note under the open rule. */
+  transition: transform var(--dur-base) var(--ease-out);
 }
 
 /* Opened either by the frame's own state or by the URL fragment, which is the path a
    browser without JavaScript takes: the toggle is an <a href="#console-side">.
    Nothing here may transition `visibility`: an element inside a hidden subtree cannot
    take focus, and `ConsoleFrame` moves focus into the drawer in the same task as the
-   click. Measured twice — with `visibility 0s linear .18s`, and again with the site's
-   blanket `transition: all`, the drawer was still `hidden` a frame after it opened and
-   the focus call was a no-op. */
+   click. Measured twice — with `visibility 0s linear .18s`, and again while the site
+   stylesheet still carried a blanket `transition: all`, the drawer was still `hidden`
+   a frame after it opened and the focus call was a no-op. That blanket rule is gone —
+   globals.css names its transitions now — so the drawer no longer has to outrank it
+   with `!important`, and cannot, because naming `transform` is the whole point. */
 .console-frame[data-nav='open'] .console-side,
 .console-side:target {
   visibility: visible;
@@ -365,7 +369,7 @@ html[data-theme='dark'] .console-body {
   border-block-end: 2px solid var(--text-secondary);
   /* closed points forward (right in LTR, left in RTL), open points down */
   transform: rotate(-45deg);
-  transition: transform 0.12s ease;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 
 [dir='rtl'] .console-nav-caret {
@@ -406,8 +410,9 @@ details[open] > .console-nav-head .console-nav-caret {
   padding: 0;
   color: var(--text-primary);
   background: var(--bg-card);
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.9rem;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-surface);
+  box-shadow: var(--elev-3);
 }
 
 .console-palette::backdrop {
@@ -514,8 +519,9 @@ details[open] > .console-nav-head .console-nav-caret {
 
 .console-card {
   background: var(--bg-card);
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.9rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
+  box-shadow: var(--elev-1);
   padding: var(--console-pad) calc(var(--console-pad) + 0.05rem);
 }
 
@@ -532,8 +538,9 @@ details[open] > .console-nav-head .console-nav-caret {
 
 .console-panel {
   background: var(--bg-card);
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.9rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
+  box-shadow: var(--elev-1);
   padding: var(--console-pad);
   margin-block-end: var(--console-stack);
   max-width: var(--console-panel-w);
@@ -622,7 +629,7 @@ details[open] > .console-nav-head .console-nav-caret {
   gap: 0.4rem;
   min-height: var(--console-tap);
   padding: 0.4rem 0.9rem;
-  border-radius: 0.65rem;
+  border-radius: var(--radius-control);
   border: 1px solid var(--border-control-soft);
   background: var(--bg-card);
   color: var(--text-primary);
@@ -892,7 +899,7 @@ details[open] > .console-nav-head .console-nav-caret {
   min-height: var(--console-tap);
   padding: 0.4rem 0.7rem;
   border: 1px solid var(--border-control-soft);
-  border-radius: 0.65rem;
+  border-radius: var(--radius-control);
   background: var(--bg-card-subtle);
   color: var(--text-primary);
   font: inherit;
@@ -978,10 +985,10 @@ details[open] > .console-nav-head .console-nav-caret {
   align-items: center;
   gap: var(--console-gap-tight);
   padding: 0.5rem 0.7rem;
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.65rem;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-control);
   background: var(--bg-card);
-  box-shadow: 0 0.25rem 0.75rem rgb(0 0 0 / 12%);
+  box-shadow: var(--elev-2);
 }
 
 .console-bulk .console-count {
@@ -993,8 +1000,8 @@ details[open] > .console-nav-head .console-nav-caret {
   max-block-size: var(--console-list-h);
   overflow: auto;
   scrollbar-width: thin;
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.9rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
   background: var(--bg-card);
 }
 
@@ -1145,8 +1152,8 @@ details[open] > .console-nav-head .console-nav-caret {
 
 .console-row-skeleton {
   min-height: var(--console-tap);
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.65rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
   background: linear-gradient(90deg, var(--bg-card-subtle) 25%, var(--bg-secondary) 50%, var(--bg-card-subtle) 75%);
   background-size: 200% 100%;
   animation: console-shimmer 1.2s linear infinite;
@@ -1259,8 +1266,8 @@ details[open] > .console-nav-head .console-nav-caret {
 .console-preview-frame {
   inline-size: 100%;
   min-height: 20rem;
-  border: 1px solid var(--border-control-soft);
-  border-radius: 0.65rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
   background: var(--bg-card);
 }
 

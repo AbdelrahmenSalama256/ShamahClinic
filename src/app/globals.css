@@ -4,7 +4,11 @@
   /* Warm luxury palette - never sterile hospital white */
   --bg-primary: #faf7f2;
   --bg-secondary: #f4ece4;
-  --bg-card: #ffffff;
+  /* The one surface that was pure `#ffffff`. On an ivory page a white card reads as a
+     hole punched in the theme rather than something resting on it, and every
+     `bg-white` in the dark palette is re-pointed here, so the warm stop is the only
+     thing that had to move. Text ratios are measured in docs/contrast-report.md. */
+  --bg-card: #fffcf8;
   --bg-card-subtle: #fdfbf8;
   --bg-dark: #191412;
   --bg-dark-card: #241d1a;
@@ -13,7 +17,9 @@
   --text-secondary: #6b5e57;
   --text-muted: #6e675c;
   --text-inverse: #faf7f2;
-  --text-gold: #c9a227;
+  /* Gold is readable as text only at `--gold-end` strength; the mid stop is a surface
+     colour, not an ink. See docs/contrast-report.md. */
+  --text-gold: #85640f;
 
   /* Signature Gold Gradient */
   --gold-start: #d8b237;
@@ -21,9 +27,6 @@
   --gold-end: #85640f;
   --gold-glow: rgba(201, 162, 39, 0.25);
   --gold-border: rgba(133, 100, 15, 0.8);
-
-  /* Gold is readable as text only at --gold-end strength. */
-  --text-gold: #85640f;
 
   /* --------------------------------------------
      Semantic button pairs. A surface and its ink always
@@ -109,6 +112,82 @@
   --radius-lg: 1rem;
   --radius-xl: 1.5rem;
   --radius-2xl: 2rem;
+
+  /* --------------------------------------------
+     The token layer (BK-19.1). One place, read by both surfaces.
+
+     Colour is NOT here: `siteTheme` in `src/config/site.ts` paints the colour
+     variables as an inline style on `<html>` (that is what makes the console's
+     `data-theme` flip happen with no script and no flash), and the values above
+     are the fallback for a document that renders without it. What follows is the
+     part of the system that does not change with the palette — a 4px spacing
+     scale, the two radii the console already used by hand, warm-tinted elevation,
+     a 1px hairline that is quieter than a control border, and named durations and
+     easing curves — plus the theme-dependent members of that set, re-pointed
+     under `html[data-theme="dark"]` below.
+
+     A token here earns its place by having a consumer today, not by anticipating
+     one. `--hairline`, `--elev-1/2/3`, `--dur-*` and `--ease-*` are read by
+     `console.css`; when the site sections take them in 19.7 they take these names.
+     -------------------------------------------- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
+  --sp-20: 5rem;
+  --sp-24: 6rem;
+
+  /* The two the console drew by hand before this existed. Named by what they round,
+     so a control and the surface it sits on cannot drift a pixel apart. */
+  --radius-control: 0.65rem;
+  --radius-surface: 0.9rem;
+  --radius-pill: 9999px;
+
+  /* Boundaries. A control needs a border that meets 3:1 against its surface
+     (`--border-control-soft`); a card, a panel or a table wrap needs a hairline that
+     only says "this is one object". Those are different requirements and were being
+     answered by the same value, which is why every panel looked outlined in gold. */
+  --hairline: rgba(33, 26, 22, 0.1);
+  --hairline-strong: rgba(33, 26, 22, 0.16);
+  --hairline-gold: rgba(133, 100, 15, 0.22);
+
+  /* Elevation, warm because the brand is: black-on-cream shadows read as dirt. */
+  --elev-1: 0 0.0625rem 0.125rem rgb(33 26 22 / 5%), 0 0.25rem 0.5rem rgb(33 26 22 / 6%);
+  --elev-2: 0 0.125rem 0.25rem rgb(33 26 22 / 6%), 0 0.5rem 1rem rgb(33 26 22 / 9%),
+    0 1.25rem 2rem rgb(33 26 22 / 7%);
+  --elev-3: 0 0.25rem 0.5rem rgb(33 26 22 / 8%), 0 1.25rem 2.5rem rgb(33 26 22 / 13%),
+    0 2.5rem 5rem rgb(33 26 22 / 12%);
+  --glow-gold: 0 0 0 0.0625rem var(--gold-glow), 0 0.5rem 1.5rem var(--gold-glow);
+  --blur-glass: 14px;
+  --glass-surface: rgba(250, 247, 242, 0.72);
+  --glass-border: rgba(133, 100, 15, 0.18);
+
+  /* Stacking, so a toast and a drawer cannot each invent their own number. */
+  --z-sticky: 30;
+  --z-scrim: 35;
+  --z-drawer: 40;
+  --z-drop: 60;
+  --z-modal: 70;
+  --z-palette: 75;
+  --z-toast: 80;
+
+  /* Motion. 150–400ms, easing that leaves the value it started from fast. The
+     blanket `transition: all` these replace could not be given a duration at all
+     without also animating width, padding and visibility. */
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 340ms;
+  --dur-reveal: 500ms;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   /* var(--tw-leading, var(--text-xs--line-height)) */
   --line-height: 1.5;
   --line-height-sm: 1.25;
@@ -140,7 +219,34 @@
 
 * {
   box-sizing: border-box;
-  transition: all 0.3s ease-in-out !important;
+}
+/* Hover polish, named. This block used to be `* { transition: all 0.3s ease-in-out
+   !important }`, which did four things nobody wanted: it animated layout properties
+   (`width`, `padding`, `visibility`) so every state change cost a reflow; its
+   `!important` outranked every Tailwind `transition-*`/`duration-*` utility, so the
+   site's own components could not ask for a different curve; it gave a drawer no way
+   to stop transitioning `visibility`, which is why `console.css` had to fight it with
+   another `!important`; and it made a theme toggle unverifiable, because "all"
+   includes the properties a CLS audit measures. The names below are the ones a
+   control actually changes state in — transform and opacity included, so nothing that
+   animated before stops animating now. */
+a,
+button,
+input,
+select,
+textarea,
+summary,
+label,
+[role="button"],
+[role="link"],
+[tabindex] {
+  transition:
+    color var(--dur-base) var(--ease-out),
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-base) var(--ease-out),
+    opacity var(--dur-base) var(--ease-out);
 }
 img {
   width: 100% !important;
@@ -150,7 +256,6 @@ html {
   scroll-behavior: smooth;
   /* Anchors and focus jumps must land below the sticky header. */
   scroll-padding-top: calc(var(--nav-height) + 0.5rem);
-  transition: all 0.3s ease-in-out !important;
 }
 
 body {
@@ -169,6 +274,21 @@ html[data-theme="dark"] body {
 
 html[data-theme="dark"] {
   color-scheme: dark;
+  /* The theme-dependent half of the token layer. `siteTheme.dark` re-points the
+     colours; these are the ones a dark palette cannot borrow: a hairline that was
+     10% black vanishes on charcoal, and a shadow tinted with the page's own warm
+     brown is not a shadow on charcoal at all. Same names, same roles, one stop
+     lifted. */
+  --hairline: rgba(245, 238, 230, 0.12);
+  --hairline-strong: rgba(245, 238, 230, 0.2);
+  --hairline-gold: rgba(213, 180, 70, 0.28);
+  --elev-1: 0 0.0625rem 0.125rem rgb(0 0 0 / 30%), 0 0.25rem 0.5rem rgb(0 0 0 / 24%);
+  --elev-2: 0 0.125rem 0.25rem rgb(0 0 0 / 32%), 0 0.5rem 1rem rgb(0 0 0 / 26%),
+    0 1.25rem 2rem rgb(0 0 0 / 22%);
+  --elev-3: 0 0.25rem 0.5rem rgb(0 0 0 / 36%), 0 1.25rem 2.5rem rgb(0 0 0 / 30%),
+    0 2.5rem 5rem rgb(0 0 0 / 26%);
+  --glass-surface: rgba(33, 30, 27, 0.72);
+  --glass-border: rgba(213, 180, 70, 0.22);
 }
 
 /* The header surface comes from --nav-surface, which flips with the theme. */
@@ -554,7 +674,6 @@ a[class*="rounded-full"]:has(> svg, span),
 a[class*="items-center"]:has(> svg, span) {
   font-size: 12px;
   line-height: 1.5;
-  transition: all 0.3s ease-in-out !important;
 }
 
 @media (min-width: 480px) {

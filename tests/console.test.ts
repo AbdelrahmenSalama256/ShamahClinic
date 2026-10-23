@@ -19,6 +19,7 @@ import { loadGrants } from '../src/lib/auth/sessions';
 import { ROLE_SEEDS, SITE_LOCALES, LIST_KEYS, permissionsFor, type RoleName } from '../src/lib/auth/roles';
 import type { Grant } from '../src/lib/auth/permissions';
 import { decideRoute, isConsolePath } from '../src/lib/site-routing';
+import { siteTheme } from '../src/config/site';
 import { callResult } from '../src/components/console/client-api';
 import {
   DEFAULT_PREFS,
@@ -306,6 +307,7 @@ describe('the console is not the site', () => {
 
 describe('the shell reaches every screen at every width (BK-13.1)', () => {
   const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
+  const globalsText = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
   const frame = readFileSync(join(process.cwd(), 'src/components/console/ConsoleFrame.tsx'), 'utf8');
 
   it('has a sidebar column, an off-canvas drawer and a phone tab bar', () => {
@@ -343,13 +345,61 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
   });
 
   it('lets the drawer become visible in the frame it opens, not one later', () => {
-    // `globals.css` puts `transition: all .3s !important` on `*`, and `all` covers
-    // `visibility`. A still-hidden drawer cannot hold focus, and `ConsoleFrame` moves
-    // focus into it in the same task as the click, so the drawer has to win that
-    // `!important`. Measured on the built console: without it, focus stayed on `body`.
+    // A drawer that transitions `visibility` is still `hidden` a frame after it opens,
+    // and focus cannot enter a hidden subtree — `ConsoleFrame` moves focus in the same
+    // task as the click, so this rule is the difference between a working drawer and a
+    // dead one. It used to be proved by the drawer carrying `!important` to outrank the
+    // site's blanket `transition: all .3s !important` on `*`. BK-19.1 removed that
+    // blanket rule, so the assertion is now the negative: it must not come back, and the
+    // drawer must still name `transform` and nothing else.
     const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
-    expect(globals).toMatch(/transition: all 0\.3s ease-in-out !important/);
-    expect(css).toMatch(/\.console-side\s*\{[^}]*transition: transform 0\.18s ease !important/);
+    // `[^;]` alone would also match across the lines of the comment that explains what
+    // used to be here, so the pattern is anchored to one declaration.
+    expect(globals).not.toMatch(/transition: all [^;\n]*!important/);
+    // The replacement is a named list, so a state change cannot touch a layout property.
+    expect(globals).toMatch(/transition:\s+color var\(--dur-base\) var\(--ease-out\),/);
+    expect(globals).toMatch(/transform var\(--dur-base\) var\(--ease-out\),/);
+    expect(css).toMatch(/\.console-side\s*\{[^}]*transition: transform var\(--dur-base\) var\(--ease-out\);/);
+  });
+
+  it('keeps one set of numbers behind both surfaces', () => {
+    // The console and the site already read the same palette; what BK-19.1 added is the
+    // part that does not travel with colour — the spacing scale, the two radii the
+    // console drew by hand, elevation, hairlines and the named motion curves. They live
+    // in one file. A token that changes with the theme is defined twice there on
+    // purpose (`:root` and `html[data-theme="dark"]`); one that does not may be defined
+    // once, and a screen that reaches for a raw number instead is the start of a second
+    // system nobody maintains.
+    for (const token of ['--sp-1', '--sp-4', '--sp-8', '--radius-control', '--radius-surface', '--radius-pill',
+      '--z-sticky', '--z-scrim', '--z-drawer', '--z-drop', '--z-modal', '--z-palette', '--z-toast',
+      '--dur-fast', '--dur-base', '--dur-slow', '--dur-reveal', '--ease-out', '--ease-in-out', '--ease-spring']) {
+      expect((globalsText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} defined once`).toBe(1);
+    }
+    for (const token of ['--hairline', '--hairline-strong', '--hairline-gold', '--elev-1', '--elev-2', '--elev-3',
+      '--glass-surface', '--glass-border']) {
+      expect((globalsText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} light + dark`).toBe(2);
+    }
+    // Every one the console reads must be a token, not a literal it invented.
+    expect(css).not.toMatch(/border-radius: 0\.(65|9)rem/);
+    expect(css).not.toMatch(/transition: transform 0?\.\d+s/);
+    expect(css).toMatch(/border: 1px solid var\(--hairline\)/);
+    expect(css).toMatch(/box-shadow: var\(--elev-3\)/);
+  });
+
+  it('keeps the fallback palette and the painted palette in step', () => {
+    // `globals.css` `:root` is the fallback; `siteTheme.light` is the inline style the
+    // three document roots paint. A colour that disagrees between the two is a colour
+    // that changes on whichever document forgets the style attribute — and the one that
+    // can forget it is the error page, which is the worst place to discover a theme bug.
+    const root = globalsText.slice(globalsText.indexOf(':root {'), globalsText.indexOf('@theme inline'));
+    let compared = 0;
+    for (const [name, value] of Object.entries(siteTheme.light as Record<string, string>)) {
+      const at = root.indexOf(`\n  ${name}:`);
+      if (at === -1) continue; // painted by the inline style only — no fallback to drift
+      expect(root.slice(at).startsWith(`\n  ${name}: ${value};`), `${name} matches the fallback`).toBe(true);
+      compared += 1;
+    }
+    expect(compared).toBeGreaterThan(30);
   });
 
   it('decides density on the server, from the prefs', () => {

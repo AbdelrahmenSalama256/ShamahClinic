@@ -95,7 +95,7 @@ export const siteTheme = {
   light: {
     "--bg-primary": "#faf7f2",
     "--bg-secondary": "#f4ece4",
-    "--bg-card": "#ffffff",
+    "--bg-card": "#fffcf8",
     "--bg-card-subtle": "#fdfbf8",
     "--bg-dark": "#191412",
     "--bg-dark-card": "#241d1a",
