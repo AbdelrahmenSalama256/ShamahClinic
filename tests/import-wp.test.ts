@@ -12,6 +12,10 @@
  *   - re-running the import is a no-op: a row that already says what the snapshot
  *     says gets no new draft, no new revision and no new publish.
  *
+ * 7.5 added the 56 result stories, which are `list_item` rows in the console's own
+ * `results` list: membership is then the list's to decide, so an editor who disables
+ * a row hides it from `/results` even though the snapshot file still names it.
+ *
  * Cleanup deletes exactly the rows the import wrote (matched by their snapshot keys),
  * so the database is left holding nothing published and the other suites' rungs are
  * untouched.
@@ -21,10 +25,11 @@ import { db, destroyDb } from '../src/lib/db';
 import { assertTestDb } from '../src/lib/db/guard';
 import { readDbConfig } from '../src/lib/db/index';
 import { kindSpec, parseWrites, type ContentLocale } from '../src/lib/content/kinds';
-import { importSnapshot, planArticles, planCategories, planDocs, planOffers, planPages, type ImportReport } from '../src/lib/content/import-wp';
+import { importSnapshot, planArticles, planCategories, planDocs, planOffers, planPages, planResultStories, type ImportReport } from '../src/lib/content/import-wp';
+import { syncLists } from '../src/lib/content/lists';
 import { hasPublished } from '../src/lib/content/published';
-import { getAllArticles, getAllOffers, getAllPages, getOffer } from '../src/lib/content/site';
-import { readSnapshot } from '../src/lib/wp/snapshot';
+import { getAllArticles, getAllOffers, getAllPages, getOffer, getResultStories, type ResultStory } from '../src/lib/content/site';
+import { readSnapshot, snapshotResultStories } from '../src/lib/wp/snapshot';
 import * as wp from '../src/lib/wp';
 
 let dryRun: ImportReport;
@@ -33,25 +38,49 @@ let rerun: ImportReport;
 let beforeDry: Awaited<ReturnType<typeof counts>>;
 let afterDry: Awaited<ReturnType<typeof counts>>;
 
-async function counts(): Promise<{ article: number; offer: number; page: number; category: number }> {
-  const [article, offer, page, category] = await Promise.all([
+async function counts(): Promise<{ article: number; offer: number; page: number; category: number; results: number }> {
+  const list = await db.selectFrom('lists').select('id').where('list_key', '=', 'results').executeTakeFirst();
+  const [article, offer, page, category, results] = await Promise.all([
     db.selectFrom('articles').select('id').execute(),
     db.selectFrom('offers').select('id').execute(),
     db.selectFrom('pages').select('id').execute(),
     db.selectFrom('categories').select('id').execute(),
+    list ? db.selectFrom('list_items').select('id').where('list_id', '=', list.id).execute() : Promise.resolve([]),
   ]);
-  return { article: article.length, offer: offer.length, page: page.length, category: category.length };
+  return { article: article.length, offer: offer.length, page: page.length, category: category.length, results: results.length };
+}
+
+/** The `results` list the import writes into — `npm run db:seed` normally creates it. */
+async function resultsListId(): Promise<string | null> {
+  const row = await db.selectFrom('lists').select('id').where('list_key', '=', 'results').executeTakeFirst();
+  return row?.id ?? null;
+}
+
+/** The page clamp is 30, so the whole journal is read a page at a time. */
+async function everyStory(): Promise<ResultStory[]> {
+  const items: ResultStory[] = [];
+  for (let page = 1; ; page += 1) {
+    const paged = await getResultStories({ page, perPage: 30 });
+    items.push(...paged.items);
+    if (!paged.hasMore) return items;
+  }
 }
 
 /** Exactly what the import can write — the same keys, so no fixture is ever touched. */
 async function purge(): Promise<void> {
   const docs = planDocs();
-  const slugs = docs.filter((doc) => doc.kind !== 'page').map((doc) => doc.key);
+  const slugs = docs.filter((doc) => doc.kind !== 'page' && doc.kind !== 'list_item').map((doc) => doc.key);
   const routes = docs.filter((doc) => doc.kind === 'page').map((doc) => doc.key);
+  const stories = docs.filter((doc) => doc.kind === 'list_item').map((doc) => doc.key);
+  const listId = await resultsListId();
+  const items = listId && stories.length > 0
+    ? await db.selectFrom('list_items').select('id').where('list_id', '=', listId).where('uid', 'in', stories).execute()
+    : [];
   const ids = [
     ...(await db.selectFrom('articles').select('id').where('slug', 'in', slugs).execute()),
     ...(await db.selectFrom('offers').select('id').where('slug', 'in', slugs).execute()),
     ...(await db.selectFrom('pages').select('id').where('route', 'in', routes).execute()),
+    ...items,
   ].map((row) => row.id);
 
   await db.deleteFrom('articles').where('slug', 'in', slugs).execute();
@@ -61,6 +90,7 @@ async function purge(): Promise<void> {
     .deleteFrom('categories')
     .where('slug', 'in', planCategories().map((doc) => doc.slug))
     .execute();
+  if (items.length > 0) await db.deleteFrom('list_items').where('id', 'in', items.map((row) => row.id)).execute();
   if (ids.length > 0) await db.deleteFrom('revisions').where('entity_id', 'in', ids).execute();
 }
 
@@ -68,6 +98,9 @@ beforeAll(async () => {
   assertTestDb();
   await purge();
   const database = readDbConfig().database;
+  // Idempotent, and the same call `npm run db:seed` makes: the import needs the list
+  // row to exist, and says so with one skipped entry rather than 56 when it does not.
+  await syncLists({ dryRun: false, database });
   beforeDry = await counts();
   dryRun = await importSnapshot({ apply: false, database });
   afterDry = await counts();
@@ -90,6 +123,9 @@ describe('the snapshot mapped to console rows', () => {
     expect(planArticles()).toHaveLength(readSnapshot<unknown[]>('posts-list', 'en')?.length ?? 0);
     expect(planOffers()).toHaveLength(readSnapshot<unknown[]>('products', 'en')?.length ?? 0);
     expect(planPages()).toHaveLength(readSnapshot<unknown[]>('pages-list', 'en')?.length ?? 0);
+    expect(planResultStories()).toHaveLength(snapshotResultStories().length);
+    // The story rows name a post id, which is what the article card carries.
+    expect(planResultStories().every((doc) => doc.listKey === 'results' && /^\d+$/.test(doc.key))).toBe(true);
     expect(docs.every((doc) => doc.legacyId.length > 0)).toBe(true);
   });
 
@@ -134,7 +170,47 @@ describe('the imported rows answer the site', () => {
     expect(await hasPublished('article')).toBe(true);
     expect(await hasPublished('offer')).toBe(true);
     expect(await hasPublished('page')).toBe(true);
+    expect(await hasPublished('list_item', { listKey: 'results' })).toBe(true);
     expect(applied.categories.created).toBe(planCategories().length);
+  });
+
+  it('shows the same result stories, now chosen by the list rather than the file', async () => {
+    const index = new Map(snapshotResultStories().map((story) => [story.id, story.phrases]));
+    const stories = await everyStory();
+    const cards = new Map((await getAllArticles()).map((card) => [card.id, card]));
+    const expected = [...index.keys()].filter((id) => cards.has(id));
+    expect(stories.map((story) => story.card.id).sort((a, b) => a - b)).toEqual(expected.sort((a, b) => a - b));
+    // The phrases come back through a JSON column, so they are compared by what they
+    // say rather than by the identity the snapshot's array had in memory.
+    const fromDatabase = new Map(stories.map((story) => [story.card.id, story.phrases]));
+    for (const id of expected) expect(fromDatabase.get(id)).toEqual(index.get(id));
+  });
+
+  it('takes the list off the snapshot, so hiding a story hides it', async () => {
+    const listId = await resultsListId();
+    if (!listId) throw new Error('the results list row is missing');
+    const shown = await everyStory();
+    const total = (await getResultStories({ page: 1, perPage: 30 })).total;
+    const victim = shown[0];
+    const row = await db
+      .selectFrom('list_items')
+      .select(['id', 'enabled'])
+      .where('list_id', '=', listId)
+      .where('uid', '=', String(victim.card.id))
+      .executeTakeFirst();
+    if (!row) throw new Error(`${victim.card.id} imported no list row`);
+
+    try {
+      await db.updateTable('list_items').set({ enabled: 0 }).where('id', '=', row.id).execute();
+      const hidden = await everyStory();
+      expect(hidden.some((story) => story.card.id === victim.card.id)).toBe(false);
+      expect((await getResultStories({ page: 1, perPage: 30 })).total).toBe(total - 1);
+      // The file still names it, so a snapshot answer would have kept showing it.
+      expect(snapshotResultStories().some((entry) => entry.id === victim.card.id)).toBe(true);
+    } finally {
+      await db.updateTable('list_items').set({ enabled: row.enabled }).where('id', '=', row.id).execute();
+    }
+    expect((await everyStory()).length).toBe(shown.length);
   });
 
   it('renders the same journal the snapshot rendered, article for article', async () => {
@@ -239,5 +315,6 @@ describe('re-running the import', () => {
     expect(stored.offer).toBe(planOffers().length);
     expect(stored.page).toBe(planPages().length);
     expect(stored.category).toBe(planCategories().length);
+    expect(stored.results).toBe(planResultStories().length);
   });
 });

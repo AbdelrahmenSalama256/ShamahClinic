@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ResultsClient } from "@/components/pages/ResultsClient";
-import { getResultStories } from "@/lib/wp/result-stories";
+import { getResultStories } from "@/lib/content/site";
 import { cardToUIArticle } from "@/lib/wp/ui";
 import { getLocalizedHref } from "@/lib/locale";
 import { SITE_URL } from "@/lib/site";

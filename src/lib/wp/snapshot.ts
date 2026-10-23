@@ -6,7 +6,9 @@ import type { Lang } from "./types";
  * The committed WordPress snapshot (`data/wp/*.json`, produced by `npm run sync:wp`).
  *
  * `next build` reads ONLY from here — zero requests reach the client's production
- * WordPress. At runtime the live API is preferred and this is the fallback.
+ * WordPress. Since BK-7.3 the site asks the database first and this is the fallback,
+ * and BK-7.5 is the work that retires the fallback read by read: nothing here is ever
+ * fetched from the network at runtime.
  */
 const DIR = path.join(process.cwd(), "data", "wp");
 

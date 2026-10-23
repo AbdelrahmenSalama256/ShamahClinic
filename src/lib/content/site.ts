@@ -26,6 +26,7 @@ import { arabicRatio, hrefPair } from '../wp/lang';
 import { decodeEntities, firstParagraph, htmlToText, sanitizeHtmlBody } from '../wp/sanitize';
 import { toPhotoSlot } from '../wp/ui-helpers';
 import { heroPhotos } from '../wp/hero';
+import { storyPhraseIndex } from '../wp/result-stories';
 import { parseHomeProse, splitHomeProse, type BilingualHomeBlock } from '../wp/home-prose';
 import { homeIntroFallback } from '../../data/about';
 import type { PhotoSlot } from '../images';
@@ -598,6 +599,47 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
         .filter((card): card is ServiceCard => card !== null),
     () => wp.getServiceCards(),
   );
+}
+
+// --- result stories -----------------------------------------------------------
+
+/**
+ * A result story is an article whose own text names an outcome, so its card comes
+ * from `getAllArticles()` and only its **membership** has a rung: the `results` list
+ * the console edits, or the phrase index the snapshot derived from post bodies.
+ *
+ * The rows are keyed by the WordPress post id — the number `numericId` puts on the
+ * card — because an article's slug can be renamed while its id cannot, and the list
+ * is a statement about the post, not about its URL. `phrases` is the provenance the
+ * phrase index carried: why a post was called a story. Nothing on the page renders it.
+ */
+export interface ResultStory {
+  card: ArticleCard;
+  phrases: string[];
+}
+
+async function resultStoryIndex(): Promise<Map<number, string[]>> {
+  return listRung(
+    'results',
+    async () =>
+      new Map(
+        (await publicRows('list_item', { listKey: 'results' }))
+          .filter((row) => flag(row, 'enabled'))
+          .map((row) => {
+            const id = Number(row.key);
+            return [id, docStrings(documentOf(row) ?? {}, 'phrases').en] as [number, string[]];
+          })
+          // A row an editor typed by hand may name nothing; it cannot be a story.
+          .filter(([id]) => Number.isInteger(id)),
+      ),
+    async () => storyPhraseIndex(),
+  );
+}
+
+export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory>> {
+  const [index, cards] = await Promise.all([resultStoryIndex(), getAllArticles()]);
+  const stories = cards.filter((card) => index.has(card.id)).map((card) => ({ card, phrases: index.get(card.id)! }));
+  return wp.paginate(stories, q.page, q.perPage);
 }
 
 // --- settings -----------------------------------------------------------------

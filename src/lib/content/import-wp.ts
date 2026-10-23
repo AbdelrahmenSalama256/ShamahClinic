@@ -1,5 +1,5 @@
 /**
- * Bringing the WordPress content into the console's tables (BK-7.2).
+ * Bringing the WordPress content into the console's tables (BK-7.2, extended by 7.5).
  *
  * The source is the frozen snapshot in `data/wp/*.json` — the same files the site's
  * fallback rung reads — so an import is reproducible offline and never asks the
@@ -7,6 +7,11 @@
  * the list, the slugs and the prices; Arabic rows carrying the same WordPress id
  * supply the other locale, which is how TranslatePress keeps one article across the
  * two subsites.
+ *
+ * Four plans, not three: the articles, offers and pages 7.2 imported, plus the result
+ * stories' membership. A story *is* an article, so its row copies no text — it is a
+ * `results` list item naming the post id, which is how `/results` stops deciding what
+ * to show from a file the console cannot edit.
  *
  * Three rules make the result editable rather than merely stored:
  *   - the row keeps its WordPress id in `legacy_id`, because the site's cards key on
@@ -25,23 +30,25 @@ import { randomUUID } from 'node:crypto';
 import { db } from '../db';
 import { minorToDecimal } from '../wp/mappers';
 import { mirrorSrc } from '../wp/mirror';
-import { readSnapshot, snapshotMedia, snapshotMeta } from '../wp/snapshot';
+import { readSnapshot, snapshotMedia, snapshotMeta, snapshotResultStories } from '../wp/snapshot';
 import { bestImageSrc } from '../wp/sanitize';
 import type { WCStoreProduct, WPTerm } from '../wp/types';
 import { kindSpec, parseWrites, type ContentKind, type ContentLocale } from './kinds';
 import { publishRow } from './publish';
-import { createRow, getRow, saveDraft, type ContentRow } from './store';
+import { createRow, getRow, listIdForKey, saveDraft, type ContentRow } from './store';
 
-/** Kinds this import knows: a list item has no WordPress equivalent to map from. */
-export type ImportKind = Exclude<ContentKind, 'list_item'>;
+/** Every kind the snapshot can speak for, list items included since 7.5. */
+export type ImportKind = ContentKind;
 
 export interface ImportDoc {
   kind: ImportKind;
-  /** the row's public identity: an article slug, an offer slug or a page route */
+  /** the row's public identity: an article slug, an offer slug, a page route, a list item uid */
   key: string;
   legacyId: string;
   /** when WordPress published it, so the site keeps showing the same date */
   at: Date;
+  /** a list item belongs to one of the seeded lists; no other kind carries it */
+  listKey?: string;
   /** one article's category, as the snapshot's term slug; resolved to a row id on write */
   categorySlug?: string;
   fields: Partial<Record<ContentLocale, Record<string, unknown>>>;
@@ -246,8 +253,36 @@ export function planPages(): ImportDoc[] {
   });
 }
 
+/**
+ * `/results` membership, as the console's own list.
+ *
+ * The uid is the WordPress post id the article card already carries: a slug can be
+ * renamed by an editor, an id cannot, and the row is a statement about the post rather
+ * than about its URL. Its document holds only the phrases that made it a story — the
+ * title, cover and excerpt belong to the article, so a reworded story is fresh without
+ * touching this list.
+ *
+ * One locale is enough because a list item is a single JSON document: the columns it
+ * fills are shared by both languages, which is what the console's own writes do.
+ */
+export function planResultStories(): ImportDoc[] {
+  const dates = byId(rows<SnapshotPost>('posts-list', 'en'));
+  const published = snapshotPublishedAt();
+  return snapshotResultStories().map((story, index) => {
+    const post = dates.get(story.id);
+    return {
+      kind: 'list_item' as const,
+      listKey: 'results',
+      key: String(story.id),
+      legacyId: String(story.id),
+      at: post ? asUtc(post.date) : published,
+      fields: { ar: { data: { phrases: story.phrases }, enabled: true, position: index } },
+    };
+  });
+}
+
 export function planDocs(): ImportDoc[] {
-  return [...planArticles(), ...planOffers(), ...planPages()];
+  return [...planArticles(), ...planOffers(), ...planPages(), ...planResultStories()];
 }
 
 // --- writing -------------------------------------------------------------------
@@ -284,17 +319,19 @@ interface SelectShape {
   executeTakeFirst(): Promise<Record<string, unknown> | undefined>;
 }
 
-async function findExisting(kind: ImportKind, key: string): Promise<ExistingRow | null> {
+async function findExisting(kind: ImportKind, key: string, listId?: string): Promise<ExistingRow | null> {
   const spec = kindSpec(kind);
-  // One query builder over three tables, so the column name the spec supplies is
+  // One query builder over four tables, so the column name the spec supplies is
   // handed to the narrow shape `./store.ts` uses for the same reason.
-  const row = await (db.selectFrom(spec.table) as unknown as SelectShape)
+  let query: SelectShape = (db.selectFrom(spec.table) as unknown as SelectShape)
     .select('id')
     .select('status')
-    .select('legacy_id')
-    .where(spec.keyColumn, '=', key)
-    .where('deleted_at', 'is', null)
-    .executeTakeFirst();
+    .select('legacy_id');
+  query = query.where(spec.keyColumn, '=', key).where('deleted_at', 'is', null);
+  // A list item's uid is unique inside its own list, so the same number can be a
+  // result story and a branch — only the list says which row this document means.
+  if (listId) query = query.where('list_id', '=', listId);
+  const row = await query.executeTakeFirst();
   if (!row) return null;
   const legacy = row.legacy_id;
   return { id: String(row.id), status: String(row.status ?? ''), legacy_id: legacy === null || legacy === undefined ? null : String(legacy) };
@@ -328,7 +365,24 @@ function fieldsWithCategory(doc: ImportDoc, ids: Map<string, string>): ImportDoc
   return { ...doc.fields, en: { ...doc.fields.en, categoryId: id } };
 }
 
-async function importDoc(doc: ImportDoc, ids: Map<string, string>, apply: boolean): Promise<'created' | 'updated' | 'unchanged' | { why: string }> {
+/**
+ * The lists the snapshot writes into, resolved once. `npm run db:seed` creates them;
+ * a missing row is a setup gap rather than bad data, so it is reported once for the
+ * list instead of once per row.
+ */
+async function resolveLists(docs: ImportDoc[]): Promise<{ ids: Map<string, string>; missing: string[] }> {
+  const keys = [...new Set(docs.map((doc) => doc.listKey).filter((key): key is string => Boolean(key)))];
+  const ids = new Map<string, string>();
+  const missing: string[] = [];
+  for (const key of keys) {
+    const id = await listIdForKey(key);
+    if (id) ids.set(key, id);
+    else missing.push(key);
+  }
+  return { ids, missing };
+}
+
+async function importDoc(doc: ImportDoc, ids: Map<string, string>, lists: Map<string, string>, apply: boolean): Promise<'created' | 'updated' | 'unchanged' | { why: string }> {
   const fields = fieldsWithCategory(doc, ids);
   const spec = kindSpec(doc.kind);
   for (const [locale, values] of Object.entries(fields) as [ContentLocale, Record<string, unknown>][]) {
@@ -338,10 +392,11 @@ async function importDoc(doc: ImportDoc, ids: Map<string, string>, apply: boolea
     }
   }
 
-  const existing = await findExisting(doc.kind, doc.key);
+  const listId = doc.listKey ? lists.get(doc.listKey) : undefined;
+  const existing = await findExisting(doc.kind, doc.key, listId);
   if (!existing) {
     if (!apply) return 'created';
-    const created = await createRow(doc.kind, { key: doc.key, actorId: IMPORT_ACTOR.id, legacyId: doc.legacyId });
+    const created = await createRow(doc.kind, { key: doc.key, listKey: doc.listKey, actorId: IMPORT_ACTOR.id, legacyId: doc.legacyId });
     if (!created.ok) return { why: `${created.status} ${created.code}` };
     const written = await publish(doc, created.value.id, fields, apply);
     return typeof written === 'string' ? 'created' : written;
@@ -388,18 +443,21 @@ async function publish(doc: ImportDoc, id: string, fields: ImportDoc['fields'], 
  */
 export async function importSnapshot(options: { apply: boolean; database: string }): Promise<ImportReport> {
   const apply = options.apply;
+  const docs = planDocs();
   const categoryDocs = planCategories();
   const { map, created, existed } = await categoryIds(categoryDocs, apply, IMPORT_ACTOR.id);
+  const lists = await resolveLists(docs);
   const report: ImportReport = {
     dryRun: !apply,
     database: options.database,
     categories: { created, existed },
     rows: { created: 0, updated: 0, unchanged: 0 },
-    skipped: [],
+    skipped: lists.missing.map((listKey) => ({ kind: 'list_item', key: listKey, why: 'no `lists` row — run `npm run db:seed`' })),
   };
 
-  for (const doc of planDocs()) {
-    const outcome = await importDoc(doc, map, apply);
+  for (const doc of docs) {
+    if (doc.listKey && !lists.ids.has(doc.listKey)) continue;
+    const outcome = await importDoc(doc, map, lists.ids, apply);
     if (typeof outcome === 'string') report.rows[outcome] += 1;
     else report.skipped.push({ kind: doc.kind, key: doc.key, why: outcome.why });
   }

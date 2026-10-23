@@ -1,30 +1,18 @@
-import { paginate } from "./index";
-// A result story *is* an article, so its card comes from the site's read path:
-// reading it from `./index` would render the snapshot journal on /results while
-// /blogs showed the database.
-import { getAllArticles } from "../content/site";
 import { snapshotResultStories } from "./snapshot";
-import type { ArticleCard, Paged } from "./types";
-/**
- * A result story is a WordPress post whose own text names an outcome. The
- * dashboard holds no result records and no before/after media — see
- * docs/RESULTS-SOURCE.md — so the article body is the only data that says "this
- * one is about a result". Membership comes from the phrase index `sync:wp` derives
- * from those bodies; the card itself (cover, title, excerpt, date) is still read
- * from the posts API, so a reworded article is fresh without a re-sync.
- */
-export interface ResultStory {
-  card: ArticleCard;
-  phrases: string[];
-}
 
-export async function getResultStories(
-  q: { page?: number; perPage?: number } = {},
-): Promise<Paged<ResultStory>> {
-  const byId = new Map(snapshotResultStories().map((row) => [row.id, row.phrases]));
-  const cards = await getAllArticles();
-  const stories = cards
-    .filter((card) => byId.has(card.id))
-    .map((card) => ({ card, phrases: byId.get(card.id)! }));
-  return paginate(stories, q.page, q.perPage);
+/**
+ * Which of the 92 articles are result stories.
+ *
+ * A story is a WordPress post whose own text names an outcome; the dashboard holds no
+ * result records and no before/after media — see docs/RESULTS-SOURCE.md — so the
+ * phrase index `sync:wp` derives from those bodies is the only thing that says "this
+ * one belongs on `/results`".
+ *
+ * This is the snapshot rung of that membership, and nothing else. A story *is* an
+ * article, so joining it onto cards is the site's read path's job (`../content/site`),
+ * which asks the `results` list first — reading it here would pair a database card with
+ * a file's opinion about which cards to show.
+ */
+export function storyPhraseIndex(): Map<number, string[]> {
+  return new Map(snapshotResultStories().map((row) => [row.id, row.phrases]));
 }

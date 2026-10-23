@@ -5,7 +5,9 @@
  *                                       -> also allowed against a database not named *_test
  *
  * Imports the frozen WordPress snapshot (`data/wp/*.json`) as console rows: the 92
- * articles, 4 offers, 27 pages and the post categories they point at. The source is
+ * articles, 4 offers, 27 pages, the post categories they point at, and the 56 result
+ * stories' membership in the `results` list (7.5 — that list is why `/results` no longer
+ * reads `result-stories.json` while rendering). The source is
  * the committed files, so this never asks the client's production WordPress for
  * anything, and a row that already matches the snapshot is left alone — re-running
  * adds no revisions.
@@ -20,7 +22,7 @@ loadEnv();
 
 import { assertTestDb } from '../../src/lib/db/guard';
 import { destroyDb, readDbConfig } from '../../src/lib/db/index';
-import { planArticles, planCategories, planOffers, planPages, importSnapshot } from '../../src/lib/content/import-wp';
+import { planArticles, planCategories, planOffers, planPages, planResultStories, importSnapshot } from '../../src/lib/content/import-wp';
 
 async function main(): Promise<void> {
   const apply = process.argv.includes('--apply');
@@ -31,9 +33,10 @@ async function main(): Promise<void> {
     article: planArticles().length,
     offer: planOffers().length,
     page: planPages().length,
+    results: planResultStories().length,
   };
-  console.log(`WordPress snapshot — ${docs.article + docs.offer + docs.page} rows, database ${database}`);
-  console.log(`  article ${docs.article}  offer ${docs.offer}  page ${docs.page}  category ${planCategories().length}`);
+  console.log(`WordPress snapshot — ${docs.article + docs.offer + docs.page + docs.results} rows, database ${database}`);
+  console.log(`  article ${docs.article}  offer ${docs.offer}  page ${docs.page}  category ${planCategories().length}  result story ${docs.results}`);
   console.log();
 
   const report = await importSnapshot({ apply, database });

@@ -26,7 +26,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import * as site from '../src/lib/content/site';
 import * as wp from '../src/lib/wp';
 import { getAbout } from '../src/lib/wp/about';
-import { getResultStories } from '../src/lib/wp/result-stories';
 import { getFeaturedServices, getMergedTreatment, getMergedTreatments } from '../src/lib/wp/treatments';
 
 const ROOT = process.cwd();
@@ -84,7 +83,7 @@ async function renderEveryPublicReader(): Promise<void> {
     wp.getPost(article.slug),
     wp.getOffer(offer.slug, 'ar'),
     getAbout(),
-    getResultStories({ page: 1, perPage: 9 }),
+    site.getResultStories({ page: 1, perPage: 9 }),
     getFeaturedServices(3),
     getMergedTreatment(treatments[0]?.id ?? ''),
   ]);
