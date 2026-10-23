@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { consoleCall } from './client-api';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
+import { Alert } from '@/components/ui/Status';
 import type { MessageKey } from '@/lib/console/messages';
 
 const ERRORS: Record<string, MessageKey> = {
@@ -50,16 +51,8 @@ export function PasswordForm({ labels }: Readonly<{ labels: Record<MessageKey, s
       <Button type="submit" variant="primary" loading={busy}>
         {labels['password.submit']}
       </Button>
-      {error && (
-        <p className="console-alert" data-tone="error" role="alert">
-          {labels[error]}
-        </p>
-      )}
-      {saved && (
-        <p className="console-alert" role="status">
-          {labels['password.saved']}
-        </p>
-      )}
+      {error && <Alert tone="danger">{labels[error]}</Alert>}
+      {saved && <Alert tone="ok">{labels['password.saved']}</Alert>}
     </form>
   );
 }

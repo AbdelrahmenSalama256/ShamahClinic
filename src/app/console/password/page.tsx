@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { PasswordForm } from '@/components/console/PasswordForm';
+import { Alert } from '@/components/ui/Status';
 import { message, type MessageKey } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';
 
@@ -32,9 +33,7 @@ export default async function ConsolePasswordPage() {
       <section className="console-login">
         <h1 className="console-heading">{message('password.heading', prefs.locale)}</h1>
         {auth.user.mustChangePassword ? (
-          <p className="console-alert" data-tone="error">
-            {message('password.must_change', prefs.locale)}
-          </p>
+          <Alert tone="danger">{message('password.must_change', prefs.locale)}</Alert>
         ) : (
           <p className="console-lede">
             <Link href="/console">{message('nav.overview', prefs.locale)}</Link>

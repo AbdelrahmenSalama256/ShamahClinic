@@ -144,10 +144,16 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
   });
 
   it('reads only variables that the token layer actually defines', () => {
+    // `--tone-*` are the one set this file declares for itself: the `[data-tone]` rules fill
+    // three names and each member reads them with its own neutral default, which is what
+    // lets a badge and an alert disagree about "no tone" without a heavier selector. They
+    // belong to no theme, so `globals.css` has no business naming them — but they still have
+    // to be written down somewhere, so the same proof runs against this file.
     const names = [...new Set([...ui.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1]))];
     expect(names.length).toBeGreaterThan(12);
     for (const name of names) {
-      expect(globals, `${name} is defined in globals.css`).toMatch(new RegExp(`\\n\\s*${name}:`));
+      const home = name.startsWith('--tone-') ? ui : globals;
+      expect(home, `${name} is defined`).toMatch(new RegExp(`\\n\\s*${name}:`));
     }
   });
 
@@ -330,11 +336,22 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
 
   it('leaves no second definition of a field anywhere else', () => {
     expect(consoleCode).not.toMatch(/\.console-field/);
-    // The console sheet may not reach past the primitive for an element it now owns.
+    // The console sheet may not reach past the primitive for an element it now owns —
+    // with one exception, and it is a narrow one. A `Note` is a span so that the pager's
+    // "of 4" can live inside a row, which means a caption standing alone on a page only
+    // becomes a line of its own if the surface says so. Space is the surface's business and
+    // paint is the primitive's (19.3c), so a `.ui-*` selector in `console.css` may declare
+    // `display` and a margin and nothing else: enough to place a caption, never enough to
+    // re-decide what a caption looks like on one screen and not the others.
     for (const match of consoleCode.matchAll(/([^{}]+)\{/g)) {
       const selector = match[1].trim();
       expect(selector, `console.css styles a bare element: ${selector}`).not.toMatch(/(^|[\s,>+~(])(input|textarea|select)(?![\w-])/);
-      expect(selector, `console.css overrides the primitive: ${selector}`).not.toContain('.ui-');
+      if (!selector.includes('.ui-')) continue;
+      const open = match.index + match[0].length;
+      const body = consoleCode.slice(open, consoleCode.indexOf('}', open));
+      for (const line of body.split(';').map((part) => part.trim()).filter(Boolean)) {
+        expect(line, `console.css re-paints a primitive: ${line}`).toMatch(/^(display|margin(-block|-inline)?(-(start|end|top|bottom|left|right))?):/);
+      }
     }
     for (const name of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
       const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
@@ -343,5 +360,201 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
       // what a field looked like is the one that must not come back.
       expect(source, `${name} still paints a field`).not.toMatch(/console-field/);
     }
+  });
+});
+
+/*
+ * The status family (BK-19.3c): the badge, the alert, the note, the empty, the skeleton and
+ * the value mark. What these cases guard is the shape the console had before them — one
+ * question, "how much does this matter", answered three times by three members with three
+ * different vocabularies (`error` for the alert, `warn` painted from the danger pair for the
+ * chip, and nothing at all for the count), plus a table cell whose entire content was a glyph
+ * no voice reads and a list whose loading state was an `aria-label` on empty boxes.
+ */
+describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
+  const statusSource = readFileSync(join(process.cwd(), 'src/components/ui/Status.tsx'), 'utf8');
+  const listSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
+  const editorSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
+  const messages = readFileSync(join(process.cwd(), 'src/lib/console/messages.ts'), 'utf8');
+
+  /** Every `tone=` written anywhere in the console, in a literal or inside an expression. */
+  const namedTones = [
+    readFileSync(join(process.cwd(), 'src/app/console/(workspace)/page.tsx'), 'utf8'),
+    readFileSync(join(process.cwd(), 'src/app/console/password/page.tsx'), 'utf8'),
+    listSource,
+    editorSource,
+    ...['ConsolePalette', 'ConsoleShell', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) =>
+      readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8'),
+    ),
+  ].flatMap((source) =>
+    [...source.matchAll(/tone=(?:"([^"]+)"|\{([^}]*)\})/g)].flatMap((match) =>
+      match[1] ? [match[1]] : [...match[2].matchAll(/'([a-z]+)'/g)].map((word) => word[1]),
+    ),
+  );
+
+  it('answers "how much does this matter" with three words and one silence', () => {
+    const tones = [...new Set([...ui.matchAll(/\[data-tone='([a-z]+)'\]/g)].map((match) => match[1]))].sort();
+    expect(tones).toEqual(['danger', 'ok', 'warn']);
+    // `neutral` is the word the primitive keeps for "no tone" and the one value it never
+    // writes: there is no rule to match it, and a hook nothing styles is a hook that drifts.
+    expect(ui).not.toMatch(/data-tone='neutral'/);
+    expect(statusSource).toMatch(/return tone === 'neutral' \? undefined : tone;/);
+    for (const tone of namedTones) {
+      expect(['neutral', 'ok', 'warn', 'danger'], `${tone} is a tone the sheet paints`).toContain(tone);
+    }
+    expect(namedTones.length).toBeGreaterThan(8);
+  });
+
+  it('declares the tone once and lets each member ask for what it has', () => {
+    for (const member of ['.ui-badge', '.ui-alert', '.ui-note']) {
+      expect(rule(ui, member), `${member} reads the ink`).toMatch(/var\(--tone-fg/);
+    }
+    // A pill and a box disagree about "no tone" on purpose — a label is quiet, a sentence is
+    // not — which is why the fallbacks sit with the members and not in the `[data-tone]` rules.
+    expect(rule(ui, '.ui-badge')).toMatch(/color: var\(--tone-fg, var\(--text-secondary\)\);/);
+    expect(rule(ui, '.ui-alert')).toMatch(/color: var\(--tone-fg, var\(--text-primary\)\);/);
+    expect(rule(ui, '.ui-note')).not.toMatch(/background|border/);
+    for (const selector of [".ui-badge[data-tone='ok']", ".ui-alert[data-tone='warn']", ".ui-note[data-tone='danger']"]) {
+      expect(ui, `${selector} sets the triple`).toContain(`\n${selector}`);
+    }
+    // Every tone rule writes all three variables, so a member never invents a colour alone.
+    for (const match of ui.matchAll(/\[data-tone='(ok|warn|danger)'\][^{]*\{([^}]*)\}/g)) {
+      const body = match[2];
+      for (const name of ['--tone-fg', '--tone-bg', '--tone-border']) {
+        expect(body, `${match[1]} sets ${name}`).toContain(`${name}:`);
+      }
+    }
+  });
+
+  it('derives the role of an alert from the news, not from the call site', () => {
+    expect(statusSource).toMatch(/role=\{role \?\? \(tone === 'danger' \? 'alert' : tone === 'neutral' \? undefined : 'status'\)\}/);
+    // The hand-written ternary this replaced lived at eight call sites; one of them is enough
+    // to prove the pattern did not survive.
+    for (const source of [listSource, editorSource]) {
+      expect(source, 'a banner does not spell out its own role').not.toMatch(/role=\{(notice|failed)\.tone ===/);
+    }
+    for (const name of ['ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
+      const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
+      expect(source, `${name} uses the primitive`).toMatch(/<Alert/);
+      expect(source, `${name} still writes an alert by hand`).not.toMatch(/console-alert/);
+    }
+    // An alert is a paragraph that holds buttons: the list's failure line has carried a
+    // Retry inside its sentence since BK-13.3, and a `div` would have said nothing about
+    // being a message.
+    expect(listSource).toMatch(/<Alert tone="danger">\s*\{labels\[failed\]\}\s*<Button/);
+  });
+
+  it('gives a loading list a word as well as a shape', () => {
+    // The wells are decoration until something names them: the old markup was
+    // `<ul aria-label="Loading">` around empty boxes, which announced nothing at all.
+    expect(statusSource).toMatch(/role=\{label \? 'status' : undefined\} aria-hidden=\{label \? undefined : true\}/);
+    expect(statusSource).toMatch(/<Note className="sr-only">\{label\}<\/Note>/);
+    expect(listSource).toMatch(/<Skeleton rows=\{Math\.min\(view\.per, 6\)\} label=\{labels\['content\.loading'\]\} \/>/);
+    expect(editorSource).toMatch(/<Skeleton rows=\{3\} label=\{labels\['content\.loading'\]\} \/>/);
+    expect(rule(ui, '.ui-skeletons')).toMatch(/display: grid;/);
+    expect(rule(ui, '.ui-skeleton')).toMatch(/min-block-size: var\(--tap\);/);
+  });
+
+  it('breathes instead of sweeping, and 19.1 stops it', () => {
+    // A background-position sweep is the one animation that cannot be a transform, so it
+    // repaints every frame — and anchored with `inset-inline-start` it disagrees with its own
+    // translate in RTL. An opacity change is identical in both readings.
+    expect(rule(ui, '.ui-skeleton')).toMatch(/animation: ui-skeleton var\(--dur-shimmer\) var\(--ease-in-out\) infinite;/);
+    expect(ui.slice(ui.indexOf('@keyframes ui-skeleton'))).toMatch(/^@keyframes ui-skeleton \{\s*50% \{\s*opacity: 0\.55;\s*\}\s*\}/);
+    expect(ui).not.toMatch(/background-position/);
+    // No override of its own in either sheet: `globals.css` zeroes every duration for `*`
+    // under `prefers-reduced-motion`, so a second answer here is a second place to remember
+    // — and `animation: none` on a well would freeze it mid-breath rather than at full ink.
+    expect(ui).not.toMatch(/animation: none/);
+    expect(consoleCode).not.toMatch(/animation: none|console-shimmer|background-position/);
+  });
+
+  it('puts a word beside the glyph, where only the voice can reach it', () => {
+    expect(statusSource).toMatch(/const GLYPH: Record<MarkState, string> = \{ yes: '●', no: '○', none: '—' \};/);
+    expect(statusSource).toMatch(/<span aria-hidden="true">\{GLYPH\[state\]\}<\/span>/);
+    expect(statusSource).toMatch(/<span className="sr-only">\{label\}<\/span>/);
+    // Three states, two rules and a base: `no` keeps the default ink, because a tick that is
+    // off is not an error, and only an absent value drops below it.
+    expect(rule(ui, '.ui-mark')).toMatch(/color: var\(--text-secondary\);/);
+    expect(rule(ui, ".ui-mark[data-state='yes']")).toMatch(/color: var\(--text-success\);/);
+    expect(rule(ui, ".ui-mark[data-state='none']")).toMatch(/color: var\(--text-muted\);/);
+    expect(ui).not.toMatch(/\.ui-mark\[data-state='no'\]/);
+    expect(listSource).toMatch(/<Mark state="none" label=\{labels\['content\.value\.none'\]\} \/>/);
+    for (const key of ['content.value.yes', 'content.value.no', 'content.value.none']) {
+      expect((messages.match(new RegExp(`'${key}':`, 'g')) ?? []).length, `${key} in both catalogs`).toBe(2);
+    }
+  });
+
+  it('leaves the console no second definition of a status', () => {
+    for (const gone of ['.console-alert', '.console-note', '.console-meta', '.console-account-label', '.console-palette-empty',
+      '.console-row-skeleton', '.console-chip[', '.console-count[', '.console-chip {']) {
+      expect(consoleCode, `${gone} is not a rule any more`).not.toContain(gone);
+    }
+    // The two hooks that survive do it by placement, and only by placement: `Badge` carries no
+    // margin of its own, and the count is the thing a row pushes around — `auto` in the bulk bar
+    // where it leads, zeroed in the pager where the controls take the far edge instead. Measured
+    // in the built app at 360: pager count `margin-inline-start: 0`, controls `auto`.
+    expect(rule(consoleCode, '.console-count')).toMatch(/margin-inline-start: auto;/);
+    expect(rule(consoleCode, '.console-pager .console-count')).toMatch(/margin-inline-start: 0;/);
+    expect(rule(consoleCode, '.console-bulk .console-count')).toMatch(/margin-inline-end: auto;/);
+    expect(rule(consoleCode, '.console-count')).not.toMatch(/color|font-size/);
+    expect(rule(consoleCode, '.console-account-roles')).toMatch(/gap: var\(--ui-gap-tight\);/);
+    // Nothing still writes the class the primitive replaced — `console.css` is only half of
+    // a deletion, and the pages outside the shared components were the eager writers.
+    const dead = ['console-alert', 'console-note', 'console-meta', 'console-account-label', 'console-palette-empty', 'console-row-skeleton'];
+    for (const path of [
+      ...['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ConsoleShell', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) => `src/components/console/${name}.tsx`),
+      'src/app/console/(workspace)/page.tsx',
+      'src/app/console/(workspace)/settings/page.tsx',
+      'src/app/console/password/page.tsx',
+    ]) {
+      const source = readFileSync(join(process.cwd(), path), 'utf8');
+      for (const name of [...dead, 'className="console-chip"']) {
+        expect(source, `${path} still writes ${name}`).not.toContain(name);
+      }
+    }
+  });
+
+  it('keeps one colour table for the state of a row', () => {
+    // The list and the editor used to read the same key and pick the same colour by hand, in
+    // two files, in two shapes — the only way one pane stops matching the other.
+    const form = readFileSync(join(process.cwd(), 'src/lib/console/editor-form.ts'), 'utf8');
+    expect(form).toMatch(/export function contentStateTone\(key: MessageKey\): Tone/);
+    expect(form).toMatch(/if \(key === 'content\.state\.trashed'\) return 'danger';/);
+    expect(form).toMatch(/return key === 'content\.state\.published' \? 'ok' : 'neutral';/);
+    for (const source of [listSource, editorSource]) {
+      expect(source).toContain('contentStateTone');
+    }
+    expect(listSource).toMatch(/<Badge tone=\{contentStateTone\(state\)\}>\{labels\[state\]\}<\/Badge>/);
+  });
+
+  it('keeps a badge one word wide, because a pill sets the column it sits in', () => {
+    // `overflow-wrap` inherits, and the list's cells declare `anywhere` so a long slug stays
+    // inside the table. A badge that named nothing inherited that and the state column's
+    // minimum became one character: 65px, "منشور" on three lines, a 99px row. Measured in the
+    // built app, the badge's own value is the one the layout reads — badge `normal` beside a
+    // cell still at `anywhere` gives a 61x26 pill in an 83px column and breaks a slug on
+    // demand, while cell `normal` beside a badge at `anywhere` collapses the column again.
+    expect(rule(ui, '.ui-badge')).toMatch(/overflow-wrap: normal;/);
+    // Not `nowrap`, which measures the same in a one-word column and overflows the 16rem
+    // sidebar on a two-word role name.
+    expect(rule(ui, '.ui-badge')).not.toMatch(/white-space/);
+    expect(consoleCode).toMatch(/\.console-table th,\s*\.console-table td\s*\{[^}]*overflow-wrap: anywhere;/);
+    // A sentence is not a pill: it has no column to collapse, so it keeps the break for the
+    // URL and the slug it sometimes has to hold.
+    expect(rule(ui, '.ui-note')).toMatch(/overflow-wrap: anywhere;/);
+    expect(rule(ui, '.ui-alert')).toMatch(/overflow-wrap: anywhere;/);
+  });
+
+  it('paints from the tokens and never from a number', () => {
+    expect(rule(ui, '.ui-badge')).toMatch(/border-radius: var\(--radius-pill\);/);
+    expect(rule(ui, '.ui-alert')).toMatch(/border-radius: var\(--radius-control\);/);
+    expect(rule(ui, '.ui-empty')).toMatch(/border: 1px dashed var\(--hairline-strong\);/);
+    expect(rule(ui, '.ui-empty')).toMatch(/padding: var\(--sp-8\) var\(--sp-4\);/);
+    expect(rule(ui, '.ui-alert')).toMatch(/gap: var\(--sp-2\) var\(--sp-3\);/);
+    // `--radius-pill` had no consumer until the badge took the radius the chip wrote by hand.
+    // Three literals survive in the console sheet, all of them inside the saved-view chips —
+    // the controls 19.3d owns when it takes the card, the table and the tabs.
+    expect(globals).toMatch(/--radius-pill: 9999px;/);
   });
 });

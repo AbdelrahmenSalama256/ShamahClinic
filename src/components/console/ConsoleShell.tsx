@@ -4,6 +4,7 @@ import type { ConsolePrefs } from '@/lib/console/prefs';
 import { navStrip, navTree, palettePlaces } from '@/lib/console/screens';
 import { ConsoleControls } from './ConsoleControls';
 import { ConsoleFrame } from './ConsoleFrame';
+import { Badge, Note } from '@/components/ui/Status';
 
 /**
  * The console's frame: brand, the signed-in account, and the screens this role may
@@ -55,14 +56,14 @@ export function ConsoleShell({
 
   const account = (
     <div className="console-account">
-      <span className="console-account-label">{message('shell.signed_in_as', prefs.locale)}</span>
+      <Note>{message('shell.signed_in_as', prefs.locale)}</Note>
       <strong>{user.name || user.email}</strong>
-      <span className="console-account-label">{message('shell.roles', prefs.locale)}</span>
-      <span>
+      <Note>{message('shell.roles', prefs.locale)}</Note>
+      {/* The roles are spaced by their group, not by each chip: a chip that carried its own
+          trailing margin left one alone in a heading with a gap nothing asked for. */}
+      <span className="console-account-roles">
         {user.roles.map((role) => (
-          <span key={role} className="console-chip">
-            {role}
-          </span>
+          <Badge key={role}>{role}</Badge>
         ))}
       </span>
     </div>

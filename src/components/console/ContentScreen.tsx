@@ -1,4 +1,5 @@
 import { ContentWorkspace } from '@/components/console/ContentWorkspace';
+import { Empty } from '@/components/ui/Status';
 import { contentScreenData, type ContentScreenProps } from '@/lib/console/content-screen';
 import { message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';
@@ -17,7 +18,9 @@ export async function ContentScreen({ kind, titleKey, search }: Readonly<Content
   if (!auth) return null; // the workspace layout has already redirected
 
   const data = await contentScreenData(kind, { grants: auth.user.grants, locale: prefs.locale, search });
-  if (!data) return <p className="console-lede">{message('content.no_permission', prefs.locale)}</p>;
+  // With the grant missing, this screen has nothing else to say, so the sentence gets the
+  // shape built for a pane that is entirely absence.
+  if (!data) return <Empty>{message('content.no_permission', prefs.locale)}</Empty>;
 
   return (
     <>

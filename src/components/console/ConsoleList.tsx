@@ -18,11 +18,13 @@
  * no control the kind cannot honour — `sorts` and `filters` come from the server, so an
  * article list shows no "Order" column and no "Off" chip.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { consoleCall, consoleRead } from './client-api';
 import { Button } from '@/components/ui/Button';
 import { Checkbox, Field, Input, Select } from '@/components/ui/Field';
+import { Alert, Badge, Empty, Mark, Note, Skeleton, type Tone } from '@/components/ui/Status';
+import { contentStateTone } from '@/lib/console/editor-form';
 import type { ContentAbilities } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import {
@@ -102,9 +104,18 @@ function stateOf(row: ListSummary): MessageKey {
   return row.status === 'published' || row.status === 'changed' ? 'content.state.published' : 'content.state.draft';
 }
 
-function cellText(value: string | number | boolean | null): string {
-  if (value === null || value === '') return '—';
-  if (typeof value === 'boolean') return value ? '●' : '○';
+/**
+ * A cell whose entire content is yes, no, or nothing.
+ *
+ * `Mark` is the part that carries the word: printed as `●`/`○`/`—` alone, the three
+ * boolean and empty columns of a kind's own columns were silent to a screen reader, and
+ * the em dash was written twice in this file — once here, once in the published column.
+ */
+function cell(value: string | number | boolean | null, labels: Record<MessageKey, string>): ReactNode {
+  if (value === null || value === '') return <Mark state="none" label={labels['content.value.none']} />;
+  if (typeof value === 'boolean') {
+    return <Mark state={value ? 'yes' : 'no'} label={labels[value ? 'content.value.yes' : 'content.value.no']} />;
+  }
   return String(value);
 }
 
@@ -134,7 +145,7 @@ export function ConsoleList({
   const [saving, setSaving] = useState(false);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; key: MessageKey } | null>(null);
+  const [notice, setNotice] = useState<{ tone: Tone; key: MessageKey } | null>(null);
 
   // The URL is the state. Scope comes first so the line reads like the navigation.
   // `listViewQuery` returns the line with its own `?`, which is the only form that can
@@ -227,10 +238,10 @@ export function ConsoleList({
     setBusy(false);
     if (result.error) {
       const mapped = `content.error.${result.error}` as MessageKey;
-      setNotice({ tone: 'error', key: labels[mapped] ? mapped : 'content.error.save' });
+      setNotice({ tone: 'danger', key: labels[mapped] ? mapped : 'content.error.save' });
     } else {
       const partial = (result.data?.failed?.length ?? 0) > 0;
-      setNotice({ tone: partial ? 'error' : 'ok', key: partial ? 'content.bulk.partial' : 'content.bulk.done' });
+      setNotice({ tone: partial ? 'danger' : 'ok', key: partial ? 'content.bulk.partial' : 'content.bulk.done' });
       setChecked(new Set());
       await load(query);
       onMutated(ids);
@@ -245,7 +256,7 @@ export function ConsoleList({
     setBusy(false);
     const mapped = result.error ? (`content.error.${result.error}` as MessageKey) : null;
     if (mapped && labels[mapped]) {
-      setNotice({ tone: 'error', key: mapped });
+      setNotice({ tone: 'danger', key: mapped });
       return;
     }
     // The chip only appears when the row comes back: a server that dies inside the
@@ -253,7 +264,7 @@ export function ConsoleList({
     // worse than the failure it hides.
     const saved = result.data?.view;
     if (!saved) {
-      setNotice({ tone: 'error', key: 'content.error.save' });
+      setNotice({ tone: 'danger', key: 'content.error.save' });
       return;
     }
     setSaving(false);
@@ -265,7 +276,7 @@ export function ConsoleList({
   async function dropView(id: string): Promise<void> {
     const result = await consoleCall(`/api/console/views/${id}`, 'DELETE');
     if (result.error) {
-      setNotice({ tone: 'error', key: 'content.error.save' });
+      setNotice({ tone: 'danger', key: 'content.error.save' });
       return;
     }
     setViews((current) => current.filter((row) => row.id !== id));
@@ -383,9 +394,9 @@ export function ConsoleList({
 
       {checked.size > 0 && (
         <div className="console-bulk" role="group" aria-label={labels['content.selected']}>
-          <span className="console-count">
+          <Note className="console-count">
             {checked.size} {labels['content.selected']}
-          </span>
+          </Note>
           {bulkable('publish') && (
             <Button disabled={busy} onClick={() => void bulk('publish')}>
               {labels['content.bulk.publish']}
@@ -406,18 +417,16 @@ export function ConsoleList({
       )}
 
       {failed ? (
-        <div className="console-alert" data-tone="error" role="alert">
-          <span>{labels[failed]}</span>
+        <Alert tone="danger">
+          {labels[failed]}
           <Button onClick={() => void load(query)}>{labels['content.retry']}</Button>
-        </div>
+        </Alert>
       ) : loading && rows.length === 0 ? (
-        <ul className="console-rows" aria-label={labels['content.loading']}>
-          {Array.from({ length: Math.min(view.per, 6) }, (_, index) => (
-            <li className="console-row-skeleton" key={index} />
-          ))}
-        </ul>
+        // The wells are the shape of what has not arrived and the label inside them is what
+        // a screen reader gets: an `aria-label` on a list of empty boxes announced nothing.
+        <Skeleton rows={Math.min(view.per, 6)} label={labels['content.loading']} />
       ) : rows.length === 0 ? (
-        <p className="console-lede">{labels['content.empty']}</p>
+        <Empty>{labels['content.empty']}</Empty>
       ) : view.mode === 'card' ? (
         <>
           {/* Card mode has no header row to hang the page-wide checkbox on, and cards are the
@@ -426,16 +435,19 @@ export function ConsoleList({
             <Checkbox checked={allChecked} onChange={toggleAll} label={labels['content.select.all']} />
           </div>
           <ul className="console-cards">
-            {rows.map((row) => (
-              <li key={row.id} className="console-card" data-active={row.id === selectedId || undefined}>
-                <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
-                <button type="button" className="console-card-body" onClick={() => onSelect(row.id === selectedId ? null : row)}>
-                  <span className="console-row-title">{titleOf(row, locale)}</span>
-                  <span className="console-chip">{labels[stateOf(row)]}</span>
-                  <code className="console-row-key">{row.key}</code>
-                </button>
-              </li>
-            ))}
+            {rows.map((row) => {
+              const state = stateOf(row);
+              return (
+                <li key={row.id} className="console-card" data-active={row.id === selectedId || undefined}>
+                  <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
+                  <button type="button" className="console-card-body" onClick={() => onSelect(row.id === selectedId ? null : row)}>
+                    <span className="console-row-title">{titleOf(row, locale)}</span>
+                    <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
+                    <code className="console-row-key">{row.key}</code>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </>
       ) : (
@@ -467,49 +479,62 @@ export function ConsoleList({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} data-active={row.id === selectedId || undefined}>
-                  <td className="console-cell-check">
-                    <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
-                  </td>
-                  <td>
-                    <button type="button" className="console-row" onClick={() => onSelect(row.id === selectedId ? null : row)}>
-                      <span className="console-row-title">{titleOf(row, locale)}</span>
-                    </button>
-                  </td>
-                  <td>
-                    <code className="console-row-key">{row.key}</code>
-                  </td>
-                  <td>
-                    <span className="console-chip">{labels[stateOf(row)]}</span>
-                  </td>
-                  <td>{row.updatedAt.slice(0, 10)}</td>
-                  {sorts.includes('published') && <td>{row.publishedAt ? row.publishedAt.slice(0, 10) : '—'}</td>}
-                  {sorts.includes('position') && <td>{cellText(row.cells.position ?? null)}</td>}
-                  {columns.map((name) => (
-                    <td key={name} className="console-cell-extra">
-                      {cellText(row.cells[name] ?? null)}
+              {rows.map((row) => {
+                const state = stateOf(row);
+                return (
+                  <tr key={row.id} data-active={row.id === selectedId || undefined}>
+                    <td className="console-cell-check">
+                      <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
                     </td>
-                  ))}
-                </tr>
-              ))}
+                    <td>
+                      <button type="button" className="console-row" onClick={() => onSelect(row.id === selectedId ? null : row)}>
+                        <span className="console-row-title">{titleOf(row, locale)}</span>
+                      </button>
+                    </td>
+                    <td>
+                      <code className="console-row-key">{row.key}</code>
+                    </td>
+                    <td>
+                      <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
+                    </td>
+                    <td>{row.updatedAt.slice(0, 10)}</td>
+                    {/* A row that has never been published is a draft: the mark says "no value"
+                        in a word, not in a dash nobody reads. */}
+                    {sorts.includes('published') && (
+                      <td>
+                        {row.publishedAt ? (
+                          row.publishedAt.slice(0, 10)
+                        ) : (
+                          <Mark state="none" label={labels['content.value.none']} />
+                        )}
+                      </td>
+                    )}
+                    {sorts.includes('position') && <td>{cell(row.cells.position ?? null, labels)}</td>}
+                    {columns.map((name) => (
+                      <td key={name} className="console-cell-extra">
+                        {cell(row.cells[name] ?? null, labels)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       )}
 
       <div className="console-pager">
-        <span className="console-count">
+        <Note className="console-count">
           {page.total} {labels['content.total']}
-        </span>
+        </Note>
         {page.pages > 1 && (
           <span className="console-controls">
             <Button disabled={page.page <= 1} leading={<ArrowBack size={16} aria-hidden="true" />} onClick={() => setView(withPage(view, page.page - 1))}>
               {labels['content.page.prev']}
             </Button>
-            <span className="console-meta">
+            <Note>
               {labels['content.page']} {page.page} {labels['content.page.of']} {page.pages}
-            </span>
+            </Note>
             <Button disabled={page.page >= page.pages} trailing={<ArrowForward size={16} aria-hidden="true" />} onClick={() => setView(withPage(view, page.page + 1))}>
               {labels['content.page.next']}
             </Button>
@@ -517,11 +542,7 @@ export function ConsoleList({
         )}
       </div>
 
-      {notice && (
-        <p className="console-alert" data-tone={notice.tone} role={notice.tone === 'error' ? 'alert' : 'status'}>
-          {labels[notice.key]}
-        </p>
-      )}
+      {notice && <Alert tone={notice.tone}>{labels[notice.key]}</Alert>}
     </div>
   );
 }

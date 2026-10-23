@@ -38,11 +38,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { consoleCall, consoleRead } from './client-api';
 import { fieldOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/console/issues';
-import { contentStateKey, fieldsFromForm, formOf, isPendingIn, sameForm, type Form } from '@/lib/console/editor-form';
+import { contentStateKey, contentStateTone, fieldsFromForm, formOf, isPendingIn, sameForm, type Form } from '@/lib/console/editor-form';
 import { previewDocument, previewModel, seoReadout } from '@/lib/console/preview';
 import { writeScopeQuery } from '@/lib/content/list-view';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
+import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/ui/Status';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import type { ContentRow, FieldView } from '@/lib/content/store';
@@ -79,7 +80,7 @@ export interface ConsoleEditorProps {
   onClose: () => void;
 }
 
-type Notice = { tone: 'ok' | 'error'; key: MessageKey };
+type Notice = { tone: Tone; key: MessageKey };
 
 export function ConsoleEditor({
   kind,
@@ -147,7 +148,7 @@ export function ConsoleEditor({
       const result = await consoleRead<{ row?: ContentRow }>(`${api}/${rowId}`);
       if (!alive) return;
       setDoc({ tag: want, row: result.data?.row ?? null });
-      if (!result.data?.row) setNotice({ tone: 'error', key: 'content.error.not_found' });
+      if (!result.data?.row) setNotice({ tone: 'danger', key: 'content.error.not_found' });
     })();
     return () => {
       alive = false;
@@ -172,7 +173,7 @@ export function ConsoleEditor({
     (result: { status: number; error: string | null }, ok: MessageKey): void => {
       if (result.error) {
         const mapped = `content.error.${result.error}` as MessageKey;
-        setNotice({ tone: 'error', key: labels[mapped] ? mapped : 'content.error.save' });
+        setNotice({ tone: 'danger', key: labels[mapped] ? mapped : 'content.error.save' });
         return;
       }
       setNotice({ tone: 'ok', key: ok });
@@ -185,7 +186,7 @@ export function ConsoleEditor({
     if (!row) return false;
     const posted = form;
     if (invalid) {
-      if (mode !== 'auto') setNotice({ tone: 'error', key: 'content.error.invalid_input' });
+      if (mode !== 'auto') setNotice({ tone: 'danger', key: 'content.error.invalid_input' });
       return false;
     }
     setBusy(true);
@@ -194,7 +195,7 @@ export function ConsoleEditor({
     if (result.error) {
       setServerIssues(result.issues.map((issue) => ({ ...issue, was: String(posted[fieldOf(issue.path)] ?? '') })));
       if (result.error === 'stale_row') setAutosaveStopped(true);
-      if (mode === 'auto') setNotice(result.error === 'stale_row' ? { tone: 'error', key: 'content.autosave_stopped' } : null);
+      if (mode === 'auto') setNotice(result.error === 'stale_row' ? { tone: 'danger', key: 'content.autosave_stopped' } : null);
       else tell(result, 'content.saved');
       return false;
     }
@@ -257,7 +258,7 @@ export function ConsoleEditor({
     const result = await consoleRead<{ revisions?: RevisionView[] }>(`${api}/${row.id}/revisions${query}`);
     setBusy(false);
     setHistory({ id: row.id, revisions: result.data?.revisions ?? [] });
-    if (!result.data?.revisions) setNotice({ tone: 'error', key: 'content.load_failed' });
+    if (!result.data?.revisions) setNotice({ tone: 'danger', key: 'content.load_failed' });
   }
 
   /** A rollback writes the draft, so it needs the same version dance a save does; the
@@ -294,9 +295,10 @@ export function ConsoleEditor({
     if (await save('nav')) onPendingResolve();
   }
 
-  if (!rowId) return <p className="console-lede">{labels['content.pick_row']}</p>;
+  if (!rowId) return <Empty>{labels['content.pick_row']}</Empty>;
 
   const model = previewModel(kind, form, locale);
+  const state = row ? contentStateKey(row) : null;
   const other: ContentLocale = locale === 'ar' ? 'en' : 'ar';
   const bilingual = kind !== 'list_item';
   const titleName = kind === 'offer' ? 'name' : 'title';
@@ -321,10 +323,10 @@ export function ConsoleEditor({
       <div className="console-editor-main">
         <header className="console-work-head">
           <h2>{row?.key ?? rowId}</h2>
-          {row && <span className="console-chip">{labels[contentStateKey(row)]}</span>}
-          {dirty && <span className="console-chip" data-tone="warn">{labels['content.dirty']}</span>}
+          {state && <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>}
+          {dirty && <Badge tone="warn">{labels['content.dirty']}</Badge>}
           <Button onClick={() => onRequestNav(onClose)}>{labels['content.close']}</Button>
-          <span className="console-meta">
+          <Note>
             {/* Each date is its own bidi run: an ISO date typed straight into an Arabic
                 sentence gets its digits reordered — `2026-10-23` read as `26-10-2026`. */}
             {row ? (
@@ -342,24 +344,18 @@ export function ConsoleEditor({
                 {labels['content.updated_at']}: <bdi>{row.updatedAt.slice(0, 10)}</bdi>
               </>
             ) : null}
-          </span>
+          </Note>
         </header>
 
-        {loading && <p className="console-lede">{labels['content.loading']}</p>}
+        {loading && <Skeleton rows={3} label={labels['content.loading']} />}
 
         {row?.trashed ? (
-          <p className="console-alert" data-tone="error">
-            {labels['content.state.trashed']}
-          </p>
+          <Alert tone="danger">{labels['content.state.trashed']}</Alert>
         ) : row && !writable ? (
-          <p className="console-alert">{labels[abilities.update.length === 0 ? 'content.readonly' : 'content.locale_locked']}</p>
+          <Alert>{labels[abilities.update.length === 0 ? 'content.readonly' : 'content.locale_locked']}</Alert>
         ) : null}
 
-        {issues.other.length > 0 && (
-          <p className="console-alert" data-tone="error" role="alert">
-            {issues.other.join(' · ')}
-          </p>
-        )}
+        {issues.other.length > 0 && <Alert tone="danger">{issues.other.join(' · ')}</Alert>}
 
         {row && (
           <div className="ui-fields">
@@ -401,7 +397,9 @@ export function ConsoleEditor({
             </Button>
           )}
           <Button onClick={() => void openHistory()} disabled={busy || !row}>{labels['content.history']}</Button>
-          <span className="console-count" data-tone={autosaveStopped || invalid ? 'error' : undefined}>
+          {/* The save state is one of four things and the tone is the part the eye reads
+              first: red for stopped, champagne for "not written yet", green for "written". */}
+          <Note className="console-count" tone={autosaveStopped || invalid ? 'danger' : dirty ? 'warn' : autosavedAt !== null ? 'ok' : 'neutral'}>
             {autosaveStopped
               ? labels['content.autosave_stopped']
               : invalid
@@ -411,7 +409,7 @@ export function ConsoleEditor({
                   : autosavedAt !== null
                     ? labels['content.autosaved']
                     : labels['content.keyboard']}
-          </span>
+          </Note>
         </div>
 
         {pendingNav && (
@@ -439,7 +437,7 @@ export function ConsoleEditor({
         {history && row && history.id === row.id && (
           <div className="console-panel console-history">
             {history.revisions.length === 0 ? (
-              <p className="console-lede">{labels['content.no_history']}</p>
+              <Empty>{labels['content.no_history']}</Empty>
             ) : (
               <ul className="console-rows">
                 {history.revisions.map((revision) => (
@@ -461,23 +459,19 @@ export function ConsoleEditor({
           </div>
         )}
 
-        {notice && (
-          <p className="console-alert" data-tone={notice.tone} role={notice.tone === 'error' ? 'alert' : 'status'}>
-            {labels[notice.key]}
-          </p>
-        )}
+        {notice && <Alert tone={notice.tone}>{labels[notice.key]}</Alert>}
       </div>
 
       <aside className="console-editor-side">
         <section className="console-panel console-preview">
           <h3>{labels['content.preview']}</h3>
-          <p className="console-note">{labels['content.preview.draft']}</p>
+          <Note>{labels['content.preview.draft']}</Note>
           {seo?.path ? (
             <ButtonLink href={seo.path} target="_blank" rel="noreferrer">
               {labels['content.preview.site']}
             </ButtonLink>
           ) : (
-            <p className="console-note">{labels['content.preview.no_page']}</p>
+            <Note>{labels['content.preview.no_page']}</Note>
           )}
           {/* No `allow-same-origin`, no `allow-scripts`: the draft's own markup is inert
               here, and it never reaches the document that holds the session cookie. */}
@@ -491,13 +485,15 @@ export function ConsoleEditor({
               <p className="console-seo-title">{seo.title || labels['content.seo.none']}</p>
               {seo.path && <p className="console-seo-path">{seo.path}</p>}
               <p className="console-seo-desc">{seo.description}</p>
-              <p className="console-note">
+              <Note>
                 {labels['content.seo.title']}: {labels['content.seo.count'].replace('{n}', String(seo.titleLength))} ·{' '}
                 {labels['content.seo.description']}: {labels['content.seo.count'].replace('{n}', String(seo.descriptionLength))}
-              </p>
+              </Note>
             </>
           ) : (
-            <p className="console-lede">{labels['content.loading']}</p>
+            // Not a skeleton: three wells of row-height would not be the shape of what is
+            // coming here, which is a sentence. The word is the honest placeholder.
+            <Note>{labels['content.loading']}</Note>
           )}
         </section>
       </aside>
@@ -536,10 +532,10 @@ function FieldRow({
             and this one did not. */}
         <Checkbox id={id} label={label} checked={Boolean(value)} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
         {/* A checkbox reads the same at a glance whether it is on or off; the words do not. */}
-        <span className="console-note">
+        <Note>
           {value ? labels['content.flag.on'] : labels['content.flag.off']}
           {field.immediate ? ` · ${labels['content.immediate']}` : ''}
-        </span>
+        </Note>
       </div>
     );
   }
@@ -551,12 +547,12 @@ function FieldRow({
     <Field
       htmlFor={id}
       errors={errors}
-      note={field.immediate && !invalid ? <span className="console-note">{labels['content.immediate']}</span> : null}
+      note={field.immediate && !invalid ? <Note>{labels['content.immediate']}</Note> : null}
       label={
         <>
           {label}
           {field.kind === 'bi' ? <span className="ui-label-note">{labels[`content.locale.${locale}` as MessageKey]}</span> : null}
-          {pending ? <span className="console-chip">{labels['content.state.pending']}</span> : null}
+          {pending ? <Badge tone="warn">{labels['content.state.pending']}</Badge> : null}
         </>
       }
     >

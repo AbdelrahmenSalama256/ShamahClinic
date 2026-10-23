@@ -1,3 +1,4 @@
+import { Empty, Note } from '@/components/ui/Status';
 import { message } from '@/lib/console/messages';
 import { overviewRows } from '@/lib/console/overview';
 import { consoleView } from '@/lib/console/server';
@@ -21,7 +22,7 @@ export default async function ConsoleOverviewPage() {
       <p className="console-lede">{message('overview.intro', prefs.locale)}</p>
 
       {rows.length === 0 ? (
-        <p className="console-lede">{message('overview.not_allowed', prefs.locale)}</p>
+        <Empty>{message('overview.not_allowed', prefs.locale)}</Empty>
       ) : (
         <dl className="console-grid">
           {rows.map((row) => (
@@ -33,7 +34,7 @@ export default async function ConsoleOverviewPage() {
         </dl>
       )}
 
-      <p className="console-note">{message('overview.coming_soon', prefs.locale)}</p>
+      <Note>{message('overview.coming_soon', prefs.locale)}</Note>
     </>
   );
 }

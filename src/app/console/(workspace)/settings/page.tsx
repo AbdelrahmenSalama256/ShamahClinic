@@ -1,4 +1,5 @@
 import { SettingsWorkspace } from '@/components/console/SettingsWorkspace';
+import { Empty } from '@/components/ui/Status';
 import { can } from '@/lib/auth/permissions';
 import { catalogFor, message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';
@@ -16,7 +17,7 @@ export default async function ConsoleSettingsPage() {
   if (!auth) return null; // the workspace layout has already redirected
 
   const grants = auth.user.grants;
-  if (!can(grants, 'setting', 'read', {})) return <p className="console-lede">{message('content.no_permission', prefs.locale)}</p>;
+  if (!can(grants, 'setting', 'read', {})) return <Empty>{message('content.no_permission', prefs.locale)}</Empty>;
 
   return (
     <>

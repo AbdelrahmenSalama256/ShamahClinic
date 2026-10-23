@@ -20,6 +20,7 @@ import { useCallback, useState } from 'react';
 import { ConsoleEditor } from './ConsoleEditor';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
+import { Alert, type Tone } from '@/components/ui/Status';
 import { ConsoleList } from './ConsoleList';
 import { consoleCall } from './client-api';
 import type { ContentScreenData, ContentScope } from '@/lib/console/content-screen';
@@ -43,7 +44,7 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
   // four of a list this page does not hold.
   const [selectedId, setSelectedId] = useState<string | null>(data.focusId);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; key: MessageKey } | null>(null);
+  const [notice, setNotice] = useState<{ tone: Tone; key: MessageKey } | null>(null);
   const [creating, setCreating] = useState(false);
   const [newKey, setNewKey] = useState('');
   const [refresh, setRefresh] = useState(0);
@@ -91,7 +92,7 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
   function tell(result: { status: number; error: string | null }, ok: MessageKey): void {
     if (result.error) {
       const mapped = `content.error.${result.error}` as MessageKey;
-      setNotice({ tone: 'error', key: labels[mapped] ? mapped : 'content.error.save' });
+      setNotice({ tone: 'danger', key: labels[mapped] ? mapped : 'content.error.save' });
       return;
     }
     setNotice({ tone: 'ok', key: ok });
@@ -230,11 +231,7 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
           onClose={closeRow}
         />
 
-        {notice && (
-          <p className="console-alert" data-tone={notice.tone} role={notice.tone === 'error' ? 'alert' : 'status'}>
-            {labels[notice.key]}
-          </p>
-        )}
+        {notice && <Alert tone={notice.tone}>{labels[notice.key]}</Alert>}
       </section>
     </div>
   );

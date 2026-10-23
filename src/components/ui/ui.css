@@ -366,3 +366,220 @@ select.ui-control {
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+/* ----------------------------------------------
+   Tone (BK-19.3c). One answer to "how much does this matter", read by the badge, the
+   alert and the note alike.
+
+   The console had it three ways: `.console-alert[data-tone='error']` recoloured the *text*
+   only, so an error box and an information box were the same box; `.console-chip` had no
+   error or ok tone at all, only a `warn` one painted from the *danger* pair — a name that
+   lied about its colour; and `.console-count` had a third subset. Each member now reads
+   the same three variables, and a member that has no use for one simply does not ask:
+   a note has no fill to tint.
+
+   `--tone-*` are declared with no fallback here, so the neutral default lives in the
+   consumer's own `var(--tone-fg, …)` line. That is what lets a badge and an alert disagree
+   about what "no tone" looks like — `--text-secondary` on a pill is a label, `--text-primary`
+   in a box is a sentence — without either of them needing a selector to win.
+
+   The pairs are measured, both themes, text against its own fill:
+   neutral 5.34 light / 8.69 dark · ok 6.15 / 7.63 · danger 5.62 / 7.46 · warn 4.69 / 9.14
+   (all past AA at 0.8rem). The tone borders sit on their own soft fills at 6.15 / 5.62
+   light and 7.63 / 7.46 dark, and the warn border is `--border-control` at 3.58 / 6.76 —
+   past the 3:1 a boundary needs. Neutral keeps `--border-control-soft`, which is the same
+   quiet gold the fields and the panels already use: a badge is identified by its word, not
+   by its edge, so the edge is reinforcement. `warn` has no soft fill of its own in either
+   palette, and inventing a fourth colour would put the brand's champagne next to a colour
+   that means "not the brand" — so it takes the neutral fill and the two signals nobody can
+   confuse: the brand's own ink and a 3.58:1 boundary.
+   ---------------------------------------------- */
+.ui-badge[data-tone='ok'],
+.ui-alert[data-tone='ok'],
+.ui-note[data-tone='ok'] {
+  --tone-fg: var(--text-success);
+  --tone-bg: var(--bg-success-soft);
+  --tone-border: var(--border-success);
+}
+
+.ui-badge[data-tone='warn'],
+.ui-alert[data-tone='warn'],
+.ui-note[data-tone='warn'] {
+  --tone-fg: var(--text-gold);
+  --tone-bg: var(--bg-secondary);
+  --tone-border: var(--border-control);
+}
+
+.ui-badge[data-tone='danger'],
+.ui-alert[data-tone='danger'],
+.ui-note[data-tone='danger'] {
+  --tone-fg: var(--text-danger);
+  --tone-bg: var(--bg-danger-soft);
+  --tone-border: var(--border-danger);
+}
+
+/* ----------------------------------------------
+   Badge (BK-19.3c). The state of one row, one role, one field — a word in a pill.
+
+   `.console-chip` spelled its radius as `999px` while `--radius-pill` (9999px) sat
+   unconsumed three files away, and it carried `margin-inline-end: 0.3rem` of its own,
+   which is a group's layout living inside a member: two chips side by side got a trailing
+   gap after the last one, and a chip in a heading got a margin nothing asked for. Spacing
+   between chips is now the group's (`gap` on `.console-chips`, on the editor's header and
+   on the pager row).
+
+   It breaks no word, and it has to say so out loud. `overflow-wrap` inherits, and the list's
+   cells declare `anywhere` to keep a long slug inside the table, so a badge that named
+   nothing inherited the break — and the articles table read the state column's minimum as one
+   character, gave it 65px and printed "منشور" on three lines in a 99px-tall row. Measured in
+   the built app, the badge's own value is the one the column reads: cell `normal` with the
+   badge `anywhere` still collapses to 65px, and the fix is the badge's `normal` — which leaves
+   the cell free to break a slug (83px column, 26px badge, one line).
+
+   Not `white-space: nowrap`, which measures the same here and is wrong: a two-word role name
+   in the 16rem sidebar needs its space break and would otherwise run out of the box.
+   ---------------------------------------------- */
+.ui-badge {
+  display: inline-block;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--tone-border, var(--border-control-soft));
+  border-radius: var(--radius-pill);
+  background: var(--tone-bg, var(--bg-secondary));
+  color: var(--tone-fg, var(--text-secondary));
+  font-size: var(--ui-font-small);
+  line-height: 1.3;
+  overflow-wrap: normal;
+}
+
+/* ----------------------------------------------
+   Alert (BK-19.3c). A paragraph the person needs to read, with the tone of the news.
+
+   `role` is derived, not typed at every call site: bad news interrupts (`alert`),
+   confirmation is polite (`status`), and a box that explains a standing fact — the
+   read-only editor's banner — is neither and gets nothing, because a live region that
+   never changes teaches people to ignore live regions. A call site may still name its own
+   role; the primitive's default is only what the console already had written by hand at
+   eight of them, in the same words.
+   ---------------------------------------------- */
+.ui-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-block: var(--sp-3) 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--tone-border, var(--border-control-soft));
+  border-radius: var(--radius-control);
+  background: var(--tone-bg, var(--bg-secondary));
+  color: var(--tone-fg, var(--text-primary));
+  font-size: var(--ui-font);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Note (BK-19.3c). The caption-strength line under something: a hint, a count, a label
+   for a row of chips.
+
+   This is the fourth name for one thing that `console.css` had: `.console-note` (with
+   `margin-block-start: 1.5rem`, which inside a field is a mile), `.console-count` (the same
+   three declarations plus `margin-inline-start: auto`), `.console-meta` (the same three and
+   no margin) and `.console-account-label` (the same three). They differed only in the space
+   around them, so the space is what the surface keeps and the type is what lives here once.
+   ---------------------------------------------- */
+.ui-note {
+  margin: 0;
+  color: var(--tone-fg, var(--text-secondary));
+  font-size: var(--ui-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Skeleton (BK-19.3c). The shape of what has not arrived yet.
+
+   `.console-row-skeleton` swept a `background-position` across a three-stop gradient, and
+   `--dur-shimmer` — declared in `globals.css` for exactly this — was never read by
+   anything. A position sweep is the one animation that cannot be expressed as a transform,
+   so it repaints on every frame, and it is the motion the brief's "transform/opacity only"
+   line was written to keep out.
+
+   It is replaced by a breath rather than by the same sweep moved to a
+   `translateX`-ing pseudo-element, and the reason is Arabic. A band anchored with
+   `inset-inline-start` travels the *box* correctly but the translate itself is physical, so
+   the two disagree in RTL and the sweep either starts mid-box or leaves it immediately —
+   which needs a `[dir='rtl'] keyframe to fix, and this file's rule since 19.2 is that it
+   never writes one. An opacity change is the same animation in both readings, costs no
+   paint, and 19.1's reduced-motion block stops it by zeroing the duration, which leaves the
+   well at full strength instead of frozen half-transparent.
+
+   The stack is the component's, not the caller's: `rows` is the number of wells and the gap
+   between them is `--ui-gap-tight`, the same rhythm the real list puts between its rows — so
+   a loading list already measures the height of the list it is waiting for, and the caller
+   does not have to remember to wrap it in a class that means "rows".
+   ---------------------------------------------- */
+.ui-skeletons {
+  display: grid;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-skeleton {
+  min-block-size: var(--tap);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--bg-card-subtle);
+  animation: ui-skeleton var(--dur-shimmer) var(--ease-in-out) infinite;
+}
+
+@keyframes ui-skeleton {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ----------------------------------------------
+   Empty (BK-19.3c). The honest answer to "this list has nothing in it".
+
+   Two states, two different accidents: the palette's empty was `.console-palette-empty`
+   (a secondary line at whatever size the dialog's body is) and the list's was
+   `.console-lede` — the class that 15 other paragraphs use for their opening sentence, so
+   the emptiest state on the screen was wearing the loudest one. An empty is a block with
+   its own edge, because "nothing here" and "still loading" and "the page is broken" have
+   to be three different things at a glance.
+   ---------------------------------------------- */
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8) var(--sp-4);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-surface);
+  color: var(--text-secondary);
+  font-size: var(--ui-font);
+  text-align: center;
+}
+
+/* ----------------------------------------------
+   Value mark (BK-19.3c). A cell whose whole content is yes, no, or nothing.
+
+   `cellText` returned a string and the string was a glyph: `●`, `○`, `—`. In a table read
+   aloud, three columns of glyphs are three columns of silence — a screen reader says
+   "black circle" at best and nothing at the usual punctuation setting. The mark keeps its
+   shape (a date column and a tick column measure differently, and the column is narrow) and
+   puts the word beside it where only the voice can reach it. The glyph is `aria-hidden` so
+   it is not read twice.
+   ---------------------------------------------- */
+.ui-mark {
+  font-size: var(--ui-font);
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.ui-mark[data-state='yes'] {
+  color: var(--text-success);
+}
+
+/* An absent value is not a false one, so it is the quietest of the three: a column of
+   `—` must never read as a column of `○` from across the room. */
+.ui-mark[data-state='none'] {
+  color: var(--text-muted);
+}

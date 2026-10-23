@@ -15,6 +15,7 @@
  * belongs under is the same either way. An issue is not a rejection of the whole save —
  * the other fields are still edited — but no request goes out while one is open.
  */
+import type { Tone } from '@/components/ui/Status';
 import type { MessageKey } from './messages';
 import type { FieldIssue } from './issues';
 import type { ContentLocale } from '../content/kinds';
@@ -29,6 +30,20 @@ export function contentStateKey(row: ContentRow): MessageKey {
   // A row nobody has ever published has no unpublished changes: it is a draft.
   if (row.publishedAt && row.pendingLocales.length > 0) return 'content.state.pending';
   return row.status === 'draft' ? 'content.state.draft' : 'content.state.published';
+}
+
+/**
+ * The chip's colour, read off the chip's word — one table for both panes.
+ *
+ * The list and the editor build this word from different objects (`ListSummary` carries
+ * `pendingAr`/`pendingEn`, `ContentRow` carries `pendingLocales`), so they cannot share the
+ * first function. They can share this one, which is the only way a row stops reading greener
+ * in one pane than in the other.
+ */
+export function contentStateTone(key: MessageKey): Tone {
+  if (key === 'content.state.trashed') return 'danger';
+  if (key === 'content.state.pending') return 'warn';
+  return key === 'content.state.published' ? 'ok' : 'neutral';
 }
 
 /** Pending in one language only: an Arabic edit must not flag the English tab. */

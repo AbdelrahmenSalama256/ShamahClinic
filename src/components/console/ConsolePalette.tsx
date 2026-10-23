@@ -7,6 +7,7 @@ import type { SearchHit } from '@/lib/console/search';
 import { consoleRead } from './client-api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Field';
+import { Badge, Note, Skeleton } from '@/components/ui/Status';
 
 export type PaletteLabels = {
   open: string;
@@ -154,7 +155,7 @@ export function ConsolePalette({ entries, labels }: Readonly<{ entries: PaletteP
                 >
                   <span className="console-palette-group">{entry.group}</span>
                   <span className="console-palette-label">{entry.label}</span>
-                  {!entry.writable && <span className="console-chip">{labels.readOnly}</span>}
+                  {!entry.writable && <Badge>{labels.readOnly}</Badge>}
                 </a>
               ))}
             </section>
@@ -162,7 +163,9 @@ export function ConsolePalette({ entries, labels }: Readonly<{ entries: PaletteP
           {(pending || hits.length > 0) && (
             <section>
               <h2 className="console-palette-section">{labels.records}</h2>
-              {pending && <p className="console-palette-row">{labels.searching}</p>}
+              {/* One well in the height of a result row, and the word inside it for the
+                  voice — a `<p>` wearing the anchor's class could not be hovered anyway. */}
+              {pending && <Skeleton rows={1} label={labels.searching} />}
               {hits.map((hit) => (
                 <a
                   key={`${hit.kind}.${hit.id}`}
@@ -179,7 +182,7 @@ export function ConsolePalette({ entries, labels }: Readonly<{ entries: PaletteP
               ))}
             </section>
           )}
-          {nothing && <p className="console-palette-empty">{labels.empty}</p>}
+          {nothing && <Note>{labels.empty}</Note>}
         </div>
       </dialog>
     </>

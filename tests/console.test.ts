@@ -399,7 +399,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
       '--z-sticky', '--z-scrim', '--z-drawer', '--z-drop', '--z-modal', '--z-palette', '--z-toast',
       '--dur-fast', '--dur-base', '--dur-slow', '--dur-reveal', '--ease-out', '--ease-in-out', '--ease-spring',
       // BK-19.3a: the control geometry both surfaces' buttons read, and the two durations
-      // that are not transitions — a spinner and a skeleton sweep.
+      // that are not transitions — a spinner and a skeleton's breath.
       '--tap', '--tap-field', '--ui-font', '--ui-font-small', '--ui-gap', '--ui-gap-tight', '--ui-pad', '--ui-stack',
       '--dur-spin', '--dur-shimmer']) {
       expect((globalsText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} defined once`).toBe(1);

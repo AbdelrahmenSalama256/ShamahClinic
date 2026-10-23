@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
+import { Alert } from '@/components/ui/Status';
 import type { MessageKey } from '@/lib/console/messages';
 
 /** The login handler's error codes, mapped to the message that explains them. */
@@ -57,11 +58,7 @@ export function LoginForm({ labels }: Readonly<{ labels: Record<MessageKey, stri
       <Button type="submit" variant="primary" loading={busy}>
         {busy ? labels['login.waiting'] : labels['login.submit']}
       </Button>
-      {error && (
-        <p className="console-alert" data-tone="error" role="alert">
-          {labels[error]}
-        </p>
-      )}
+      {error && <Alert tone="danger">{labels[error]}</Alert>}
     </form>
   );
 }

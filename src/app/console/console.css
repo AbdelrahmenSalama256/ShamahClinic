@@ -485,9 +485,11 @@ details[open] > .console-nav-head .console-nav-caret {
   overflow-wrap: anywhere;
 }
 
-.console-palette-empty {
-  margin: 0.8rem 0 0.2rem;
-  color: var(--text-secondary);
+/* The palette's "no results" is a `Note`, and a note is a span so that it can sit inside
+   the pager's row. Here it stands alone, so the dialog gives it the line and the space. */
+.console-palette-list > .ui-note {
+  display: block;
+  margin-block: 0.8rem 0.2rem;
 }
 
 .console-scrim {
@@ -541,16 +543,6 @@ details[open] > .console-nav-head .console-nav-caret {
   max-width: var(--console-panel-w);
 }
 
-.console-chip {
-  display: inline-block;
-  padding: 0.15rem 0.55rem;
-  margin-inline-end: 0.3rem;
-  border-radius: 999px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: var(--ui-font-small);
-}
-
 .console-controls {
   display: flex;
   flex-wrap: wrap;
@@ -568,9 +560,11 @@ details[open] > .console-nav-head .console-nav-caret {
   overflow-wrap: anywhere;
 }
 
-.console-account-label {
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
+/* The roles are `Badge`s, which carry no margin of their own, so the group spaces them. */
+.console-account-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-gap-tight);
 }
 
 /* Fields, controls and checkboxes live in `src/components/ui/ui.css` now (BK-19.3b), for
@@ -581,23 +575,6 @@ details[open] > .console-nav-head .console-nav-caret {
  * native field at the top of the dialog. Nothing here re-paints them, for the same reason
  * the buttons stopped being re-painted: a surface override is how one screen's 44px floor
  * quietly becomes another's 36px. */
-
-.console-alert {
-  margin-block: 0.75rem;
-  padding: 0.6rem 0.8rem;
-  border-radius: 0.6rem;
-  font-size: var(--ui-font);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.console-alert[data-tone='error'] {
-  color: var(--text-danger);
-}
-
-.console-alert[data-tone='ok'] {
-  color: var(--text-success);
-}
 
 .console-center {
   display: grid;
@@ -610,10 +587,16 @@ details[open] > .console-nav-head .console-nav-caret {
   width: min(26rem, 100%);
 }
 
-.console-note {
-  margin-block-start: 1.5rem;
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
+/* `Note` is a span — the pager's "of 4" has to live inside a span — so a caption standing
+   alone gets its block-ness and its space from the surface it stands on: a panel, or the
+   page under its cards. Inside a field stack or a controls row the note is a flex item and
+   `display` is ignored, which is how this reaches only the standalone ones. `--ui-stack` is
+   what two panels put between themselves; the 1.5rem this replaces was a `margin-block-start`
+   that a field stack inherited as a mile. */
+.console-panel > .ui-note,
+.console-content > .ui-note {
+  display: block;
+  margin-block-start: var(--ui-stack);
 }
 
 /* --- the content workspace (BK-6, retuned by 13.1) ------------------------ */
@@ -640,10 +623,10 @@ details[open] > .console-nav-head .console-nav-caret {
   margin-block-end: 0.75rem;
 }
 
+/* Placement only: the type is `.ui-note`'s. This is the one caption in a row that pushes to
+   the far edge, and the three overrides below say when a row should not push. */
 .console-count {
   margin-inline-start: auto;
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
 }
 
 .console-rows {
@@ -700,12 +683,6 @@ details[open] > .console-nav-head .console-nav-caret {
 .console-work-head h2 {
   margin: 0;
   font-size: 1.05rem;
-  overflow-wrap: anywhere;
-}
-
-.console-meta {
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
 
@@ -1007,24 +984,6 @@ details[open] > .console-nav-head .console-nav-caret {
   cursor: pointer;
 }
 
-.console-row-skeleton {
-  min-height: var(--tap);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: linear-gradient(90deg, var(--bg-card-subtle) 25%, var(--bg-secondary) 50%, var(--bg-card-subtle) 75%);
-  background-size: 200% 100%;
-  animation: console-shimmer 1.2s linear infinite;
-}
-
-@keyframes console-shimmer {
-  from {
-    background-position: 200% 0;
-  }
-  to {
-    background-position: -200% 0;
-  }
-}
-
 .console-pager {
   display: flex;
   flex-wrap: wrap;
@@ -1093,15 +1052,6 @@ details[open] > .console-nav-head .console-nav-caret {
 .console-editor-bar .console-count {
   flex-basis: 100%;
   margin-inline-start: 0;
-}
-
-.console-count[data-tone='error'] {
-  color: var(--text-danger);
-}
-
-.console-chip[data-tone='warn'] {
-  background: var(--bg-danger-soft);
-  color: var(--text-danger);
 }
 
 .console-nav-confirm {
@@ -1261,8 +1211,5 @@ details[open] > .console-nav-head .console-nav-caret {
   .console-side,
   .console-scrim {
     transition: none !important;
-  }
-  .console-row-skeleton {
-    animation: none;
   }
 }

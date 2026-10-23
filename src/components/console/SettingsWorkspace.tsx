@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { consoleCall } from './client-api';
 import { Button } from '@/components/ui/Button';
 import { Field, Textarea } from '@/components/ui/Field';
+import { Alert, Badge, Empty, Note, type Tone } from '@/components/ui/Status';
 import type { MessageKey } from '@/lib/console/messages';
 import type { SettingView } from '@/lib/content/settings';
 
@@ -30,7 +31,7 @@ export function SettingsWorkspace({
   // Which row is in flight, not merely whether one is: the spinner has to sit on the
   // control that asked, and every other row stays put while it waits.
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const [notice, setNotice] = useState<{ tone: Tone; text: string } | null>(null);
   const busy = busyId !== null;
 
   async function save(row: SettingView): Promise<void> {
@@ -40,7 +41,7 @@ export function SettingsWorkspace({
     try {
       value = JSON.parse(text) as unknown;
     } catch {
-      setNotice({ tone: 'error', text: labels['content.error.json'] });
+      setNotice({ tone: 'danger', text: labels['content.error.json'] });
       return;
     }
     setBusyId(id);
@@ -48,13 +49,13 @@ export function SettingsWorkspace({
     setBusyId(null);
     if (result.error) {
       const mapped = `content.error.${result.error}` as MessageKey;
-      setNotice({ tone: 'error', text: labels[mapped] ?? labels['content.error.save'] });
+      setNotice({ tone: 'danger', text: labels[mapped] ?? labels['content.error.save'] });
       return;
     }
     setNotice({ tone: 'ok', text: labels['content.saved'] });
   }
 
-  if (rows.length === 0) return <p className="console-lede">{labels['content.empty']}</p>;
+  if (rows.length === 0) return <Empty>{labels['content.empty']}</Empty>;
 
   return (
     <>
@@ -64,10 +65,10 @@ export function SettingsWorkspace({
         return (
           <section className="console-panel" key={id}>
             <h2 className="console-subheading">
-              {row.key} <span className="console-chip">{row.group}</span>
+              {row.key} <Badge>{row.group}</Badge>
             </h2>
             {row.secret ? (
-              <p className="console-alert">{labels['content.secret']}</p>
+              <Alert>{labels['content.secret']}</Alert>
             ) : (
               <Field label={id} htmlFor={`setting-${id}`}>
                 <Textarea
@@ -84,17 +85,13 @@ export function SettingsWorkspace({
                 )}
               </Field>
             )}
-            <p className="console-note">
+            <Note>
               {labels['content.updated_at']}: {row.updatedAt.slice(0, 10)} · {labels['content.version']} {row.version}
-            </p>
+            </Note>
           </section>
         );
       })}
-      {notice && (
-        <p className="console-alert" data-tone={notice.tone} role={notice.tone === 'error' ? 'alert' : 'status'}>
-          {notice.text}
-        </p>
-      )}
+      {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}
     </>
   );
 }
