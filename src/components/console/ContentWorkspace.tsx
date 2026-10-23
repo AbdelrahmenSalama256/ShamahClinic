@@ -22,7 +22,7 @@ import { ConsoleList } from './ConsoleList';
 import { consoleCall } from './client-api';
 import type { ContentScreenData, ContentScope } from '@/lib/console/content-screen';
 import type { ContentLocale } from '@/lib/content/kinds';
-import type { ListScope } from '@/lib/content/list-view';
+import { writeScopeQuery, type ListScope } from '@/lib/content/list-view';
 import type { ContentRow } from '@/lib/content/store';
 import type { MessageKey } from '@/lib/console/messages';
 
@@ -57,9 +57,8 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
   const scopeValue: ContentScope = named ? String(scope.listKey ?? '') : locale;
   const publishable = data.abilities.publish.filter((candidate) => !named || candidate === scope.listKey);
 
-  function query(): string {
-    return named ? `?list=${encodeURIComponent(String(scope.listKey ?? ''))}` : `?locale=${locale}`;
-  }
+  /** The line every write from this screen ends with. */
+  const scopeQuery = writeScopeQuery({ listKey: named ? scopeValue : null, locale });
 
   const reloadList = useCallback(() => setRefresh((current) => current + 1), []);
   const onDirtyChange = useCallback((next: boolean) => setDirty(next), []);
@@ -100,7 +99,7 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
     const key = newKey.trim();
     if (!key || !data.abilities.create.includes(scopeValue)) return;
     setBusy(true);
-    const result = await consoleCall<{ row?: ContentRow }>(`${api}${query()}`, 'POST', { key });
+    const result = await consoleCall<{ row?: ContentRow }>(`${api}${scopeQuery}`, 'POST', { key });
     setBusy(false);
     const created = result.data?.row;
     if (created) {

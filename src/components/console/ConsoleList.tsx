@@ -29,6 +29,7 @@ import {
   withPage,
   withSort,
   withView,
+  writeScopeQuery,
   type ListFilter,
   type ListScope,
   type ListSort,
@@ -208,16 +209,14 @@ export function ConsoleList({
     setChecked(allChecked ? new Set() : new Set(rows.map((row) => row.id)));
   }
 
-  /** The scope a write names, in the term `guard()` reads it from. */
-  function scopeParam(): string {
-    return scope.listKey ? `list=${encodeURIComponent(scope.listKey)}` : `locale=${locale}`;
-  }
+  /** The scope a bulk write names, in the one spelling the guard reads. */
+  const scopeQuery = writeScopeQuery({ listKey: scope.listKey, locale });
 
   async function bulk(verb: 'publish' | 'trash' | 'restore'): Promise<void> {
     const ids = [...checked];
     if (ids.length === 0) return;
     setBusy(true);
-    const result = await consoleCall<{ done?: string[]; failed?: { code: string }[] }>(`${api}/bulk/${verb}?${scopeParam()}`, 'POST', { ids });
+    const result = await consoleCall<{ done?: string[]; failed?: { code: string }[] }>(`${api}/bulk/${verb}${scopeQuery}`, 'POST', { ids });
     setBusy(false);
     if (result.error) {
       const mapped = `content.error.${result.error}` as MessageKey;

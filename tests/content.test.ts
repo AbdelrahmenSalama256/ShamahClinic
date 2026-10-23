@@ -28,7 +28,7 @@ import { assignRole, createUser, getOrCreateRole } from '../src/lib/auth/users';
 import { contentActionHandler, contentCollectionHandler, contentItemHandler, settingsHandler } from '../src/lib/content/api';
 import { viewItemHandler, viewsHandler } from '../src/lib/console/views-route';
 import { kindSpec, parseWrites, type ContentLocale } from '../src/lib/content/kinds';
-import type { ListView } from '../src/lib/content/list-view';
+import { writeScopeQuery, type ListView } from '../src/lib/content/list-view';
 import type { ListPage } from '../src/lib/content/summary';
 import type { SavedView } from '../src/lib/console/views-route';
 import type { ContentRow } from '../src/lib/content/store';
@@ -1287,5 +1287,41 @@ describe('contentScreenData hands the workspace only the buttons the API honours
     expect(pages?.abilities.update).toEqual(['ar', 'en']);
     // The catalog gives a page create, update and publish — never delete.
     expect(pages?.abilities.remove).toEqual([]);
+  });
+});
+
+describe('one function spells the scope every write names (BK-13.5)', () => {
+  it('answers a tab screen and a list screen through the line the screen now builds', async () => {
+    // Workspace, editor and list each used to build this themselves. The rule moved into
+    // `writeScopeQuery`, so the proof is that a write carrying the line the components call
+    // is still judged against the scope its caller meant — on a save, a create and a bulk.
+    const tab = writeScopeQuery({ listKey: null, locale: 'ar' });
+    expect(tab).toBe('?locale=ar');
+
+    const created = await call(`/content/article${tab}`, write(actors.Owner, 'POST', { key: slug('one-spelling') }));
+    expect(created.status, JSON.stringify(created.body)).toBe(200);
+
+    const saved = await call(`/content/article/${created.row.id}${tab}`, write(actors.Owner, 'PATCH', { fields: { title: 'spelled once' } }));
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    expect(saved.row.fields.title).toMatchObject({ draft: { ar: 'spelled once' } });
+
+    const trashed = await call(`/content/article/bulk/trash${tab}`, write(actors.Owner, 'POST', { ids: [created.row.id] }));
+    expect(trashed.status, JSON.stringify(trashed.body)).toBe(200);
+    expect(trashed.done).toEqual([created.row.id]);
+    const restored = await call(`/content/article/bulk/restore${tab}`, write(actors.Owner, 'POST', { ids: [created.row.id] }));
+    expect(restored.done, JSON.stringify(restored.body)).toEqual([created.row.id]);
+
+    const named = writeScopeQuery({ listKey: 'branches', locale: 'ar' });
+    const row = await call(`/content/list_item${named}`, write(actors.Editor, 'POST', { key: `${ar}-one-spelling` }));
+    expect(row.status, JSON.stringify(row.body)).toBe(200);
+  });
+
+  it('names the list and never both terms', () => {
+    // The guard reads its scope off the URL, so a line that named a list *and* a language
+    // would be judged against whichever it reads first. One term, always, is the rule.
+    expect(writeScopeQuery({ listKey: 'nav', locale: 'ar' })).toBe('?list=nav');
+    // An empty list is not a scope, so the language is what the write can name.
+    expect(writeScopeQuery({ listKey: '', locale: 'en' })).toBe('?locale=en');
+    expect(writeScopeQuery({ listKey: null, locale: null })).toBe('');
   });
 });

@@ -40,6 +40,7 @@ import { consoleCall, consoleRead } from './client-api';
 import { fieldOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/console/issues';
 import { contentStateKey, fieldsFromForm, formOf, isPendingIn, sameForm, type Form } from '@/lib/console/editor-form';
 import { previewDocument, previewModel, seoReadout } from '@/lib/console/preview';
+import { writeScopeQuery } from '@/lib/content/list-view';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import type { ContentRow, FieldView } from '@/lib/content/store';
@@ -120,7 +121,7 @@ export function ConsoleEditor({
 
   const writable = abilities.update.includes(scopeValue);
   const canEditRow = row !== null && writable && !row.trashed && !loading;
-  const query = named ? `?list=${encodeURIComponent(String(scopeValue))}` : `?locale=${locale}`;
+  const query = writeScopeQuery({ listKey: named ? String(scopeValue) : null, locale });
 
   // A fresh read — a new row, a new tab, a rollback — owns the form. A save that came
   // back under the same tag does not: it answers with the row the database holds, and the

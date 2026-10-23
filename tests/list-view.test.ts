@@ -33,6 +33,7 @@ import {
   withPage,
   withSort,
   withView,
+  writeScopeQuery,
   type ListScope,
   type ListView,
 } from '../src/lib/content/list-view';
@@ -220,5 +221,36 @@ describe('the screen writes the address bar from that one string', () => {
     expect(url.search).toBe(line);
     expect(url.searchParams.get('locale')).toBe('ar');
     expect(url.searchParams.get('trash')).toBe('1');
+  });
+});
+
+describe('a write names its scope with one term, spelled in one place (BK-13.5)', () => {
+  const components = ['ConsoleList', 'ConsoleEditor', 'ContentWorkspace'].map((name) => [
+    name,
+    readFileSync(join(process.cwd(), 'src', 'components', 'console', `${name}.tsx`), 'utf8'),
+  ]);
+
+  it('chooses the list when there is one and the language when there is not', () => {
+    expect(writeScopeQuery({ listKey: 'branches', locale: 'ar' })).toBe('?list=branches');
+    expect(writeScopeQuery({ listKey: null, locale: 'ar' })).toBe('?locale=ar');
+    // An unnamed list is not a scope: the language is what the guard can actually read.
+    expect(writeScopeQuery({ listKey: '', locale: 'en' })).toBe('?locale=en');
+  });
+
+  it('sends no term at all rather than a scope nobody named', () => {
+    expect(writeScopeQuery({ listKey: null, locale: null })).toBe('');
+  });
+
+  it('encodes a key that needs it, because a raw & would end the term early', () => {
+    expect(writeScopeQuery({ listKey: 'a b&c', locale: 'ar' })).toBe('?list=a%20b%26c');
+  });
+
+  it('leaves no component to invent the either/or', () => {
+    // Three spellings of one rule is three chances to send both terms, and a request that
+    // names a list *and* a locale is judged against whichever the guard reads first.
+    for (const [name, source] of components) {
+      expect(source, `${name} names a list`).not.toMatch(/list=\$\{/);
+      expect(source, `${name} names a locale`).not.toMatch(/locale=\$\{/);
+    }
   });
 });

@@ -719,3 +719,45 @@ describe('the editor pane is one row, edited (BK-13.4)', () => {
     expect(workspace).not.toMatch(/'PATCH'|\/publish|\/restore|\/rollback|\/revisions/);
   });
 });
+
+describe('every screen reaches the primitives through one door (BK-13.5)', () => {
+  /** Each page file with the path it sits at, so a failure names the screen that drifted. */
+  const pageFiles = (dir: string): { path: string; source: string }[] =>
+    readdirSync(dir).flatMap((entry) => {
+      const full = join(dir, entry);
+      if (statSync(full).isDirectory()) return pageFiles(full);
+      return entry === 'page.tsx' ? [{ path: full, source: readFileSync(full, 'utf8') }] : [];
+    });
+  const pages = pageFiles(consoleDir);
+  const list = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
+
+  it('draws a content screen from the workspace, never from a primitive', () => {
+    expect(pages.length, 'the sweep covers every registered screen').toBe(CONSOLE_SCREENS.length + 1);
+    // A screen that imported ConsoleList would hold a second copy of the terms the address
+    // bar already names, and the two answer different questions after one reload. Matched on
+    // the import, not the word: `ConsoleListsPage` is a screen that is drawn correctly.
+    const primitive = /from '@\/components\/console\/(?:ConsoleList|ConsoleEditor|ContentWorkspace)'/;
+    for (const { path, source } of pages) {
+      expect(source, path).not.toMatch(primitive);
+    }
+    // Settings is the one screen that is not a content screen: a site setting takes effect
+    // as it is saved, so it has no draft, no publish bar and nothing to share.
+    expect(pages.find(({ path }) => path.endsWith(join('settings', 'page.tsx')))?.source).toMatch(/SettingsWorkspace/);
+  });
+
+  it('hands the whole query string over instead of naming terms', () => {
+    // A page that picked out `?sort` and `?filter` for itself falls behind the list the
+    // moment the list gains a term — the drift this row was written to close.
+    for (const { path, source } of pages) {
+      expect(source, path).not.toMatch(/parseListView|parseListScope|URLSearchParams/);
+    }
+  });
+
+  it('keeps a list view out of the browser’s history', () => {
+    // `replaceState`, on purpose: a chip press is not a page, so Back leaves the console
+    // screen for the previous one, which the server renders from its own terms. A pushState
+    // here would make the address bar and the screen two histories that disagree.
+    expect(list).toMatch(/history\.replaceState/);
+    expect(list).not.toMatch(/pushState|useRouter/);
+  });
+});

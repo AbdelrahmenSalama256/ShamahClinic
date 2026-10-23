@@ -163,6 +163,21 @@ export function listScopeParams(scope: ListScope): URLSearchParams {
   return params;
 }
 
+/**
+ * The line a **write** names its scope with — as opposed to the address bar, which carries
+ * every term it knows. One spelling because the either/or is the rule, and three components
+ * inventing it is three chances to send both terms: the guard reads the scope off the URL,
+ * so a request that names a list *and* a locale is answered against whichever it reads
+ * first, not the one the caller meant.
+ */
+export function writeScopeQuery(scope: { listKey: string | null; locale: string | null }): string {
+  if (scope.listKey) return `?list=${encodeURIComponent(scope.listKey)}`;
+  if (scope.locale) return `?locale=${encodeURIComponent(scope.locale)}`;
+  // Nothing names the scope, so nothing is sent: the guard reads the scope off the URL and
+  // a write that arrives without one is refused rather than guessed at.
+  return '';
+}
+
 /** The scope a query string names. Each term is verbatim or absent: the server validates the values. */
 export function parseListScope(params: Params): ListScope {
   return {
