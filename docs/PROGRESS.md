@@ -210,6 +210,52 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       of their own), `getOfferCategories` (**blocked**: the `categories` table has no taxonomy column, so post and
       product categories would collide), and the `nav`/`specialists`/`faq`/`results`/`treatments` lists, which have
       console screens but no public reader yet — each needs one before it can be moved, not invented here.
+      Four separate moves, so four sub-rows: 6.3c-a settings, 6.3c-b the home prose, then the two that are not
+      readers at all (6.3c-c a schema decision, 6.3c-d prop plumbing).
+- [x] 6.3c-a `getSettings` — `bcb84e2` (the reader) · `050a78f` (the same double-parse on the console side)
+      It was never a WordPress read: an aggregate of `siteConfig` plus two counts, so it now lives on the site's own
+      read path (`lib/content/site.ts`), where six of its fields can come from the `settings` table. The fallback is
+      **per key**, the opposite of the content rungs: a site that saved a phone number still takes its hours from the
+      config file, because a setting has no draft twin and no version of record — half-filling the group is a normal
+      state, not a broken one. Two kinds of row a public reader must not take: a blank value (the editor cleared the
+      field, so the authored word returns) and an `is_secret` row (the console will not show those values over the
+      operator's shoulder, and `/api/v1/settings` answers to anyone).
+      Moving it found the defect it was carrying. The driver hands back a **parsed** JSON scalar, so re-parsing a
+      digits-only value turned `'20555000111'` into the number `20555000111` and the field silently kept the config
+      value instead of the operator's edit — `asWord` decodes only a quoted document, which is the other half of what
+      `content/settings.ts` already documents as "the driver parses most of it, but not every path".
+      `readSettings()` on the console side had the identical double-parse, and it is worse there than in a reader: the
+      settings screen would show a number, and saving what it showed wrote a JSON **number** into the column — after
+      which no site reader can render the field at all. Probed against the test database before deciding
+      (`.tmp/bk6c-console-roundtrip.mts`: typed `'20555000111'` → column `"20555000111"` → `readSettings` returned
+      `typeof number`), then fixed with the same rule and asserted as its own case.
+      **What this rung changes is the API, not the pixels.** The rendered site takes only `settings.branches` from this
+      reader (`src/app/[lang]/page.tsx:45`); the brand name, phone and hours reach the HTML through the config module
+      itself (`[lang]/layout.tsx`, `src/data/clinic.ts`, `lib/jsonld.ts`, `lib/seo.ts`). Pointing those components at
+      the read path is BK-14's editable-elements work, not a row that moves a source — and `lang` still does not move
+      `name` or `hours`, which is also BK-14's.
+      1 more case in `tests/site.test.ts` (14) and 1 in `tests/content.test.ts` (suite 313 tests / 10 files),
+      typecheck, lint, `next build` (86 static pages), and `prove:no-wp` re-run because a read path changed
+      (5 checks, 79 routes, 0 requests to the WordPress origin).
+      The live proof, over the real route against the dev database: `/api/v1/settings` went from
+      `"Shamah Clinics"` / `"201121880908"` to `"شامه — محرر النصوص"` / `"20555000111"` while the server logged
+      `[site] db settings (2 key(s))`, and back to the byte-identical baseline once the fixture was cleared — no
+      restart between, so the reader really queries per request. `.tmp/bk6c-settings.mts` (gitignored) touches exactly
+      two primary keys, dry-run until `--force`; the dev database is back to 1 article, 1 offer, 0 settings rows.
+- [ ] 6.3c-b `getHeroPhotos` / `getHomeIntro` / `getHomeProseSections` — all three parse the **body** of one
+      WordPress page, and BK-7.2 imported that page as a `pages` row whose published column keeps the raw builder
+      HTML. So the DB rung is the same parse over `rawBody()` of the published `home` page (a counterpart to `body()`,
+      which sanitizes and would break the builder markup), with `getRawPageHtml` as the fallback and the existing
+      `note()` line saying which one answered. Rewires `src/app/[lang]/page.tsx:5` and `src/lib/wp/about.ts:5`.
+- [ ] 6.3c-c `getOfferCategories` — still blocked, and the block is a schema question rather than a reader: the
+      `categories` table has no taxonomy column, so an imported product category and an imported post category with
+      the same slug would collide. Needs a migration decision (add `taxonomy`) before anything moves.
+- [ ] 6.3c-d the `nav` / `specialists` / `faq` / `results` / `treatments` lists — each has a console screen and no
+      public reader, and today each is read **synchronously inside a client component**: `Navbar`, `Footer`,
+      `SiteShell`, `BookingModal`, `DoctorsClient`, `FaqClient`, `FaqAccordion`, `ResultCaseCard`, `TreatmentCard` and
+      `HomeBody` import `src/data/<list>` directly (all ten files are `'use client'`). A reader alone would not reach
+      the page: the value has to be passed down as a prop from a server component, which is BK-14's element plumbing.
+      Writing readers first and leaving them unwired is the invention this row says not to do.
 - [x] 6.4 Trash + never-delete: soft delete, restore, and versions that are never garbage-collected — `c68eb9d`
       Trashing sets `deleted_at` and keeps the id, version and every revision; the live list and the trash view read
       the same table (`?trash=1`). Trashing needs the delete grant, restoring the write grant, and a row in the trash
@@ -659,6 +705,11 @@ schema leaves room for each, and BK-17's Connectors screen is where a key would 
 - **JSON columns read back already parsed.** MariaDB stores them as LONGTEXT with a `json_valid()` check and
   `mysql2` type-casts on read, so `after_json` is an object, not a string. Write with `json(value)`, read
   without `JSON.parse` — an assertion that parsed twice threw `"[object Object]" is not valid JSON`.
+  The same double-parse is quieter and worse for a **string that reads as JSON**: a WhatsApp number came back as
+  the string `20555000111`, `JSON.parse` turned it into the number `20555000111`, and the caller read that as
+  "no value saved here" — the field silently kept the config file's word, with no error on any path. Both
+  readers now decode only a document (text starting with `{`, `[` or `"`): `parse()` in `content/settings.ts`
+  and `asWord()` in `content/site.ts`. Asserted in both suites (`bk6-…/hotline`, `site-…` settings rows).
 - **`Database` must not extend `Record<string, unknown>`.** The index signature collapses `keyof Database` to
   `string`, and every qualified join reference then infers as `never` ("argument not assignable to never").
   Fixed in `src/lib/db/types.ts` in `08b790e`; schema drift is caught by `src/lib/db/schema.test.ts`.
