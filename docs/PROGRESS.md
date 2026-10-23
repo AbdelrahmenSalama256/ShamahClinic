@@ -39,10 +39,10 @@ loaded into the console once it exists; `D:\shamah` is left alone.
 `npm run prove:no-wp` is the BK-7 gate on top of those four: it starts the built server with a fetch guard and crawls
 every public route, and must be re-run whenever a read path changes.
 
-`npm run build` needs outbound network: `next/font/google` fetches Montserrat and Readex Pro at compile time
-(`src/lib/fonts.ts`). Offline it fails with `getaddrinfo ENOTFOUND fonts.googleapis.com` — that is the
-environment, not the code. Self-hosting the two fonts would remove the dependency; do that only if deploys
-turn out to need it.
+`npm run build` needs **no outbound network**. It used to: `next/font/google` fetched Montserrat and Readex Pro at
+compile time and, with no DNS, failed with `getaddrinfo ENOTFOUND fonts.googleapis.com` — that was the environment,
+not the code (BK-0.2 recorded the failure). BK-19.2 self-hosted four Tajawal weights under `src/lib/fonts/`, so the
+build is offline-clean and `src/lib/fonts.ts` no longer exists.
 
 Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 
@@ -415,9 +415,10 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       the host**. Coverage caveat, stated plainly: the guard replaces `globalThis.fetch` airtight, but patches
       `http/https.request` on the exports object, which a `import { request } from 'node:https'` binding taken before
       it loaded would not see — that gap is why the structural half exists and is not redundant. Scope caveat: this
-      proves the *rendered site* never reaches WordPress. `next build` still fetches Google Fonts
+      proves the *rendered site* never reaches WordPress. `next build` still fetched Google Fonts
       (`src/lib/fonts.ts`, see the Gates note above) — a compile-time dependency on a third party, not on the clinic's
-      CMS, and the reason "no WordPress" and "no network" are not yet the same sentence.
+      CMS, and the reason "no WordPress" and "no network" were not yet the same sentence. BK-19.2 closed that: the
+      fonts are self-hosted now and `src/lib/fonts.ts` is gone, so the sentence is true on both halves.
       Gates: typecheck, lint, `vitest run` 163 tests / 8 files, `next build` clean. **The build now prerenders 84 pages,
       not 272, and that is not a regression**: the dev database holds the owner's own two published console rows (an
       article and an offer, created and published 2026-10-22 23:11–23:13), and one published row is what takes a kind
@@ -870,10 +871,11 @@ brief adds that is genuinely not done: the rest of 7.5 (`seo.json`, `offer-categ
   `globals.css` 143/153/557) — it animates layout properties, defeats `transform/opacity` discipline and makes a
   themed toggle unverifiable — and `img { width: 100% !important }`, which overrides every intrinsic-size hint and is
   a CLS hazard.
-- Fonts: `src/lib/fonts.ts` loads **Readex Pro + Montserrat from `next/font/google`**, so `npm run build` needs
+- Fonts: `src/lib/fonts.ts` loaded **Readex Pro + Montserrat from `next/font/google`**, so `npm run build` needed
   outbound DNS (BK-0.2 recorded the failure). The brief asks for **Tajawal**. That is a real decision, not a
   find-and-replace: Readex Pro is the Arabic face the current contrast report was measured with, and switching the
-  public site's typography is a visible change to a live brand.
+  public site's typography is a visible change to a live brand. → taken in 19.2, with the mixed-script argument that
+  decided it; `docs/contrast-report.md` is the file that has to be re-read if a measured pair moves.
 - `tests/console.test.ts` (763 lines) asserts **CSS strings and class names**, and 13.5 added source-walk tests that
   fail if a page re-invents a primitive. A redesign therefore has to update those assertions in the same commit as
   the styling, deliberately — "the tests broke" and "the design changed" must not be confused.
@@ -957,10 +959,87 @@ the markup they name.
       what sizes every `next/image` on the site, and dropping it is a per-section layout question with a CLS
       consequence, which is 19.7's job with the sections in front of it. What 19.1 could do about it is say where it
       lives and why, so 19.7 does not rediscover it.
-- [ ] 19.2 Type + RTL: the display face decision (Tajawal vs the shipped Readex Pro/Montserrat) taken openly,
+- [x] 19.2 Type + RTL: the display face decision (Tajawal vs the shipped Readex Pro/Montserrat) taken openly,
       self-hosted so `next/font/google` stops needing the network at build time; type scale, tight tracking on
       headings, tabular numerals for stats; a logical-properties sweep of console.css and the site sections; mirrored
-      icons/chevrons and mirrored motion in RTL.
+      icons/chevrons and mirrored motion in RTL. `6ca5278`
+      **The face decision, stated plainly because the brief asked for it to be:** the shipped system was two Google
+      families chosen by *direction* — Readex Pro on the body, and `[dir="ltr"] body` swapping the whole page to
+      Montserrat. That is one font per language, so an Arabic page with an English clinic name or a Latin number in
+      it set those glyphs in a different family with different ascent, descent and x-height, mid-sentence. Tajawal
+      was chosen and it is the brief's own call, but the reason it is right here is measurable: its Latin is drawn in
+      the same file as its Arabic, one cmap, matching metrics, so a mixed run gets one face — which is why the
+      `[dir="ltr"]` override is gone rather than translated. Both old stacks are deleted, not left as fallbacks: a
+      test fails if `readex` or `montserrat` survives anywhere in `src`.
+      Self-hosted as four static weights (400/500/700/800 woff2, 20.8–21.7 KB, + `OFL.txt`) through
+      `next/font/local`, from upstream `google/fonts` ofl/tajawal v12 via fonttools, otherwise unmodified. Two
+      reasons, both operational: `npm run build` no longer resolves `fonts.googleapis.com` (BK-0.2 recorded that a
+      build with no outbound DNS fails outright, and BK-11's cPanel host may not have it), and `adjustFontFallback`
+      measures the real file, so the generated fallback face carries `size-adjust: 94.43%` with matching
+      ascent/descent/line-gap overrides — verified in the built CSS — which is what keeps the swap free of layout
+      shift. The family has no variable version, so `font-semibold` resolves to 700 and `font-black` to 800; the
+      observed computed `font-weight: 900` on an `<h1>` is the 800 face, which is where the console and the site
+      already sat.
+      `--font-ui` is the only stack components read, and it is `var(--font-tajawal, "Segoe UI", Tahoma, Arial,
+      sans-serif)`. The fallback is not decoration and its reason is specific: `@font-face` rules do not cross into a
+      document that never loaded the stylesheet — the console's preview `srcdoc` frame, an email template, a print
+      sheet — so those need a real stack, not an empty family name. All three document roots (`[lang]`, `console`,
+      `NotFoundDocument`) now apply exactly one `.variable`; the 404 was the case that used to need both fonts
+      exported, because it composes outside the layout tree.
+      **`tabular-nums` is a dead declaration on this face and the components proved it.** Tajawal ships `aalt ccmp
+      dlig fina init liga medi rlig frac` (+`calt` at 500/700) and no `tnum` at any weight, and its digits were never
+      equal to begin with: measured off the upstream binaries with fontTools, the Latin ten spans **375 units** (the
+      1) to **553** (the 4) of a 1000 upem at 400, and the Arabic-Indic ones the site actually renders in Arabic —
+      `formatNumber` maps `[0-9]` to ٠–٩ when `language === "ar"` — span **207** (١) to **633** (٣). So equal digits
+      became geometry: `--num-cell: max(1ch, 0.64em)` and a `@utility num` that reserves one cell per digit
+      (`[--num-digits:n]` where a value has a known width). `ch` is the advance of the Latin 0, which is 552 units
+      here and therefore *understates* both the Latin 4 and the widest Arabic-Indic digit — hence the floor. Measured
+      on the built site: the six index values on `/en/about` are all 23.03px against natural widths of 14.70–19.84px,
+      and Arabic-Indic ١–٤ on `/ar/about` land in the same 23.03px cell with naturals of 10.26–22.79px and no
+      overflow. `ResultCaseCard`'s pager cells only the numerator, because only the numerator changes.
+      Tracking: the four `--ls-*` tokens are now the only place a heading, eyebrow, label or number asks for
+      tracking, which lets one unlayered `[dir="rtl"]` rule zero all four — joined Arabic letters open at the joins
+      when spaced, so `-0.015em` on an `<h1>` and `0.3em` on an eyebrow are both Latin moves. Placement matters and
+      is the non-obvious part of this row: the token block is an *unlayered* `:root`, so an override inside
+      `@layer base` loses to it whatever its source order. Tailwind's own `--tracking-*` namespace is re-pointed at
+      the tokens (`@theme { --tracking-tight: var(--ls-heading) … }`), which is why the twelve call sites that had
+      hand-tuned a value — `tracking-[0.2em]`, `tracking-[0.28em]`, `tracking-[0.3em]` — needed no edit and now
+      simply flip: verified computed `letter-spacing: normal` on `/ar`'s h1 and eyebrow against `-0.42px` and `3.3px`
+      on `/en`. The scale itself (`--fs-h1…h4`, clamped in **rem** so it follows the visitor's font size, with
+      `--lh-tight`/`--lh-body`) moved into `@layer base` and now applies in both directions; the px ladder further
+      down is on controls only and does not rescale it — an earlier draft of the comment claimed otherwise and was
+      corrected against the file.
+      RTL sweep: both stylesheets and every `.tsx` are free of physical direction, proved by a test rather than by
+      reading. `console.css` already flipped its drawer and nav caret through logical properties, so the remaining
+      work was behavioural: the Navbar's two mobile faces were the last un-signed horizontal motion in the tree and
+      now take one magnitude signed by language (`slideInX`), entering from the trailing edge and leaving through the
+      leading one, and the inline `"→"`/`"←"` characters baked into two nav labels and the journal back link became
+      direction-aware lucide icons — a text arrow is the one glyph that cannot be mirrored by CSS.
+      `tests/typography.test.ts`: 11 new cases, and the suite is now **329 tests over 11 files, all passing** — no
+      `next/font/google` import anywhere; each declared weight a real `wOF2` over 15 KB with a filename matching the
+      weight it declares; the OFL present and carrying both the Boutros copyright and the licence text; exactly one
+      font stack, every `font-family:` line in both stylesheets equal to it, no dead family left; all three roots
+      applying exactly one `.variable`; the scale and the tokens in the order that makes them work; the digit cell
+      defined with zero `tabular-nums` left in a component; the `[dir="rtl"]` tracking rule ahead of its twins with
+      the `@theme` re-pointing; x-motion present only in files that flip; no physical direction in either stylesheet.
+      One case caught a defect rather than a hypothetical: `PageHero`'s mobile twin still carried a second
+      `tabular-nums`, and that is what failed the digit-cell test. Separately, two rationales written into the code
+      comments during this row turned out to be wrong and were rewritten from the measurements — a "hashed family
+      name" story that font-family matching made irrelevant, and a claim that the root-size ladder rescales the
+      heading scale (it sits on controls, not `html`). Worth recording because a comment that overstates a mechanism
+      is worse than no comment, and the tests here are written against files rather than against those comments.
+      Gates: typecheck · lint · `vitest run` **329/329 over 11 files** · `next build`. `npm run prove:no-wp` was not
+      re-run — no read path changed. The one non-style module in the diff, `src/lib/console/preview.ts`, is a CSS
+      string for the editor frame, not a reader: it lost `font-style: italic` from a `.lede` rule (Tajawal has no
+      italic face to synthesize or select) and took a size step instead.
+      **What this row could not fix:** the console's article preview renders in a `srcdoc` iframe, and `next/font`
+      exposes no URL to hand it — only a className, a style and the variable — so the preview cannot see the
+      `@font-face` rules and stays on the system fallback. It is therefore *not* a faithful render of the published
+      typography, which is a real limit for an editor making layout judgements. Options are to serve the woff2 files
+      from `public/` and re-declare the faces inside the preview document (duplicating what `next/font` owns, and
+      losing the content-hashed URLs), or to move the preview to a same-origin route that imports `globals.css`
+      (which makes it a real page, and changes what the preview frame is). Neither is a typography change, so 19.6
+      re-opens it with the editor screens in front of it.
 - [ ] 19.3 Primitives: `src/components/ui/` — button (primary/secondary/ghost/danger/loading), input, textarea,
       select, combobox, checkbox, switch, radio, date field, file drop-zone with preview + progress, rich-text area,
       table (sticky head, row hover, inline actions, sortable, skeleton, empty, pagination — `ConsoleList` already
