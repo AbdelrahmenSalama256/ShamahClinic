@@ -427,6 +427,42 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       per-request WPBakery nonce inside page 622's body), so nothing new can be found in the fresh folder, and only the
       frozen one is what the site serves today. `data/wp/*` stays read-only and undeleted either way — retiring the
       **rung** means no code path falls back to it, not that the backup goes away.
+- [x] 7.5-a `data/wp/result-stories.json` membership — `9bb7f96`
+      `/results` now asks the console's own `results` list which articles are stories, so membership is editable and the
+      phrase index is only the fallback rung. The list was already in `LIST_KEYS`, already seeded with
+      `is_article_collection: 1`, and already console-editable, so this needed no migration and no new column — which is
+      why it went there rather than into a flag on `articles`.
+      `planResultStories()` writes one `list_item` per story: `uid` is the **WordPress post id**, not the slug —
+      `list_items.uid` is VARCHAR(120) and post 998's slug is 128 characters, and more to the point a slug is something
+      an editor may rename while an id is not, so the row says "this post is a story" rather than "this URL is". The
+      document holds only `phrases` (why the post was called a story; nothing renders it), `enabled` and `position`;
+      the card's title, cover, excerpt and date keep coming from the article row, so a reworded story is fresh without
+      touching the list. One locale is written because a list item is a single JSON document shared by both languages,
+      which is what the console's own writes do.
+      `getResultStories` moved out of `src/lib/wp` into `src/lib/content/site`, where `listRung('results', …)` decides
+      per list, and `storyPhraseIndex()` in `src/lib/wp/result-stories.ts` is now only the snapshot rung — the old
+      reader paired a database card with a file's opinion about which cards to show. The importer gained a fourth plan:
+      `findExisting` and `createRow` are list-scoped, `resolveLists` looks each list key up once and a missing `lists`
+      row is reported as **one** skipped entry ("run `npm run db:seed`") instead of fifty-six.
+      Plans: articles 92 · offers 4 · pages 27 · categories 2 · result stories 56 (179 rows).
+      15 cases in `tests/import-wp.test.ts` (suite 316 tests / 10 files) — two new: the rendered stories and their
+      phrases equal the snapshot index row for row, and the load-bearing one: setting a row's `enabled` to 0 takes the
+      story off `/results` and drops the total by one **while the file still names it**, which is the difference between
+      a list and a file. Found while writing them: `paginate` clamps `perPage` to `MAX_PER_PAGE` (30), so a "read the
+      whole list" query needs the page loop, not `perPage: 500` — the first draft of the assertion silently compared 30
+      of 56 and only failed because it compared ids.
+      Measured on the built server (`next start` against `shamah_cms_test` after `npm run wp:import -- --apply`), not
+      only in-process: `/results` rendered 9 cards on page 1 and **56 unique stories across 7 pages**, matching the
+      snapshot set with nothing missing and nothing extra; hiding story 1001 in the database gave 55 and the victim's
+      card was gone from every page while `result-stories.json` still listed it; restoring it returned 56. `/ar/results`
+      renders the same page the same way. No pixels inspected — the automation page is hidden in this environment, so
+      the proof is the rendered HTML's card links and the reader's counts.
+      Gates: typecheck · lint (the one warning was a gitignored `.tmp` probe, now deleted) · `vitest run` 316/316 ·
+      `next build` · `prove:no-wp` re-run because a read path changed (5 checks, 79 routes, 0 requests to the WordPress
+      origin). `data/wp/` and `public/wp/` show no modification. The test database is back to zero content rows, zero
+      categories, zero list items.
+      Still in 7.5: `seo.json` (BK-15's), `offer-categories` (blocked on 6.3c-c's schema call) and the fallback rung
+      itself, which cannot go until every rendered kind can answer from the database.
 
 ## BK-8 — marketing (superseded, do not work these rows)
 Folded into **BK-17** the day the owner's expansion brief arrived (2026-10-22), because that brief
