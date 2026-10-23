@@ -379,6 +379,7 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       seen in a screenshot.
 - [x] 13.2 Navigation from the permission catalog, rendered as a tree (group → screen → entity) that hides what the
       role cannot read and greys what it cannot write, plus a command palette (⌘K / Ctrl+K) for screens and records.
+      — `c49d90f`
       `navTree(grants, locale)` in `screens.ts` reads the three levels straight off the catalog — a screen the role
       cannot `read` is never emitted, a leaf it cannot `write` renders `aria-disabled` with a dotted underline — so
       the tree is a *consequence* of `can()` rather than a second permission list that can drift. Entities come from
@@ -407,9 +408,55 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       editor open. Caveat as before: widths are geometry read from a same-origin iframe, not pixels seen — the 360
       drawer was also screenshotted and read, which is what confirmed the tree's visual hierarchy (group headings,
       chevrons, greyed leaf) rather than only its box positions.
-- [ ] 13.3 Shared list primitive: table/card modes, sortable columns, saved filters, search, bulk select → bulk
+- [x] 13.3 Shared list primitive: table/card modes, sortable columns, saved filters, search, bulk select → bulk
       publish/trash, per-page, all mirrored into the URL so a view is linkable; empty, loading and error states once
-      instead of per screen.
+      instead of per screen. — `661dd9e`
+      `list-view.ts` makes the view six terms (mode, sort+dir, `q`, filter, page, per) and nothing else;
+      `ConsoleList.tsx` draws them and `summary.ts` answers them with one query per kind. Defaults are **per kind**,
+      not global, because the line has to round-trip: an offer screen drops `sort=position` (its own default) and must
+      re-parse to the view it was written from, while one global default would drop that term and re-add another
+      kind's direction. `parseListView` totalises — a typo in a bookmark falls back instead of failing — and a
+      hand-typed line never reaches SQL as an identifier, because the terms map onto the columns `kinds.ts` declares.
+      Each kind only offers what its columns can answer (`sortsFor`/`filtersFor`), and the scope terms (`list`,
+      `locale`, `trash`, `key`) parse separately because the guard reads them, not the list. The first page arrives
+      server-rendered for exactly this URL, so the client draws it and does not ask for it again.
+      Bulk is a path verb — `/content/<kind>/bulk/<publish|trash|restore>` — so permission is decided before the body
+      is read (publish→`publish`, trash→`delete`, restore→`update`); ids are capped at 100, rows apply one at a time so
+      a partly blocked selection answers with `done` and `failed` instead of a silent half-job, and nothing landing is
+      a 409 rather than a 200. A saved view (`007_views.sql`) stores the server's own canonical rendering of the
+      re-parsed query, never the string the browser sent, so it can hold no term the kind cannot honour and carries no
+      `?key=`: restoring one is byte-for-byte the view that was saved. 24 per person per kind, and every statement
+      names `user_id` — that row filter, not the deliberately coarse `self` grant, is what makes a filter private.
+      Two semantics are stated here because they will be re-litigated: `pending` means "the draft differs from its
+      published twin, `NULL` counting as different", so an unpublished draft *is* pending on purpose; and one unknown
+      field name rejects the whole write, because accepting the fields it did recognise would silently drop the one the
+      editor meant to save.
+      Five defects, all of them from measuring rather than reading, each now asserted. A column header drew 36px and a
+      saved-view half 34px: the chip is the capsule, so it needed `align-items: stretch` plus `content-box` sizing —
+      its own 1px border was eating the 44px the halves were measured against. A row's checkbox label
+      named the token and measured 16px, because `min-block-size` does nothing on an inline box. Dense lowered the
+      search box and the per-page select to 36px by borrowing `--console-tap-field`, the token for a form you type
+      into; these are targets you tap on a phone, and exactly one use of the field token is left in the file, on
+      purpose. Card mode had **no select-all at all** — and card mode is the phone mode, where tapping 25 boxes by hand
+      would be the whole job. And toggling Trash from a Drafts view answered with an empty list over two rows that were
+      plainly there: every row in Trash is trashed, so a state chip carried into it matches nothing. Trash now offers
+      only All and `listViewQuery` refuses to write the term pair that would disagree with the screen it renders — two
+      pre-existing tests had encoded the broken behaviour and are rewritten with why.
+      Measured on the built console at 360 / 640 / 800 / 1024 / 1440, table and card, RTL and LTR, at both densities:
+      zero horizontal overflow at every width, and no control under the floor — 13 measured in table mode, 8 in card,
+      each ≥ 44px in dense and in comfortable. The table scrolls inside its own box only at 360 (412 inside 314), and
+      the card grid follows the *pane*, not the viewport: 1 / 2 / 3 columns appear as the pane crosses multiples of
+      13rem, so one column at the 1024 split (pane 424px) and three at 1440 (pane 840px). Live through the UI:
+      bulk publish took 15 drafts to 5, bulk trash moved 2 out and restore put them back, a saved view round-tripped
+      (`?locale=en&sort=title&dir=desc&per=10` stored, restored, then deleted) and a search nothing matches drew the
+      shared empty state once. Caveat as before: every width above is geometry read from a same-origin iframe, not
+      pixels seen — the in-app automation viewport is fixed near 505px.
+      The pass seeded 30 articles / 12 offers / 8 branch rows through `.tmp/bk13-seed.mts` and removed them with
+      `.tmp/bk13-clean.mts` (dry-run first, `--force` to act): `npm run doctor` is back to 1 article and 1 offer and
+      `console_views` is empty; the audit rows those calls wrote stay, because audit is append-only.
+      Gates: `npm run typecheck` · `npm run lint` · `npx vitest run` (231 tests over 9 files) · `npm run build`, and
+      because this row added a read path, `npm run prove:no-wp` again: 79 routes, 0 requests to the WordPress origin.
+      `ContentWorkspace.tsx` is 512 lines (532 before this row) — 13.5 finishes the split onto 13.3 + 13.4.
 - [ ] 13.4 Shared editor primitive: split pane (fields / live preview + SEO), sticky save-publish bar, unsaved-changes
       guard, autosave draft, per-field messages coming from `parseWrites`, keyboard save.
 - [ ] 13.5 Split `ContentWorkspace.tsx` (530 lines today) onto 13.3 + 13.4 and re-point the five existing screens at
@@ -565,6 +612,20 @@ schema leaves room for each, and BK-17's Connectors screen is where a key would 
 - **Offer a control only where the API would honour it.** A write button names a scope, so abilities are computed
   per scope against the caller's grants (`publish` = publish ∩ update, because `publishHandler` re-tests both). Reads
   are unscoped: a Viewer can open every screen and press nothing.
+- **The URL is the list's only state** (BK-13.3). `ConsoleList` renders from the parsed view plus the scope, and
+  `listViewQuery()` is the single form those terms can take — it carries its own `?`, so no caller adds a second one.
+  The first page is the one the server already rendered for this exact line, which is why the load effect is guarded
+  by a signature ref; a re-read is triggered by the line changing or by the editor bumping `refreshToken`. Anything
+  13.4/13.5 adds to a content screen goes through those two terms, not through local state.
+- **Two tap tokens, and only one of them shrinks.** `--console-tap` (44px) is for anything a thumb aims at — chips,
+  sort headers, checkboxes, the search box, the per-page select — and dense never lowers it. `--console-tap-field`
+  drops to 36px in dense for the two fields you type into. `tests/console.test.ts` names each list selector and
+  insists it takes `--console-tap`, and counts the field-token uses in the stylesheet, so a new control that borrows
+  the wrong one fails instead of quietly shipping a 36px target.
+- **The list reads its own width.** `.console-work-list` is an inline-size container, so card columns (auto-fill of
+  13rem tracks) and the kind's extra cells (`@container console-list (min-width: 34rem)`) follow the *pane*, not the
+  viewport — at 1024 the split gives the list a 424px pane and cards sit one per row, while a 1000 viewport with the
+  drawer gives it 656px and three. Measuring either against `window.innerWidth` gives the wrong answer.
 - **Seeing the console in a browser** (each of these cost a detour): `next start` does not serve files added to
   `public/` after the build, and `.next/static/**` drops unknown paths with a 404 — so a preview asset has to go
   through a throwaway same-host proxy (`.tmp/bk5-proxy.mjs`, logs in, injects the session cookies, forwards to the
