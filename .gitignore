@@ -52,6 +52,11 @@ next-env.d.ts
 # name from docs/contrast-report.md instead of being committed
 /docs/screenshots/
 
+# BK-19: WordPress copies, media and `mysqldump` output. The owner's rule is that a
+# backup must exist before anything is removed and must never be committed — which is
+# why this is one folder, ignored whole, rather than a pattern that could miss a dump.
+/backups/
+
 .vercel
 .env*
 !.env.example

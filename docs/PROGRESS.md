@@ -16,8 +16,11 @@ loaded into the console once it exists; `D:\shamah` is left alone.
 
 ## Resume protocol (do this first, every time)
 1. Read this file, then `git log --oneline -20`. Continue at the first unchecked row; never redo a `[x]` row.
-2. Work only in `D:\shamah_cms` on branch `cms-clean`. **Never push. Never touch `main`. Never touch
-   `D:\shamah`** (the live site, and another session's `admin-restore` branch lives there too).
+2. Work only in `D:\shamah_cms`. Since BK-19 the working branch is `feature/cms-migration-redesign` (created from
+   `cms-clean` HEAD at `3d40693`; `cms-clean` stays as the pre-design line). **Never push. Never touch `main`. Never
+   touch `D:\shamah`** (the live site, and another session's `admin-restore` branch lives there too). The brief of
+   2026-10-23 asks for a GitHub push in its Phase 7; that is the one instruction in it this plan does **not** run
+   without the owner's word — see 19.0.
 3. Stage explicit paths — never `git add -A`. One commit per finished row, hash on the row.
 4. Secrets: print variable **names** only, never values. `.env.local` / `.env.test` are sourced, never echoed.
 5. `data/wp/*.json` and `public/wp/*` are the frozen WordPress backup (92 articles, 4 offers, 56 result
@@ -808,6 +811,123 @@ schema leaves room for each, and BK-17's Connectors screen is where a key would 
       permission.
 - [ ] 18.3 Section affordances from the overlay: reorder, enable, duplicate, and the 15.3 analysis panel docked to the
       page being edited.
+
+## BK-19 — the owner's end-to-end brief of 2026-10-23 (migrate, strip WordPress, redesign)
+
+> "after you finish the cms and everything is stable add all the content from WP to our cms and clean the WP from
+> shamah and every fingerprint related to WP to raise our performance" — then a 115-line brief: Phases 1–7 (audit,
+> run locally, backup + migrate, connect the site, clean up, a full visual + motion redesign of **dashboard and
+> public site**, QA + push), branch `feature/cms-migration-redesign`, a commit per phase, nothing deleted before a
+> backup exists and the migration is verified, no secrets/dumps committed, PROGRESS.md as the ledger, build + lint
+> green per phase, "the frontend is the priority… I do not care about the actual content inside the CMS, only that
+> it looks and feels exceptional".
+
+### Phase 1 — audit. Measured, not restated
+**Two engines exist and they are not the same product.** `D:\shamah` (GitHub `ShamahClinic.git`, branch
+`admin-restore`, tree dirty: `src/app/[lang]/admin/page.tsx` deleted, `src/app/admin/`, `psql`, `start-server.bat`
+untracked) has moved to **SiteDash + Prisma/PostgreSQL** — `prisma/schema.prisma` with a `postgresql` datasource,
+`src/lib/sitedash/`, `src/app/admin/`, commits `f3a726c → 858d9ba → 1e00b21`. `D:\shamah_cms` (this ledger) is the
+**own console on MariaDB**, and its only remote is the local path `D:/shamah`. The new brief names SiteDash; the
+standing decision of 2026-10-22 names this console. **This plan runs against this console**, because it is where the
+brief's Phases 3 and 4 are already substantially true, and it records the fork instead of silently picking one.
+
+**The WordPress dependency, in the repo that still has it (`D:\shamah`):** `src/lib/wp` = 18 files, imported by 39
+files; `src/lib/wp/config.ts:4` defaults `WP_ORIGIN` to `https://www.shamahclinics.com`, so with `WP_BASE_URL` unset
+(as it is here) a runtime read goes to the client's production WordPress; `data/wp` 3.4 MB / 18 JSON; `public/wp`
+1.4 MB / 60 webp; `next.config.ts` still allowlists both WP hostnames for `next/image`; the contact form still posts
+to a CF7-compatible route; JSON-LD `#organization` names the WP domain (`src/config/site.ts:76`).
+
+**Already delivered here against the same brief** (so the plan does not re-schedule it): Phase 2 = the commands block
+at the top of this file and `npm run doctor`; Phase 3's backup = `data/wp/` + `public/wp/` are the frozen WordPress
+backup (rule 5) and a fresh dump is re-generable with `npm run sync:wp`; Phase 3's migration = BK-7.2 + 7.5-a put
+**179 content rows** in the database (92 articles · 4 offers · 27 pages · 56 result stories, 2 categories) from a
+dry-run-default, re-runnable, idempotent importer; Phase 4 = BK-6.3c-a/b + 7.3 + 7.5-a make articles, offers, pages,
+home prose, settings and `/results` membership read the database first, with `npm run prove:no-wp` at **79 routes, 0
+requests to the WordPress origin**; Phase 5 = BK-7.3 already deleted the live WP client **in this repo**. What the
+brief adds that is genuinely not done: the rest of 7.5 (`seo.json`, `offer-categories`, the fallback rung itself),
+6.3c-d, BK-14→18, the cut-over **in `D:\shamah`** (task #220), and all of Phase 6.
+
+**The design surface, measured (this is what Phase 6 actually costs):**
+- Console: 8 screens + login + password, **2 611 LOC** in 14 components; `console.css` is 1 408 lines holding the
+  frame and every primitive. **There is no `src/components/ui`** — buttons, inputs, tables, the dialog, toasts and
+  the palette are hand-written markup inside `ConsoleList/ConsoleEditor/ConsolePalette/ContentWorkspace/
+  ConsoleControls/LoginForm/PasswordForm/SettingsWorkspace`. Restyling means editing those eight files, not swapping
+  a library in.
+- Theming is half-built: `data-theme` / `data-density` / `dir` are decided on the server from the prefs cookie
+  (`src/lib/console/prefs.ts`, no client script, no flash) — but console.css contains **one** `[data-theme='dark']`
+  rule. Dark mode is a single override, not a palette. There is no `prefers-color-scheme` and no animated toggle.
+- Motion: 4 `transition` declarations, 2 `animation`, 1 `@keyframes` in 1 408 lines, and **no
+  `prefers-reduced-motion` block anywhere in the console**. `framer-motion@13.4.4` is installed and unused by it;
+  `lucide-react` is used by 24 site files and 0 console files.
+- The public site already owns the brand the brief asks for, and the console should inherit it rather than re-derive
+  it: `--gold-start #d8b237`, `--gold-mid #c9a227`, `--gold-end #85640f`, `--bg-primary #faf7f2` (warm ivory),
+  `--bg-dark #191412` (warm charcoal), plus documented contrast pairs, `--ink-on-gold`, focus rings and status
+  pairs measured in `docs/contrast-report.md`. `--bg-card: #ffffff` is the one pure-white stop, and the brief says
+  never pure white.
+- Two globals fight any redesign: `* { transition: all .3s ease-in-out !important }` (three occurrences,
+  `globals.css` 143/153/557) — it animates layout properties, defeats `transform/opacity` discipline and makes a
+  themed toggle unverifiable — and `img { width: 100% !important }`, which overrides every intrinsic-size hint and is
+  a CLS hazard.
+- Fonts: `src/lib/fonts.ts` loads **Readex Pro + Montserrat from `next/font/google`**, so `npm run build` needs
+  outbound DNS (BK-0.2 recorded the failure). The brief asks for **Tajawal**. That is a real decision, not a
+  find-and-replace: Readex Pro is the Arabic face the current contrast report was measured with, and switching the
+  public site's typography is a visible change to a live brand.
+- `tests/console.test.ts` (763 lines) asserts **CSS strings and class names**, and 13.5 added source-walk tests that
+  fail if a page re-invents a primitive. A redesign therefore has to update those assertions in the same commit as
+  the styling, deliberately — "the tests broke" and "the design changed" must not be confused.
+
+### Phase 6 is the new work: rows 19.1–19.8
+Every row keeps the standing rules: public props contracts unchanged, one commit per row with its hash, all four
+gates plus `prove:no-wp` when a read path moves, and the console suites' assertions updated in the same commit as
+the markup they name.
+
+- [x] 19.0 Branch `feature/cms-migration-redesign` from `cms-clean` HEAD (`3d40693`); `/backups/` git-ignored and
+      the frozen WordPress backup copied into it (`backups/wp-frozen-2026-10-23/`, 78 files / 4.7 MB, both
+      `diff -rq` runs silent); this audit section. No source file changed, so the four gates are inherited from
+      `3d40693` rather than re-run for a docs-and-config commit.
+      **The brief's Phase 7 push is on hold, and it is not a oversight.** `D:\shamah_cms`'s `origin` is the local
+      path `D:/shamah`, so "push the branch" here means writing into another session's dirty working tree; the
+      GitHub remote lives on `D:\shamah`, whose `main` feeds a deployed Vercel app
+      (`https://shamah-clinic.vercel.app`). Pushing needs the owner to say which repo and which remote, and the
+      protocol's "never push" holds until then.
+- [ ] 19.1 Tokens: one source of truth for both surfaces — colours (background layers, surface, elevated surface,
+      border, text primary/secondary/muted, brand, champagne accent derived from `--gold-mid`, success/warning/
+      danger), radii, a 4px spacing scale, shadows, blur, z-index, easing curves and durations — as CSS variables in
+      `src/app/globals.css` so the console and the site read the same file they already both read. Real light **and**
+      dark palettes (warm charcoal `#191412`, warm ivory `#faf7f2`, no pure white card), no `@media`-only fallback.
+      Kills the `transition: all !important` rules and `img { width: 100% !important }` as side effects of being
+      correct, each with its CLS/contrast consequence checked.
+- [ ] 19.2 Type + RTL: the display face decision (Tajawal vs the shipped Readex Pro/Montserrat) taken openly,
+      self-hosted so `next/font/google` stops needing the network at build time; type scale, tight tracking on
+      headings, tabular numerals for stats; a logical-properties sweep of console.css and the site sections; mirrored
+      icons/chevrons and mirrored motion in RTL.
+- [ ] 19.3 Primitives: `src/components/ui/` — button (primary/secondary/ghost/danger/loading), input, textarea,
+      select, combobox, checkbox, switch, radio, date field, file drop-zone with preview + progress, rich-text area,
+      table (sticky head, row hover, inline actions, sortable, skeleton, empty, pagination — `ConsoleList` already
+      owns the behaviour, this keeps it and takes the markup), card, tabs, modal, drawer, dropdown, toast, tooltip,
+      badge, avatar, breadcrumbs, progress, skeleton, confirm dialog, validation states, illustrated empties. Every
+      one with hover / focus-visible / active / disabled / loading. One icon family (lucide, already the site's).
+      The eight console components are re-pointed at them **without changing their props contracts**.
+- [ ] 19.4 Shell: collapsible sidebar with a shared-layout animated active indicator, tooltips when collapsed, brand
+      mark, user area; sticky top bar with breadcrumbs, the existing `ConsolePalette` restyled (Cmd/Ctrl+K, keyboard
+      nav), quick actions, animated theme toggle, notifications; drawer/bottom bar on mobile; verified at
+      360 / 768 / 1280 / 1920.
+- [ ] 19.5 Dashboard home: hero greeting with the site name, animated stat cards (count-up + sparkline), recent
+      activity from the audit trail that already exists, quick-action tiles, content-status overview.
+- [ ] 19.6 Every remaining console screen on 19.3/19.4 — articles, offers, pages, lists, settings, login, password —
+      plus the signature brand element and the branded login / 404 / 500 / loading treatments.
+- [ ] 19.7 Public site sections: hero, services, doctors, before/after, testimonials, FAQ, contact, footer, nav,
+      journal, offers, results — restyled on the same tokens, content still from the CMS read path, SEO/JSON-LD and
+      the contrast report kept green.
+- [ ] 19.8 Motion + final pass: motion presets in one shared file (150–400 ms, springs/custom cubic-béziers,
+      transform + opacity only, `prefers-reduced-motion` honoured everywhere), page transitions, staggered entrances,
+      press scale, magnetic primary CTAs, spring modals with backdrop blur, shimmer instead of spinners; then the
+      responsive + RTL + WCAG-AA + Core-Web-Vitals sweep and the six-part final report.
+
+**Sequencing, stated because the brief does not order it:** 19.1→19.6 (dashboard, the thing the owner opens every
+day and calls "very bad") before 19.7 (public site, which is already on-brand and verified). The remaining
+data-layer rows — 7.5's `seo.json` + `offer-categories`, 6.3c-d's prop plumbing, BK-14→18 — keep their own rows and
+are not renumbered here; the cut-over in `D:\shamah` is task #220 and is gated on the backup + verification rules.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
