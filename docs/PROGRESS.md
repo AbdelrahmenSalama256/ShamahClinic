@@ -24,6 +24,8 @@ loaded into the console once it exists; `D:\shamah` is left alone.
    stories). They are read-only and **never deleted**. BK-7.2 imports the content kinds out of them; they stay the
    site's fallback rung — `result-stories.json` membership, `seo.json` and `offer-categories` are still read
    directly, which is row 7.5, not 7.3 (7.3 removed the live origin, which is what the dependency actually was).
+   `npm run sync:wp` writes a fresh dump to `data/wp-<timestamp>/` and refuses `data/wp/` unless `--overwrite-frozen`
+   is passed (7.1); those dump folders are gitignored — read them, do not commit or delete them.
 6. Mutating CLI commands default to dry-run; they only act with `--apply`/`--force`.
 7. Tests run against `shamah_cms_test` only — `src/lib/db/guard.ts` refuses anything not ending in `_test`.
 
@@ -313,7 +315,37 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       deletes exactly the `bk6-*` fixtures and their revisions/settings/audit rows, dry-run until `--force`.
 
 ## BK-7 — cut WordPress out
-- [ ] 7.1 Fresh WP dump into a NEW timestamped folder (never overwriting `data/wp/*.json`)
+- [x] 7.1 Fresh WP dump into a NEW timestamped folder (never overwriting `data/wp/*.json`) — `a80f911`
+      The row could not be run as written, because `sync:wp` had no way to obey it: it resolved `data/wp` internally and
+      ended by saying "Commit data/wp/". Now the destination is `--out=<dir>`, defaulting to
+      `data/wp-<UTC timestamp>/`; naming the frozen folder exits `sync:wp refused — … is the frozen backup the build
+      ships with` unless `--overwrite-frozen` is passed too (exit 1 at module scope, before a request goes out), so
+      overwriting the shipped snapshot takes two flags saying it. `--json-only` pulls content without re-encoding media:
+      it skips `public/wp/` and carries the frozen `images.json` into the new dump instead of writing an empty map,
+      which would read as "these 60 pairings are gone". `meta.json` gained `mode`, and reads `previousGeneratedAt` from
+      the frozen folder — a dump in a new folder still names the age of the copy it is being compared with. Log lines
+      label files by the folder actually written, and the closing line distinguishes "commit this" from "this is next to
+      what the build reads". `/data/wp-*/` is gitignored: 3.4 MB per sweep, re-generable in a minute, and the shipped
+      snapshot is what must stay reviewed.
+      The sweep (`npm run sync:wp -- --json-only`, 22 requests, 60.1 s, 18 files) wrote
+      `data/wp-2026-10-23T04-57-55-573Z/`. Every count matches the shipped snapshot row for row — 92 posts, 27 pages,
+      2 categories, 4 products, 23 media, 56 result stories, 60 image pairings, 4 SEO URLs.
+      Row-by-row hash comparison (`.tmp/bk71-drift.mts`, gitignored): **628 rows identical · 2 changed · 0 new · 0 gone**.
+      Nothing on the client's site has been published, edited, or deleted since the 2026-10-13 capture — which is what
+      makes 7.2's import and 7.4's proof still current. The two changed rows are one row seen twice: page 622 `home`,
+      English and Arabic. Not an edit — same body length (40,810 / 40,866 chars), same stripped text (4,765 / 4,773
+      chars), same `modified` stamp. The only difference is WPBakery's per-request `data-vc-public-nonce`
+      (`51837524ff` frozen → `be9350e40f` fresh). 15 of the 17 content files are byte-identical; `pages.en/ar.json`
+      differ only by those two ten-character strings.
+      **Two consequences, both for later rows.** 6.3c-b's readers parse the `home` body for the slider and the prose
+      rows, so any re-sync will report the homepage as changed and a "is the snapshot stale?" check has to normalize
+      `data-vc-public-nonce="…"` before it compares HTML — nothing a reader uses is inside it. And 7.5 should retire the
+      fallback rung against the **frozen** folder, not a fresh dump: content-wise they are the same bytes, and only the
+      frozen one is what the site is currently serving, so only comparing against it can show a real gap.
+      Nothing was written into `data/wp/` or `public/wp/` — `git status` shows both clean (60 tracked files in
+      `public/wp`), and the dump went to its own folder. Gates: typecheck and lint clean. Only `scripts/sync-wp.mjs`
+      and `.gitignore` changed — no TS source, no read path — so `vitest`, `next build` and `prove:no-wp` were not
+      re-run for this row.
 - [x] 7.2 Import the snapshot as console rows: 92 articles, 4 offers, 27 pages + their categories, slugs preserved (`legacy_id` set) — `43fdf45`
       `src/lib/content/import-wp.ts` reads `data/wp/*.json` — never the live site — and pairs each English post with
       its Arabic twin **by post id** (all 92 share one id), so a translation WordPress kept as a separate post lands in
@@ -391,6 +423,10 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
 - [ ] 7.5 The snapshot-**file** reads the import has not replaced: `data/wp/result-stories.json` membership,
       `seo.json`, `offer-categories`, and the `data/wp/*.json` fallback rung itself. This is what 7.3 named and did not
       do — the live-read half is closed, the snapshot-retirement half is not.
+      Work against `data/wp/`, not the 7.1 dump: 7.1 proved they carry the same 628 rows (the only difference is a
+      per-request WPBakery nonce inside page 622's body), so nothing new can be found in the fresh folder, and only the
+      frozen one is what the site serves today. `data/wp/*` stays read-only and undeleted either way — retiring the
+      **rung** means no code path falls back to it, not that the backup goes away.
 
 ## BK-8 — marketing (superseded, do not work these rows)
 Folded into **BK-17** the day the owner's expansion brief arrived (2026-10-22), because that brief
@@ -746,6 +782,10 @@ schema leaves room for each, and BK-17's Connectors screen is where a key would 
   with no visible change. Before claiming a rung flip moved bytes, render the route twice **with the data held
   still**: if those two differ, compare the visible text, JSON-LD blocks, `img` srcs and `a[href]` instead of the
   whole file (found while proving 6.3c-b; the hash of a single Arabic page proves nothing).
+- **A fresh WordPress dump is never byte-identical to the shipped one.** WPBakery stamps a
+  `data-vc-public-nonce="…"` into the `home` page body on every request, so a re-sync always reports page 622
+  changed in both locales while its text, length and `modified` stamp hold still. Normalize that attribute — or
+  compare row hashes with it stripped — before concluding the client edited anything (measured in 7.1).
 
 ### Things MariaDB and Kysely do differently (each one cost debugging time)
 - **No `INSERT … ON CONFLICT (cols) DO NOTHING`.** That is Postgres syntax; Kysely's
