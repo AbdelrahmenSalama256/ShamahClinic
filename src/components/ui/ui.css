@@ -1,0 +1,191 @@
+/*
+ * The control layer: one definition per primitive, read by both surfaces.
+ *
+ * `globals.css` imports this file, and every document root already imports
+ * `globals.css`, so a `Button` paints the same on a public page and in the console
+ * without either of them having to remember a second stylesheet. It is a separate file
+ * because a control library grows a rule at a time and a token layer should not.
+ *
+ * Rules here are **unlayered**, the same choice `globals.css` makes for its tokens and
+ * for the focus ring. That is not laziness about the cascade, it is the cascade: an
+ * unlayered `.ui-button` outranks every Tailwind utility, so the 44px tap floor a WCAG
+ * success criterion depends on cannot be undone by a `py-1` at a call site, and a
+ * component that wants a different size asks the primitive for one (`size="sm"`,
+ * `variant="ghost"`) instead of fighting a utility it will lose. The cost is symmetric
+ * and known: restyling a primitive from a surface stylesheet means another unlayered
+ * rule later in the document, which is exactly what `console.css` does today to the tabs.
+ *
+ * No physical direction anywhere in here — `inline-size`, `padding-inline`,
+ * `border-block-start` — so Arabic needs no override, and no raw number where a token
+ * exists: `--tap`, `--ui-font`, `--radius-control`, `--dur-*`, `--ease-*`.
+ */
+
+/* ----------------------------------------------
+   Button (BK-19.3a). Five states a control can be in, and every one of them is named:
+   hover, focus-visible (from the single ring in `globals.css`), active-pressed,
+   disabled, loading.
+
+   The variant is a `data-variant` attribute rather than a modifier class because the
+   primitive renders it from a prop and nothing else may set it; the pressed state reuses
+   the `data-active` attribute the console already had, so a toggle keeps the same hook.
+
+   `primary` is the brand gold. The sweep runs `#f5e6a8 → #a8801f` in light and is lifted
+   in dark, and the ink is `--btn-gold-fg` (`#17120f`) in both, so the measured floor is
+   the darkest stop: 5.11:1 on light and 5.19:1 on dark, past AA for a normal-weight
+   label. The boundary is a separate problem from the label — a mid-tone gold reaches
+   only 2.26:1 against cream — so the fill carries `--border-control` (5.36:1) and stays
+   legible as a control even where the gradient is at its palest.
+
+   Every variant names its own hover. `console.css` used to have none for
+   `.console-button-primary`, which meant a filled button took the default's
+   `background: var(--bg-secondary)` and inverted to a light one under a cursor.
+   ---------------------------------------------- */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap);
+  padding: var(--sp-1) var(--sp-4);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--ui-font);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.ui-button:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  box-shadow: var(--elev-1);
+  transform: translateY(-1px);
+}
+
+/* The press. Transform only, so it costs a compositor frame and no reflow. */
+.ui-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  box-shadow: none;
+}
+
+.ui-button[data-variant='primary'] {
+  background: var(--gold-gradient);
+  border-color: var(--border-control);
+  color: var(--btn-gold-fg);
+  font-weight: 600;
+}
+
+/* A gradient cannot be hovered by changing one colour, so the fill holds and the control
+   gains presence instead: the brand glow behind the lift. */
+.ui-button[data-variant='primary']:hover:not(:disabled) {
+  background: var(--gold-gradient);
+  box-shadow: var(--glow-gold), var(--elev-1);
+}
+
+.ui-button[data-variant='ghost'] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  padding-inline: var(--sp-2);
+}
+
+.ui-button[data-variant='ghost']:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  box-shadow: none;
+  color: var(--text-primary);
+}
+
+/* A destructive action is filled in both themes because the pair is what travels:
+   `--text-danger` on cream is `#b3261e`, on charcoal it is the lifted `#f2a0a0`, and
+   `--bg-card` is the ink that clears AA against either (6.39:1 light, 8.14:1 dark). */
+.ui-button[data-variant='danger'] {
+  background: var(--text-danger);
+  border-color: transparent;
+  color: var(--bg-card);
+  font-weight: 600;
+}
+
+.ui-button[data-variant='danger']:hover:not(:disabled) {
+  background: var(--text-danger);
+  box-shadow: var(--elev-2);
+}
+
+/* Pressed toggle — a filter that is on, the mode the list is in, the panel that is open.
+   Same hook `console.css` already used, so `aria-pressed` stays the consumer's business
+   and this rule only answers to what the primitive was told. */
+.ui-button[data-active] {
+  border-color: var(--text-primary);
+  background: var(--bg-secondary);
+  font-weight: 600;
+}
+
+.ui-button[data-size='sm'] {
+  font-size: var(--ui-font-small);
+  padding: var(--sp-1) var(--sp-2);
+}
+
+/* Icon-only keeps the floor on both axes: a 44px square, not a 44px-tall pill, because
+   a lone chevron on the edge of a toolbar is the hardest target to hit. */
+.ui-button[data-size='icon'] {
+  min-inline-size: var(--tap);
+  padding-inline: var(--sp-1);
+  gap: 0;
+}
+
+.ui-button[data-block] {
+  display: flex;
+  inline-size: 100%;
+}
+
+.ui-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* After `:disabled`, and deliberately: a button in flight is disabled — one click, one
+   request — but the cursor says why. */
+.ui-button[data-loading] {
+  cursor: progress;
+  opacity: 1;
+}
+
+.ui-button svg {
+  flex-shrink: 0;
+}
+
+.ui-button-spin {
+  flex-shrink: 0;
+  inline-size: 1em;
+  block-size: 1em;
+  border: 2px solid currentColor;
+  border-block-start-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: ui-spin var(--dur-spin) linear infinite;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A lift on hover is a movement the visitor did not ask for. The spinner needs no
+     mention here: `globals.css` zeroes every animation duration under this query, which
+     leaves the ring standing still as a mark beside a label that already says "Saving…",
+     and `aria-busy` says it to a screen reader. Overriding that here would mean
+     out-`!important`-ing the one rule whose whole job is to be unbeatable. */
+  .ui-button:hover:not(:disabled),
+  .ui-button:active:not(:disabled) {
+    transform: none;
+  }
+}

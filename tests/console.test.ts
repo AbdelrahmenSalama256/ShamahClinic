@@ -327,21 +327,28 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
   });
 
   it('holds the 44px tap floor at both densities', () => {
-    expect(css).toMatch(/--console-tap: 2\.75rem/);
-    expect((css.match(/min-height: var\(--console-tap\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
+    // BK-19.3a moved the floor out of the console and into the shared control layer, so
+    // the assertions moved with it: `--tap` is declared once in `globals.css`, the
+    // primitive reads it, and the console reads the same name for the controls it still
+    // paints itself. A second `--console-tap` would be a second floor.
+    const ui = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
+    expect(globalsText).toMatch(/\n\s*--tap: 2\.75rem;/);
+    expect(ui).toMatch(/\.ui-button\s*\{[^}]*min-height: var\(--tap\);/);
+    expect(css).not.toMatch(/--console-tap/);
+    expect((css.match(/min-height: var\(--tap\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
     const dense = css.slice(css.indexOf("[data-density='dense']"));
-    expect(dense.slice(0, dense.indexOf('}'))).not.toContain('--console-tap:');
+    expect(dense.slice(0, dense.indexOf('}'))).not.toContain('--tap:');
 
     // Measuring 13.3 caught a 36px column header, 34px saved-view halves and a search box
     // that dense lowered to 36px — all of which passed the count above. Every control the
-    // list adds takes `--console-tap` by name, and never the field token dense lowers.
+    // list adds takes `--tap` by name, and never the field token dense lowers.
     for (const selector of ['.console-sort', '.console-chip-button', '.console-view-chip', '.console-chip-x', '.console-search', '.console-inline select', '.console-cards-head']) {
       const start = css.indexOf(`\n${selector} {`);
       expect(start, `${selector} is styled`).toBeGreaterThan(-1);
-      expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--console-tap\)/);
+      expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--tap\)/);
     }
     expect(css).not.toMatch(/min-(?:height|inline-size|block-size): [12]\.[0-9]+rem/);
-    expect((css.match(/min-height: var\(--console-tap-field\)/g) ?? []).length).toBe(1);
+    expect((css.match(/min-height: var\(--tap-field\)/g) ?? []).length).toBe(1);
   });
 
   it('lets the drawer become visible in the frame it opens, not one later', () => {
@@ -372,11 +379,15 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // system nobody maintains.
     for (const token of ['--sp-1', '--sp-4', '--sp-8', '--radius-control', '--radius-surface', '--radius-pill',
       '--z-sticky', '--z-scrim', '--z-drawer', '--z-drop', '--z-modal', '--z-palette', '--z-toast',
-      '--dur-fast', '--dur-base', '--dur-slow', '--dur-reveal', '--ease-out', '--ease-in-out', '--ease-spring']) {
+      '--dur-fast', '--dur-base', '--dur-slow', '--dur-reveal', '--ease-out', '--ease-in-out', '--ease-spring',
+      // BK-19.3a: the control geometry both surfaces' buttons read, and the two durations
+      // that are not transitions — a spinner and a skeleton sweep.
+      '--tap', '--tap-field', '--ui-font', '--ui-font-small', '--ui-gap', '--ui-gap-tight', '--ui-pad', '--ui-stack',
+      '--dur-spin', '--dur-shimmer']) {
       expect((globalsText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} defined once`).toBe(1);
     }
     for (const token of ['--hairline', '--hairline-strong', '--hairline-gold', '--elev-1', '--elev-2', '--elev-3',
-      '--glass-surface', '--glass-border']) {
+      '--glass-surface', '--glass-border', '--gold-gradient']) {
       expect((globalsText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} light + dark`).toBe(2);
     }
     // Every one the console reads must be a token, not a literal it invented.
@@ -713,11 +724,13 @@ describe('the editor pane is one row, edited (BK-13.4)', () => {
 
   it('pins the save bar and keeps every control in it at the tap floor', () => {
     expect(css).toMatch(/\.console-editor-bar\s*\{[^}]*position: sticky/);
-    for (const selector of ['.console-editor-bar', '.console-button']) {
-      const start = css.indexOf(`\n${selector} {`);
-      expect(start, `${selector} is styled`).toBeGreaterThan(-1);
-      expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--console-tap\)/);
-    }
+    const ui = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
+    // The bar still owns its own floor; the controls inside it are the primitive's, so
+    // their floor is proved in the file that paints them (19.3a) and not re-declared here.
+    expect(css.slice(css.indexOf('\n.console-editor-bar {'), css.indexOf('}', css.indexOf('\n.console-editor-bar {')))).toMatch(/var\(--tap\)/);
+    expect(ui).toMatch(/\.ui-button\s*\{[^}]*min-height: var\(--tap\);/);
+    expect(editor).toContain('<Button');
+    expect(editor).not.toContain('console-button');
   });
 
   it('writes the draft on a pause and never publishes itself', () => {

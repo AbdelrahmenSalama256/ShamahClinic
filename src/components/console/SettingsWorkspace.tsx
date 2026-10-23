@@ -11,6 +11,7 @@
  */
 import { useState } from 'react';
 import { consoleCall } from './client-api';
+import { Button } from '@/components/ui/Button';
 import type { MessageKey } from '@/lib/console/messages';
 import type { SettingView } from '@/lib/content/settings';
 
@@ -25,8 +26,11 @@ export function SettingsWorkspace({
   canWrite,
 }: Readonly<{ rows: SettingView[]; labels: Record<MessageKey, string>; canWrite: boolean }>) {
   const [edited, setEdited] = useState<Record<string, string>>({});
-  const [busy, setBusy] = useState(false);
+  // Which row is in flight, not merely whether one is: the spinner has to sit on the
+  // control that asked, and every other row stays put while it waits.
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+  const busy = busyId !== null;
 
   async function save(row: SettingView): Promise<void> {
     const id = `${row.group}.${row.key}`;
@@ -38,9 +42,9 @@ export function SettingsWorkspace({
       setNotice({ tone: 'error', text: labels['content.error.json'] });
       return;
     }
-    setBusy(true);
+    setBusyId(id);
     const result = await consoleCall('/api/console/settings', 'PATCH', { group: row.group, key: row.key, value });
-    setBusy(false);
+    setBusyId(null);
     if (result.error) {
       const mapped = `content.error.${result.error}` as MessageKey;
       setNotice({ tone: 'error', text: labels[mapped] ?? labels['content.error.save'] });
@@ -74,9 +78,9 @@ export function SettingsWorkspace({
                   onChange={(event) => setEdited((state) => ({ ...state, [id]: event.target.value }))}
                 />
                 {canWrite && (
-                  <button type="button" className="console-button console-button-primary" onClick={() => void save(row)} disabled={busy}>
+                  <Button variant="primary" loading={busyId === id} disabled={busy} onClick={() => void save(row)}>
                     {labels['content.save']}
-                  </button>
+                  </Button>
                 )}
               </div>
             )}

@@ -18,6 +18,7 @@
  */
 import { useCallback, useState } from 'react';
 import { ConsoleEditor } from './ConsoleEditor';
+import { Button } from '@/components/ui/Button';
 import { ConsoleList } from './ConsoleList';
 import { consoleCall } from './client-api';
 import type { ContentScreenData, ContentScope } from '@/lib/console/content-screen';
@@ -138,13 +139,13 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
     <div className="console-work" data-kind={kind} data-open={selectedId ? 'true' : undefined}>
       <section className="console-work-list" aria-label={labels['content.rows']}>
         <div className="console-controls console-work-bar">
-          <button type="button" className="console-button" onClick={() => requestNav(() => switchScope({ trash: !scope.trash }))} aria-pressed={scope.trash}>
+          <Button active={scope.trash} onClick={() => requestNav(() => switchScope({ trash: !scope.trash }))} aria-pressed={scope.trash}>
             {scope.trash ? labels['content.live'] : labels['content.trash']}
-          </button>
+          </Button>
           {data.abilities.create.includes(scopeValue) && !scope.trash && (
-            <button type="button" className="console-button" onClick={() => setCreating((open) => !open)} aria-expanded={creating}>
+            <Button onClick={() => setCreating((open) => !open)} aria-expanded={creating}>
               {labels['content.new']}
-            </button>
+            </Button>
           )}
         </div>
 
@@ -161,12 +162,10 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
               <input id="new-key" value={newKey} onChange={(event) => setNewKey(event.target.value)} placeholder={labels['content.identity_hint']} />
             </div>
             <div className="console-controls">
-              <button type="submit" className="console-button console-button-primary" disabled={busy || newKey.trim() === ''}>
+              <Button type="submit" variant="primary" loading={busy} disabled={newKey.trim() === ''}>
                 {labels['content.create']}
-              </button>
-              <button type="button" className="console-button" onClick={() => setCreating(false)}>
-                {labels['content.cancel']}
-              </button>
+              </Button>
+              <Button onClick={() => setCreating(false)}>{labels['content.cancel']}</Button>
             </div>
           </form>
         )}
@@ -195,13 +194,11 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
         {(named || selectedId !== null) && (
           <div className="console-tabs" role="tablist" aria-label={labels[named ? 'content.list.pick' : 'content.language']}>
             {data.scopes.map((candidate) => (
-              <button
+              <Button
                 key={String(candidate)}
-                type="button"
                 role="tab"
                 aria-selected={String(candidate) === String(scopeValue)}
-                className="console-button"
-                data-active={String(candidate) === String(scopeValue) || undefined}
+                active={String(candidate) === String(scopeValue)}
                 onClick={() =>
                   requestNav(() =>
                     named ? switchScope({ listKey: String(candidate) }) : switchScope({ locale: candidate as ContentLocale }),
@@ -209,7 +206,7 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
                 }
               >
                 {named ? (data.lists.find((list) => list.key === candidate)?.label ?? String(candidate)) : labels[`content.locale.${candidate}` as MessageKey]}
-              </button>
+              </Button>
             ))}
           </div>
         )}

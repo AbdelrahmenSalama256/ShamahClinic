@@ -31,6 +31,16 @@ function sourceFiles(dir = 'src', found: string[] = []): string[] {
   return found;
 }
 
+/** Source with its comments blanked, character for character so line numbers survive.
+ *  These sweeps are about what the tree paints, and prose in a doc comment paints
+ *  nothing — cutting it is what keeps a comment from being either an offender or an
+ *  escape hatch. A `//` preceded by a colon is a protocol, not a comment. */
+function withoutComments(source: string): string {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' '))
+    .replace(/(^|[^:'"`])\/\/[^\n]*/gm, '$1');
+}
+
 /** The text of a `@layer base { … }` block, brace-matched, or '' when absent. Anchored
  *  to the start of a line because the phrase also appears inside an explanation. */
 function layerBlock(css: string, layer: string): string {
@@ -194,7 +204,11 @@ describe('BK-19.2 the type system', () => {
       /(^|["'\s:])((m|p)(l|r)|left|right)-[a-z0-9[]|text-(left|right)\b|border-(l|r)-|rounded-(l|r)-|origin-(l|r)\b|space-x-/;
     const offenders = sourceFiles()
       .filter((file) => file.endsWith('.tsx'))
-      .filter((file) => physical.test(read(file)));
+      .filter((file) => physical.test(withoutComments(read(file))));
     expect(offenders).toEqual([]);
+    // Both halves of that pass have to be load-bearing: a sweep that matches nothing is
+    // a sweep that stopped catching the class it was written for.
+    expect(physical.test('className="flex items-center text-left"'), 'the rule still bites code').toBe(true);
+    expect(physical.test(withoutComments('/** use text-left here */')), 'the rule skips prose').toBe(false);
   });
 });

@@ -19,7 +19,9 @@
  * article list shows no "Order" column and no "Off" chip.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { consoleCall, consoleRead } from './client-api';
+import { Button } from '@/components/ui/Button';
 import type { ContentAbilities } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import {
@@ -139,6 +141,10 @@ export function ConsoleList({
   // caller adds a second one.
   const query = useMemo(() => listViewQuery(view, scope, kind), [view, scope, kind]);
   const api = `/api/console/content/${kind}`;
+  // A pager chevron points where the row continues, and in Arabic that is the other way:
+  // the label says "previous" in both, so only the glyph turns.
+  const ArrowBack = locale === 'ar' ? ChevronRight : ChevronLeft;
+  const ArrowForward = locale === 'ar' ? ChevronLeft : ChevronRight;
 
   const load = useCallback(
     async (line: string): Promise<void> => {
@@ -328,17 +334,12 @@ export function ConsoleList({
               ))}
             </select>
           </label>
-          <button
-            type="button"
-            className="console-button"
-            aria-pressed={view.mode === 'card'}
-            onClick={() => setView(withView(view, { mode: view.mode === 'table' ? 'card' : 'table' }))}
-          >
+          <Button active={view.mode === 'card'} aria-pressed={view.mode === 'card'} onClick={() => setView(withView(view, { mode: view.mode === 'table' ? 'card' : 'table' }))}>
             {labels[view.mode === 'table' ? 'content.mode.card' : 'content.mode.table']}
-          </button>
-          <button type="button" className="console-button" onClick={() => setSaving((open) => !open)} aria-expanded={saving}>
+          </Button>
+          <Button onClick={() => setSaving((open) => !open)} aria-expanded={saving}>
             {labels['content.view.save']}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -350,7 +351,7 @@ export function ConsoleList({
                 {row.name}
               </button>
               <button type="button" className="console-chip-x" aria-label={`${labels['content.view.remove']}: ${row.name}`} onClick={() => void dropView(row.id)}>
-                ×
+                <X size={16} aria-hidden="true" />
               </button>
             </span>
           ))}
@@ -370,12 +371,10 @@ export function ConsoleList({
             <input id="view-name" value={newName} maxLength={80} onChange={(event) => setNewName(event.target.value)} />
           </div>
           <div className="console-controls">
-            <button type="submit" className="console-button console-button-primary" disabled={busy || newName.trim() === ''}>
+            <Button type="submit" variant="primary" loading={busy} disabled={newName.trim() === ''}>
               {labels['content.view.save']}
-            </button>
-            <button type="button" className="console-button" onClick={() => setSaving(false)}>
-              {labels['content.cancel']}
-            </button>
+            </Button>
+            <Button onClick={() => setSaving(false)}>{labels['content.cancel']}</Button>
           </div>
         </form>
       )}
@@ -386,20 +385,20 @@ export function ConsoleList({
             {checked.size} {labels['content.selected']}
           </span>
           {bulkable('publish') && (
-            <button type="button" className="console-button" disabled={busy} onClick={() => void bulk('publish')}>
+            <Button disabled={busy} onClick={() => void bulk('publish')}>
               {labels['content.bulk.publish']}
-            </button>
+            </Button>
           )}
           {scope.trash
             ? bulkable('restore') && (
-                <button type="button" className="console-button" disabled={busy} onClick={() => void bulk('restore')}>
+                <Button disabled={busy} onClick={() => void bulk('restore')}>
                   {labels['content.bulk.restore']}
-                </button>
+                </Button>
               )
             : bulkable('trash') && (
-                <button type="button" className="console-button" disabled={busy} onClick={() => void bulk('trash')}>
+                <Button variant="danger" disabled={busy} onClick={() => void bulk('trash')}>
                   {labels['content.bulk.trash']}
-                </button>
+                </Button>
               )}
         </div>
       )}
@@ -407,9 +406,7 @@ export function ConsoleList({
       {failed ? (
         <div className="console-alert" data-tone="error" role="alert">
           <span>{labels[failed]}</span>
-          <button type="button" className="console-button" onClick={() => void load(query)}>
-            {labels['content.retry']}
-          </button>
+          <Button onClick={() => void load(query)}>{labels['content.retry']}</Button>
         </div>
       ) : loading && rows.length === 0 ? (
         <ul className="console-rows" aria-label={labels['content.loading']}>
@@ -463,7 +460,7 @@ export function ConsoleList({
                       onClick={() => setView(withSort(view, sort))}
                     >
                       {labels[SORT_KEYS[sort]]}
-                      {view.sort === sort ? (view.dir === 'asc' ? ' ↑' : ' ↓') : ''}
+                      {view.sort === sort ? (view.dir === 'asc' ? <ArrowUp size={14} aria-hidden="true" /> : <ArrowDown size={14} aria-hidden="true" />) : null}
                     </button>
                   </th>
                 ))}
@@ -514,15 +511,15 @@ export function ConsoleList({
         </span>
         {page.pages > 1 && (
           <span className="console-controls">
-            <button type="button" className="console-button" disabled={page.page <= 1} onClick={() => setView(withPage(view, page.page - 1))}>
+            <Button disabled={page.page <= 1} leading={<ArrowBack size={16} aria-hidden="true" />} onClick={() => setView(withPage(view, page.page - 1))}>
               {labels['content.page.prev']}
-            </button>
+            </Button>
             <span className="console-meta">
               {labels['content.page']} {page.page} {labels['content.page.of']} {page.pages}
             </span>
-            <button type="button" className="console-button" disabled={page.page >= page.pages} onClick={() => setView(withPage(view, page.page + 1))}>
+            <Button disabled={page.page >= page.pages} trailing={<ArrowForward size={16} aria-hidden="true" />} onClick={() => setView(withPage(view, page.page + 1))}>
               {labels['content.page.next']}
-            </button>
+            </Button>
           </span>
         )}
       </div>

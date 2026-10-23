@@ -41,6 +41,7 @@ import { fieldOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/conso
 import { contentStateKey, fieldsFromForm, formOf, isPendingIn, sameForm, type Form } from '@/lib/console/editor-form';
 import { previewDocument, previewModel, seoReadout } from '@/lib/console/preview';
 import { writeScopeQuery } from '@/lib/content/list-view';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import type { ContentRow, FieldView } from '@/lib/content/store';
@@ -321,9 +322,7 @@ export function ConsoleEditor({
           <h2>{row?.key ?? rowId}</h2>
           {row && <span className="console-chip">{labels[contentStateKey(row)]}</span>}
           {dirty && <span className="console-chip" data-tone="warn">{labels['content.dirty']}</span>}
-          <button type="button" className="console-button" onClick={() => onRequestNav(onClose)}>
-            {labels['content.close']}
-          </button>
+          <Button onClick={() => onRequestNav(onClose)}>{labels['content.close']}</Button>
           <span className="console-meta">
             {/* Each date is its own bidi run: an ISO date typed straight into an Arabic
                 sentence gets its digits reordered — `2026-10-23` read as `26-10-2026`. */}
@@ -382,27 +381,25 @@ export function ConsoleEditor({
         {/* The bar is pinned to the bottom of the pane: the actions are the reason the
             pane is open, and on a phone they must not be forty keystrokes below the text. */}
         <div className="console-editor-bar console-controls">
-          <button type="button" className="console-button console-button-primary" onClick={() => void save('manual')} disabled={busy || !canEditRow || !dirty || invalid}>
+          <Button variant="primary" loading={busy} disabled={!canEditRow || !dirty || invalid} onClick={() => void save('manual')}>
             {busy ? labels['content.saving'] : labels['content.save']}
-          </button>
+          </Button>
           {publishable.length > 0 && row && !row.trashed && (
-            <button type="button" className="console-button" onClick={() => void publish()} disabled={busy || !writable || invalid}>
+            <Button onClick={() => void publish()} disabled={busy || !writable || invalid}>
               {labels['content.publish']}
-            </button>
+            </Button>
           )}
           {row && abilities.remove.includes(scopeValue) && !row.trashed && (
-            <button type="button" className="console-button" onClick={() => onRequestNav(() => void moveToTrash())} disabled={busy}>
+            <Button variant="danger" onClick={() => onRequestNav(() => void moveToTrash())} disabled={busy}>
               {labels['content.trash_item']}
-            </button>
+            </Button>
           )}
           {row?.trashed && abilities.update.includes(scopeValue) && (
-            <button type="button" className="console-button" onClick={() => void restore()} disabled={busy}>
+            <Button onClick={() => void restore()} disabled={busy}>
               {labels['content.restore']}
-            </button>
+            </Button>
           )}
-          <button type="button" className="console-button" onClick={() => void openHistory()} disabled={busy || !row}>
-            {labels['content.history']}
-          </button>
+          <Button onClick={() => void openHistory()} disabled={busy || !row}>{labels['content.history']}</Button>
           <span className="console-count" data-tone={autosaveStopped || invalid ? 'error' : undefined}>
             {autosaveStopped
               ? labels['content.autosave_stopped']
@@ -420,12 +417,10 @@ export function ConsoleEditor({
           <div className="console-panel console-nav-confirm" role="alertdialog" aria-label={labels['content.unsaved.title']}>
             <p className="console-lede">{labels['content.unsaved.body']}</p>
             <div className="console-controls">
-              <button type="button" className="console-button console-button-primary" onClick={() => void continueAfterSave()} disabled={busy}>
+              <Button variant="primary" loading={busy} onClick={() => void continueAfterSave()}>
                 {labels['content.unsaved.save']}
-              </button>
-              <button
-                type="button"
-                className="console-button"
+              </Button>
+              <Button
                 onClick={() => {
                   setForm(savedForm);
                   setSavedForm(savedForm);
@@ -434,10 +429,8 @@ export function ConsoleEditor({
                 disabled={busy}
               >
                 {labels['content.unsaved.discard']}
-              </button>
-              <button type="button" className="console-button" onClick={onPendingCancel}>
-                {labels['content.unsaved.keep']}
-              </button>
+              </Button>
+              <Button onClick={onPendingCancel}>{labels['content.unsaved.keep']}</Button>
             </div>
           </div>
         )}
@@ -455,17 +448,15 @@ export function ConsoleEditor({
                       {revision.note ? ` · ${revision.note}` : ''}
                     </span>
                     {publishable.length > 0 && (
-                      <button type="button" className="console-button" onClick={() => void rollback(revision.revision)} disabled={busy}>
+                      <Button size="sm" onClick={() => void rollback(revision.revision)} disabled={busy}>
                         {labels['content.rollback']}
-                      </button>
+                      </Button>
                     )}
                   </li>
                 ))}
               </ul>
             )}
-            <button type="button" className="console-button" onClick={() => setHistory(null)}>
-              {labels['content.close']}
-            </button>
+            <Button onClick={() => setHistory(null)}>{labels['content.close']}</Button>
           </div>
         )}
 
@@ -481,9 +472,9 @@ export function ConsoleEditor({
           <h3>{labels['content.preview']}</h3>
           <p className="console-note">{labels['content.preview.draft']}</p>
           {seo?.path ? (
-            <a className="console-button" href={seo.path} target="_blank" rel="noreferrer">
+            <ButtonLink href={seo.path} target="_blank" rel="noreferrer">
               {labels['content.preview.site']}
-            </a>
+            </ButtonLink>
           ) : (
             <p className="console-note">{labels['content.preview.no_page']}</p>
           )}

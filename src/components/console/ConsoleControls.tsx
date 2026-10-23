@@ -2,8 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import Link from 'next/link';
 import { consoleCall } from './client-api';
+import { Button, ButtonLink } from '@/components/ui/Button';
 import type { ConsolePrefs } from '@/lib/console/prefs';
 
 interface Labels {
@@ -48,26 +48,21 @@ export function ConsoleControls({ prefs, labels }: Readonly<{ prefs: ConsolePref
 
   return (
     <span className="console-controls">
-      <Link href="/" target="_blank" rel="noreferrer" className="console-button">
+      <ButtonLink href="/" target="_blank" rel="noreferrer">
         {labels.viewSite}
-      </Link>
-      <button type="button" className="console-button" disabled={busy} onClick={() => save({ ...prefs, theme: prefs.theme === 'dark' ? 'light' : 'dark' })}>
+      </ButtonLink>
+      <Button disabled={busy} onClick={() => save({ ...prefs, theme: prefs.theme === 'dark' ? 'light' : 'dark' })}>
         {prefs.theme === 'dark' ? labels.toLight : labels.toDark}
-      </button>
-      <button
-        type="button"
-        className="console-button"
-        disabled={busy}
-        onClick={() => save({ ...prefs, density: prefs.density === 'dense' ? 'comfortable' : 'dense' })}
-      >
+      </Button>
+      <Button disabled={busy} onClick={() => save({ ...prefs, density: prefs.density === 'dense' ? 'comfortable' : 'dense' })}>
         {prefs.density === 'dense' ? labels.toComfortable : labels.toDense}
-      </button>
-      <button type="button" className="console-button" disabled={busy} onClick={() => save({ ...prefs, locale: prefs.locale === 'ar' ? 'en' : 'ar' })}>
+      </Button>
+      <Button disabled={busy} onClick={() => save({ ...prefs, locale: prefs.locale === 'ar' ? 'en' : 'ar' })}>
         {labels.switchLocale}
-      </button>
-      <button type="button" className="console-button" disabled={busy} onClick={signOut}>
+      </Button>
+      <Button disabled={busy} onClick={signOut}>
         {labels.signOut}
-      </button>
+      </Button>
     </span>
   );
 }

@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* The control layer both surfaces read, bundled here rather than imported by each
+ * document root: a primitive that has to be remembered twice is a primitive that gets
+ * forgotten on the third surface. Position is fixed by the cascade, not by this file's
+ * order — see the header of the file itself. */
+@import "../components/ui/ui.css";
 
 :root {
   /* Warm luxury palette - never sterile hospital white */
@@ -27,6 +32,12 @@
   --gold-end: #85640f;
   --gold-glow: rgba(201, 162, 39, 0.25);
   --gold-border: rgba(133, 100, 15, 0.8);
+  /* The sweep itself, with a `:root` fallback. It used to exist only in the inline
+     style the two real layouts write, which is fine until a document forgets it — the
+     error page — and a control that paints with `var(--gold-gradient)` then paints with
+     nothing: an invalid value at the place a colour belongs. Same string as
+     `siteTheme.light` in `src/config/site.ts`; a test compares the two. */
+  --gold-gradient: linear-gradient(120deg, #c9a227 0%, #e8c766 20%, #f5e6a8 35%, #e8c766 50%, #c9a227 65%, #b08d24 85%, #a8801f 100%);
 
   /* --------------------------------------------
      Semantic button pairs. A surface and its ink always
@@ -149,6 +160,29 @@
   --radius-surface: 0.9rem;
   --radius-pill: 9999px;
 
+  /* --------------------------------------------
+     Control geometry (`src/components/ui/ui.css`, BK-19.3). These eight are the numbers a
+     primitive reads, so they are the numbers both surfaces agree on: the public site's
+     defaults live here, and the console re-declares the ones it draws smaller on
+     `[data-surface='console']` and again under `[data-density='dense']`. They used to be
+     `--console-*` names, which is why a control built for one surface could not be read by
+     the other.
+
+     `--tap` is the floor for anything a finger hits and density does not lower it: a dense
+     layout means fewer pixels per row of *content*, not smaller things to press.
+     `--tap-field` is the same number in comfortable mode and the one dense mode is allowed
+     to lower, because a text field's target is the box the visitor aims at, not a control
+     they can miss and hit twice.
+     -------------------------------------------- */
+  --tap: 2.75rem;
+  --tap-field: 2.75rem;
+  --ui-font: 0.875rem;
+  --ui-font-small: 0.8rem;
+  --ui-gap: 0.85rem;
+  --ui-gap-tight: 0.35rem;
+  --ui-pad: 1.1rem;
+  --ui-stack: 1rem;
+
   /* Boundaries. A control needs a border that meets 3:1 against its surface
      (`--border-control-soft`); a card, a panel or a table wrap needs a hairline that
      only says "this is one object". Those are different requirements and were being
@@ -184,6 +218,11 @@
   --dur-base: 220ms;
   --dur-slow: 340ms;
   --dur-reveal: 500ms;
+  /* Not transitions. The brief's 150–400ms is how long a state change takes to settle;
+     these are the periods of things that never settle — an indeterminate spinner and a
+     skeleton's sweep — and a loop that fast looks nervous and one that slow looks broken. */
+  --dur-spin: 700ms;
+  --dur-shimmer: 1.2s;
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -361,6 +400,9 @@ html[data-theme="dark"] {
     0 2.5rem 5rem rgb(0 0 0 / 26%);
   --glass-surface: rgba(33, 30, 27, 0.72);
   --glass-border: rgba(213, 180, 70, 0.22);
+  /* The sweep lifted with the rest of the gold, so a control filled with it keeps the
+     same ink-to-stop margin it has on cream. Matches `siteTheme.dark`. */
+  --gold-gradient: linear-gradient(120deg, #a4832a 0%, #c29e3c 20%, #e1c15b 35%, #c29e3c 50%, #a4832a 65%, #b5902f 85%, #c9a441 100%);
 }
 
 /* The header surface comes from --nav-surface, which flips with the theme. */

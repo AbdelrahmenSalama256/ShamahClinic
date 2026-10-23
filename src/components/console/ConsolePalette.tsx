@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { PalettePlace } from '@/lib/console/screens';
 import type { SearchHit } from '@/lib/console/search';
 import { consoleRead } from './client-api';
+import { Button } from '@/components/ui/Button';
 
 export type PaletteLabels = {
   open: string;
@@ -108,9 +109,9 @@ export function ConsolePalette({ entries, labels }: Readonly<{ entries: PaletteP
 
   return (
     <>
-      <button type="button" className="console-button console-palette-open" ref={trigger} onClick={() => setOpen(true)}>
+      <Button ref={trigger} onClick={() => setOpen(true)}>
         {labels.open}
-      </button>
+      </Button>
       <dialog
         ref={dialog}
         className="console-palette"
