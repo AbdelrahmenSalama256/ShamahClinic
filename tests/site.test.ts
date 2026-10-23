@@ -13,7 +13,9 @@
  *   - the published HTML goes through the same sanitizer the WordPress body did, so
  *     an authored `<script>` cannot ride into `dangerouslySetInnerHTML`;
  *   - a list (`branches`, `services`) is chosen per **list**, not per kind: two
- *     lists of the same table can sit on different rungs at the same time.
+ *     lists of the same table can sit on different rungs at the same time;
+ *   - settings are the exception: a saved `site` key replaces the config value for
+ *     that one field only, a blank or secret row never reaches a public reader.
  *
  * Every fixture is named `site-<run>` and removed in `afterAll`.
  */
@@ -39,8 +41,11 @@ import {
   getPost,
   getPosts,
   getServiceCards,
+  getSettings,
 } from '../src/lib/content/site';
 import { SITE_URL } from '../src/lib/site';
+import { siteConfig } from '../src/config/site';
+import { WHATSAPP } from '../src/lib/wp/config';
 import * as wp from '../src/lib/wp';
 
 const run = randomUUID().slice(0, 8);
@@ -125,10 +130,18 @@ async function purge(): Promise<void> {
   await db.deleteFrom('pages').where('route', 'like', '/site-%').execute();
   await db.deleteFrom('list_items').where('uid', 'like', 'site-%').execute();
   await db.deleteFrom('categories').where('slug', 'like', 'site-%').execute();
+  await db.deleteFrom('settings').where('group_name', 'in', ['site', `${run}-settings`]).where('setting_key', 'in', SETTING_KEYS).execute();
   if (ids.length > 0) await db.deleteFrom('revisions').where('entity_id', 'in', ids).execute();
 }
 
 const categoryId = randomUUID();
+
+/**
+ * The keys `getSettings` can read. They are the real `site` group's real keys — a
+ * reader that only understood a test-shaped group would prove nothing — so the
+ * suite writes them and deletes exactly them again.
+ */
+const SETTING_KEYS = ['name', 'tagline', 'phone', 'whatsapp', 'email', 'hours'];
 
 beforeAll(async () => {
   assertTestDb();
@@ -336,6 +349,51 @@ describe('the database rung', () => {
     expect(home.offers.map((offer) => offer.slug)).toEqual([key('hydra')]);
     expect(home.branches.length).toBeGreaterThan(0);
     expect(home.settings.name).toBeTruthy();
+  });
+
+  it('reads a saved setting per key, and never a secret one', async () => {
+    const authored = await getSettings('en');
+    expect(authored.name).toBe(siteConfig.brand.name.en);
+    expect(authored.whatsapp).toBe(WHATSAPP);
+
+    await db
+      .insertInto('settings')
+      .values([
+        { group_name: 'site', setting_key: 'name', value: JSON.stringify('شامه سي إم إس'), default_value: null, is_secret: 0, version: 1 },
+        { group_name: 'site', setting_key: 'whatsapp', value: JSON.stringify('20555000111'), default_value: null, is_secret: 0, version: 1 },
+        // A blank is not an edit: the field keeps the config value rather than rendering nothing.
+        { group_name: 'site', setting_key: 'email', value: JSON.stringify('   '), default_value: null, is_secret: 0, version: 1 },
+        // A secret row is hidden from the console, so it is hidden from a public reader too.
+        { group_name: 'site', setting_key: 'phone', value: JSON.stringify('+20999000111'), default_value: null, is_secret: 1, version: 1 },
+        // Same key, different group: `site` is this reader's group and no other.
+        { group_name: `${run}-settings`, setting_key: 'name', value: JSON.stringify('another group'), default_value: null, is_secret: 0, version: 1 },
+      ])
+      .execute();
+
+    const saved = await getSettings('en');
+    expect(saved.name).toBe('شامه سي إم إس');
+    expect(saved.whatsapp).toBe('20555000111');
+    // The fallback is per key: an operator who saved a name still gets the authored
+    // email (blank) and the authored phone (the secret row never reaches here).
+    expect(saved.email).toBe(authored.email);
+    expect(saved.phone).toBe(authored.phone);
+    // The two counted fields stay counted — they are not settings.
+    expect(saved.branches).toBe((await getBranches()).length);
+    expect(saved.currency).toBe(authored.currency);
+    // `lang` picks offers and branches, not the saved words — see the reader's note.
+    expect((await getSettings('ar')).name).toBe('شامه سي إم إس');
+
+    // Clearing a field hands it back to the config file, one key at a time.
+    await db
+      .updateTable('settings')
+      .set({ value: JSON.stringify('') })
+      .where('group_name', '=', 'site')
+      .where('setting_key', '=', 'name')
+      .execute();
+    expect((await getSettings('en')).name).toBe(siteConfig.brand.name.en);
+
+    await db.deleteFrom('settings').where('group_name', 'in', ['site', `${run}-settings`]).where('setting_key', 'in', SETTING_KEYS).execute();
+    expect((await getSettings('en')).whatsapp).toBe(WHATSAPP);
   });
 });
 

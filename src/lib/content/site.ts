@@ -30,6 +30,8 @@ import type { Article, ArticleCard, Bi, CategoryTerm, Lang, Offer, OfferDetail, 
 import { db } from '../db';
 import { SITE_URL } from '../site';
 import { getLocalizedHref } from '../locale';
+import { siteConfig } from '../../config/site';
+import { WHATSAPP } from '../wp/config';
 import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
@@ -594,6 +596,104 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
   );
 }
 
+// --- settings -----------------------------------------------------------------
+
+/**
+ * A setting is one JSON value per `(group, key)`, which is why the console can gain
+ * a key without a migration. `site` is this read path's group and the six keys below
+ * are what a `Settings` field can be saved under.
+ *
+ * A row flagged `is_secret` is skipped: the console hides those values from whoever
+ * is looking over the operator's shoulder, and a public reader is a worse version of
+ * that room. `/api/v1/settings` answers to any visitor.
+ *
+ * The fallback is per key, not per call: a site that has saved a phone number still
+ * takes its hours from the config file. That is the opposite of the content rungs,
+ * where "has this been published?" is answered for a whole kind at a time — a
+ * setting has no draft twin and no version of record, so half-filling the group is
+ * a normal state rather than a broken one.
+ */
+const SETTING_GROUP = 'site';
+
+/** The homepage's tagline. No config file holds it today, and BK-14 gives it an address. */
+const TAGLINE = "Great Skin Doesn't Happen By Chance";
+
+/** MariaDB prints JSON as LONGTEXT and the driver parses most, but not every, path. */
+function asWord(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const text = value.trim();
+  // A parsed scalar arrives as the string itself; an unparsed one arrives as its JSON,
+  // so only a quoted document is decoded again. Without this a phone number — all
+  // digits, quotes gone — reads as a JSON number and the field silently keeps the
+  // config value instead of the operator's edit.
+  if (text.startsWith('"') && text.endsWith('"') && text.length > 1) {
+    try {
+      const parsed: unknown = JSON.parse(text);
+      return typeof parsed === 'string' ? parsed : null;
+    } catch {
+      return value;
+    }
+  }
+  return text ? value : null;
+}
+
+async function savedSettings(): Promise<Map<string, string>> {
+  const rows = await db
+    .selectFrom('settings')
+    .select(['setting_key', 'value'])
+    .where('group_name', '=', SETTING_GROUP)
+    .where('is_secret', '=', 0)
+    .execute();
+  const values = new Map<string, string>();
+  for (const row of rows) {
+    const value = asWord(row.value);
+    // Only a word is usable here: every `Settings` field is one, and an editor
+    // that saved an object would otherwise render as `[object Object]`.
+    if (value?.trim()) values.set(row.setting_key, value);
+  }
+  return values;
+}
+
+/**
+ * The site's settings: the six words an operator can edit come from the database when
+ * they have been saved and from the config file otherwise, and the two counted fields
+ * stay counted — they are not settings, they are the offers and branches this same
+ * read path just returned.
+ *
+ * `lang` still does not move `name` or `hours`: both are read as English whatever the
+ * page's language, which is what the site has rendered since before this read path
+ * existed. Changing it would change the homepage, so it belongs to BK-14's editable
+ * elements, not to a row that moves a source.
+ */
+export async function getSettings(lang: Lang = 'en'): Promise<Settings> {
+  const [offers, branches, saved] = await Promise.all([
+    getOffers({ perPage: 1 }, lang),
+    getBranches(),
+    savedSettings().then(
+      (values) => {
+        if (values.size) note('db', 'settings', `${values.size} key(s)`);
+        else note('snapshot', 'settings', 'nothing saved');
+        return values;
+      },
+      (err: unknown) => {
+        note('snapshot', 'settings', reason(err));
+        return new Map<string, string>();
+      },
+    ),
+  ]);
+  const field = (key: string, authored: string): string => saved.get(key) ?? authored;
+  return {
+    name: field('name', siteConfig.brand.name.en),
+    tagline: field('tagline', TAGLINE),
+    currency: offers.items[0]?.currency || 'EGP',
+    phone: field('phone', siteConfig.contact.phone),
+    whatsapp: field('whatsapp', WHATSAPP),
+    email: field('email', siteConfig.contact.email),
+    hours: field('hours', siteConfig.contact.workingHours.en),
+    branches: branches.length,
+  };
+}
+
 // --- home ---------------------------------------------------------------------
 
 export interface HomeData {
@@ -604,15 +704,13 @@ export interface HomeData {
 }
 
 /**
- * The homepage's blocks. Its offers, articles and branches come from this read
- * path; its settings are still a WordPress read until the next slice moves them, so
- * the page is assembled here rather than in `../wp` to keep the two rungs of the
- * same page from disagreeing about the journal.
+ * The homepage's blocks, assembled here rather than in the page so the four reads
+ * that make it up cannot disagree about which rung answered.
  */
 export async function getHome(opts: { offers?: number; articles?: number; lang?: Lang } = {}): Promise<HomeData> {
   const lang = opts.lang ?? 'en';
   const [settings, offersPaged, articlesPaged, branches] = await Promise.all([
-    wp.getSettings(lang),
+    getSettings(lang),
     getOffers({ perPage: opts.offers ?? 4 }, lang),
     getPosts({ perPage: opts.articles ?? 3 }),
     getBranches(),

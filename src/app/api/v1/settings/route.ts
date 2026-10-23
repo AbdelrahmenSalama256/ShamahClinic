@@ -1,4 +1,4 @@
-import { getSettings } from "@/lib/wp";
+import { getSettings } from "@/lib/content/site";
 import { ok, fail, readQuery } from "@/lib/http-api";
 
 export async function GET(req: Request) {

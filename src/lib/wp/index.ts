@@ -1,4 +1,4 @@
-import { DEFAULT_PER_PAGE, MAX_PER_PAGE, PAGE_IDS, WHATSAPP, logSource } from "./config";
+import { DEFAULT_PER_PAGE, MAX_PER_PAGE, PAGE_IDS, logSource } from "./config";
 import {
   readSnapshot,
   snapshotMedia,
@@ -29,13 +29,11 @@ import type {
   Paged,
   SeoMeta,
   ServiceCard,
-  Settings,
   WCStoreProduct,
   WPPost,
   WPTerm,
   Lang,
 } from "./types";
-import { siteConfig } from "@/config/site";
 import type { BranchDetail } from "@/data/branches";
 import type { PhotoSlot } from "@/lib/images";
 import { mergeBranches, parseOffices } from "./branches";
@@ -146,25 +144,12 @@ async function pairLists<T extends { id: number }>(
 }
 
 // ---------------------------------------------------------------------------
-// Settings + branches (config/static per docs/inventory.md)
+// Branches (config/static per docs/inventory.md)
+//
+// `getSettings` used to live here. It was an aggregate of the config file plus two
+// counts, never a WordPress read, so it now belongs to the site's read path
+// (`lib/content/site.ts`), where its editable words can come from the settings table.
 // ---------------------------------------------------------------------------
-
-export async function getSettings(lang: Lang = "en"): Promise<Settings> {
-  const [offers, branches] = await Promise.all([
-    getOffers({ perPage: 1 }, lang),
-    getBranchList(),
-  ]);
-  return {
-    name: siteConfig.brand.name.en,
-    tagline: "Great Skin Doesn't Happen By Chance",
-    currency: offers.items[0]?.currency || "EGP",
-    phone: siteConfig.contact.phone,
-    whatsapp: WHATSAPP,
-    email: siteConfig.contact.email,
-    hours: siteConfig.contact.workingHours.en,
-    branches: branches.length,
-  };
-}
 
 export interface BranchView {
   id: string;
