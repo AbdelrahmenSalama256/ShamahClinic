@@ -9,7 +9,8 @@
  *   - publishing moves the copy a visitor reads and nothing before it does, and a
  *     rollback puts an older published copy back without deleting a revision or
  *     overwriting the draft somebody is currently writing;
- *   - a secret setting never leaves the settings endpoint, not even inside a 200.
+ *   - a secret setting never leaves the settings endpoint, not even inside a 200, and a
+ *     digits-only one stays the string an editor typed rather than becoming a number.
  *
  * Every fixture is named `bk6-<run>` and every row it creates is removed in
  * `afterAll`, including the catalog roles this suite seeds.
@@ -758,6 +759,22 @@ describe('settings keep a secret inside the environment', () => {
 
     const fresh = await call('/settings', write(actors.Owner, 'PATCH', { group, key: 'maintenance', value: false }));
     expect(fresh.body.row).toMatchObject({ key: 'maintenance', version: 1, secret: false });
+  });
+
+  it('keeps a digits-only setting the string an editor typed', async () => {
+    // A phone number is a word, not a quantity. Reading the column had become a number
+    // here, and saving that number back put a JSON number in a field no site reader can
+    // show — the operator's edit disappeared without an error anywhere.
+    const hotline = await call('/settings', write(actors.Owner, 'PATCH', { group, key: 'hotline', value: '20555000111' }));
+    expect(hotline.status).toBe(200);
+    const row = hotline.body.row as SettingView;
+    expect(row).toMatchObject({ key: 'hotline', value: '20555000111' });
+    expect(typeof row.value).toBe('string');
+
+    const listed = (JSON.parse(await (await raw('/settings', read(actors.Owner))).text()) as { rows: SettingView[] })
+      .rows.find((row) => row.group === group && row.key === 'hotline');
+    expect(typeof listed?.value).toBe('string');
+    expect(listed?.value).toBe('20555000111');
   });
 });
 

@@ -42,9 +42,19 @@ function toView(row: {
   };
 }
 
-/** MariaDB prints JSON as LONGTEXT; the driver parses most of it, but not every path. */
+/**
+ * MariaDB prints JSON as LONGTEXT; the driver parses most of it, but not every path.
+ *
+ * Only a *document* is decoded again. A plain string that happens to read as JSON — a
+ * WhatsApp number, an extension, a year — arrived parsed already, and re-decoding it
+ * turned the console's answer into a number. Saved back through that number it became a
+ * JSON number in the column, which no site reader can show as a word: an operator's edit
+ * would disappear without an error anywhere.
+ */
 function parse(value: unknown): unknown {
   if (typeof value !== 'string') return value ?? null;
+  const text = value.trim();
+  if (!text.startsWith('{') && !text.startsWith('[') && !text.startsWith('"')) return value;
   try {
     return JSON.parse(value);
   } catch {
