@@ -629,4 +629,93 @@ describe('a screen only says saved when the server says saved', () => {
   it('does not invent an error for a code the server did answer with', () => {
     expect(callResult(404, { error: 'not_found' }).error).toBe('not_found');
   });
+
+  it('keeps the field messages a rejected write answers with', () => {
+    // A 400 with `{ error, issues }` is the only way the editor knows which box to mark,
+    // so `issues` has to survive the same trip `data` does.
+    const rejected = callResult(400, { error: 'invalid_input', issues: [{ path: 'fields.title', message: 'required' }] });
+    expect(rejected.issues).toEqual([{ path: 'fields.title', message: 'required' }]);
+    expect(rejected.data).toBeNull();
+
+    const accepted = callResult<{ row?: unknown }>(200, { row: { id: 'r1' }, issues: [] });
+    expect(accepted.issues).toEqual([]);
+    expect(accepted.data).toEqual({ row: { id: 'r1' } });
+  });
+
+  it('ignores an issues field that is not a list of messages', () => {
+    expect(callResult(400, { error: 'invalid_input', issues: 'nope' }).issues).toEqual([]);
+    expect(callResult(400, { error: 'invalid_input', issues: [{ path: 1, message: 'x' }] }).issues).toEqual([]);
+  });
+});
+
+describe('the editor pane is one row, edited (BK-13.4)', () => {
+  const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
+  const editor = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
+  const workspace = readFileSync(join(process.cwd(), 'src/components/console/ContentWorkspace.tsx'), 'utf8');
+
+  it('splits the pane on the pane’s own width', () => {
+    // The workspace gives the editor 22rem or 60rem depending on the viewport, so a
+    // viewport media query would put a phone-width preview next to a squeezed field.
+    expect(css).toMatch(/\.console-work-edit\s*\{[^}]*container-name: console-edit/);
+    expect(css).toMatch(/@container console-edit \(min-width: \d+rem\)/);
+    expect(css).toMatch(/\.console-editor\s*\{[^}]*grid-template-columns/);
+  });
+
+  it('pins the save bar and keeps every control in it at the tap floor', () => {
+    expect(css).toMatch(/\.console-editor-bar\s*\{[^}]*position: sticky/);
+    for (const selector of ['.console-editor-bar', '.console-button']) {
+      const start = css.indexOf(`\n${selector} {`);
+      expect(start, `${selector} is styled`).toBeGreaterThan(-1);
+      expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--console-tap\)/);
+    }
+  });
+
+  it('writes the draft on a pause and never publishes itself', () => {
+    expect(editor).toMatch(/const AUTOSAVE_MS = \d{3,5};/);
+    // The two things a person must be able to read off the bar: that it saves drafts only,
+    // and that it stopped because someone else got there first.
+    expect(editor).toContain("labels['content.autosave']");
+    expect(editor).toContain("labels['content.autosave_stopped']");
+    expect(editor).toMatch(/result\.error === 'stale_row'\) setAutosaveStopped\(true\)/);
+    expect(editor).toMatch(/if \(!canEditRow \|\| !dirty[^)]*autosaveStopped/);
+  });
+
+  it('saves before it publishes, because publish means the draft in the database', () => {
+    expect(editor).toMatch(/if \(dirty && !\(await save\('nav'\)\)\) return;/);
+  });
+
+  it('saves from the keyboard', () => {
+    expect(editor).toMatch(/\(event\.ctrlKey \|\| event\.metaKey\) && event\.key\.toLowerCase\(\) === 's'/);
+    expect(editor).toContain('event.preventDefault()');
+    expect(editor).toContain("labels['content.keyboard']");
+  });
+
+  it('holds a navigation that would lose unsaved words', () => {
+    // The gate is in the workspace, the words are in the editor: picking a row, a tab or
+    // the Trash all ask first, and only the pane that holds the form can answer.
+    expect(workspace).toMatch(/if \(!dirty\) \{\s*\w+\(\);/);
+    expect(workspace.match(/requestNav\(/g)!.length).toBeGreaterThanOrEqual(4);
+    expect(editor).toContain("labels['content.unsaved.save']");
+    expect(editor).toContain("labels['content.unsaved.discard']");
+    expect(editor).toContain("labels['content.unsaved.keep']");
+    // Discarding puts back exactly what the server last said, so the next save cannot
+    // re-send what was just thrown away.
+    expect(editor).toMatch(/setForm\(savedForm\);\s*setSavedForm\(savedForm\);/);
+  });
+
+  it('marks the field a message belongs to', () => {
+    expect(editor).toContain('aria-invalid');
+    expect(editor).toContain('data-invalid');
+    expect(editor).toMatch(/className="console-field-error" role="alert"/);
+    expect(css).toMatch(/\.console-field-error\s*\{[^}]*var\(--text-danger\)/);
+  });
+
+  it('leaves the row’s scope to the workspace', () => {
+    // One owner per thing: the editor never touches the selection or the tabs, and the
+    // workspace holds no form. `create()` is the one write the workspace makes, because a
+    // new row is empty — there are no words in it for the editor to protect.
+    expect(editor).not.toMatch(/setScope|setSelectedId/);
+    expect(workspace).not.toMatch(/setForm|fieldsFromForm|formOf|RevisionView/);
+    expect(workspace).not.toMatch(/'PATCH'|\/publish|\/restore|\/rollback|\/revisions/);
+  });
 });

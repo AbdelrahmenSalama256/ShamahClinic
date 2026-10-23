@@ -1,0 +1,396 @@
+/**
+ * BK-13.4 — the editor's own modules, with no database and no React in sight.
+ *
+ * Three properties hold the pane together, and all three are cheap to lose:
+ *
+ * **The message a save comes back with is the message under the field.** The console does
+ * not invent its own error strings — it translates `parseWrites()`'s. So the test drives the
+ * real server function with every bad value a kind can be handed and requires each sentence
+ * it answers with to have a mapping, in both languages. When the server learns a new way to
+ * refuse a write, this fails until the catalog learns it too.
+ *
+ * **The preview and the SEO read-out say what the site will say.** `seoReadout()` follows
+ * `publicSeo()`'s fallbacks and `publicPathOf()` is the same rule the site's hrefs are built
+ * from, so a console link cannot point at a URL the routing does not serve.
+ *
+ * **Nothing is posted that the browser already knows is wrong, and nothing dirty stays
+ * dirty forever.** `fieldsFromForm()` answers in the server's vocabulary, and `sameForm()`
+ * compares against the form that was *posted* — because MariaDB returns `12` for what
+ * someone typed as `12.0`, and a baseline re-read from the row would leave autosave writing
+ * the same draft every two seconds.
+ */
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { LIST_KEYS } from '../src/lib/auth/roles';
+import { CONTENT_KINDS, CONTENT_LOCALES, kindSpec, parseWrites, type ContentKind, type ContentLocale } from '../src/lib/content/kinds';
+import { localizedPath, pageSlug, publicPathOf } from '../src/lib/content/paths';
+import { fieldsFromForm, formOf, sameForm, contentStateKey, isPendingIn } from '../src/lib/console/editor-form';
+import { catalogFor, type MessageKey } from '../src/lib/console/messages';
+import { fieldOf, groupIssues, issueText, liveIssues, type FieldIssue, type TrackedIssue } from '../src/lib/console/issues';
+import { previewDocument, previewModel, seoReadout } from '../src/lib/console/preview';
+import type { ContentRow, FieldView } from '../src/lib/content/store';
+
+const labels = catalogFor('ar');
+const labelsEn = catalogFor('en');
+
+function field(patch: Partial<FieldView> & { kind: FieldView['kind'] }): FieldView {
+  return { pending: false, immediate: false, multiline: false, max: 0, ...patch };
+}
+
+function row(patch: Partial<ContentRow> & { kind: ContentKind }): ContentRow {
+  return {
+    id: 'r1',
+    key: 'k1',
+    status: 'draft',
+    version: 1,
+    trashed: false,
+    updatedAt: '2026-10-01T08:00:00.000Z',
+    publishedAt: null,
+    pendingLocales: [],
+    fields: {},
+    ...patch,
+  };
+}
+
+/** One row shaped like every field of its kind, so `formOf` and `fieldsFromForm` see them all. */
+function rowOfKind(kind: ContentKind): ContentRow {
+  const spec = kindSpec(kind);
+  const fields: Record<string, FieldView> = {};
+  for (const bi of spec.bi) fields[bi.name] = field({ kind: 'bi', draft: { ar: '', en: '' }, pub: { ar: null, en: null }, max: bi.max });
+  for (const text of spec.text) fields[text.name] = field({ kind: 'text', value: text.fallback ?? '', max: text.max });
+  for (const number of spec.number) fields[number.name] = field({ kind: 'number', value: null });
+  for (const flag of spec.flag) fields[flag.name] = field({ kind: 'flag', value: false });
+  for (const json of spec.json) fields[json.name] = field({ kind: 'json', draftJson: {} });
+  return row({ kind, fields });
+}
+
+describe('the site path a row lives at (BK-13.4)', () => {
+  it('spells each kind the way the site does', () => {
+    expect(publicPathOf('article', 'rahma-diabetes')).toBe('/blogs/rahma-diabetes');
+    expect(publicPathOf('offer', 'botox')).toBe('/offers/botox');
+    expect(publicPathOf('page', '/')).toBe('/');
+    expect(publicPathOf('page', '/about/')).toBe('/about');
+  });
+
+  it('gives every registered list a rule, and the header menu none', () => {
+    for (const listKey of LIST_KEYS) {
+      expect(publicPathOf('list_item', 'x', listKey) !== null || listKey === 'nav', `${listKey} is decided`).toBe(true);
+    }
+    expect(publicPathOf('list_item', 'x', 'nav')).toBeNull();
+    expect(publicPathOf('list_item', 'x')).toBeNull();
+    expect(publicPathOf('list_item', 'x', 'nope')).toBeNull();
+    expect(publicPathOf('list_item', 'riyadh', 'branches')).toBe('/branches/riyadh');
+  });
+
+  it('prefixes both languages, because a bare path is Arabic', () => {
+    // `decideRoute()` rewrites `/blogs/x` to `/ar/blogs/x`, so an English link has to say
+    // `/en/` itself — a preview that opens the wrong language is worse than no link.
+    expect(localizedPath('/blogs/x', 'ar')).toBe('/ar/blogs/x');
+    expect(localizedPath('/blogs/x', 'en')).toBe('/en/blogs/x');
+    expect(localizedPath('/', 'en')).toBe('/en');
+    expect(pageSlug('//about//')).toBe('about');
+  });
+
+  it('is the rule the site itself uses, not a second copy', () => {
+    const site = readFileSync(join(process.cwd(), 'src/lib/content/site.ts'), 'utf8');
+    expect(site).toContain("from './paths'");
+    expect(site).toMatch(/publicPathOf\('article'/);
+    expect(site).toMatch(/publicPathOf\('offer'/);
+    expect(site).not.toMatch(/`\/blogs\/\$\{/);
+  });
+});
+
+describe('every message parseWrites() can answer with has a translation', () => {
+  /** A value of the wrong shape for every field of every kind, plus a name that is not one. */
+  function serverIssues(kind: ContentKind): FieldIssue[] {
+    const spec = kindSpec(kind);
+    const sent: Record<string, unknown> = { not_a_field: 'x' };
+    for (const bi of spec.bi) sent[bi.name] = 'x'.repeat(bi.max + 1);
+    for (const text of spec.text) sent[text.name] = 'x'.repeat(text.max + 1);
+    for (const number of spec.number) sent[number.name] = '12abc';
+    for (const flag of spec.flag) sent[flag.name] = 'yes';
+    for (const json of spec.json) sent[json.name] = 'nope';
+    const overlong = parseWrites(spec, { key: 'k', fields: sent }, 'ar');
+    const empties: Record<string, unknown> = {};
+    for (const bi of spec.bi) empties[bi.name] = 7;
+    for (const json of spec.json) empties[json.name] = null;
+    const wrongShape = parseWrites(spec, { key: 'k', fields: empties }, 'ar');
+    // Nothing sent at all: a required JSON field answers `required`, in its own words.
+    const missing = parseWrites(spec, { key: 'k', fields: {} }, 'ar');
+    return [...overlong.issues, ...wrongShape.issues, ...missing.issues];
+  }
+
+  for (const kind of CONTENT_KINDS) {
+    it(`${kind}: every sentence is mapped, in Arabic and in English`, () => {
+      const issues = serverIssues(kind);
+      expect(issues.length, `${kind} refuses a wrong-shaped write`).toBeGreaterThan(0);
+      for (const issue of issues) {
+        expect(issueText(labels, issue), `${kind}: ${issue.message}`).not.toBe(issue.message);
+        expect(issueText(labelsEn, issue), `${kind}: ${issue.message}`).not.toBe(issue.message);
+        expect(issueText(labels, issue).length).toBeGreaterThan(0);
+        expect(issueText(labelsEn, issue)).not.toMatch(/[\u0600-\u06FF]/);
+      }
+    });
+  }
+
+  it('fills in a length limit instead of dropping the number', () => {
+    expect(labels['content.issue.long']).toContain('{max}');
+    expect(issueText(labels, { path: 'title', message: 'longer than 191 characters' })).toContain('191');
+    expect(issueText(labelsEn, { path: 'title', message: 'longer than 191 characters' })).toBe('Longer than 191 characters.');
+  });
+
+  it('passes an unknown sentence through rather than showing nothing', () => {
+    expect(issueText(labels, { path: 'title', message: 'the column is on fire' })).toBe('the column is on fire');
+  });
+});
+
+describe('issues reach the field they belong to', () => {
+  const names = ['title', 'price'];
+
+  it('takes the field name out of a zod path', () => {
+    expect(fieldOf('fields.title')).toBe('title');
+    expect(fieldOf('title')).toBe('title');
+    expect(fieldOf('fields.data.0.name')).toBe('data');
+  });
+
+  it('marks a known field and keeps the rest for the notice line', () => {
+    const grouped = groupIssues(labels, [{ path: 'fields.title', message: 'required' }, { path: 'version', message: 'stale_row' }], names);
+    expect(grouped.byField.title).toEqual([labels['content.issue.required']]);
+    expect(grouped.other).toEqual(['stale_row']);
+  });
+
+  it('says each sentence once per field', () => {
+    // The browser's parse and the server can both refuse the same box; one box, one line.
+    const grouped = groupIssues(labels, [{ path: 'price', message: 'expected a number' }, { path: 'fields.price', message: 'expected a number' }], names);
+    expect(grouped.byField.price).toHaveLength(1);
+    expect(grouped.other).toEqual([]);
+  });
+
+  it('retires a server sentence once its value is gone from the box', () => {
+    // Found by typing over a refused currency: the write had been rejected for nine
+    // letters, the box now held three, and the field still read `أطول من 8 حرفًا.`.
+    const refused: TrackedIssue[] = [{ path: 'currency', message: 'longer than 8 characters', was: 'EEEEEEEEE' }];
+    expect(liveIssues(refused, { currency: 'EEEEEEEEE' })).toEqual(refused);
+    expect(liveIssues(refused, { currency: 'EGP' })).toEqual([]);
+    expect(liveIssues(refused, {})).toEqual([]);
+  });
+
+  it('keeps a sentence no field owns until the next attempt answers', () => {
+    // A moved `version` is not fixed by editing a box, so it must not vanish on a keystroke.
+    const stale: TrackedIssue[] = [{ path: 'version', message: 'stale_row', was: '' }];
+    expect(liveIssues(stale, { title: 'رحمة' })).toEqual(stale);
+  });
+
+  it('reads a bilingual path as the field the editor can mark', () => {
+    const refused: TrackedIssue[] = [{ path: 'fields.title', message: 'longer than 500 characters', was: 'طويل' }];
+    expect(liveIssues(refused, { title: 'طويل' })).toHaveLength(1);
+    expect(liveIssues(refused, { title: 'رحمة' })).toHaveLength(0);
+  });
+});
+
+describe('the form the fields draw', () => {
+  it('reads one language tab out of a bilingual row', () => {
+    const article = rowOfKind('article');
+    article.fields.title = field({ kind: 'bi', draft: { ar: 'رحمة', en: 'Mercy' }, pub: { ar: 'رحمة', en: 'Mercy' } });
+    expect(formOf(article, 'ar').title).toBe('رحمة');
+    expect(formOf(article, 'en').title).toBe('Mercy');
+    // A language nobody has written yet starts empty, not `[object Object]`.
+    article.fields.excerpt = field({ kind: 'bi', draft: { ar: 'مقتطف', en: '' }, pub: { ar: null, en: null } });
+    expect(formOf(article, 'en').excerpt).toBe('');
+    expect(formOf(article, 'ar').excerpt).toBe('مقتطف');
+  });
+
+  it('prints JSON the way an editor expects to read it', () => {
+    const item = rowOfKind('list_item');
+    item.fields.data = field({ kind: 'json', draftJson: { name: { ar: 'عيون', en: 'Eyes' } } });
+    expect(formOf(item, 'ar').data).toBe(JSON.stringify({ name: { ar: 'عيون', en: 'Eyes' } }, null, 2));
+    expect(formOf(rowOfKind('list_item'), 'ar').data).toBe('{}');
+  });
+
+  it('is dirty only against the values it posted, never against the database’s rounding', () => {
+    const typed = { price: '12.0' };
+    expect(sameForm(typed, { price: '12.0' })).toBe(true);
+    // The stored spelling differs; the baseline the component keeps is the typed one, so a
+    // re-read row cannot re-dirty the form and drive autosave in a circle.
+    expect(sameForm(typed, { price: '12' })).toBe(false);
+    expect(sameForm({}, { price: '' })).toBe(true);
+    expect(sameForm({ enabled: true }, { enabled: 'true' })).toBe(true);
+  });
+
+  it('collects what cannot be sent, in the words the server uses', () => {
+    const offer = rowOfKind('offer');
+    offer.fields.price = field({ kind: 'number', value: null });
+    offer.fields.images = field({ kind: 'json', draftJson: [] });
+    offer.fields.onSale = field({ kind: 'flag', value: false });
+
+    const blank = fieldsFromForm(offer, { price: '', images: '', onSale: false });
+    expect(blank.issues).toEqual([]);
+    expect(blank.fields.price).toBeNull();
+    expect(blank.fields.images).toEqual({});
+    expect(blank.fields.onSale).toBe(false);
+
+    const halfTyped = fieldsFromForm(offer, { price: '12.', images: '[{"a":1}]', onSale: true });
+    expect(halfTyped.fields.price).toBe(12);
+    expect(halfTyped.fields.images).toEqual([{ a: 1 }]);
+    expect(halfTyped.fields.onSale).toBe(true);
+
+    const broken = fieldsFromForm(offer, { price: 'abc', images: '{oops', onSale: false });
+    expect(broken.issues).toEqual([
+      { path: 'price', message: 'expected a number' },
+      { path: 'images', message: 'not valid JSON' },
+    ]);
+
+    const scalar = fieldsFromForm(offer, { price: '1', images: '"just a string"', onSale: false });
+    expect(scalar.issues).toEqual([{ path: 'images', message: 'expected an object or an array' }]);
+  });
+
+  it('refuses a write the moment one field is unusable', () => {
+    // The component checks `parsed.issues.length` before any request goes out.
+    const offer = rowOfKind('offer');
+    offer.fields.price = field({ kind: 'number', value: null });
+    expect(fieldsFromForm(offer, { price: 'x' }).issues.length).toBeGreaterThan(0);
+  });
+
+  it('names the row’s state as one chip', () => {
+    expect(contentStateKey(row({ kind: 'article', status: 'draft' }))).toBe('content.state.draft');
+    expect(contentStateKey(row({ kind: 'article', status: 'published' }))).toBe('content.state.published');
+    expect(contentStateKey(row({ kind: 'article', status: 'published', publishedAt: '2026-10-01T08:00:00.000Z', pendingLocales: ['ar'] }))).toBe('content.state.pending');
+    expect(contentStateKey(row({ kind: 'article', status: 'published', trashed: true }))).toBe('content.state.trashed');
+
+    const title = field({ kind: 'bi', draft: { ar: 'جديد', en: 'New' }, pub: { ar: 'قديم', en: 'New' } });
+    expect(isPendingIn(title, 'ar')).toBe(true);
+    expect(isPendingIn(title, 'en')).toBe(false);
+    // Never published: there is no copy the draft could have outrun.
+    expect(isPendingIn(field({ kind: 'bi', draft: { ar: 'جديد', en: 'New' }, pub: { ar: null, en: null } }), 'ar')).toBe(false);
+  });
+});
+
+describe('the preview pane', () => {
+  it('shows the words being typed, not the last saved copy', () => {
+    const model = previewModel('article', { title: 'لحاملات', excerpt: 'نص', content: '<p>فقرة</p>', image: '', imageAlt: false }, 'ar');
+    expect(model.title).toBe('لحاملات');
+    expect(model.intro).toBe('نص');
+    expect(model.body).toBe('<p>فقرة</p>');
+    expect(model.bodyAs).toBe('html');
+    // An empty text field says nothing; a flag says something even when it is off.
+    expect(model.fields.map((f) => f.name)).toEqual(['imageAlt']);
+  });
+
+  it('reads a list document for its title and teaser', () => {
+    const doc = JSON.stringify({ question: { ar: 'سؤال؟', en: 'Q?' }, answer: { ar: 'جواب', en: 'A' } });
+    const model = previewModel('list_item', { data: doc, position: '3', enabled: true }, 'en');
+    expect(model.title).toBe('Q?');
+    expect(model.intro).toBe('A');
+    expect(model.bodyAs).toBe('text');
+    expect(model.fields).toEqual([
+      { name: 'position', value: '3' },
+      { name: 'enabled', value: true },
+    ]);
+  });
+
+  it('shows a half-typed document as the text it is', () => {
+    const model = previewModel('list_item', { data: '{"name": ' }, 'ar');
+    expect(model.title).toBe('');
+    expect(model.body).toBe('{"name":');
+    expect(model.bodyAs).toBe('text');
+  });
+
+  it('escapes everything the pane prints itself, and nothing the author wrote', () => {
+    const doc = previewDocument(previewModel('article', { title: '<img src=x onerror=alert(1)>', excerpt: 'a & b', content: '<p>real & true</p>' }, 'en'), 'en');
+    expect(doc).toContain('&lt;img src=x onerror=alert(1)&gt;');
+    expect(doc).not.toContain('<img src=x');
+    expect(doc).toContain('a &amp; b');
+    // The body is the authored HTML, on purpose — the frame it goes into is `sandbox=""`.
+    expect(doc).toContain('<p>real & true</p>');
+    expect(doc.startsWith('<!doctype html>')).toBe(true);
+    expect(doc).toContain('lang="en" dir="ltr"');
+    expect(previewDocument(previewModel('article', { title: 'رحمة' }, 'ar'), 'ar')).toContain('lang="ar" dir="rtl"');
+  });
+
+  it('is handed to a frame that cannot run it', () => {
+    const editor = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
+    // No `allow-same-origin`: the draft's markup gets no origin, so it cannot read the
+    // console's session cookie even if a copy editor pastes a `<script>`.
+    expect(editor).toMatch(/<iframe[^>]*sandbox=""/);
+    expect(editor).not.toMatch(/sandbox="allow-/);
+  });
+});
+
+describe('the search read-out follows the site', () => {
+  const base = { kind: 'article' as const, key: 'rahma', locale: 'ar' as ContentLocale };
+
+  it('borrows the other language the way publicSeo() does', () => {
+    const mine = seoReadout({ ...base, title: 'رحمة', otherTitle: 'Mercy', description: 'وصف', otherDescription: 'Desc' });
+    expect(mine).toMatchObject({ title: 'رحمة', description: 'وصف', path: '/ar/blogs/rahma' });
+
+    const borrowed = seoReadout({ ...base, title: '', otherTitle: 'Mercy', description: '', otherDescription: 'Desc' });
+    expect(borrowed.title).toBe('Mercy');
+    expect(borrowed.description).toBe('Desc');
+
+    const headingOnly = seoReadout({ ...base, title: '', otherTitle: '', description: '', otherDescription: '' });
+    expect(headingOnly.title).toBe('');
+    expect(headingOnly.description).toBe('');
+    expect(headingOnly.descriptionLength).toBe(0);
+  });
+
+  it('counts characters the way a person counts them', () => {
+    // Code points, not UTF-16 units: an emoji is one character in a search result.
+    expect(seoReadout({ ...base, title: 'رحمة', otherTitle: '', description: 'x', otherDescription: '' }).titleLength).toBe(4);
+    expect(seoReadout({ ...base, title: '👩🏼 💊', otherTitle: '', description: 'x', otherDescription: '' }).titleLength).toBe(4);
+  });
+
+  it('says when a row has no page to preview', () => {
+    expect(seoReadout({ kind: 'list_item', key: 'home', listKey: 'nav', locale: 'en', title: 'x', otherTitle: '', description: '', otherDescription: '' }).path).toBeNull();
+    expect(seoReadout({ kind: 'page', key: '/contact', locale: 'en', title: 'x', otherTitle: '', description: '', otherDescription: '' }).path).toBe('/en/contact');
+  });
+});
+
+describe('the catalog carries every key in both languages', () => {
+  const editorKeys: MessageKey[] = [
+    'content.editor',
+    'content.preview',
+    'content.preview.draft',
+    'content.preview.site',
+    'content.preview.no_page',
+    'content.seo',
+    'content.seo.title',
+    'content.seo.description',
+    'content.seo.none',
+    'content.seo.count',
+    'content.dirty',
+    'content.saving',
+    'content.autosave',
+    'content.autosaved',
+    'content.autosave_stopped',
+    'content.unsaved.title',
+    'content.unsaved.body',
+    'content.unsaved.save',
+    'content.unsaved.discard',
+    'content.unsaved.keep',
+    'content.keyboard',
+    'content.flag.on',
+    'content.flag.off',
+    'content.issue.text',
+    'content.issue.number',
+    'content.issue.flag',
+    'content.issue.json',
+    'content.issue.invalid_json',
+    'content.issue.unknown',
+    'content.issue.required',
+    'content.issue.long',
+  ];
+
+  for (const key of editorKeys) {
+    it(`${key} reads in Arabic and in English`, () => {
+      for (const locale of CONTENT_LOCALES) {
+        expect(catalogFor(locale as ContentLocale)[key].trim().length, `${key} ${locale}`).toBeGreaterThan(0);
+      }
+      // An Arabic string with an English word pasted into it is a half-finished translation,
+      // and a placeholder the console substitutes has to survive in both catalogues.
+      expect(labels[key]).toMatch(/[\u0600-\u06FF]/);
+      expect(labelsEn[key]).not.toMatch(/[\u0600-\u06FF]/);
+      expect([...labels[key].matchAll(/\{\w+\}/g)].length, key).toBe([...labelsEn[key].matchAll(/\{\w+\}/g)].length);
+    });
+  }
+});

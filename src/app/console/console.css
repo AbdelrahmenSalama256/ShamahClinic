@@ -817,10 +817,6 @@ details[open] > .console-nav-head .console-nav-caret {
   color: var(--text-secondary);
 }
 
-.console-work-actions {
-  margin-block-start: var(--console-stack);
-}
-
 .console-history {
   margin-block-start: var(--console-stack);
 }
@@ -1179,6 +1175,127 @@ details[open] > .console-nav-head .console-nav-caret {
 .console-pager .console-controls {
   margin-inline-start: auto;
   align-items: center;
+}
+
+/* --- the content editor (BK-13.4) ----------------------------------------- */
+/*
+ * Fields on one side, what they produce on the other. The split is decided by the editor
+ * pane's own width and not the viewport's: a 900px screen gives this pane ~22rem, a
+ * 1440px screen gives it ~43rem, and a preview squeezed beside a slug field shows a
+ * letter per line instead of a page. So `.console-work-edit` is a container and
+ * `@container console-edit` is what puts the two columns side by side.
+ *
+ * Stacked, the preview comes after the save bar. On a phone the words are the work and
+ * the frame is only a check, so it does not get to push the buttons off the screen.
+ */
+.console-work-edit {
+  container-type: inline-size;
+  container-name: console-edit;
+}
+
+.console-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--console-stack);
+  align-items: start;
+}
+
+.console-editor-main,
+.console-editor-side {
+  min-width: 0;
+}
+
+/* The panels in this column are the column: they take its width instead of the card cap
+   the rest of the console uses, because a preview of a page is not a form. */
+.console-editor-side .console-panel {
+  max-width: none;
+}
+
+/* Pinned to the bottom of the pane, and 44px tall whatever the density: the bar holds no
+   field, so the token dense lowers has no business here. */
+.console-editor-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  min-height: var(--console-tap);
+  align-items: center;
+  gap: var(--console-gap-tight) var(--console-gap);
+  margin-block-start: var(--console-stack);
+  padding-block: 0.5rem;
+  background: var(--bg-secondary);
+  border-block-start: 1px solid var(--border-control-soft);
+}
+
+.console-editor-bar .console-count {
+  flex-basis: 100%;
+  margin-inline-start: 0;
+}
+
+.console-count[data-tone='error'] {
+  color: var(--text-danger);
+}
+
+.console-chip[data-tone='warn'] {
+  background: var(--bg-danger-soft);
+  color: var(--text-danger);
+}
+
+.console-nav-confirm {
+  border-color: var(--text-danger);
+}
+
+.console-field[data-invalid] :is(input, textarea, select) {
+  border-color: var(--text-danger);
+}
+
+.console-field-error {
+  color: var(--text-danger);
+  font-size: var(--console-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* The draft's own markup, inert: `sandbox=""` in the component gives the frame no origin,
+   no scripts and no way to move the window, so no same-origin rule is needed here. */
+.console-preview-frame {
+  inline-size: 100%;
+  min-height: 20rem;
+  border: 1px solid var(--border-control-soft);
+  border-radius: 0.65rem;
+  background: var(--bg-card);
+}
+
+.console-preview h3,
+.console-seo h3 {
+  margin: 0 0 0.4rem;
+  font-size: 1rem;
+}
+
+.console-seo-title,
+.console-seo-desc,
+.console-seo-path {
+  margin: 0 0 0.4rem;
+  overflow-wrap: anywhere;
+}
+
+.console-seo-path {
+  font-size: var(--console-font-small);
+  color: var(--text-gold);
+}
+
+.console-seo-desc {
+  font-size: var(--console-font-small);
+  color: var(--text-secondary);
+}
+
+/* Wide enough that both halves are worth reading at once. Measured: the comfortable
+   density caps the page at 72rem, so this pane is 42rem on a 1440px laptop and 59rem on a
+   1920px one in dense. At 42rem a split gave the fields 21rem and the frame 15.7rem — a
+   squeezed page and a column you cannot write an article in — so it stays one column there,
+   where each gets the whole pane. */
+@container console-edit (min-width: 54rem) {
+  .console-editor {
+    grid-template-columns: minmax(0, 1fr) minmax(23rem, 27rem);
+  }
 }
 
 /* --- ≥ 1024px: the sidebar is a column ------------------------------------ */

@@ -32,6 +32,7 @@ import { SITE_URL } from '../site';
 import { getLocalizedHref } from '../locale';
 import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
 import type { ContentKind } from './kinds';
+import { pageSlug, publicPathOf } from './paths';
 
 export type { PageCard, Query, WithSeo };
 
@@ -142,8 +143,14 @@ function matches(term: string | undefined, text: string): boolean {
   return text.includes(term.trim().toLowerCase());
 }
 
-/** SEO built from the row's own published copy. Nothing is fetched from WordPress. */
-function publicSeo(path: string, title: Bi, description: Bi, ogImage: string | null): { en: SeoMeta; ar: SeoMeta | null } {
+/**
+ * SEO built from the row's own published copy. Nothing is fetched from WordPress.
+ *
+ * The path comes from `./paths.ts` — the same rule the console's preview link uses —
+ * so a row cannot be published at one URL and indexed at another.
+ */
+function publicSeo(kind: ContentKind, key: string, title: Bi, description: Bi, ogImage: string | null): { en: SeoMeta; ar: SeoMeta | null } {
+  const path = publicPathOf(kind, key) ?? '/';
   const forLocale = (locale: Lang): SeoMeta => {
     const other: Lang = locale === 'ar' ? 'en' : 'ar';
     const heading = title[locale] || title[other];
@@ -189,7 +196,7 @@ function articleCard(row: PublicRow, index: number, categories: Map<string, Cate
     modified: row.updatedAt,
     category: ref?.name ?? null,
     categorySlug: ref?.slug ?? null,
-    href: hrefPair(`blogs/${row.key}`),
+    href: hrefPair(publicPathOf('article', row.key)!),
   };
 }
 
@@ -232,7 +239,7 @@ export async function getPost(slug: string): Promise<WithSeo<Article> | null> {
         },
         content,
       };
-      return { item: article, seo: publicSeo(`/blogs/${card.slug}`, article.title, article.excerpt, article.image) };
+      return { item: article, seo: publicSeo('article', card.slug, article.title, article.excerpt, article.image) };
     },
     () => wp.getPost(slug),
   );
@@ -328,7 +335,10 @@ function offer(row: PublicRow, index: number): Offer {
     images,
     image: images[0]?.src ?? null,
     imageAlt: images[0]?.alt ?? { ar: '', en: '' },
-    href: { ar: `/offers/${row.key}`, en: `/offers/${row.key}` },
+    // Both languages carry the same unprefixed path because that is how the snapshot
+    // spells an offer link (`../wp/mappers.ts`), and `decideRoute()` renders an Arabic
+    // page for it either way. The prefix is the one thing the two rungs must agree on.
+    href: { ar: publicPathOf('offer', row.key)!, en: publicPathOf('offer', row.key)! },
   };
 }
 
@@ -360,18 +370,13 @@ export async function getOffer(slug: string, lang: Lang = 'en'): Promise<WithSeo
       const row = await publicRow('offer', lookupKey(slug));
       if (!row || !flag(row, 'enabled')) return null;
       const detail = { ...offer(row, 0), html: body(row, 'body') };
-      return { item: detail, seo: publicSeo(`/offers/${detail.slug}`, detail.name, detail.excerpt, detail.image) };
+      return { item: detail, seo: publicSeo('offer', detail.slug, detail.name, detail.excerpt, detail.image) };
     },
     () => wp.getOffer(slug, lang),
   );
 }
 
 // --- pages --------------------------------------------------------------------
-
-/** A route as the site spells it in a path segment: no surrounding slashes. */
-function pageSlug(route: string): string {
-  return route.replace(/^\/+/, '').replace(/\/+$/, '');
-}
 
 function pageCard(row: PublicRow, index: number): PageCard {
   const slug = pageSlug(row.key);
@@ -383,7 +388,7 @@ function pageCard(row: PublicRow, index: number): PageCard {
     title: decoded(pair(row, 'title')),
     // A page has no excerpt column; the body's first paragraph is what a card shows.
     excerpt: { ar: firstParagraph(content.ar), en: firstParagraph(content.en) },
-    href: hrefPair(slug),
+    href: hrefPair(publicPathOf('page', row.key)!),
   };
 }
 
@@ -414,9 +419,9 @@ export async function getPage(slug: string): Promise<WithSeo<PageContent> | null
         slug: pageSlug(row.key),
         title: decoded(pair(row, 'title')),
         html: body(row, 'content'),
-        href: hrefPair(pageSlug(row.key)),
+        href: hrefPair(publicPathOf('page', row.key)!),
       };
-      return { item: page, seo: publicSeo(`/${page.slug}`, page.title, { ar: '', en: '' }, null) };
+      return { item: page, seo: publicSeo('page', row.key, page.title, { ar: '', en: '' }, null) };
     },
     () => wp.getPage(slug),
   );

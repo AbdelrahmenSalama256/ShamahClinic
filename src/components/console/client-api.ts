@@ -4,6 +4,7 @@
  * HttpOnly precisely so this works; `shamah_session` is, and never appears here.
  */
 import { CSRF_COOKIE, CSRF_HEADER } from '@/lib/auth/env';
+import type { FieldIssue } from '@/lib/console/issues';
 
 export function csrfToken(): string {
   for (const pair of document.cookie.split(';')) {
@@ -18,16 +19,36 @@ export interface CallResult<T = unknown> {
   /** The `error` code the guard answers with, or a synthetic `http_<status>` for a
    *  failure that reached the server and came back with no code to name. */
   error: string | null;
-  /** The response body minus `error` — null on a failed call, so a screen cannot read a
+  /** The response body minus `error` and `issues` — null on a failed call, so a screen cannot read a
    *  row out of a response that never carried one. */
   data: T | null;
+  /** The per-field rejections that came with the error code, which is the only reason
+   *  an editor can mark the box rather than the banner. */
+  issues: FieldIssue[];
 }
 
 function dataOf<T>(payload: unknown): T | null {
   if (payload === null || typeof payload !== 'object') return null;
   const rest = { ...(payload as Record<string, unknown>) };
   delete rest.error;
+  delete rest.issues;
   return Object.keys(rest).length > 0 ? (rest as T) : null;
+}
+
+/**
+ * `parseWrites()` and zod both answer with `{ path, message }` lists. They are kept
+ * beside the code rather than inside `data`, because `data` is null on a failure and the
+ * field that failed is the one thing the editor still has to show.
+ */
+function issuesOf(payload: unknown): FieldIssue[] {
+  if (payload === null || typeof payload !== 'object') return [];
+  const value = (payload as { issues?: unknown }).issues;
+  if (!Array.isArray(value)) return [];
+  return value.filter((issue): issue is FieldIssue => {
+    if (issue === null || typeof issue !== 'object') return false;
+    const candidate = issue as { path?: unknown; message?: unknown };
+    return typeof candidate.path === 'string' && typeof candidate.message === 'string';
+  });
 }
 
 /** A server that fails hard answers with no body to read, and that is not a JSON error. */
@@ -52,7 +73,7 @@ function codeOf(payload: unknown): string | undefined {
  */
 export function callResult<T>(status: number, payload: unknown): CallResult<T> {
   const error = codeOf(payload) ?? (status >= 200 && status < 300 ? null : `http_${status}`);
-  return { status, error, data: error ? null : dataOf<T>(payload) };
+  return { status, error, issues: issuesOf(payload), data: error ? null : dataOf<T>(payload) };
 }
 
 export async function consoleCall<T = unknown>(path: string, method: 'POST' | 'PATCH' | 'DELETE', body?: unknown): Promise<CallResult<T>> {
