@@ -849,10 +849,12 @@ brief adds that is genuinely not done: the rest of 7.5 (`seo.json`, `offer-categ
 
 **The design surface, measured (this is what Phase 6 actually costs):**
 - Console: 8 screens + login + password, **2 611 LOC** in 14 components; `console.css` is 1 408 lines holding the
-  frame and every primitive. **There is no `src/components/ui`** — buttons, inputs, tables, the dialog, toasts and
-  the palette are hand-written markup inside `ConsoleList/ConsoleEditor/ConsolePalette/ContentWorkspace/
-  ConsoleControls/LoginForm/PasswordForm/SettingsWorkspace`. Restyling means editing those eight files, not swapping
-  a library in.
+  frame and every primitive. The site has ten primitives in `src/components/ui` (`Photo`, `Reveal`, `Counter`,
+  `Marquee`, `Swiper`, `SectionHeading`, `Breadcrumbs`, `CtaBand`, `DatePicker`, `FloatingActions`) and the console
+  imports **none of them**: its buttons, inputs, tables, dialog, toasts and palette are hand-written markup inside
+  `ConsoleList/ConsoleEditor/ConsolePalette/ContentWorkspace/ConsoleControls/LoginForm/PasswordForm/SettingsWorkspace`.
+  Restyling means editing those eight files, not swapping a library in — and 19.3 is a shared set both surfaces use,
+  not a second folder next to the first.
 - Theming is half-built: `data-theme` / `data-density` / `dir` are decided on the server from the prefs cookie
   (`src/lib/console/prefs.ts`, no client script, no flash) — but console.css contains **one** `[data-theme='dark']`
   rule. Dark mode is a single override, not a palette. There is no `prefers-color-scheme` and no animated toggle.
@@ -883,20 +885,78 @@ the markup they name.
 
 - [x] 19.0 Branch `feature/cms-migration-redesign` from `cms-clean` HEAD (`3d40693`); `/backups/` git-ignored and
       the frozen WordPress backup copied into it (`backups/wp-frozen-2026-10-23/`, 78 files / 4.7 MB, both
-      `diff -rq` runs silent); this audit section. No source file changed, so the four gates are inherited from
-      `3d40693` rather than re-run for a docs-and-config commit.
+      `diff -rq` runs silent); this audit section. `02d2fbf` No source file changed, so the four gates are inherited
+      from `3d40693` rather than re-run for a docs-and-config commit.
       **The brief's Phase 7 push is on hold, and it is not a oversight.** `D:\shamah_cms`'s `origin` is the local
       path `D:/shamah`, so "push the branch" here means writing into another session's dirty working tree; the
       GitHub remote lives on `D:\shamah`, whose `main` feeds a deployed Vercel app
       (`https://shamah-clinic.vercel.app`). Pushing needs the owner to say which repo and which remote, and the
       protocol's "never push" holds until then.
-- [ ] 19.1 Tokens: one source of truth for both surfaces — colours (background layers, surface, elevated surface,
-      border, text primary/secondary/muted, brand, champagne accent derived from `--gold-mid`, success/warning/
-      danger), radii, a 4px spacing scale, shadows, blur, z-index, easing curves and durations — as CSS variables in
-      `src/app/globals.css` so the console and the site read the same file they already both read. Real light **and**
-      dark palettes (warm charcoal `#191412`, warm ivory `#faf7f2`, no pure white card), no `@media`-only fallback.
-      Kills the `transition: all !important` rules and `img { width: 100% !important }` as side effects of being
-      correct, each with its CLS/contrast consequence checked.
+- [x] 19.1 Tokens: one source of truth for both surfaces — radii, a 4px spacing scale, shadows, blur, z-index,
+      easing curves and durations — as CSS variables the console and the site both read, alongside the colour
+      layers that already were one. `66f85e6`
+      **What the row found is that the brief was asking for something the site already had.** The palette, the
+      charcoal `#191412`, the ivory `#faf7f2`, the gold ramp, the warm button/status pairs and their measured ratios
+      all exist, in one place, and the console already reads them — so this did not build a design system, it
+      finished one: the half that does not travel with colour (spacing, radii, elevation, hairlines, a z ladder,
+      named durations and curves) was the part that was missing, and it was missing in both files at once.
+      Added to `globals.css`: `--sp-1…--sp-24` on a 4px base; `--radius-control` (0.65rem) and `--radius-surface`
+      (0.9rem) — the two the console drew by hand ten times; `--hairline`, `--hairline-strong`, `--hairline-gold`;
+      `--elev-1/2/3` tinted with the page's own brown rather than black, plus `--glow-gold`, `--blur-glass`,
+      `--glass-surface/border`; `--z-sticky…--z-toast`; `--dur-fast/base/slow/reveal` (150/220/340/500ms) and
+      `--ease-out/in-out/spring`. The four that genuinely change with the palette (`--hairline*`, `--elev-*`,
+      `--glass-*`) are re-declared under `html[data-theme="dark"]`, which is where a 10%-black hairline vanishes on
+      charcoal and a brown-tinted shadow stops being a shadow.
+      Not added: a champagne accent token. `--gold-gradient` already sweeps `#f5e6a8 → #e8c766` and a second name for
+      the same champagne would have had no reader until 19.3 gives it one — the rule for this block is that a token
+      earns its place with a consumer that exists today, and the primitives are where an accent gets used.
+      `--bg-card` light was `#ffffff` — the one pure-white stop, and the brief says never pure white. It is
+      `#fffcf8` in both `globals.css` and `siteTheme.light` (the inline style is what actually paints, so editing one
+      of the two would have changed nothing on screen). Measured after the move, ink against the new card:
+      text-primary 17.16 → **16.77**, secondary 6.24 → **6.10**, muted 5.59 → **5.46**, gold 5.49 → **5.36**,
+      danger 6.54 → **6.39**, success 7.08 → **6.92** — every pair past AA against the card *and* against the page
+      behind it. `--text-on-dark: #ffffff` was left alone and that is deliberate: the brief's "never pure white"
+      names backgrounds, and that stop is the measured label on bottle-green and on charcoal, not a surface.
+      **The `transition: all .3s ease-in-out !important` rule is gone, and it was load-bearing in three places.**
+      It sat on `*`, on `html` (which animates nothing), and on the site's `button`/pill selector. Consequences
+      measured rather than assumed: it made every state change a layout change, because `all` includes `width`,
+      `padding` and `visibility`; its `!important` outranked every Tailwind `transition-*`/`duration-*` utility, so
+      the site's own components could not ask for a different curve without their own `!important`; and it is why
+      `console.css` line 186 says `transition: transform 0.18s ease !important` — a drawer that transitions
+      `visibility` is still `hidden` a frame after it opens, and focus cannot enter a hidden subtree (13.1 measured
+      exactly that). The replacement lists the six properties a control changes state in — `color`,
+      `background-color`, `border-color`, `box-shadow`, `transform`, `opacity` — on the interactive selectors,
+      without `!important`, so a component that names its own utility now wins. Nothing that animated before stops
+      animating now, because `transform` is in the list.
+      The console takes the tokens where they are already correct: card, panel, table wrap, row skeleton and preview
+      frame move from a 1px gold-outline border to `--hairline` (cards and panels also gain `--elev-1`, the palette
+      `--elev-3`, the floating bulk bar `--elev-2`), the drawer takes `--z-drawer`, and every radius and duration
+      literal became a name. Control borders were **not** softened: 1.4.11 needs 3:1 on a boundary a person must see
+      to use a control, and `--border-control-soft` is what carries that — the hairline is for objects, which is the
+      distinction that did not exist before this row and the reason every panel looked outlined in gold.
+      Tests 316 → **318 over 10 files**, one rewritten and two added in `tests/console.test.ts`: the drawer case now
+      asserts the *absence* of the blanket rule and that the drawer still names `transform`; a token case asserts
+      each theme-independent token is declared exactly once (and the four theme-dependent ones exactly twice) and
+      that `console.css` contains no radius or duration literal left over; and a drift case walks `siteTheme.light`
+      and fails if any variable that also has a `:root` fallback disagrees — because the document that can forget
+      its inline style is the error page, and that is the worst place to discover a theme bug. Two failures were
+      caught by the new tests, not by reading: `--text-gold` was declared twice in `:root` (`#c9a227`, then
+      overwritten four lines later by the readable `#85640f`), which is a fallback that silently differed from the
+      painted value; and the first draft of the "must not come back" assertion matched the comment that explains
+      what used to be there, so it is anchored to one declaration.
+      Gates: typecheck · lint · `vitest run` 318/318 · `next build`. `npm run prove:no-wp` was **not** re-run: no
+      read path changed — `siteTheme` gained a colour value and `globals.css` is not imported by a reader. The
+      already-running MariaDB on 3307 served the suites; `npm run db:local:start` from this shell correctly refused
+      to double-start (`ibdata1 must be writable`) and left the other session's server alone.
+      **What this row could not see:** the hairline is a ~5% luminance step on the card it bounds, which is what a
+      hairline is, and the elevation is a shadow — both are judgements about pixels the automation viewport cannot
+      settle here, so they are argued from the measured ratios and from the 13.1 drawer history, and 19.6 re-opens
+      them against a real screenshot when the screens are rebuilt on top.
+      `img { width: 100% !important }` stayed, and that is a decision rather than an oversight. The tree contains
+      **one** raw `<img>` (in a `Photo.tsx` comment), so the rule is not a leftover of hand-written markup — it is
+      what sizes every `next/image` on the site, and dropping it is a per-section layout question with a CLS
+      consequence, which is 19.7's job with the sections in front of it. What 19.1 could do about it is say where it
+      lives and why, so 19.7 does not rediscover it.
 - [ ] 19.2 Type + RTL: the display face decision (Tajawal vs the shipped Readex Pro/Montserrat) taken openly,
       self-hosted so `next/font/google` stops needing the network at build time; type scale, tight tracking on
       headings, tabular numerals for stats; a logical-properties sweep of console.css and the site sections; mirrored
