@@ -242,11 +242,41 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       `[site] db settings (2 key(s))`, and back to the byte-identical baseline once the fixture was cleared — no
       restart between, so the reader really queries per request. `.tmp/bk6c-settings.mts` (gitignored) touches exactly
       two primary keys, dry-run until `--force`; the dev database is back to 1 article, 1 offer, 0 settings rows.
-- [ ] 6.3c-b `getHeroPhotos` / `getHomeIntro` / `getHomeProseSections` — all three parse the **body** of one
-      WordPress page, and BK-7.2 imported that page as a `pages` row whose published column keeps the raw builder
-      HTML. So the DB rung is the same parse over `rawBody()` of the published `home` page (a counterpart to `body()`,
-      which sanitizes and would break the builder markup), with `getRawPageHtml` as the fallback and the existing
-      `note()` line saying which one answered. Rewires `src/app/[lang]/page.tsx:5` and `src/lib/wp/about.ts:5`.
+- [x] 6.3c-b `getHeroPhotos` / `getHomeIntro` / `getHomeProseSections` — `f5a192f`
+      All three now sit on the site's read path (`rawHomeBodies()` + three exported readers in
+      `lib/content/site.ts`), where a published `home` page row answers first and `getRawPageHtml`
+      is the fallback; the `note()` line is what says which one did. The parse itself did not move:
+      `hero.ts` and `home-prose.ts` stay pure functions over a body string, which is why
+      `src/lib/wp/index.ts` only lost the three wrappers and `getRawPageHtml` became exported.
+      The row's wording asked for a `rawBody()` helper; it turned out `pair()` **is** the raw
+      accessor and `body()` is `pair()` plus `sanitizeHtmlBody`, so the hero reader takes
+      `pair(row, 'content')` and the builder markup arrives whole. Raw on this door and sanitized
+      on `getPage('home')` is the same row served two ways, and the new case asserts both halves —
+      the prose appears in `getPage`'s HTML while `rs-slide` does not. `pair()`'s
+      `ar || en` cross-fill means a home row written in one language parses with that body for the
+      other, which is how every other bilingual field on this path already behaves.
+      Rewired `src/app/[lang]/page.tsx:5` (one import instead of two modules) and
+      `src/lib/wp/about.ts:5`, so `/about` never pairs a database page with a snapshot body.
+      **Live proof, served HTML over the dev database.** With 0 `pages` rows the log said
+      `[site] snapshot page (nothing published)`; publishing the snapshot's own `home` body
+      (40,810 chars en / 40,866 ar) through `createRow` → `saveDraft` → `publishRow` moved it to
+      `[site] db       page` and the homepage's 3 mirrored slider photos stayed the same 3.
+      `/` came out **byte-identical** across three cold renders — snapshot rung, database rung,
+      database re-run (`91df2227ab8f956e` each). `/ar` did not: two renders of the *same* data
+      differ there too, in the RSC flight payload only, so it is not a comparable byte string;
+      its visible text (2,822 chars), 2 JSON-LD blocks, 15 image srcs and 63 hrefs hash
+      identically before and after. Compared served markup, not pixels — no browser pass on this row.
+      The measurement also caught the rung rule from the other side: with only `home` published, the
+      services band's heading fell back to its authored words, because `getPageTitle('our-services')`
+      is the **same page kind** and the snapshot's page 696 title (`خدماتنا`) is not merged with
+      database pages. Publishing that row too (9,861 / 9,605 chars) returned the heading and made
+      `/` byte-identical. That is BK-7's import told to carry all 27 pages, not one.
+      1 more case in `tests/site.test.ts` (15) and the no-WP network test now calls the three readers
+      through `site.*` (suite 314 tests / 10 files), typecheck, lint, `next build` (86 static pages),
+      `prove:no-wp` re-run because a read path changed (5 checks, 79 routes, 0 requests to the
+      WordPress origin). `.tmp/bk6c-home.mts` (gitignored) seeds and clears those routes by the ids in
+      its own marker file, dry-run until `--force`; the dev database is back to 1 article, 1 offer,
+      0 pages, 0 settings — with 0 revisions and 0 audit rows naming the fixture ids.
 - [ ] 6.3c-c `getOfferCategories` — still blocked, and the block is a schema question rather than a reader: the
       `categories` table has no taxonomy column, so an imported product category and an imported post category with
       the same slug would collide. Needs a migration decision (add `taxonomy`) before anything moves.
@@ -697,6 +727,11 @@ schema leaves room for each, and BK-17's Connectors screen is where a key would 
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
+- **A byte-for-byte HTML comparison is only stable on some routes.** `/` hashes the same across cold renders of the
+  same data, but `/ar` differs render-to-render inside the RSC flight payload (`self.__next_f` chunk references)
+  with no visible change. Before claiming a rung flip moved bytes, render the route twice **with the data held
+  still**: if those two differ, compare the visible text, JSON-LD blocks, `img` srcs and `a[href]` instead of the
+  whole file (found while proving 6.3c-b; the hash of a single Arabic page proves nothing).
 
 ### Things MariaDB and Kysely do differently (each one cost debugging time)
 - **No `INSERT … ON CONFLICT (cols) DO NOTHING`.** That is Postgres syntax; Kysely's
