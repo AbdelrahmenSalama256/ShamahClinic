@@ -212,6 +212,10 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       console screens but no public reader yet — each needs one before it can be moved, not invented here.
       Four separate moves, so four sub-rows: 6.3c-a settings, 6.3c-b the home prose, then the two that are not
       readers at all (6.3c-c a schema decision, 6.3c-d prop plumbing).
+      **Where it stands:** 6.3c-a and 6.3c-b are done, so every reader the site *renders* goes through
+      `lib/content/site.ts`. The two open sub-rows are open for reasons a row cannot fix: 6.3c-c waits on a schema
+      decision about taxonomies, and 6.3c-d waits on BK-14 passing list values down as props. Neither reads live
+      WordPress, so `prove:no-wp` stays green with them open.
 - [x] 6.3c-a `getSettings` — `bcb84e2` (the reader) · `050a78f` (the same double-parse on the console side)
       It was never a WordPress read: an aggregate of `siteConfig` plus two counts, so it now lives on the site's own
       read path (`lib/content/site.ts`), where six of its fields can come from the `settings` table. The fallback is
@@ -277,9 +281,19 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       WordPress origin). `.tmp/bk6c-home.mts` (gitignored) seeds and clears those routes by the ids in
       its own marker file, dry-run until `--force`; the dev database is back to 1 article, 1 offer,
       0 pages, 0 settings — with 0 revisions and 0 audit rows naming the fixture ids.
-- [ ] 6.3c-c `getOfferCategories` — still blocked, and the block is a schema question rather than a reader: the
-      `categories` table has no taxonomy column, so an imported product category and an imported post category with
-      the same slug would collide. Needs a migration decision (add `taxonomy`) before anything moves.
+- [ ] 6.3c-c `getOfferCategories` — still blocked, and the block is a schema question rather than a reader. Measured,
+      so the decision can be made from facts: the `categories` table has no taxonomy column (`db/types.ts:128`) and
+      its slug is **unique** (`categories_slug`, `migrations/002_content.sql:23`), while the frozen snapshot already
+      holds a post category `laser` (WordPress term 63) and a product category `laser` (WooCommerce term 15) — importing
+      both into one table is a duplicate-key and one of them silently wins. Even with the terms stored there is nothing
+      to point at them: `offers` has no category column, where `articles` has `category_id` (same file, line 41). And the
+      counts would change meaning — `getCategories()` counts rows (`articleCategoryCounts()`), while this reader returns
+      the number WooCommerce printed in the snapshot.
+      Three decisions, none of them mine to make quietly: add `taxonomy` and move the index to `(slug, taxonomy)`,
+      decide how an offer references a term (column or join table), and decide whether a category's count is stored or
+      computed. Nothing is at risk while they are open: the reader serves the frozen snapshot, which is what
+      `prove:no-wp` shows costs 0 requests to the WordPress origin, and its only consumer is
+      `src/app/api/v1/offer-categories/route.ts:6` — no component on the site renders it.
 - [ ] 6.3c-d the `nav` / `specialists` / `faq` / `results` / `treatments` lists — each has a console screen and no
       public reader, and today each is read **synchronously inside a client component**: `Navbar`, `Footer`,
       `SiteShell`, `BookingModal`, `DoctorsClient`, `FaqClient`, `FaqAccordion`, `ResultCaseCard`, `TreatmentCard` and
