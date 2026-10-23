@@ -210,7 +210,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                       aria-hidden="true"
                       className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"
                     />
-                    <span className="absolute top-3 start-3 text-[10px] font-bold tracking-[0.2em] uppercase text-[var(--text-on-dark)] bg-black/40 backdrop-blur-sm border border-[var(--border-on-dark)] rounded-full px-2.5 py-1">
+                    <span className="absolute top-3 start-3 text-[10px] font-bold tracking-eyebrow uppercase text-[var(--text-on-dark)] bg-black/40 backdrop-blur-sm border border-[var(--border-on-dark)] rounded-full px-2.5 py-1">
                       {t("فرع", "Branch")} {formatNumber(i + 1)}
                     </span>
                     <div className="absolute bottom-0 start-0 end-0 p-4">

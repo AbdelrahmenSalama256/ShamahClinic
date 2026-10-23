@@ -47,7 +47,7 @@ export const SectionHeading: React.FC<SectionHeadingProps> = ({
     >
       {index && (
         <span
-          className={`block text-sm font-bold tracking-[0.3em] mb-3 ${
+          className={`block text-sm font-bold tracking-eyebrow mb-3 ${
             tone === "dark" ? "text-[var(--gold-start)]" : "text-[var(--gold-end)]"
           }`}
         >

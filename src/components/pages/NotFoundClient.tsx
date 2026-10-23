@@ -75,7 +75,7 @@ export const NotFoundClient: React.FC = () => {
       {/* Giant faint 404 in the background */}
       <span
         aria-hidden="true"
-        className="pointer-events-none select-none absolute top-1/2 start-1/2 -translate-x-1/2 -translate-y-1/2 text-[280px] sm:text-[420px] lg:text-[560px] font-black leading-none text-white/[0.035] tabular-nums"
+        className="pointer-events-none select-none absolute top-1/2 start-1/2 -translate-x-1/2 -translate-y-1/2 text-[280px] sm:text-[420px] lg:text-[560px] font-black leading-none text-white/[0.035]"
       >
         404
       </span>
@@ -84,7 +84,7 @@ export const NotFoundClient: React.FC = () => {
         {/* Centered content */}
         <div className="max-w-2xl mx-auto text-center">
           <Reveal>
-            <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[var(--gold-start)] mb-6 px-4 py-1.5 rounded-full border border-[var(--gold-start)]/30 bg-[var(--gold-start)]/5">
+            <span className="inline-flex items-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-eyebrow text-[var(--gold-start)] mb-6 px-4 py-1.5 rounded-full border border-[var(--gold-start)]/30 bg-[var(--gold-start)]/5">
               <span className="text-[var(--gold-start)]">
                 {t("خطأ ٤٠٤", "Error 404")}
               </span>
@@ -123,7 +123,7 @@ export const NotFoundClient: React.FC = () => {
 
         {/* Destination cards */}
         <Reveal delay={0.2} className="mt-16 lg:mt-20">
-          <p className="text-center text-[10px] sm:text-xs font-bold uppercase tracking-[0.3em] text-[var(--text-on-dark-muted)] mb-6">
+          <p className="text-center text-[10px] sm:text-xs font-bold uppercase tracking-eyebrow text-[var(--text-on-dark-muted)] mb-6">
             {t("أو تصفّحي هذه الوجهات", "Or explore these destinations")}
           </p>
 

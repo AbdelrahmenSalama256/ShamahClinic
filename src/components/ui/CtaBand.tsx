@@ -67,7 +67,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
             }`}
           >
             <Reveal>
-              <span className="inline-block text-[10px] font-bold tracking-[0.3em] uppercase text-[var(--gold-start)] mb-4">
+              <span className="inline-block text-[10px] font-bold tracking-eyebrow uppercase text-[var(--gold-start)] mb-4">
                 {t("استشارة مجانية", "Free consultation")}
               </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-[var(--text-on-dark)] leading-[1.15]">

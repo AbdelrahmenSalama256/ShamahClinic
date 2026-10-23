@@ -140,7 +140,7 @@ export function previewDocument(model: PreviewModel, locale: ContentLocale): str
     '<style>',
     'body{margin:0;padding:1.1rem;font:15px/1.65 system-ui,sans-serif;color:#1c1c1c;background:#fff;word-wrap:break-word}',
     'h1{margin:0 0 .6rem;font-size:1.25rem;line-height:1.35}',
-    '.lede{margin:0 0 1rem;color:#555;font-style:italic}',
+    '.lede{margin:0 0 1rem;color:#555;font-size:1.05rem}',
     'img{max-width:100%;height:auto}',
     'pre{white-space:pre-wrap;word-break:break-word;background:#f5f5f5;padding:.7rem;border-radius:.5rem;font-size:.8rem}',
     '.meta{margin:1.2rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;font-size:.8rem;color:#555}',

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
-import { montserrat, readexPro } from "@/lib/fonts";
+import { tajawal } from "@/lib/fonts";
 import "../globals.css";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -91,7 +91,7 @@ export default async function RootLayout({
       lang={lang}
       dir={lang === "ar" ? "rtl" : "ltr"}
       data-scroll-behavior="smooth"
-      className={`${readexPro.variable} ${montserrat.variable} h-full scroll-smooth`}
+      className={`${tajawal.variable} h-full scroll-smooth`}
       style={siteTheme.light as React.CSSProperties}
       suppressHydrationWarning
     >

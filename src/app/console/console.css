@@ -69,7 +69,7 @@
   min-height: 100vh;
   background: var(--bg-secondary);
   color: var(--text-primary);
-  font-family: var(--font-readex-pro), system-ui, sans-serif;
+  font-family: var(--font-ui);
   font-size: var(--console-font);
   -webkit-font-smoothing: antialiased;
 }
@@ -116,7 +116,7 @@ html[data-theme='dark'] .console-body {
 
 .console-brand strong {
   font-size: 1.05rem;
-  letter-spacing: 0.01em;
+  letter-spacing: var(--ls-soft);
 }
 
 .console-brand span {
@@ -317,7 +317,7 @@ html[data-theme='dark'] .console-body {
   color: var(--text-secondary);
   font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
 }
 
@@ -454,7 +454,7 @@ details[open] > .console-nav-head .console-nav-caret {
   color: var(--text-secondary);
   font-size: 0.7rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-label);
   text-transform: uppercase;
 }
 

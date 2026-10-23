@@ -154,7 +154,7 @@ export const AboutClient: React.FC<{
           <ol className="mt-12 space-y-10">
             {reasons.map((reason, i) => (
               <Reveal as="li" key={i} delay={i * 0.08} className="flex gap-6">
-                <span className="text-4xl font-black text-[var(--gold-end)] tabular-nums leading-none">
+                <span className="text-4xl font-black text-[var(--gold-end)] num leading-none">
                   {formatNumber(i + 1)}
                 </span>
                 <div>
@@ -182,7 +182,7 @@ export const AboutClient: React.FC<{
           <ol className="mt-12 space-y-10">
             {values.map((v, i) => (
               <Reveal as="li" key={i} delay={i * 0.08} className="flex gap-6">
-                <span className="text-4xl font-black text-[var(--gold-end)] tabular-nums leading-none">
+                <span className="text-4xl font-black text-[var(--gold-end)] num leading-none">
                   {formatNumber(i + 1)}
                 </span>
                 <div>

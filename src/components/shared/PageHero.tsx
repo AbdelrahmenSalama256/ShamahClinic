@@ -44,7 +44,7 @@ export const PageHero: React.FC<PageHeroProps> = ({
               <Reveal trigger="mount">
                 {index && (
                   <div className="flex items-baseline gap-4 mb-4">
-                    <span className="text-4xl sm:text-5xl font-black text-[var(--gold-end)] tabular-nums leading-none">
+                    <span className="text-4xl sm:text-5xl font-black text-[var(--gold-end)] num [--num-digits:2] leading-none">
                       {index}
                     </span>
                     <span className="h-px flex-1 max-w-[80px] bg-[var(--gold-mid)]/40" />
@@ -81,7 +81,7 @@ export const PageHero: React.FC<PageHeroProps> = ({
             <Reveal trigger="mount" className="mt-8 lg:mt-14 max-w-3xl">
               {index && (
                 <div className="flex items-baseline gap-4 mb-4">
-                  <span className="text-4xl sm:text-5xl font-black text-[var(--gold-end)] tabular-nums leading-none">
+                  <span className="text-4xl sm:text-5xl font-black text-[var(--gold-end)] num [--num-digits:2] leading-none">
                     {index}
                   </span>
                   <span className="h-px flex-1 max-w-[80px] bg-[var(--gold-mid)]/40" />

@@ -148,7 +148,7 @@ export const TreatmentDetailClient: React.FC<{
                   <ol className="space-y-4">
                     {treatment.steps[language].map((s, i) => (
                       <li key={i} className="flex gap-4">
-                        <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--border-control)] text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
+                        <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--border-control)] text-[var(--gold-end)] font-black text-sm flex items-center justify-center">
                           {formatNumber(i + 1)}
                         </span>
                         <p className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)] pt-1">

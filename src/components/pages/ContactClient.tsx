@@ -399,7 +399,7 @@ export const ContactClient: React.FC<{
 
                       <span className="flex items-center gap-2 shrink-0">
                         {selectedServices.length > 0 && (
-                          <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--gold-end)] text-[var(--btn-gold-fg)] text-[11px] font-bold tabular-nums">
+                          <span className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-full bg-[var(--gold-end)] text-[var(--btn-gold-fg)] text-[11px] font-bold">
                             {selectedServices.length}
                           </span>
                         )}

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { montserrat, readexPro } from '@/lib/fonts';
+import { tajawal } from '@/lib/fonts';
 import { siteConfig, siteTheme } from '@/config/site';
 import { dirOf } from '@/lib/console/prefs';
 import { message } from '@/lib/console/messages';
@@ -36,7 +36,7 @@ export default async function ConsoleRootLayout({ children }: Readonly<{ childre
       data-theme={prefs.theme}
       data-density={prefs.density}
       data-surface="console"
-      className={`${readexPro.variable} ${montserrat.variable}`}
+      className={`${tajawal.variable}`}
       style={(prefs.theme === 'dark' ? siteTheme.dark : siteTheme.light) as React.CSSProperties}
     >
       <body className="console-body">{children}</body>

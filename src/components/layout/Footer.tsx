@@ -146,7 +146,7 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
                     </Link>
                     <a
                       href={`tel:${b.phone}`}
-                      className="text-[var(--gold-start)] hover:underline shrink-0 tabular-nums"
+                      className="text-[var(--gold-start)] hover:underline shrink-0"
                       // dir="ltr"
                     >
                       {b.phone}

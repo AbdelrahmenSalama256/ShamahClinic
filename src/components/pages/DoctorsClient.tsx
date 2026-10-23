@@ -62,7 +62,7 @@ export const DoctorsClient: React.FC<{ branches: BranchDetail[] }> = ({
                   { ar: "متابعة بعد الجلسة لضبط النتيجة والاطمئنان على استجابة بشرتكِ.", en: "Post-session follow-up to refine results and check your skin's response." },
                 ].map((s, i) => (
                   <Reveal as="li" key={i} delay={i * 0.06} className="flex gap-4">
-                    <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--border-control)] text-[var(--gold-end)] font-black text-sm flex items-center justify-center tabular-nums">
+                    <span className="w-8 h-8 shrink-0 rounded-full bg-[var(--bg-card)] border border-[var(--border-control)] text-[var(--gold-end)] font-black text-sm flex items-center justify-center">
                       {formatNumber(i + 1)}
                     </span>
                     <p className="text-sm sm:text-base leading-relaxed text-[var(--text-secondary)] pt-1">{t(s.ar, s.en)}</p>

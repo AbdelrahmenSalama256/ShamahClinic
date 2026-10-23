@@ -24,6 +24,8 @@ import {
   ChevronDown,
   Moon,
   Sun,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 
 export const Navbar: React.FC = () => {
@@ -31,6 +33,14 @@ export const Navbar: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { openBooking } = useBooking();
   const pathname = usePathname();
+  // The one icon family, mirrored by reading direction: an arrow that points
+  // "onward" in English points the other way in Arabic. A literal "→" in a label
+  // string cannot do that, and Tajawal does not draw it either.
+  const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
+  // Motion turns with the reading direction too: the menu panel enters from the
+  // trailing edge and leaves through the leading one, which is the opposite pair
+  // of signs in Arabic. One magnitude, signed.
+  const slideInX = language === "ar" ? -20 : 20;
 
   const [isScrolled, setIsScrolled] = useState(false);
   // Menu state is scoped to the path it was opened on, so navigating closes it
@@ -249,7 +259,10 @@ export const Navbar: React.FC = () => {
                             href={getLocalizedHref(link.href, language)}
                             className="block text-center text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] py-1.5 transition-colors duration-300"
                           >
-                            {t("كل الخدمات ←", "All treatments →")}
+                            <span className="inline-flex items-center justify-center gap-1.5">
+                              {t("كل الخدمات", "All treatments")}
+                              <Arrow className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                            </span>
                           </Link>
                         </div>
                       </motion.div>
@@ -358,9 +371,9 @@ export const Navbar: React.FC = () => {
               /* ── FACE 1: Main menu ── */
               <motion.div
                 key="main-menu"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: slideInX }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0, x: -slideInX }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 className="absolute inset-0 flex flex-col justify-between p-6 overflow-y-auto"
               >
@@ -505,9 +518,9 @@ export const Navbar: React.FC = () => {
               /* ── FACE 2: Services submenu ── */
               <motion.div
                 key="services-menu"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: slideInX }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0, x: -slideInX }}
                 transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                 className="absolute inset-0 flex flex-col p-6 overflow-y-auto bg-[var(--bg-primary)]"
               >
@@ -559,7 +572,10 @@ export const Navbar: React.FC = () => {
                       href={getLocalizedHref(mobileParent.href, language)}
                       className="mt-4 block text-center text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] py-3 rounded-xl border border-[var(--border-control)] hover:border-[var(--border-control)] transition-colors duration-300"
                     >
-                      {t("كل الخدمات ←", "All treatments →")}
+                      <span className="inline-flex items-center justify-center gap-1.5">
+                        {t("كل الخدمات", "All treatments")}
+                        <Arrow className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      </span>
                     </Link>
                   </nav>
                 )}

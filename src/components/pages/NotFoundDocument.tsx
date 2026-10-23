@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
 import "../../app/globals.css";
-import { montserrat, readexPro } from "@/lib/fonts";
+import { tajawal } from "@/lib/fonts";
 import { NotFoundClient } from "@/components/pages/NotFoundClient";
 import { SiteShell } from "@/components/layout/SiteShell";
 import { siteConfig, siteTheme } from "@/config/site";
@@ -57,7 +57,7 @@ export default async function NotFoundDocument() {
       lang={lang}
       dir={lang === "ar" ? "rtl" : "ltr"}
       data-scroll-behavior="smooth"
-      className={`${readexPro.variable} ${montserrat.variable} h-full scroll-smooth`}
+      className={`${tajawal.variable} h-full scroll-smooth`}
       style={siteTheme.light as React.CSSProperties}
       suppressHydrationWarning
     >

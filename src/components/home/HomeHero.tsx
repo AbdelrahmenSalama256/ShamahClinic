@@ -92,7 +92,7 @@ export const HomeHero: React.FC<{
             initial={reduce ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.28em] text-[var(--gold-start)]"
+            className="text-[11px] sm:text-xs font-bold uppercase tracking-eyebrow text-[var(--gold-start)]"
           >
             {t(
               "عيادات شامه · القاهرة والجيزة",

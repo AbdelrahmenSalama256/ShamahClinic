@@ -32,6 +32,9 @@ export const JournalArticleClient: React.FC<{
   const { t, language, formatNumber } = useLanguage();
   const author = getSpecialist(article.authorId);
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
+  // "Back" is the mirror of "onward", so it takes the opposite arrow — and one
+  // literal "→" in both label strings pointed the wrong way for English readers.
+  const BackArrow = language === "ar" ? ArrowRight : ArrowLeft;
 
   // ── Build TOC from sections ──
   const toc = useMemo(
@@ -351,7 +354,7 @@ export const JournalArticleClient: React.FC<{
                             href={`#${item.id}`}
                             className="group flex items-start gap-2 text-[13px] leading-snug text-[var(--text-secondary)] hover:text-[var(--gold-end)] transition-colors"
                           >
-                            <span className="text-[10px] font-bold text-[var(--gold-end)] tabular-nums pt-0.5 shrink-0">
+                            <span className="text-[10px] font-bold text-[var(--gold-end)] num [--num-digits:2] pt-0.5 shrink-0">
                               {formatNumber(i + 1)}
                             </span>
                             <span className="border-b border-transparent group-hover:border-[var(--gold-border)] transition-colors">
@@ -388,7 +391,10 @@ export const JournalArticleClient: React.FC<{
                   href={getLocalizedHref("/blogs", language)}
                   className="block text-center text-xs font-semibold text-[var(--text-muted)] hover:text-[var(--gold-end)] transition-colors"
                 >
-                  {t("→ الرجوع إلى المدونة", "→ Back to all blogs")}
+                  <span className="inline-flex items-center justify-center gap-1.5">
+                    <BackArrow className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    {t("الرجوع إلى المدونة", "Back to all blogs")}
+                  </span>
                 </Link>
               </div>
             </aside>

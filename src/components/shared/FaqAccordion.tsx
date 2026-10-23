@@ -27,7 +27,7 @@ export const FaqAccordion: React.FC<{ items: FaqItem[] }> = ({ items }) => {
             >
               {/* Number */}
               <span
-                className={`text-2xl sm:text-3xl font-black tabular-nums leading-none pt-0.5 shrink-0 transition-colors duration-300 ${
+                className={`text-2xl sm:text-3xl font-black num [--num-digits:2] leading-none pt-0.5 shrink-0 transition-colors duration-300 ${
                   isOpen
                     ? "text-[var(--gold-end)]"
                     : "text-[var(--text-muted)] group-hover:text-[var(--gold-end)]"
