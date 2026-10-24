@@ -279,8 +279,8 @@ describe('the sidebar registry', () => {
     // sidebar is filtered by the catalog rather than hardcoded.
     const content = ['articles', 'offers', 'pages'];
     const expected: Record<RoleName, string[]> = {
-      Owner: ['overview', 'leads', ...content, 'lists', 'settings', 'password'],
-      Admin: ['overview', 'leads', ...content, 'lists', 'settings', 'password'],
+      Owner: ['overview', 'leads', ...content, 'lists', 'settings', 'users', 'roles', 'password'],
+      Admin: ['overview', 'leads', ...content, 'lists', 'settings', 'users', 'roles', 'password'],
       Editor: ['overview', 'leads', ...content, 'lists', 'password'],
       SEO: ['overview', ...content, 'lists', 'password'],
       Marketer: ['overview', 'leads', ...content, 'password'],

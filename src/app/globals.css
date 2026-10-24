@@ -80,6 +80,8 @@ html[data-theme="dark"] body {
   color: var(--text-primary);
 }
 
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
 html[data-theme="dark"] textarea {
   color-scheme: dark;
   background-color: var(--bg-card);

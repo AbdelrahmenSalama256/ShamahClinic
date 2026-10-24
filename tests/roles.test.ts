@@ -454,6 +454,10 @@ describe('no console route writes without guard()', () => {
     // The leads trio (list, item, notes) is one handler and three one-line routes; the
     // source a write names comes from the query string, and the guard reads it there.
     ['@/lib/leads/api', 'src/lib/leads/api.ts'],
+    // Accounts and roles: five route files, one handler each, all through `guard()`.
+    // Accounts and permissions are the writes an Owner makes with no page to revert them,
+    // so the thin delegate is the only shape allowed here.
+    ['@/lib/users/api', 'src/lib/users/api.ts'],
   ]);
 
   function routeFiles(dir: string): string[] {

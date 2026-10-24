@@ -709,6 +709,11 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
       '.console-cards .ui-card',
       '.console-cards .console-card-link > .ui-badge',
       '.console-lead-note-list > .ui-note',
+      // BK-16a: the account and role screens own the vertical rhythm under their lede,
+      // and the fields inside their forms give up the stack margin the field carries
+      // elsewhere. Placement only, same as the settings row below.
+      '.console-users > .ui-lede, .console-roles > .ui-lede',
+      '.console-user-form .ui-field, .console-role-form .ui-field, .console-role-grid .ui-field',
       // BK-15a: a page row already spaces its children, so the field inside it gives up
       // the stack margin it carries everywhere else. Placement only — the border, label
       // and control inside stay the primitive's.

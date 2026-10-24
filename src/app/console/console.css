@@ -1317,6 +1317,197 @@ span.console-thumb[data-empty] {
   inline-size: 100%;
 }
 
+/* --- accounts + roles (BK-16a) -------------------------------------------- */
+/*
+ * Both screens are the leads shape — a list and the one you picked — because an account
+ * and a role are records you configure, not documents with a draft. The root owns the
+ * vertical rhythm so the create card, a notice and the split do not each guess it; the
+ * lede's own bottom margin is the one the gap replaces.
+ *
+ * The role screen puts its *wide* half on the inline-end side instead: a matrix is read
+ * across, so the list of roles is the narrow column and the permissions are the pane.
+ */
+.console-users,
+.console-roles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-gap);
+  min-width: 0;
+}
+
+.console-users > .ui-lede,
+.console-roles > .ui-lede {
+  margin-block-end: 0;
+}
+
+.console-users-split,
+.console-roles-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ui-stack);
+  align-items: start;
+}
+
+.console-users-list,
+.console-roles-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-gap);
+  min-width: 0;
+  container-type: inline-size;
+  container-name: console-list;
+}
+
+@media (min-width: 1024px) {
+  .console-users-split {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+  }
+
+  .console-roles-split {
+    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
+  }
+
+  /* The pane follows the row you clicked while the rest of the page moves. Its own
+     `overflow` keeps a long permission matrix from pushing Save off-screen. */
+  .console-user-detail,
+  .console-role-detail {
+    position: sticky;
+    inset-block-start: 0;
+    max-block-size: calc(100vh - 8rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+
+.console-user-detail,
+.console-role-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui-gap);
+  min-width: 0;
+}
+
+.console-badges {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+/* Both editors are a column of fields inside a card that already pads them: the field's
+   own bottom margin would double the gap the form sets. */
+.console-user-form,
+.console-role-form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--ui-gap);
+  inline-size: 100%;
+  min-width: 0;
+}
+
+/* The form is already full width and stretches its children, so a field needs only its
+   own bottom margin removed; `inline-size` here would be the surface repainting the
+   primitive, which `tests/ui-primitives.test.ts` refuses. */
+.console-user-form .ui-field,
+.console-role-form .ui-field,
+.console-role-grid .ui-field {
+  margin-block-end: 0;
+}
+
+/* The same two-column question the editor's grid answers, at the width a card has. */
+.console-user-grid,
+.console-role-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+  gap: var(--ui-gap-tight) var(--ui-gap);
+  inline-size: 100%;
+}
+
+.console-role-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-gap-tight);
+  inline-size: 100%;
+}
+
+/* --- the permission matrix ------------------------------------------------ */
+/* The matrix is the one table whose cells are controls, so the action columns centre and
+   shrink to the checkbox while the resource names keep the reading edge. */
+.console-role-table th:not(:first-child),
+.console-role-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.console-role-table th:not(:first-child) {
+  inline-size: 1%;
+}
+
+.console-role-table td {
+  padding-block: var(--sp-1);
+}
+
+/* A group heading inside `tbody` is not a column head: it does not stick, and its fill is
+   the step under the card's so the eye can close one group before opening the next. */
+.console-role-group-row th {
+  padding-block: var(--sp-1);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: var(--ui-font-small);
+  font-weight: 600;
+}
+
+.console-role-scopes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-gap-tight);
+  inline-size: 100%;
+  padding-block-start: var(--ui-gap);
+  border-block-start: 1px solid var(--border-control-soft);
+}
+
+/* One grant with a narrowed dimension: its name on one line, each dimension beneath it.
+   The rule is per-grant because the list is a list of decisions, not of fieldsets. */
+.console-role-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap-tight) var(--ui-gap);
+  padding-block: var(--ui-gap-tight);
+  border-block-end: 1px solid var(--border-control-soft);
+  font-size: var(--ui-font-small);
+}
+
+.console-role-scope > strong {
+  flex: 1 1 100%;
+  font-size: var(--ui-font);
+}
+
+/* `fieldset` has no layout of its own worth keeping: no margin, no border, and the legend
+   spans the row the boxes wrap under. */
+.console-role-scope-field {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7rem, max-content));
+  align-items: center;
+  gap: var(--sp-1) var(--ui-gap);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.console-role-scope-field > legend {
+  grid-column: 1 / -1;
+  padding: 0;
+  color: var(--text-secondary);
+  font-size: var(--ui-font-small);
+  font-weight: 600;
+}
+
 /* --- settings (BK-15a) ---------------------------------------------------- */
 /*
  * One row per public page: its name and route on the first line, the switch (and, once

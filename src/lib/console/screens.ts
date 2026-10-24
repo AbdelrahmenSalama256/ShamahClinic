@@ -30,7 +30,7 @@ export type EntityVocabulary = 'none' | 'locales' | 'lists';
 
 export interface ConsoleScreen {
   /** Doubles as the message key, so a screen with no label is a type error. */
-  key: 'overview' | 'leads' | 'articles' | 'offers' | 'pages' | 'lists' | 'settings' | 'password';
+  key: 'overview' | 'leads' | 'articles' | 'offers' | 'pages' | 'lists' | 'settings' | 'users' | 'roles' | 'password';
   path: string;
   /** `null` is the landing screen: anyone with a session may open it. */
   resource: Resource | null;
@@ -64,6 +64,12 @@ export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   // locales, lists, pages and lead sources — so a tree of group names would be
   // decoration, and this screen stays a single leaf.
   { key: 'settings', path: '/console/settings', resource: 'setting', action: 'read', group: 'site', entities: 'none' },
+  // Accounts and roles sit beside Settings because they are the same kind of thing: the
+  // site's configuration rather than its content. `* read` is what Admin holds, so Admin
+  // sees both screens but holds neither `user.create` nor `role.update` — reading the
+  // list is a real job even when changing it is the Owner's.
+  { key: 'users', path: '/console/users', resource: 'user', action: 'read', group: 'site', entities: 'none' },
+  { key: 'roles', path: '/console/roles', resource: 'role', action: 'read', group: 'site', entities: 'none' },
   // `self` needs no grant, so this is the one screen every role is expected to hold.
   { key: 'password', path: '/console/password', resource: 'self', action: 'update', group: 'account', entities: 'none' },
 ];

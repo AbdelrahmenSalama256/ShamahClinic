@@ -58,7 +58,7 @@ export async function createUser(input: NewUser): Promise<string> {
 export async function setPassword(
   userId: string,
   password: string,
-  options: { actorId?: string | null; keepSessionId?: string } = {},
+  options: { actorId?: string | null; keepSessionId?: string; mustChangePassword?: boolean } = {},
 ): Promise<void> {
   const problem = passwordProblem(password);
   if (problem) throw new Error(problem);
@@ -66,7 +66,9 @@ export async function setPassword(
     .updateTable('users')
     .set({
       password_hash: await hashPassword(password),
-      must_change_password: 0,
+      // A password the account holder did not choose is temporary by definition: the
+      // console's reset passes `true`, a person rotating their own password gets `0`.
+      must_change_password: options.mustChangePassword ? 1 : 0,
       version: sql`version + 1`,
       updated_by: options.actorId ?? null,
     })
