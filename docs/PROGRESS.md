@@ -753,9 +753,45 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       item, 1 revision, 5 audit rows, nothing else), `npm run doctor` is back to 1 article / 1 offer and 0 list items,
       and the test rig (3330/3332) and MariaDB are shut down.
 
-**BK-13 is closed** (13.1–13.5). The console has one shell, one list primitive, one editor primitive and one write-scope
-spelling; a new screen is built by naming a kind and a scope, not by copying a pane. Still open in this plan, oldest
-first: BK-6 (6.3c), BK-7.5, then BK-14 → BK-18.
+- [x] 13.6 Content screens v2: the list owns the whole width, a row opens at its own URL, creation is a title, the
+      language is two tabs, pictures are visible, and the console stops reading the site stylesheet — `99e34da`
+      **What the owner asked for, and what each answer is.** The list sat in a two-column split that kept 75% of the
+      screen for a form nobody had opened; `.console-work` is `display: block` now, the list is full width, and the
+      creation form is capped at 44rem without a grid. A row opens `/console/<kind>/<id>` — a real page
+      (`ContentDetailScreen` server-renders the row and hands it to `ContentDetail` as `initialRow`), not a pane, so it
+      can be bookmarked and Back returns to the list the person found it in. The unsaved-words gate moved with it:
+      `requestNav()` + `beforeunload` live on the detail page, and locale switching goes through the same gate and
+      through `writeScopeQuery()` rather than spelling `?locale=` a fourth time.
+      **A new item is a title.** `POST /content/<kind>` accepts `{ title, locale }` and derives the key with
+      `slugify()` — Unicode letters kept, so Arabic titles produce Arabic keys; page keys get the `/` prefix; a
+      collision is suffixed `-2…-50` rather than rejected. The explicit `key` shape still works for imports.
+      **The language is two tabs, not a dropdown.** `LANGUAGE_TABS = ['ar','en']` is rendered by both the list's scope
+      tabs and the detail editor; no `<Select>` remains on either screen. The user writes one language at a time and
+      the other locale is untouched.
+      **Pictures are part of the row.** `imagesOfForm()` walks the live form — an offer's `images[locale][]`, a
+      service's `image`, a list item's `data` — and the editor renders every URL as a plain `img` in
+      `.console-media-list` (a build-time allowlist cannot know WordPress paths, CDNs or data URLs). The table also
+      carries a thumbnail per row, which is only honest because the console no longer loads the site sheet.
+      **The stylesheets are separate.** The token layer moved to `src/styles/tokens.css`; `globals.css` imports it
+      (one insertion), the console layout imports `tokens.css` + `ui.css` + `console.css` and never `globals.css`.
+      That is what frees the thumbnail: the site sheet's `img { width: 100% !important }` would flatten every preview.
+      Tests assert the non-import in both directions, so a future `globals` import in the console fails structurally.
+      **The row link is a primitive, not a surface restyle.** `.ui-row-link` (flex, 44px floor, inherited ink,
+      underline on hover of the title) lives in `ui.css`; `console.css` keeps only placement. The table was rebuilt
+      around it (`ui-table console-table`, `<bdi>` dates, a muted `Mark` for empty cells) and the card layout is the
+      same row at narrow widths via `@container console-list`.
+      **A test can pass while the build fails.** The palette check sliced `tokens.css` at the first occurrence of
+      `html[data-theme="dark"]`, which is a sentence in the file header, so the compared slice was empty and the count
+      assertion caught it only after the move; the media check asserted a CSS selector against TSX. Both fixed. The
+      `npm run build` gate then caught what no text assertion could: `globals.css` had a duplicated head spliced in at
+      line 83 (`mport "tailwindcss"`). It was rebuilt from `HEAD` with only the token block removed; the diff is now
+      1 insertion / 373 deletions, and the closing brace the no-trailing-newline `sed` dropped was restored.
+      Gates: `npm run typecheck` · `npm run lint` · `npx vitest run` (**400** over 14 files) · `npm run build` ·
+      `npm run prove:no-wp` (5/5; 273 routes, 0 WordPress requests).
+
+**BK-13 is closed** (13.1–13.6). The console has one shell, one list primitive, one editor primitive and one
+write-scope spelling; a new screen is built by naming a kind and a scope, not by copying a pane. Still open in this
+plan, oldest first: BK-6 (6.3c), BK-7.5, then BK-14 → BK-18.
 
 ## BK-14 — every element of the site editable
 Reality to design against: the copy today sits in three places — database content rows (BK-6, BK-7.2), authored files
