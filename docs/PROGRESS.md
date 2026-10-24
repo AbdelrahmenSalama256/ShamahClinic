@@ -788,6 +788,44 @@ schema leaves room for each, and BK-17's Connectors screen is where a key would 
       *and* write, and a test that a custom role can only ever hold a subset of the catalog.
 
 ## BK-17 — Leads + Connectors
+- [x] 17a Both forms into the leads table, and the screen that works them — `7fe5e6f`
+      **Capture.** `/api/v1/lead` records every valid submission (after the rate limit, before the
+      WhatsApp/CF7 branch) through `src/lib/leads/store.ts`; a failed insert is swallowed and logged,
+      because the visitor's WhatsApp link must not depend on the database. The two forms are told
+      apart by the one reliable difference — a booking sends a date or a branch — and the record
+      carries `page_path`, `referrer` and the five `utm_*` tags parsed off the referer. The idempotency
+      key is a five-minute bucket of `sha256(ip|name|phone|date|subject)`, so a double tap is one row
+      and two real enquiries are two; the column is UNIQUE, so every insert supplies a key.
+      **The screen.** `src/lib/leads/view.ts` builds one row shape for the server page, the list and the
+      detail endpoint, so a row refreshed in the browser cannot lose a field the server-rendered copy
+      had. `LeadsScreen.tsx` is the console's first list whose rows are people: counts live above the
+      list as chips (the question the screen exists to answer), the detail pane holds the two verbs
+      (status, note), and the URL stays the state with `replaceState`. A `contact_hidden` row still
+      appears — a Viewer's job is to count — with name/phone/email/message/extra fields blanked and
+      `read_only` where the name would be; notes are withheld with them because a note is where staff
+      paste exactly what the rule hides.
+      **Scoped writes.** The guard reads a lead's source from `?source=` (URL, never body) and the
+      handler re-checks the loaded row's `source`, so a pasted id cannot borrow another source's
+      grant: `?source=booking` on a contact-form id answers 404, the wrong source answers 403, and an
+      invalid status answers 400 only after permission passed. Every successful move writes
+      `lead.update` with before/after.
+      **A catalog defect this screen exposed.** Marketer could `create/update/delete/export` a lead
+      but not `read` one — a grant it could never exercise on the screen that works it. `roles.ts` now
+      spells `read` beside `WRITE` for that role, with a `tests/roles.test.ts` case.
+      **Tests and gates.** `tests/leads.test.ts` (15) covers persistence + UTM/fields, double-tap dedupe,
+      both sources, Owner vs Viewer redaction, notes withheld, source-scoped writes and notes, filters,
+      paging and view parsing. `tests/console.test.ts` expects `leads` in the sidebar for every role with
+      `lead read` (all but SEO), and `tests/ui-primitives.test.ts` records the one new placement hook
+      (`.console-lead-note-list > .ui-note`). `tests/roles.test.ts` trusts `@/lib/leads/api` in the
+      route sweep, with the same transitive guard assertion as the other delegates.
+      Gates: typecheck · lint · `vitest run` **389/389** · `next build` clean · `npm run prove:no-wp`
+      **5/5** (240 sitemap URLs, 273 routes rendered 0 failed, smallest HTML 25839 bytes, 0 requests to
+      the WordPress origin, host named 0 times).
+      **Not in this slice, and still on the rows above:** CSV export and per-lead delivery state (17.2),
+      the connectors/Apps Script work (17.3–17.5), and retiring the CF7 forward (17.1). The screen was
+      not opened in a browser this pass — it renders in the build and the route sweep, but its split at
+      ≥1024px and its stacked width below that were not seen; that check belongs with the 19.6 visual
+      pass.
 - [ ] 17.1 Both forms into the database: contact form and booking wizard → `leads` with `source`, the appointment
       fields (date, branch, service, specialist, slot), status, notes, assignee, dedupe and an idempotency key, and
       role-scoped redaction of phone numbers. Then retire the CF7 forward — `LEAD_MODE=cf7` and the last
