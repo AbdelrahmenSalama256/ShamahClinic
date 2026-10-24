@@ -778,6 +778,50 @@ last two into the database so the team never needs a developer for a word.
 New tables: `seo_meta` (per entity per locale), `seo_templates`, `redirects`, `not_found_hits`, `crawl_issues`,
 `sitemap_settings`, `robots_directives`. Every one of these has its column set decided before 15.1 so 15.9 and an
 outside data source can be bolted on without a rewrite.
+- [x] 15a Page visibility + the site's own configs on the Settings screen — `1ea9f9f`
+      The owner asked for two things in the same breath: every page listed in Settings with a show/hide switch
+      ("كل الصفح وادوس تفعيل او اخفاء ليها"), and every config — meta tags, description — editable there too.
+      **No migration.** The existing `settings` table already has the shape: group `pages`, one row per route,
+      `{ "enabled": boolean, "redirectTo": string | null }`. A missing row means enabled, so a site that never opens
+      the screen behaves exactly as before, and `readPageStates` fails **open** — it runs in the layout, every page,
+      the sitemap and the not-found document, so a database outage must not turn the site into a wall of 404s.
+      `src/lib/content/settings-catalog.ts` is the client-safe registry the console renders from (key, unprefixed
+      path, AR/EN label); the console cannot list a route the site does not render. `cart` and `checkout` are not
+      routes here and are not offered.
+      **One guard per route.** `guardPage(key)` is the first statement of all 15 public page components; detail
+      routes (`blogs/[slug]`, `offers/[slug]`, `services/[slug]`, `branches/[slug]`) guard their listing's key, so
+      hiding Stories also hides every article under it. A hidden page answers `notFound()`, or follows its saved
+      target when one exists. The target is validated on the way in and on save (`safeRedirect`): a local path or an
+      absolute http(s) URL only — `//host` and `javascript:` are refused, because a redirect is the one value here
+      that can send a visitor off the site.
+      **What stops advertising it.** The `[lang]` layout reads the states once and passes `hiddenPageHrefs()` through
+      `SiteShell` to the header and footer (desktop, mobile, and the footer's Site column), and the branded 404
+      document does the same. `sitemap.ts` tags every route with its page key and drops hidden ones, so hreflang
+      alternates go with the URL rather than pointing at a 404. A successful settings write calls
+      `revalidatePath('/[lang]', 'layout')` — the public pages are ISR, and without it a hidden page would keep its
+      nav line until the five-minute window closed.
+      **Configs.** `site` keeps its six words (name, tagline, phone, WhatsApp, email, hours) and gains a visible
+      screen; `seo` holds `title.ar/en`, `description.ar/en` and `verification.google`, read by the root
+      `generateMetadata` through `getSiteMeta(lang)` with the authored `siteConfig` as the fallback. Fields are
+      plain inputs, not a JSON box — a phone number should not have to be quoted. An emptied box sends `null`,
+      which unsets the row and restores the authored value (the site reader already skipped blanks). Only dirty
+      fields are written. Every other saved row remains editable as JSON in an Advanced section, and a row flagged
+      `is_secret` says the value is configured in the environment without exposing or accepting it.
+      **Tests.** `tests/settings-pages.test.ts` (7): the parse shapes a LONGTEXT-backed JSON column may arrive in,
+      fail-open cases, the redirect allowlist, `hiddenPageHrefs`, the real `pages` group in the test database, the
+      guard's three answers (404, redirect, pass) with `next/navigation` replaced by signals, and `getSiteMeta`'s
+      fallback/override/blank-row path against the real `seo` group. `tests/ui-primitives.test.ts` names the one new
+      placement hook (`.settings-page-controls .ui-field`, margin only).
+      **Probe rows cleaned, not hidden.** Two settings rows this work had written earlier to prove the write path
+      (`pages.about` hidden, `site.hours` changed to 18:00) were still live in `shamah_cms`; both were deleted after
+      their values and audit rows were read back, which restores the authored hours and `/about`.
+      Gates: typecheck · lint · `vitest run` **396/396** · `next build` clean · `npm run prove:no-wp` **5/5**
+      (238 sitemap URLs, 271 routes rendered 0 failed, smallest HTML 27079 bytes, 0 requests to the WordPress
+      origin) — the same 238/271 baseline row 19.3d recorded, so the restored rows did not move it.
+      **Not in this slice:** links inside a page body (the home "View all" cards, About's "our doctors") still point
+      at their target when it is hidden — the guard answers 404 there. Hiding those belongs to section control
+      (14.5). The screen also has not been opened in a browser this pass: it renders in the build, but its table at
+      desktop width and its stacked fallback below 46rem were not seen; that check belongs with 19.6.
 - [ ] 15.1 Meta per entity per locale: title, description, canonical, robots (index/follow/nocache/AI), primary image
       + alt, OG title/description/image, Twitter card, focus keyword, breadcrumb label, and a `noindex` default for
       drafts. The site's `<head>` reads it, which replaces `resolveSeo`'s snapshot fallback and closes the `seo.json`
