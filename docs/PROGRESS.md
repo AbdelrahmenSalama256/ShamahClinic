@@ -1049,8 +1049,8 @@ the markup they name.
       The eight console components are re-pointed at them **without changing their props contracts**.
       **This is five sub-rows** — 19.3a the shared vocabulary and the button, 19.3b fields, 19.3c status and
       feedback, 19.3d surfaces, 19.3e overlays — because the audit found the defects in families, and a row that
-      fixed "all primitives" at once would not say which family is still hand-written. 19.3a, 19.3b and 19.3c are
-      closed below; the rest are open and the parent stays unchecked until they are.
+      fixed "all primitives" at once would not say which family is still hand-written. 19.3a, 19.3b, 19.3c and
+      19.3d are closed below; the rest are open and the parent stays unchecked until they are.
 - [x] 19.3a Shared control tokens + the button primitive — `951346c`
       **What was wrong, in the order it was found.** The console owned a 60-line `.console-button` sheet and the site
       owned none, so the same control was decided twice; `.console-button-primary` had **no hover of its own** and
@@ -1337,6 +1337,77 @@ the markup they name.
       `--z-toast` → 19.3e. Tooltip, `switch`, `radio`, `combobox`, the date field (all still without a call site) and
       the file drop-zone / rich-text area → 19.3f, which has no row yet. The `≡` glyph, `title=` duplication and the
       `ConsoleFrame` hydration key → 19.4. Push stays on hold per 19.0.
+- [x] 19.3d Surface primitives — card, table, tabs, row action, chip family — `b598c54`
+      **What was wrong, in the order it was found.** The list's table and its card mode were the same row written
+      twice: `.console-row` and `.console-card-body` were two copies of one button (block, no border, no fill, the
+      pointer, the title underlined under the cursor), and that underline rule was itself written twice. The chip
+      family was three rules that each spelled `border-radius: 999px` while `--radius-pill` (9999px) sat in
+      `globals.css` with one consumer, plus a `content-box` / `min-height: 100%` pair that only made sense for the
+      removable saved view. `.console-card`, `.console-panel`, `.console-table-wrap` and the overview tile each
+      re-painted some subset of the shell's five declarations — fill, hairline, radius, lift, `--ui-pad` — which is
+      how a card on the list and a tile on the overview drift apart. And the tab strip had `role="tab"` + `aria-selected` and none of
+      the behaviour behind them: no `aria-controls`, no panel, no roving `tabIndex`, no arrow keys — it announced
+      "tab 1 of 2, selected" and did nothing when Right was pressed, while `Tab` walked both tabs separately.
+      **What replaced it.** `src/components/ui/Surface.tsx` (`Card`, `RowAction`, `RowTitle`, `RowKey`),
+      `Chip.tsx` (`Chip`, `ChipRow`, `ChipTag`, `ChipRemove`) and `Tabs.tsx`, plus `.ui-lede`, `.ui-table` and
+      `.ui-table-sort` in `ui.css`. `console.css` loses ~270 lines and keeps placement only: the
+      `PLACEMENT_PROPERTIES` whitelist introduced in 19.3b now guards both the field overrides and the surfaces
+      through one `blocksOf()` helper, and the two copies of the rule that disagreed are gone. `Card` renders the tag
+      the content deserves (`div` in a `dl`, `li` in a `ul`, `section` for a panel) and is typed against
+      `HTMLAttributes<HTMLElement>`: a handler written for one tag is a type error on the other two —
+      `ComponentProps<'div'>` failed on `ref` and on `ClipboardEventHandler<HTMLDivElement>` — and the two extras
+      `li` carries, `type` and `value`, are not things a shell means.
+      **The row hover the brief asked for and this table never had.** Nine columns to read across with nothing under
+      the pointer. `--bg-hover` supplies it, and it is written *before* `[data-active]` in the file because both are
+      one class deep, so the order is the tie-break and "open in the editor" has to be the one that wins; a test
+      asserts `indexOf(':hover') < indexOf('[data-active]')` rather than trusting a reader to notice. The sticky head
+      keeps `z-index: 1`: it only has to clear the cells passing under it, it lives in its own scroll box, and
+      promoting a table header onto `--z-sticky` would put it in the same argument as the top bar and the drawer.
+      **The defect a browser found while both static gates passed.** In the dark theme a selected row was
+      `--bg-secondary`, which sits 3 units above `--bg-card` — *less* than the new hover wash, so the ladder read
+      card → selected → hover, i.e. backwards. In light the same token is 11 units below the card, which is why the
+      bytes, the build and the eye on a light screen all agreed with a broken dark state. Both steps are now washes of
+      one ink, `--bg-hover` and `--bg-active`, composited over whatever card they land on, in the order the state
+      machine is in. Measured in the built app, the light ladder is 0.9766 → 0.8909 → 0.8098 and the dark one
+      0.0133 → 0.0267 → 0.0418 — monotonic in both — and `--bg-secondary` keeps every other consumer untouched.
+      `siteTheme` carries the dark stops (7% / 13% of cream against the light 4.5% / 9% of charcoal ink), and the
+      suite asserts those four alphas in that order.
+      **Six visible changes that are deliberate, not drift.** Card padding is `--ui-pad` on all four sides (0.7rem →
+      1.1rem comfortable / 0.7rem dense) and the tile's `calc(--ui-pad + 0.05rem)` is gone — it was an unowned,
+      uncommented eighth-of-a-rem. Chip padding is the button's `--sp-1 --sp-4` (0.3rem 0.8rem → 0.25rem 1rem),
+      because a chip is the button's shape in a smaller voice. The filter row's gap is 0.35rem (was 0.3); cell
+      padding is `--sp-2 --sp-3` (was 0.5rem 0.7rem); the tab row's margin is `--ui-stack` (was 0.9rem); three
+      `999px` literals became `--radius-pill`. The chip's `overflow-wrap: normal` is 19.3c's inherited-property
+      lesson carried across the family before BK-17's leads tag column needs it.
+      **Measured on the built app through the 3330/3332 harness**, fresh `next build`, inside exact-size same-origin
+      iframes at 1280, 768 and 360, Arabic RTL, light and dark, comfortable and dense: no horizontal overflow in
+      table or card mode (`scrollWidth` equals `clientWidth` at 360), the active row the 0.09 ink, the active card
+      the same wash with `--text-primary` on its border, cells 8 / 12, chips 44px at 4 / 16, sort heads 44px, the
+      compiled order hover → last-child → active, and zero dead classes in the CSSOM. Tabs were exercised with real
+      key events: one tab stop, arrows following `document.dir` read at the keypress, Home / End, and manual
+      activation. A probe saved view was created and deleted through the chip UI, restoring the DB.
+      **What this pass could not see.** No real pointer hover: the automation page is hidden, so `:hover` remains a
+      computed rule-order fact plus the token values, and 19.8's human pass should confirm it. No true device
+      viewport: the automation window is ~434×623, so layout was measured inside exact-size iframes rather than on a
+      phone. The list pane's narrow columns at small widths are pre-existing — HEAD's cells carry the same
+      `overflow-wrap: anywhere` — and belong to 19.4's pane work; the selection clearing on a locale switch is
+      pre-existing too (`switchScope` already cleared it before this row).
+      **Deferred, with the row that owns each.** Of the six `--z-*` tokens 19.3c left unconsumed, two now have their
+      consumer — `--z-sticky` on the top bar, `--z-scrim` on the save bar (the same 35 it always drew) — while
+      `--z-drop`, `--z-modal`, `--z-palette` and `--z-toast` still have none → 19.3e decides them. The save bar's
+      scrim colour is still `rgb(0 0 0 / 45%)` → the overlay pass. The overview's `.console-stat` figure type moves
+      into 19.5's `Stat`. Breadcrumbs and Avatar wait for a call site; toast and progress stay 19.3e's.
+      **Tests: `vitest run` is now 373 over 12 files** (was 365). `tests/ui-primitives.test.ts` goes 36 → 44 cases;
+      the new `describe` proves the one shell / table / chip / row vocabulary, the hover-before-active order, the
+      ladder's four alphas, the surface typed for all three tags, the tap floors on the sort head and both chip
+      halves, the `normal` declaration, and the shared placement whitelist applied to both sheets.
+      `tests/console.test.ts` moves the sort and chip selectors out of the "paints its own control" list and asserts
+      their floors in `ui.css` instead — the same contract, in the file that now keeps it.
+      Gates: typecheck · lint · `vitest run` 373/373 · `next build` clean (278/278 static pages) · `prove:no-wp`
+      **5/5** (238 sitemap URLs, 271 routes rendered 0 failed, 0 requests to the WordPress origin) — re-earned
+      because the console markup moved. Dev prefs restored through `PATCH /api/console/prefs` to Arabic / light /
+      comfortable after the dark measurements. `.gitignore` now ignores `/.shots/`, the screenshots this row was
+      verified from. Push stays on hold per 19.0.
 - [ ] 19.4 Shell: collapsible sidebar with a shared-layout animated active indicator, tooltips when collapsed, brand
       mark, user area; sticky top bar with breadcrumbs, the existing `ConsolePalette` restyled (Cmd/Ctrl+K, keyboard
       nav), quick actions, animated theme toggle, notifications; drawer/bottom bar on mobile; verified at
