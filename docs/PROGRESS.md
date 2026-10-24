@@ -467,6 +467,39 @@ Legend: `[ ]` todo · `[~]` in progress · `[x]` done (commit hash on the row).
       categories, zero list items.
       Still in 7.5: `seo.json` (BK-15's), `offer-categories` (blocked on 6.3c-c's schema call) and the fallback rung
       itself, which cannot go until every rendered kind can answer from the database.
+- [x] 7.6 Retire the `treatments` path — `2a8a8cc`. The owner asked for it plainly ("وشيل اصلا الباث بتاع ال treatments ملهوش
+      لازمه خالص"), and it was a second name for a page that already called itself services: the list page's metadata
+      and breadcrumb had said `/services` since the services work, while its own URL said `/treatments`, and
+      `/services` was a two-line `export … from "../treatments/page"`. A canonical tag cannot repair that; two URLs
+      for one document can only split whatever is indexed.
+      **What moved.** The implementations now live at `src/app/[lang]/services/page.tsx` and
+      `src/app/[lang]/services/[slug]/page.tsx`; `/services` is the route, not a re-export. The detail's canonical,
+      breadcrumb `item`, `generateMetadata` path and `serviceJsonLd` path all say `/services/${id}`. The old
+      `src/app/[lang]/treatments/` folder is deleted, not left as a stub, so nothing in `app/` can render it.
+      **What links there.** `TreatmentCard` (the card every listing renders), the detail hero's own breadcrumb,
+      the branded 404's "our services" destination, `organizationJsonLd`'s `availableService`, every entry in
+      `/sitemap.xml`, and `publicPathOf('list_item', …, 'treatments')` — a console row for the `treatments` list is a
+      service row, so its preview path is `/services/${key}` like the `services` list's. The `treatments` list key
+      itself stays: retiring a URL is not retiring content, and `LIST_KEYS`/role scopes are a separate vocabulary.
+      `/api/revalidate` stops invalidating the two dead route patterns.
+      **The redirect, measured.** `next.config.ts` adds the three entries the journal rename already established as
+      the pattern — unprefixed, `/ar`, `/en` — mapping `/treatments/:path*` onto `/services/:path*`, so a detail URL
+      keeps its slug. On the built server: `/treatments` → **308** `/services`, `/ar/treatments/botox-injections` →
+      **308** `/ar/services/botox-injections`, `/en/treatments` → **308** `/en/services`. This is Next's
+      `permanent: true`, which is a 308, and that is what the existing redirects in this file already return; the
+      scripts accept 301 or 308 rather than pinning a spelling the framework chose.
+      **Proof, not assumption.** A stale `.next/types/validator.ts` still pointed at the deleted files and failed
+      typecheck until the generated directory was cleared — the route was gone from the manifest, only the cache
+      disagreed. After that: typecheck · lint · `vitest run` **389/389** · `next build` (manifest lists
+      `/[lang]/services/[slug]/page` and `/[lang]/services/page`, lists no treatments route) · `prove:no-wp`
+      **5/5** (240 sitemap URLs — the service details moved, they did not disappear — 273 routes rendered, 0
+      failed, 0 requests to the WordPress origin). `scripts/verify-render.mjs` and `scripts/test-missing-fields.mjs`
+      now count `a[href*="/services/"]` and fetch detail pages at `/services/${slug}`; the retired
+      `/treatments/no-such-treatment` 404 case was replaced by the redirect assertions above, and
+      `/services/no-such-service` still proves the 404.
+      **Untouched on purpose.** `data/wp/`, `public/wp/`, `src/data/treatments.ts` and `src/lib/wp/treatments.ts`
+      keep their names: they are content and its reader, not a URL. The images under `public/wp` and the frozen
+      snapshot are read-only by the standing rule, and a rename there would be churn with no URL behind it.
 
 ## BK-8 — marketing (superseded, do not work these rows)
 Folded into **BK-17** the day the owner's expansion brief arrived (2026-10-22), because that brief
