@@ -225,7 +225,9 @@ describe('the screen writes the address bar from that one string', () => {
 });
 
 describe('a write names its scope with one term, spelled in one place (BK-13.5)', () => {
-  const components = ['ConsoleList', 'ConsoleEditor', 'ContentWorkspace'].map((name) => [
+  // The editor moved to the row's own page (240), so the scope is still spelled by the
+  // list, the editor and the page that owns the language tabs — never by any one of them.
+  const components = ['ConsoleList', 'ConsoleEditor', 'ContentDetail'].map((name) => [
     name,
     readFileSync(join(process.cwd(), 'src', 'components', 'console', `${name}.tsx`), 'utf8'),
   ]);

@@ -13,20 +13,27 @@
  * actually produced — so the screen never claims to be showing a filter the database
  * ignored.
  *
+ * A row is a link. Its address is `/console/<kind>/<id>`, so opening one is ordinary
+ * navigation: reload, Back and a pasted link all do what they say. The table is drawn
+ * around what a row *is* — a picture, a title, the identity under it, its state, when it
+ * moved — rather than one column per sortable key.
+ *
  * Two things it deliberately does not do. It never filters the rows it already has: 92
  * articles is a page of titles, not 92 article bodies pulled to the browser. And it draws
  * no control the kind cannot honour — `sorts` and `filters` come from the server, so an
  * article list shows no "Order" column and no "Off" chip.
  */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ImageOff, X } from 'lucide-react';
 import { consoleCall, consoleRead } from './client-api';
 import { Button } from '@/components/ui/Button';
 import { Checkbox, Field, Input, Select } from '@/components/ui/Field';
 import { Alert, Badge, Empty, Mark, Note, Skeleton, type Tone } from '@/components/ui/Status';
-import { Card, RowAction, RowKey, RowTitle } from '@/components/ui/Surface';
+import { Card, RowKey, RowTitle } from '@/components/ui/Surface';
 import { Chip, ChipRemove, ChipRow, ChipTag } from '@/components/ui/Chip';
 import { contentStateTone } from '@/lib/console/editor-form';
+import { contentDetailPath } from '@/lib/console/paths';
 import type { ContentAbilities } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import {
@@ -64,17 +71,12 @@ export interface ConsoleListProps {
   locale: ContentLocale;
   labels: Record<MessageKey, string>;
   abilities: ContentAbilities;
-  selectedId: string | null;
-  onSelect: (row: ListSummary | null) => void;
-  /** the scope chips and saved views change it; the parent owns it because the editor writes by it */
+  /** the scope chips and saved views change it; the parent owns it because the URL names it */
   onScopeChange: (scope: ListScope) => void;
-  /** rows moved: the parent drops the editor's copy if it was one of them */
-  onMutated: (ids: string[]) => void;
-  /** bump it and the list re-reads the same view — how an editor save reaches the row's chip */
+  /** bump it and the list re-reads the same view */
   refreshToken?: number;
 }
 
-/** The cells worth a column of their own; the rest are the kind's, printed by name. */
 const SORT_KEYS: Record<ListSort, MessageKey> = {
   title: 'content.sort.title',
   key: 'content.sort.key',
@@ -101,7 +103,6 @@ function titleOf(row: ListSummary, locale: ContentLocale): string {
 /** One row's state, as one chip — the same four the editor prints. */
 function stateOf(row: ListSummary): MessageKey {
   if (row.trashed) return 'content.state.trashed';
-  // A row nobody has ever published has no unpublished changes: it is a draft.
   if (row.publishedAt && (row.pendingAr || row.pendingEn)) return 'content.state.pending';
   return row.status === 'published' || row.status === 'changed' ? 'content.state.published' : 'content.state.draft';
 }
@@ -121,6 +122,27 @@ function cell(value: string | number | boolean | null, labels: Record<MessageKey
   return String(value);
 }
 
+/**
+ * The picture the site will show, at the size a table can hold.
+ *
+ * Offers, services and result stories all carry one; an article carries a single URL.
+ * A row with none is not a blank cell — a work surface that silently drops the column
+ * leaves an editor wondering whether their upload failed — so the empty state says so.
+ */
+function Thumb({ src, labels }: Readonly<{ src: string | null; labels: Record<MessageKey, string> }>) {
+  if (!src) {
+    return (
+      <span className="console-thumb" data-empty="true" role="img" aria-label={labels['content.image.none']}>
+        <ImageOff size={16} aria-hidden="true" />
+      </span>
+    );
+  }
+  // The URL is whatever the content already carries — a mirrored WordPress path, a CDN,
+  // a data URL — so it cannot be listed in `next.config`'s image hosts at build time.
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img className="console-thumb" src={src} alt="" width={44} height={44} loading="lazy" decoding="async" />;
+}
+
 export function ConsoleList({
   kind,
   scope,
@@ -131,10 +153,7 @@ export function ConsoleList({
   locale,
   labels,
   abilities,
-  selectedId,
-  onSelect,
   onScopeChange,
-  onMutated,
   refreshToken = 0,
 }: Readonly<ConsoleListProps>) {
   const [view, setView] = useState<ListView>(firstView);
@@ -150,15 +169,16 @@ export function ConsoleList({
   const [notice, setNotice] = useState<{ tone: Tone; key: MessageKey } | null>(null);
 
   // The URL is the state. Scope comes first so the line reads like the navigation.
-  // `listViewQuery` returns the line with its own `?`, which is the only form that can
-  // go into the address bar, onto the end of an API path, or into a saved view — so no
-  // caller adds a second one.
   const query = useMemo(() => listViewQuery(view, scope, kind), [view, scope, kind]);
   const api = `/api/console/content/${kind}`;
   // A pager chevron points where the row continues, and in Arabic that is the other way:
   // the label says "previous" in both, so only the glyph turns.
   const ArrowBack = locale === 'ar' ? ChevronRight : ChevronLeft;
   const ArrowForward = locale === 'ar' ? ChevronLeft : ChevronRight;
+
+  /** The scope a write names, and the query a detail link carries. */
+  const scopeQuery = writeScopeQuery({ listKey: kind === 'list_item' ? scope.listKey : null, locale });
+  const detailHref = (row: ListSummary): string => `${contentDetailPath(kind, row.id)}${scopeQuery}`;
 
   const load = useCallback(
     async (line: string): Promise<void> => {
@@ -178,7 +198,7 @@ export function ConsoleList({
 
   // The first page is the one the server just rendered for this exact URL, so the first
   // pass draws it and does not ask for it again. After that, a changed query — or a bump
-  // from the editor — re-reads it and puts the same terms back in the address bar.
+  // from a sibling — re-reads it and puts the same terms back in the address bar.
   const signature = `${query}#${refreshToken}`;
   const drawn = useRef(signature);
   useEffect(() => {
@@ -229,9 +249,6 @@ export function ConsoleList({
     setChecked(allChecked ? new Set() : new Set(rows.map((row) => row.id)));
   }
 
-  /** The scope a bulk write names, in the one spelling the guard reads. */
-  const scopeQuery = writeScopeQuery({ listKey: scope.listKey, locale });
-
   async function bulk(verb: 'publish' | 'trash' | 'restore'): Promise<void> {
     const ids = [...checked];
     if (ids.length === 0) return;
@@ -246,7 +263,6 @@ export function ConsoleList({
       setNotice({ tone: partial ? 'danger' : 'ok', key: partial ? 'content.bulk.partial' : 'content.bulk.done' });
       setChecked(new Set());
       await load(query);
-      onMutated(ids);
     }
   }
 
@@ -303,6 +319,16 @@ export function ConsoleList({
     if (verb === 'publish') return abilities.publish.includes(scopeKey);
     return verb === 'trash' ? abilities.remove.includes(scopeKey) : abilities.update.includes(scopeKey);
   };
+
+  /** A column header, sortable when the kind honours that order. */
+  const sortable = (sort: ListSort, className?: string): ReactNode => (
+    <th key={sort} className={className} aria-sort={view.sort === sort ? (view.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+      <button type="button" className="ui-table-sort" data-active={view.sort === sort || undefined} onClick={() => setView(withSort(view, sort))}>
+        {labels[SORT_KEYS[sort]]}
+        {view.sort === sort ? (view.dir === 'asc' ? <ArrowUp size={14} aria-hidden="true" /> : <ArrowDown size={14} aria-hidden="true" />) : null}
+      </button>
+    </th>
+  );
 
   return (
     <div className="console-list" data-mode={view.mode} aria-busy={loading}>
@@ -415,15 +441,11 @@ export function ConsoleList({
           <Button onClick={() => void load(query)}>{labels['content.retry']}</Button>
         </Alert>
       ) : loading && rows.length === 0 ? (
-        // The wells are the shape of what has not arrived and the label inside them is what
-        // a screen reader gets: an `aria-label` on a list of empty boxes announced nothing.
         <Skeleton rows={Math.min(view.per, 6)} label={labels['content.loading']} />
       ) : rows.length === 0 ? (
         <Empty>{labels['content.empty']}</Empty>
       ) : view.mode === 'card' ? (
         <>
-          {/* Card mode has no header row to hang the page-wide checkbox on, and cards are the
-              phone mode — where tapping 25 boxes by hand is the whole job. */}
           <div className="console-cards-head">
             <Checkbox checked={allChecked} onChange={toggleAll} label={labels['content.select.all']} />
           </div>
@@ -431,13 +453,16 @@ export function ConsoleList({
             {rows.map((row) => {
               const state = stateOf(row);
               return (
-                <Card as="li" key={row.id} active={row.id === selectedId}>
+                <Card as="li" key={row.id}>
                   <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
-                  <RowAction onClick={() => onSelect(row.id === selectedId ? null : row)}>
-                    <RowTitle>{titleOf(row, locale)}</RowTitle>
+                  <Link className="ui-row-link console-card-link" href={detailHref(row)}>
+                    {page.hasImages && <Thumb src={row.image} labels={labels} />}
+                    <span className="console-card-text">
+                      <RowTitle>{titleOf(row, locale)}</RowTitle>
+                      <RowKey>{row.key}</RowKey>
+                    </span>
                     <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
-                    <RowKey>{row.key}</RowKey>
-                  </RowAction>
+                  </Link>
                 </Card>
               );
             })}
@@ -445,25 +470,17 @@ export function ConsoleList({
         </>
       ) : (
         <Card flat flush className="console-table-wrap">
-          <table className="ui-table">
+          <table className="ui-table console-table">
             <thead>
               <tr>
                 <th className="console-cell-check">
                   <Checkbox checked={allChecked} onChange={toggleAll} aria-label={labels['content.select.all']} />
                 </th>
-                {sorts.map((sort) => (
-                  <th key={sort} aria-sort={view.sort === sort ? (view.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-                    <button
-                      type="button"
-                      className="ui-table-sort"
-                      data-active={view.sort === sort || undefined}
-                      onClick={() => setView(withSort(view, sort))}
-                    >
-                      {labels[SORT_KEYS[sort]]}
-                      {view.sort === sort ? (view.dir === 'asc' ? <ArrowUp size={14} aria-hidden="true" /> : <ArrowDown size={14} aria-hidden="true" />) : null}
-                    </button>
-                  </th>
-                ))}
+                {sortable('title', page.hasImages ? 'console-cell-title' : undefined)}
+                {sortable('status')}
+                {sortable('updated')}
+                {sorts.includes('published') && sortable('published')}
+                {sorts.includes('position') && sortable('position')}
                 {columns.map((name) => (
                   <th key={name} className="console-cell-extra">
                     {labels[`content.field.${name}` as MessageKey] ?? name}
@@ -475,31 +492,28 @@ export function ConsoleList({
               {rows.map((row) => {
                 const state = stateOf(row);
                 return (
-                  <tr key={row.id} data-active={row.id === selectedId || undefined}>
+                  <tr key={row.id}>
                     <td className="console-cell-check">
                       <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
                     </td>
-                    <td>
-                      <RowAction onClick={() => onSelect(row.id === selectedId ? null : row)}>
-                        <RowTitle>{titleOf(row, locale)}</RowTitle>
-                      </RowAction>
-                    </td>
-                    <td>
-                      <RowKey>{row.key}</RowKey>
+                    <td className="console-cell-title">
+                      <Link className="ui-row-link console-row-link" href={detailHref(row)}>
+                        {page.hasImages && <Thumb src={row.image} labels={labels} />}
+                        <span className="console-row-text">
+                          <RowTitle>{titleOf(row, locale)}</RowTitle>
+                          <RowKey>{row.key}</RowKey>
+                        </span>
+                      </Link>
                     </td>
                     <td>
                       <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
                     </td>
-                    <td>{row.updatedAt.slice(0, 10)}</td>
-                    {/* A row that has never been published is a draft: the mark says "no value"
-                        in a word, not in a dash nobody reads. */}
+                    <td className="console-cell-date">
+                      <bdi>{row.updatedAt.slice(0, 10)}</bdi>
+                    </td>
                     {sorts.includes('published') && (
-                      <td>
-                        {row.publishedAt ? (
-                          row.publishedAt.slice(0, 10)
-                        ) : (
-                          <Mark state="none" label={labels['content.value.none']} />
-                        )}
+                      <td className="console-cell-date">
+                        {row.publishedAt ? <bdi>{row.publishedAt.slice(0, 10)}</bdi> : <Mark state="none" label={labels['content.value.none']} />}
                       </td>
                     )}
                     {sorts.includes('position') && <td>{cell(row.cells.position ?? null, labels)}</td>}

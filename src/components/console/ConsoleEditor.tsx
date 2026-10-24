@@ -65,6 +65,8 @@ export interface ConsoleEditorProps {
   named: boolean;
   locale: ContentLocale;
   rowId: string | null;
+  /** the row the server already read: the form starts full instead of flashing empty */
+  initialRow?: ContentRow | null;
   labels: Record<MessageKey, string>;
   abilities: ContentAbilities;
   /** the publish scopes already narrowed to this screen's list */
@@ -90,6 +92,7 @@ export function ConsoleEditor({
   named,
   locale,
   rowId,
+  initialRow = null,
   labels,
   abilities,
   publishable,
@@ -102,8 +105,11 @@ export function ConsoleEditor({
   onClose,
 }: Readonly<ConsoleEditorProps>) {
   /** The document, tagged with the read it came from: `id#nonce`. A save refreshes the row
-   *  under the same tag, which is what keeps the form — and the caret — where they are. */
-  const [doc, setDoc] = useState<{ tag: string; row: ContentRow | null } | null>(null);
+   *  under the same tag, which is what keeps the form — and the caret — where they are.
+   *  The server hands the row over on the detail page, so the first paint holds it. */
+  const [doc, setDoc] = useState<{ tag: string; row: ContentRow | null } | null>(() =>
+    initialRow && rowId !== null && initialRow.id === rowId ? { tag: `${rowId}#0`, row: initialRow } : null,
+  );
   const [nonce, setNonce] = useState(0);
   const [form, setForm] = useState<Form>({});
   /** The values this pane last had from the server, in the shape the person typed them. */
@@ -143,6 +149,9 @@ export function ConsoleEditor({
 
   useEffect(() => {
     if (!rowId) return;
+    // Nonce zero is the server's read: the document is already in `doc`, and fetching it
+    // again would only make the form flash the values it is supposed to start with.
+    if (nonce === 0 && initialRow?.id === rowId) return;
     let alive = true;
     const want = `${rowId}#${nonce}`;
     void (async () => {
@@ -154,7 +163,7 @@ export function ConsoleEditor({
     return () => {
       alive = false;
     };
-  }, [api, rowId, nonce]);
+  }, [api, initialRow, rowId, nonce]);
 
   const parsed = useMemo(() => (row ? fieldsFromForm(row, form) : { fields: {}, issues: [] }), [row, form]);
   const dirty = row !== null && !sameForm(form, savedForm);
@@ -204,8 +213,13 @@ export function ConsoleEditor({
     setSavedForm(posted);
     if (result.data?.row) setDoc({ tag, row: result.data.row });
     if (mode === 'auto') setAutosavedAt(Date.now());
-    else setNotice({ tone: 'ok', key: 'content.saved' });
-    onChanged();
+    else {
+      setNotice({ tone: 'ok', key: 'content.saved' });
+      // An explicit save is the moment to ask the screen behind the editor for its dates
+      // and state chip again. Autosave stays inside the form; re-rendering the page every
+      // two seconds would undo more than it refreshes.
+      onChanged();
+    }
     return true;
   }, [api, form, invalid, onChanged, parsed, query, row, tag, tell]);
 
@@ -237,9 +251,10 @@ export function ConsoleEditor({
   async function moveToTrash(): Promise<void> {
     if (!row) return;
     setBusy(true);
-    const result = await consoleCall(`${api}/${row.id}${query}`, 'DELETE', { trashed: true });
+    const result = await consoleCall<{ row?: ContentRow }>(`${api}/${row.id}${query}`, 'DELETE', { trashed: true });
     setBusy(false);
     tell(result, 'content.trashed');
+    if (result.data?.row) setDoc({ tag, row: result.data.row });
     onChanged();
   }
 
@@ -299,6 +314,7 @@ export function ConsoleEditor({
   if (!rowId) return <Empty>{labels['content.pick_row']}</Empty>;
 
   const model = previewModel(kind, form, locale);
+  const media = row ? imagesOfForm(row, form) : [];
   const state = row ? contentStateKey(row) : null;
   const other: ContentLocale = locale === 'ar' ? 'en' : 'ar';
   const bilingual = kind !== 'list_item';
@@ -322,11 +338,9 @@ export function ConsoleEditor({
   return (
     <div className="console-editor">
       <div className="console-editor-main">
-        <header className="console-work-head">
-          <h2>{row?.key ?? rowId}</h2>
+        <div className="console-detail-status console-controls">
           {state && <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>}
           {dirty && <Badge tone="warn">{labels['content.dirty']}</Badge>}
-          <Button onClick={() => onRequestNav(onClose)}>{labels['content.close']}</Button>
           <Note>
             {/* Each date is its own bidi run: an ISO date typed straight into an Arabic
                 sentence gets its digits reordered — `2026-10-23` read as `26-10-2026`. */}
@@ -346,7 +360,7 @@ export function ConsoleEditor({
               </>
             ) : null}
           </Note>
-        </header>
+        </div>
 
         {loading && <Skeleton rows={3} label={labels['content.loading']} />}
 
@@ -357,6 +371,25 @@ export function ConsoleEditor({
         ) : null}
 
         {issues.other.length > 0 && <Alert tone="danger">{issues.other.join(' · ')}</Alert>}
+
+        {/* The picture is part of the item, not a detail of the list: whatever URL the
+            image field (or a list item's `data`) holds is shown here as the person types
+            it, so a broken path is visible before it reaches the site. */}
+        {media.length > 0 && (
+          <section className="console-media" aria-label={labels['content.media']}>
+            <h3>{labels['content.media']}</h3>
+            <ul className="console-media-list">
+              {media.map((src) => (
+                <li key={src}>
+                  {/* The address comes from the document (a WordPress path, a CDN, a data
+                      URL), so it is not a host `next/image` could be configured with. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={src} alt="" width={120} height={90} loading="lazy" />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {row && (
           <div className="ui-fields">
@@ -579,4 +612,57 @@ function FieldRow({
       )}
     </Field>
   );
+}
+
+/** A field whose name talks about pictures, or any string that reads as a picture URL. */
+const IMAGE_NAME = /image|photo|thumb|logo|before|after/i;
+const IMAGE_PATH = /^(https?:\/\/|\/|data:image\/)/i;
+const IMAGE_EXT = /\.(avif|webp|jpe?g|png|gif|svg)(\?|#|$)/i;
+const MAX_PREVIEWS = 6;
+
+function looksLikeImage(value: string): boolean {
+  const text = value.trim();
+  return text !== '' && (IMAGE_PATH.test(text) || IMAGE_EXT.test(text));
+}
+
+/**
+ * Every picture a JSON value carries, in the order it appears.
+ *
+ * Offers keep `images` as `{ ar: [{src}], en: [{src}] }`, services and results keep one
+ * `image` string, and a list item's `data` is authored by whatever list it belongs to —
+ * so the walk does not trust a shape, only the strings that read as image addresses.
+ */
+function collectImages(value: unknown, out: string[], depth = 0): void {
+  if (out.length >= MAX_PREVIEWS || depth > 4) return;
+  if (typeof value === 'string') {
+    if (looksLikeImage(value) && !out.includes(value.trim())) out.push(value.trim());
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectImages(item, out, depth + 1);
+    return;
+  }
+  if (value === null || typeof value !== 'object') return;
+  for (const inner of Object.values(value as Record<string, unknown>)) collectImages(inner, out, depth + 1);
+}
+
+/** The pictures the live form would put on the site, read before it is saved. */
+function imagesOfForm(row: ContentRow, form: Form): string[] {
+  const out: string[] = [];
+  for (const [name, field] of Object.entries(row.fields)) {
+    const value = form[name];
+    if (field.kind === 'json') {
+      // `data` is a list item's whole document: the list itself decides which key holds
+      // a picture, so the walk looks at all of it.
+      if (name !== 'data' && !IMAGE_NAME.test(name)) continue;
+      try {
+        collectImages(JSON.parse(String(value ?? '')), out);
+      } catch {
+        // Half-typed JSON is the field's own complaint to make; a preview cannot add one.
+      }
+      continue;
+    }
+    if (field.kind === 'text' && IMAGE_NAME.test(name)) collectImages(value, out);
+  }
+  return out;
 }

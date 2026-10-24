@@ -218,10 +218,12 @@ export async function createRow(
     return { ok: false, status: 400, code: 'unknown_list', issues: [{ path: 'list', message: `no list registered as "${input.listKey}"` }] };
   }
 
-  // The identity column is unique; say so with a 409 instead of letting the
-  // driver's duplicate-key error surface as a 500.
+  // The identity column is unique across the whole table, including rows in the
+  // Trash: their unique index does not disappear with their `deleted_at`. Checking
+  // only the live rows let a new row "take" a key the database still held, and the
+  // driver answered a 500 instead of the 409 this check exists to produce.
   let taken: FilterShape = db.selectFrom(spec.table).select(['id']) as unknown as FilterShape;
-  taken = taken.where(spec.keyColumn, '=', input.key).where('deleted_at', 'is', null);
+  taken = taken.where(spec.keyColumn, '=', input.key);
   if (listId) taken = taken.where('list_id', '=', listId);
   if (await taken.executeTakeFirst()) return { ok: false, status: 409, code: 'key_taken' };
 

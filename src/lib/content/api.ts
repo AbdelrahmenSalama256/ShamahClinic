@@ -24,13 +24,27 @@ import { guard, jsonError, type GuardResult } from '../auth/guard';
 import { can, type Action as PermissionAction, type Grant, type Resource, type Target } from '../auth/permissions';
 import { CONTENT_LOCALES, isContentKind, isContentLocale, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 import { createRow, getRow, listKeyOfItem, saveDraft, setTrashed, type StoreResult } from './store';
+import { createTitledRow } from './create';
 import { listRevisions, publishRow, rollbackToRevision } from './publish';
 import { listSummaries } from './summary';
 import { parseListView, parseListScope } from './list-view';
 import { readSettings, writeSetting } from './settings';
 
 const fieldValues = z.record(z.string(), z.unknown());
-const createSchema = z.object({ key: z.string().min(1).max(191), fields: fieldValues.optional() });
+/**
+ * A new row is named by its title. The identity (`slug`, `route`, `uid`) is derived
+ * from that title, because the person adding an article knows what it is called and
+ * not what a URL-safe version of that looks like. An explicit `key` is still accepted
+ * for an import, which has one already.
+ */
+const createSchema = z
+  .object({
+    key: z.string().min(1).max(191).optional(),
+    title: z.string().trim().min(1).max(500).optional(),
+    locale: z.enum(['ar', 'en']).optional(),
+    fields: fieldValues.optional(),
+  })
+  .refine((input) => Boolean(input.key || input.title), { path: ['title'], message: 'required' });
 const saveSchema = z.object({ fields: fieldValues, version: z.number().int().positive().optional() });
 const trashSchema = z.object({ trashed: z.boolean().optional() });
 const publishSchema = z.object({ locales: z.array(z.enum(['ar', 'en'])).min(1).max(2).optional(), note: z.string().max(200).optional() });
@@ -130,6 +144,20 @@ async function createHandler(req: Request, spec: KindSpec, kind: ContentKind): P
     async (ctx): Promise<GuardResult<Body>> => {
       const listKey = spec.scope === 'lists' ? param(req, 'list') : null;
       if (spec.scope === 'lists' && !listKey) return { status: 400, data: { error: 'list_required' } };
+
+      // A title is the whole input: the identity is derived from it and made unique
+      // against every row, trashed ones included. An explicit key still wins, which is
+      // how an import keeps the address its old site served.
+      if (!ctx.input.key) {
+        const created = await createTitledRow(kind, {
+          title: ctx.input.title ?? '',
+          locale: ctx.input.locale ?? localeFor(req, spec) ?? 'ar',
+          listKey: listKey ?? undefined,
+          actorId: ctx.auth.user.id,
+        });
+        if (!created.ok) return failure(created);
+        return { data: { row: created.value }, audit: { entityType: kind, entityId: created.value.id, after: created.value } };
+      }
 
       const created = await createRow(kind, { key: ctx.input.key, listKey: listKey ?? undefined, actorId: ctx.auth.user.id });
       if (!created.ok) return failure(created);

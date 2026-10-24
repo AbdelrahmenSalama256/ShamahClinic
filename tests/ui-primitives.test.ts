@@ -13,6 +13,10 @@ import { describe, expect, it } from 'vitest';
 
 const uiCss = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
 const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+// BK-240 split the tokens out of the site stylesheet so the console can read the palette
+// without importing the element rules that would flatten a thumbnail. The numbers live
+// here now; `globals.css` and the console layout both import this file.
+const tokens = readFileSync(join(process.cwd(), 'src/styles/tokens.css'), 'utf8');
 const buttonSource = readFileSync(join(process.cwd(), 'src/components/ui/Button.tsx'), 'utf8');
 const consoleCss = readFileSync(join(process.cwd(), 'src/app/console/console.css'), 'utf8');
 
@@ -103,11 +107,16 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
     const resolved = join(process.cwd(), 'src/app', match![1]!);
     expect(existsSync(resolved), `${match![1]} resolves from src/app`).toBe(true);
     expect(readFileSync(resolved, 'utf8')).toContain('.ui-button');
-    // The console gets it by reading `globals.css`, like every other root — so there is
-    // no third surface that can be added with the control layer missing.
+    // The console is its own root, so it names the control layer itself — and the token
+    // file with it. It never reads `globals.css`: that file's `img { width: 100% !important }`
+    // is the public page's, and it would size every thumbnail in a list.
     const layout = readFileSync(join(process.cwd(), 'src/app/console/layout.tsx'), 'utf8');
-    expect(layout).not.toContain('ui.css');
+    expect(layout).toContain("import '../../components/ui/ui.css';");
+    expect(layout).toContain("import '../../styles/tokens.css';");
+    expect(layout).not.toMatch(/import\s+['"][^'"]*globals\.css/);
     expect(ui).not.toMatch(/@import/);
+    // Both roots read one token file, so a palette never has two spellings.
+    expect(globals).toContain('@import "../styles/tokens.css";');
   });
 
   it('names every state a control can be in', () => {
@@ -216,7 +225,7 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
     const names = [...new Set([...ui.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1]))];
     expect(names.length).toBeGreaterThan(12);
     for (const name of names) {
-      const home = name.startsWith('--tone-') ? ui : globals;
+      const home = name.startsWith('--tone-') ? ui : tokens;
       expect(home, `${name} is defined`).toMatch(new RegExp(`\\n\\s*${name}:`));
     }
   });
@@ -224,7 +233,7 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
   it('leaves the console no second definition of a button', () => {
     expect(consoleCode).not.toMatch(/\.console-button/);
     expect(consoleCode).not.toMatch(/--console-tap/);
-    for (const name of ['ConsoleControls', 'ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
+    for (const name of ['ConsoleControls', 'ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
       const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
       expect(source, `${name} still uses the old class`).not.toContain('console-button');
     }
@@ -301,7 +310,7 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
     // A bar control shares its row with buttons, so it takes the floor density never
     // touches — the two are different numbers under `[data-density='dense']`.
     expect(rule(ui, '.ui-control[data-bar]')).toMatch(/min-height: var\(--tap\);/);
-    expect(globals).toMatch(/--tap-field: 2\.75rem;/);
+    expect(tokens).toMatch(/--tap-field: 2\.75rem;/);
     expect(consoleCode).toMatch(/\[data-density='dense'\] \{\s*--tap-field: /);
     expect(consoleCode).not.toMatch(/--tap:/);
   });
@@ -417,7 +426,7 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
         expect(PLACEMENT_PROPERTIES, `${block.selector} may not set ${property}`).toContain(property);
       }
     }
-    for (const name of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
+    for (const name of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
       const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
       // `console-search` and `console-cell-check` survive as the console's own layout —
       // how wide the filter box is, how wide a checkbox column is. The sheet that decided
@@ -447,7 +456,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
     readFileSync(join(process.cwd(), 'src/app/console/password/page.tsx'), 'utf8'),
     listSource,
     editorSource,
-    ...['ConsolePalette', 'ConsoleShell', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) =>
+    ...['ConsolePalette', 'ConsoleShell', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) =>
       readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8'),
     ),
   ].flatMap((source) =>
@@ -497,7 +506,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
     for (const source of [listSource, editorSource]) {
       expect(source, 'a banner does not spell out its own role').not.toMatch(/role=\{(notice|failed)\.tone ===/);
     }
-    for (const name of ['ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
+    for (const name of ['ContentListScreen', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
       const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
       expect(source, `${name} uses the primitive`).toMatch(/<Alert/);
       expect(source, `${name} still writes an alert by hand`).not.toMatch(/console-alert/);
@@ -567,7 +576,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
     // a deletion, and the pages outside the shared components were the eager writers.
     const dead = ['console-alert', 'console-note', 'console-meta', 'console-account-label', 'console-palette-empty', 'console-row-skeleton'];
     for (const path of [
-      ...['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ConsoleShell', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) => `src/components/console/${name}.tsx`),
+      ...['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ConsoleShell', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) => `src/components/console/${name}.tsx`),
       'src/app/console/(workspace)/page.tsx',
       'src/app/console/(workspace)/settings/page.tsx',
       'src/app/console/password/page.tsx',
@@ -619,7 +628,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
     // `--radius-pill` had no consumer until the badge took the radius the chip wrote by
     // hand. The three chip literals 19.3c left behind are gone with the chips themselves —
     // see the capsule case in 19.3d, which forbids the number in either sheet.
-    expect(globals).toMatch(/--radius-pill: 9999px;/);
+    expect(tokens).toMatch(/--radius-pill: 9999px;/);
   });
 });
 
@@ -627,7 +636,8 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
   const surfaceSource = readFileSync(join(process.cwd(), 'src/components/ui/Surface.tsx'), 'utf8');
   const chipSource = readFileSync(join(process.cwd(), 'src/components/ui/Chip.tsx'), 'utf8');
   const tabsSource = readFileSync(join(process.cwd(), 'src/components/ui/Tabs.tsx'), 'utf8');
-  const workspaceSource = readFileSync(join(process.cwd(), 'src/components/console/ContentWorkspace.tsx'), 'utf8');
+  const listScreenSource = readFileSync(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'), 'utf8');
+  const detailSource = readFileSync(join(process.cwd(), 'src/components/console/ContentDetail.tsx'), 'utf8');
   const listSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
   const navSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'), 'utf8');
   const siteConfig = readFileSync(join(process.cwd(), 'src/config/site.ts'), 'utf8');
@@ -656,7 +666,7 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     for (const name of retired) {
       const gone = new RegExp(`\\.console-${name}(?![\\w-])`);
       expect(consoleCode, `.console-${name} is not a rule any more`).not.toMatch(gone);
-      expect(`${listSource}\n${workspaceSource}\n${navSource}`, `nothing still writes console-${name}`).not.toMatch(
+      expect(`${listSource}\n${listScreenSource}\n${detailSource}\n${navSource}`, `nothing still writes console-${name}`).not.toMatch(
         new RegExp(`console-${name}(?![\\w-])`),
       );
     }
@@ -693,8 +703,11 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     expect(overrides.map((block) => block.selector)).toEqual([
       '.console-palette-list > .ui-note',
       '.console-panel > .ui-note, .console-content > .ui-note',
+      // BK-240: the create card's one sentence gives up the stack margin the note
+      // carries everywhere else, and the card's state chip is pushed to the far edge.
+      '.console-create .ui-lede, .console-create .ui-note',
       '.console-cards .ui-card',
-      '.console-cards .ui-row-action',
+      '.console-cards .console-card-link > .ui-badge',
       '.console-lead-note-list > .ui-note',
       // BK-15a: a page row already spaces its children, so the field inside it gives up
       // the stack margin it carries everywhere else. Placement only — the border, label
@@ -719,7 +732,7 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     // typed for a `div` is a type error on the `li` a call site is allowed to ask for, and
     // the union of the three tags' attributes is what a variable tag is checked against.
     expect(surfaceSource).toMatch(/type CardProps = HTMLAttributes<HTMLElement> &/);
-    expect(listSource).toMatch(/<Card as="li" key=\{row\.id\} active=\{row\.id === selectedId\}>/);
+    expect(listSource).toMatch(/<Card as="li" key=\{row\.id\}>/);
     expect(listSource).toMatch(/<Card flat flush className="console-table-wrap">/);
     // A call site that already owns an element puts the class on it instead of nesting a
     // second box — the login posts from a `form`, and a form inside a card is two objects.
@@ -744,8 +757,8 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     // already wears — measured 3 units *above* the dark card against a hover 15 units above
     // it, which put the ladder backwards in the built app. An overlay composites, so the same
     // pair of numbers steps card → hover → active in both themes.
-    expect(globals).toMatch(/--bg-hover: rgba\(33, 26, 22, 0\.045\);/);
-    expect(globals).toMatch(/--bg-active: rgba\(33, 26, 22, 0\.09\);/);
+    expect(tokens).toMatch(/--bg-hover: rgba\(33, 26, 22, 0\.045\);/);
+    expect(tokens).toMatch(/--bg-active: rgba\(33, 26, 22, 0\.09\);/);
     expect(siteConfig).toMatch(/"--bg-hover": "rgba\(33, 26, 22, 0\.045\)",/);
     expect(siteConfig).toMatch(/"--bg-active": "rgba\(33, 26, 22, 0\.09\)",/);
     expect(siteConfig).toMatch(/"--bg-hover": "rgba\(245, 238, 230, 0\.07\)",/);
@@ -758,7 +771,7 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     expect(rule(ui, '.ui-table thead th')).toMatch(/z-index: 1;/);
     expect(rule(ui, '.ui-table')).toMatch(/border-collapse: separate;/);
     expect(rule(ui, '.ui-table-sort')).toMatch(/min-block-size: var\(--tap\);/);
-    expect(listSource).toMatch(/className="ui-table"/);
+    expect(listSource).toMatch(/className="ui-table console-table"/);
     expect(listSource).toMatch(/className="ui-table-sort"/);
   });
 
@@ -769,7 +782,13 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     expect(rule(ui, '.ui-row-action:hover .ui-row-title')).toMatch(/text-decoration: underline;/);
     expect(rule(ui, '.ui-row-title')).toMatch(/font-weight: 600;/);
     expect(surfaceSource).toMatch(/<button type=\{type\} className=\{clsx\('ui-row-action', className\)\}/);
-    expect(listSource).toMatch(/<RowAction onClick=\{\(\) => onSelect\(row\.id === selectedId \? null : row\)\}>/);
+    // A row is an anchor now that it has its own address (240). It keeps the primitive's
+    // class so the row looks the same lifted from a card and from a table, and it still
+    // carries one action and one title.
+    expect(rule(ui, '.ui-row-link')).toMatch(/min-block-size: var\(--tap\);/);
+    expect(rule(ui, '.ui-row-link')).toMatch(/text-decoration: none;/);
+    expect(listSource).toMatch(/<Link className="ui-row-link console-row-link" href=\{detailHref\(row\)\}>/);
+    expect(listSource).toMatch(/<Link className="ui-row-link console-card-link" href=\{detailHref\(row\)\}>/);
     // The key is a `code`: it is literal text a person may have to type into another screen.
     expect(surfaceSource).toMatch(/<code className=\{clsx\('ui-row-key', className\)\}/);
   });
@@ -811,15 +830,19 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
       'role="tab"',
       'role="tabpanel"',
       'aria-selected={selected}',
-      'aria-controls={panelId}',
+      'aria-controls={hasPanel ? panelId : undefined}',
       'aria-labelledby={tabId(value)}',
       'tabIndex={selected ? 0 : -1}',
     ]) {
       expect(tabsSource, `${hook} is on the tab group`).toContain(hook);
     }
     expect(rule(ui, '.ui-tabs')).toMatch(/gap: var\(--ui-gap-tight\);/);
-    expect(workspaceSource).toMatch(/<Tabs/);
-    expect(workspaceSource).toMatch(/idBase=\{`scope-\$\{kind\}`\}/);
+    expect(listScreenSource).toMatch(/<Tabs/);
+    expect(listScreenSource).toMatch(/idBase=\{`scope-\$\{kind\}`\}/);
+    // The row's own page has the same pair, named for the row so two pages open in two
+    // tabs cannot claim the same panel id.
+    expect(detailSource).toMatch(/<Tabs/);
+    expect(detailSource).toMatch(/idBase=\{`detail-\$\{kind\}-\$\{row\.id\}`\}/);
     // The arrows follow the reading direction — in Arabic the first tab is on the right, so
     // Right goes back — and `document.dir` is read at the keypress because the console's own
     // theme switch flips it without reloading.
@@ -845,6 +868,6 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     // reason said out loud: a table head and a save bar have no argument with the top bar.
     expect((consoleCode.match(/z-index: \d/g) ?? []).length).toBe(1);
     expect(rule(consoleCode, '.console-editor-bar')).toMatch(/z-index: 6;/);
-    expect(globals).toMatch(/--z-sticky: 30;[\s\S]*--z-scrim: 35;[\s\S]*--z-drawer: 40;/);
+    expect(tokens).toMatch(/--z-sticky: 30;[\s\S]*--z-scrim: 35;[\s\S]*--z-drawer: 40;/);
   });
 });

@@ -1,0 +1,346 @@
+/*
+ * The design tokens both surfaces share.
+ *
+ * Extracted from `globals.css` so the console can read the palette, the spacing
+ * scale and the theme-dependent hairline without importing the site stylesheet —
+ * whose `img { width: 100% !important }` and body rules are the site’s, not a work
+ * surface’s. `globals.css` imports this file; so does the console layout.
+ *
+ * Only declarations live here: no reset, no element rule, nothing that could reach a
+ * component. A token that changes with the theme is declared twice on purpose (light
+ * in `:root`, dark in `html[data-theme="dark"]`).
+ */
+
+:root {
+  /* Warm luxury palette - never sterile hospital white */
+  --bg-primary: #faf7f2;
+  --bg-secondary: #f4ece4;
+  /* The one surface that was pure `#ffffff`. On an ivory page a white card reads as a
+     hole punched in the theme rather than something resting on it, and every
+     `bg-white` in the dark palette is re-pointed here, so the warm stop is the only
+     thing that had to move. Text ratios are measured in docs/contrast-report.md. */
+  --bg-card: #fffcf8;
+  --bg-card-subtle: #fdfbf8;
+  /* The two steps a surface takes: under a cursor, and while it is the row that is open.
+     Both are translucent ink rather than a fourth hex. `--bg-card-subtle` is 2 units below
+     `--bg-card`, which is not a state anyone can see, and `--bg-secondary` — the fill every
+     pressed control already uses — measured 11 units below the card in the light theme and
+     only 3 units *above* it in the dark one, where a hovered row was the stronger of the
+     two. An overlay composites over whatever it lands on, so the same numbers give a card
+     a whisper and a secondary a shade, in both themes, in the order the state machine is
+     in: card, then hover, then active. `siteTheme` carries the dark stops. */
+  --bg-hover: rgba(33, 26, 22, 0.045);
+  --bg-active: rgba(33, 26, 22, 0.09);
+  --bg-dark: #191412;
+  --bg-dark-card: #241d1a;
+
+  --text-primary: #211a16;
+  --text-secondary: #6b5e57;
+  --text-muted: #6e675c;
+  --text-inverse: #faf7f2;
+  /* Gold is readable as text only at `--gold-end` strength; the mid stop is a surface
+     colour, not an ink. See docs/contrast-report.md. */
+  --text-gold: #85640f;
+
+  /* Signature Gold Gradient */
+  --gold-start: #d8b237;
+  --gold-mid: #c9a227;
+  --gold-end: #85640f;
+  --gold-glow: rgba(201, 162, 39, 0.25);
+  --gold-border: rgba(133, 100, 15, 0.8);
+  /* The sweep itself, with a `:root` fallback. It used to exist only in the inline
+     style the two real layouts write, which is fine until a document forgets it — the
+     error page — and a control that paints with `var(--gold-gradient)` then paints with
+     nothing: an invalid value at the place a colour belongs. Same string as
+     `siteTheme.light` in `src/config/site.ts`; a test compares the two. */
+  --gold-gradient: linear-gradient(120deg, #c9a227 0%, #e8c766 20%, #f5e6a8 35%, #e8c766 50%, #c9a227 65%, #b08d24 85%, #a8801f 100%);
+
+  /* --------------------------------------------
+     Semantic button pairs. A surface and its ink always
+     travel together, which is what stops an unthemed
+     `bg-white` from meeting an inverted `--text-primary`
+     and printing white on white. Choose by the surface
+     the control sits on: solid anywhere, outline on a
+     light surface, onDark on an always-dark one.
+     Ratios are measured against every stop the theme
+     paints (see docs/contrast-report.md).
+     -------------------------------------------- */
+  --btn-gold-fg: #17120f;
+  --btn-gold-fg-hover: #17120f;
+
+  /* Ink for the gold band itself. The sweep runs from #f5e6a8 to #a8801f, and only
+     a near-black label clears 4.5:1 at the darkest stop, so a band has no room for
+     a lighter secondary colour — muted text on gold is the same ink. */
+  --ink-on-gold: #17120f;
+  --ink-on-gold-muted: #17120f;
+
+  --btn-wa-solid-bg: #0a6636;
+  --btn-wa-solid-fg: #ffffff;
+  --btn-wa-solid-bg-hover: #075e2f;
+  --btn-wa-solid-fg-hover: #ffffff;
+
+  --btn-wa-outline-bg: transparent;
+  --btn-wa-outline-fg: #0a6636;
+  --btn-wa-outline-border: #0a6636;
+  --btn-wa-outline-bg-hover: #0a6636;
+  --btn-wa-outline-fg-hover: #ffffff;
+
+  --btn-wa-on-dark-bg: transparent;
+  --btn-wa-on-dark-fg: #3ddc84;
+  --btn-wa-on-dark-border: rgba(61, 220, 132, 0.65);
+  --btn-wa-on-dark-bg-hover: rgba(61, 220, 132, 0.16);
+  --btn-wa-on-dark-fg-hover: #6ee7a8;
+
+  /* Control boundaries and the focus ring, ≥3:1 on this theme's surfaces. */
+  --border-control: #9c7619;
+  --border-control-soft: rgba(133, 100, 15, 0.55);
+  --focus-ring: #85640f;
+  /* The same three roles at the strength an always-dark surface needs. No single
+     mid-tone reaches 3:1 against both cream and near-black, so a dark container
+     re-points these through `.on-dark` instead of shipping a second colour. */
+  --border-control-on-dark: #d8b237;
+  --focus-ring-on-dark: #e1c15b;
+  --text-gold-on-dark: #d8b237;
+
+  /* Status pairs: an error or confirmation reads on this theme's card surface. */
+  --text-success: #0a6636;
+  --bg-success-soft: #e6f2ea;
+  --border-success: #0a6636;
+  --text-danger: #b3261e;
+  --bg-danger-soft: #fbeaea;
+  --border-danger: #b3261e;
+  --text-success-on-dark: #3ddc84;
+  --text-danger-on-dark: #f2a0a0;
+
+  /* Text on surfaces that are dark in both themes (hero, CTA band, footer). */
+  --text-on-dark: #ffffff;
+  --text-on-dark-muted: #d9d2ca;
+  /* Neutral hairline on those surfaces; the green pair below is for controls. */
+  --border-on-dark: rgba(255, 255, 255, 0.45);
+
+  /* Sticky header: opaque enough to read whatever scrolls under it. */
+  --nav-surface: rgba(250, 247, 242, 0.94);
+  --nav-surface-scrolled: rgba(250, 247, 242, 0.97);
+  --nav-shadow: rgba(33, 26, 22, 0.08);
+  --nav-height: 4.5rem;
+  --floating-control-size: 3.5rem;
+  --floating-control-gap: 1.5rem;
+  /* Height of the sticky mobile action bar (p-3 + 2.75rem control + p-3). */
+  --mobile-bar-height: 4.25rem;
+
+  /* Blush / Rose supporting tones */
+  --blush-light: #fbf0eb;
+  --blush-accent: #e8b4b8;
+  --rose-gold: #c88d83;
+
+  /* Radius & Glass */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-2xl: 2rem;
+
+  /* --------------------------------------------
+     The token layer (BK-19.1). One place, read by both surfaces.
+
+     Colour is NOT here: `siteTheme` in `src/config/site.ts` paints the colour
+     variables as an inline style on `<html>` (that is what makes the console's
+     `data-theme` flip happen with no script and no flash), and the values above
+     are the fallback for a document that renders without it. What follows is the
+     part of the system that does not change with the palette — a 4px spacing
+     scale, the two radii the console already used by hand, warm-tinted elevation,
+     a 1px hairline that is quieter than a control border, and named durations and
+     easing curves — plus the theme-dependent members of that set, re-pointed
+     under `html[data-theme="dark"]` below.
+
+     A token here earns its place by having a consumer today, not by anticipating
+     one. `--hairline`, `--elev-1/2/3`, `--dur-*` and `--ease-*` are read by
+     `console.css`; when the site sections take them in 19.7 they take these names.
+     -------------------------------------------- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.25rem;
+  --sp-6: 1.5rem;
+  --sp-8: 2rem;
+  --sp-10: 2.5rem;
+  --sp-12: 3rem;
+  --sp-16: 4rem;
+  --sp-20: 5rem;
+  --sp-24: 6rem;
+
+  /* The two the console drew by hand before this existed. Named by what they round,
+     so a control and the surface it sits on cannot drift a pixel apart. */
+  --radius-control: 0.65rem;
+  --radius-surface: 0.9rem;
+  --radius-pill: 9999px;
+
+  /* --------------------------------------------
+     Control geometry (`src/components/ui/ui.css`, BK-19.3). These eight are the numbers a
+     primitive reads, so they are the numbers both surfaces agree on: the public site's
+     defaults live here, and the console re-declares the ones it draws smaller on
+     `[data-surface='console']` and again under `[data-density='dense']`. They used to be
+     `--console-*` names, which is why a control built for one surface could not be read by
+     the other.
+
+     `--tap` is the floor for anything a finger hits and density does not lower it: a dense
+     layout means fewer pixels per row of *content*, not smaller things to press.
+     `--tap-field` is the same number in comfortable mode and the one dense mode is allowed
+     to lower, because a text field's target is the box the visitor aims at, not a control
+     they can miss and hit twice.
+     -------------------------------------------- */
+  --tap: 2.75rem;
+  --tap-field: 2.75rem;
+  --ui-font: 0.875rem;
+  --ui-font-small: 0.8rem;
+  --ui-gap: 0.85rem;
+  --ui-gap-tight: 0.35rem;
+  --ui-pad: 1.1rem;
+  --ui-stack: 1rem;
+
+  /* Boundaries. A control needs a border that meets 3:1 against its surface
+     (`--border-control-soft`); a card, a panel or a table wrap needs a hairline that
+     only says "this is one object". Those are different requirements and were being
+     answered by the same value, which is why every panel looked outlined in gold. */
+  --hairline: rgba(33, 26, 22, 0.1);
+  --hairline-strong: rgba(33, 26, 22, 0.16);
+  --hairline-gold: rgba(133, 100, 15, 0.22);
+
+  /* Elevation, warm because the brand is: black-on-cream shadows read as dirt. */
+  --elev-1: 0 0.0625rem 0.125rem rgb(33 26 22 / 5%), 0 0.25rem 0.5rem rgb(33 26 22 / 6%);
+  --elev-2: 0 0.125rem 0.25rem rgb(33 26 22 / 6%), 0 0.5rem 1rem rgb(33 26 22 / 9%),
+    0 1.25rem 2rem rgb(33 26 22 / 7%);
+  --elev-3: 0 0.25rem 0.5rem rgb(33 26 22 / 8%), 0 1.25rem 2.5rem rgb(33 26 22 / 13%),
+    0 2.5rem 5rem rgb(33 26 22 / 12%);
+  --glow-gold: 0 0 0 0.0625rem var(--gold-glow), 0 0.5rem 1.5rem var(--gold-glow);
+  --blur-glass: 14px;
+  --glass-surface: rgba(250, 247, 242, 0.72);
+  --glass-border: rgba(133, 100, 15, 0.18);
+
+  /* Stacking, so a toast and a drawer cannot each invent their own number. */
+  --z-sticky: 30;
+  --z-scrim: 35;
+  --z-drawer: 40;
+  --z-drop: 60;
+  --z-modal: 70;
+  --z-palette: 75;
+  --z-toast: 80;
+
+  /* Motion. 150–400ms, easing that leaves the value it started from fast. The
+     blanket `transition: all` these replace could not be given a duration at all
+     without also animating width, padding and visibility. */
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 340ms;
+  --dur-reveal: 500ms;
+  /* Not transitions. The brief's 150–400ms is how long a state change takes to settle;
+     these are the periods of things that never settle — an indeterminate spinner and a
+     skeleton's sweep — and a loop that fast looks nervous and one that slow looks broken. */
+  --dur-spin: 700ms;
+  --dur-shimmer: 1.2s;
+  --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* var(--tw-leading, var(--text-xs--line-height)) */
+  --line-height: 1.5;
+  --line-height-sm: 1.25;
+  --line-height-lg: 1.75;
+  --line-height-xl: 2;
+  --line-height-2xl: 2.5;
+  --line-height-3xl: 3;
+  --line-height-4xl: 4;
+  --line-height-5xl: 5;
+  --line-height-6xl: 6;
+  --line-height-7xl: 7;
+  --line-height-8xl: 8;
+  --tw-leading: var(--line-height);
+
+  /* --------------------------------------------
+     Type (BK-19.2). One family, both scripts, and the scale both surfaces read.
+
+     `--font-tajawal` is owned by `src/lib/fonts` — `next/font/local` declares it on
+     the document root with a measured, size-adjusted fallback so the swap costs no
+     layout shift. `--font-ui` is what everything else consumes: it names that family
+     when the class is there and a real system stack when it is not. The two are
+     deliberately different names, because the stack has to work in a document that
+     never loaded the stylesheet at all — the console's preview `srcdoc` frame, an email
+     template, a print sheet — and `@font-face` rules do not cross into those, so the
+     only Tajawal there is one the visitor's own system happens to have.
+
+     Readex Pro and Montserrat are gone: one family carrying Arabic and Latin in a
+     single cmap means a mixed run inside one paragraph gets matching metrics, and
+     the old `[dir="ltr"] body` override had no reason to exist.
+
+     Arabic is why the tracking tokens are split. Tight, negative tracking on Latin
+     display type is the house style; on Arabic it collides with the joining
+     letters and the kashida, so it applies under `[dir="ltr"]` only, and RTL gets
+     the leading instead.
+
+     `tabular-nums` is a dead declaration on this face and the components proved it:
+     Tajawal ships no `tnum` at any weight, and its digits were never equal — measured
+     off the upstream binaries, the Latin ten span 375 units (the 1) to 553 (the 4) of a
+     1000 upem, and the Arabic-Indic ones the site renders in Arabic span 207 (١) to 633
+     (٣). So equal digits are geometry, not OpenType: `--num-cell` is the widest single
+     digit in either script and `.num` reserves that much inline size per digit. A
+     counter that changes while you watch it — the results pager now, the dashboard
+     count-ups in 19.5 — takes `.num` with `--num-digits` at the call site.
+     -------------------------------------------- */
+  --font-ui: var(--font-tajawal, "Segoe UI", Tahoma, Arial, sans-serif);
+
+  /* The scale, in rem so it follows the visitor's own font size — the px ladder on
+     the controls further down is a different thing and does not scale these. */
+  --fs-h4: 1.125rem;
+  --fs-h3: clamp(1.25rem, 1.1rem + 0.6vw, 1.5rem);
+  --fs-h2: clamp(1.6rem, 1.35rem + 1.1vw, 2.1rem);
+  --fs-h1: clamp(2rem, 1.6rem + 1.8vw, 2.9rem);
+  --lh-tight: 1.2;
+  --lh-body: 1.7;
+
+  /* Tracking by role, not by element: an uppercase eyebrow and a heading want
+     opposite things, and both were being written by hand per rule. */
+  --ls-heading: -0.015em;
+  --ls-eyebrow: 0.3em;
+  --ls-label: 0.08em;
+  --ls-soft: 0.02em;
+
+  /* One digit's share of the line, for anything whose digits must line up or hold
+     still. `1ch` is the Latin 0 (0.552em here), which understates both the Latin 4 and
+     the Arabic-Indic ٣ (0.633em at ExtraBold), so the floor is the wider of the two. */
+  --num-cell: max(1ch, 0.64em);
+}
+
+/* Arabic joins, and joined letters cannot be spaced: the negative kind separates the
+   tooth from the join at display sizes, the wide kind dissolves the kashida at eyebrow
+   sizes. So the whole tracking scale resolves to nothing in RTL and Arabic takes its
+   air from the leading instead — one rule, rather than a `[dir="rtl"]` twin at every
+   call site that asks for a tracked label.
+   Unlayered on purpose: `:root` above is unlayered too, and a rule inside
+   `@layer base` would lose to it regardless of source order. */
+[dir="rtl"] {
+  --ls-heading: 0;
+  --ls-eyebrow: 0;
+  --ls-label: 0;
+  --ls-soft: 0;
+}
+
+
+/* The theme-dependent half of the token layer. `siteTheme.dark` re-points the colours;
+   these are the ones a dark palette cannot borrow: a hairline that was 10% black
+   vanishes on charcoal, and a shadow tinted with the page's own warm brown is not a
+   shadow on charcoal at all. Same names, same roles, one stop lifted. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --hairline: rgba(245, 238, 230, 0.12);
+  --hairline-strong: rgba(245, 238, 230, 0.2);
+  --hairline-gold: rgba(213, 180, 70, 0.28);
+  --elev-1: 0 0.0625rem 0.125rem rgb(0 0 0 / 30%), 0 0.25rem 0.5rem rgb(0 0 0 / 24%);
+  --elev-2: 0 0.125rem 0.25rem rgb(0 0 0 / 32%), 0 0.5rem 1rem rgb(0 0 0 / 26%),
+    0 1.25rem 2rem rgb(0 0 0 / 22%);
+  --elev-3: 0 0.25rem 0.5rem rgb(0 0 0 / 36%), 0 1.25rem 2.5rem rgb(0 0 0 / 30%),
+    0 2.5rem 5rem rgb(0 0 0 / 26%);
+  --glass-surface: rgba(33, 30, 27, 0.72);
+  --glass-border: rgba(213, 180, 70, 0.22);
+  --gold-gradient: linear-gradient(120deg, #a4832a 0%, #c29e3c 20%, #e1c15b 35%, #c29e3c 50%, #a4832a 65%, #b5902f 85%, #c9a441 100%);
+}

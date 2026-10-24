@@ -18,7 +18,7 @@ import { can, type Action, type Grant, type Target } from '../auth/permissions';
 import { LIST_KEYS } from '../auth/roles';
 import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale } from '../content/kinds';
 import { LIST_LABELS, type ListKey } from '../content/lists';
-import { idForRowKey, knownListKeys } from '../content/store';
+import { getRow, knownListKeys, listKeyOfItem, type ContentRow } from '../content/store';
 import { filtersFor, parseListView, parseListScope, sortsFor, type ListFilter, type ListView, type ListSort } from '../content/list-view';
 import { listSummaries, type ListPage } from '../content/summary';
 import { catalogFor, type MessageKey } from './messages';
@@ -62,9 +62,6 @@ export interface ContentScreenData {
    * the URL is what a nav leaf, a palette hit or a shared link carries.
    */
   activeLocale: ContentLocale;
-  /** The row the URL asked to open, and the id it is loaded by: the page shown may not hold it. */
-  focusKey: string | null;
-  focusId: string | null;
   labels: Record<MessageKey, string>;
 }
 
@@ -146,8 +143,6 @@ export async function contentScreenData(
   // A list screen reads one list at a time; a bilingual row carries both locales, so its
   // tabs are views over the same rows and the locale only decides which title sorts.
   const page = await listSummaries(kind, { view, listKey, trash: scope.trash, locale: activeLocale });
-  const focusKey = scope.focusKey;
-  const focusId = focusKey ? await idForRowKey(kind, focusKey, listKey ?? undefined) : null;
 
   return {
     kind,
@@ -165,8 +160,77 @@ export async function contentScreenData(
     lists,
     locale: input.locale,
     activeLocale,
-    focusKey,
-    focusId,
     labels: catalogFor(input.locale),
+  };
+}
+
+/** One row, as the detail screen draws it: the document, its scope, and what may be written. */
+export interface ContentDetailData {
+  kind: ContentKind;
+  row: ContentRow;
+  /** the list a `list_item` belongs to; null for a bilingual kind */
+  listKey: string | null;
+  /** the language tab to open, and the one a write names */
+  activeLocale: ContentLocale;
+  abilities: ContentAbilities;
+  /** the scopes this row may be published in */
+  publishable: ContentScope[];
+  /** the title the row is known by in the active language, for the screen's heading */
+  title: string;
+  /** the list screen this row came from, with its own scope kept */
+  backHref: string;
+  labels: Record<MessageKey, string>;
+}
+
+export type ContentDetailResult =
+  | { ok: true; data: ContentDetailData }
+  | { ok: false; reason: 'forbidden' | 'not_found' };
+
+/**
+ * One row for the dedicated detail route.
+ *
+ * The row is read by id — the id is the address now, not a `?key=` on a list screen —
+ * and a list item has to prove it belongs to a list, the same way a bulk write does.
+ * The screen is server-rendered so the first paint holds the document, and the client
+ * editor starts from `initialRow` rather than flashing an empty form while it fetches
+ * what the server already had.
+ */
+export async function contentDetailData(
+  kind: ContentKind,
+  id: string,
+  input: { grants: readonly Grant[]; locale: ConsoleLocale; search?: ContentScreenProps['search'] },
+): Promise<ContentDetailResult> {
+  const spec = kindSpec(kind);
+  if (!can(input.grants, spec.resource, 'read', {})) return { ok: false, reason: 'forbidden' };
+
+  const row = await getRow(kind, id);
+  if (!row) return { ok: false, reason: 'not_found' };
+
+  const params = paramsOf(input.search);
+  const activeLocale = localeAskedFor(params.get('locale'), input.locale);
+  const listKey = spec.scope === 'lists' ? await listKeyOfItem(id) : null;
+  if (spec.scope === 'lists' && !listKey) return { ok: false, reason: 'not_found' };
+
+  const abilities = abilitiesFor(kind, input.grants);
+  const titleField = spec.bi.find((field) => field.name === 'title' || field.name === 'name');
+  const title = titleField ? row.fields[titleField.name]?.draft?.[activeLocale]?.trim() || row.key : row.key;
+  const publishable = spec.scope === 'lists' ? abilities.publish.filter((scope) => scope === listKey) : abilities.publish;
+
+  return {
+    ok: true,
+    data: {
+      kind,
+      row,
+      listKey,
+      activeLocale,
+      abilities,
+      publishable,
+      title,
+      backHref:
+        spec.scope === 'lists'
+          ? `/console/lists?list=${encodeURIComponent(listKey ?? '')}`
+          : `/console/${kind}s?locale=${activeLocale}`,
+      labels: catalogFor(input.locale),
+    },
   };
 }

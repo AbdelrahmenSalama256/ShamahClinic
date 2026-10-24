@@ -45,6 +45,7 @@ const viewerEmail = `bk5-viewer-${run}@example.invalid`;
 const noReadEmail = `bk13-noread-${run}@example.invalid`;
 /** The one article this file writes, so the palette has a record to find. */
 const searchKey = `bk13-${run}-palette`;
+let searchArticleId = '';
 
 const userIds: string[] = [];
 const roleIds: string[] = [];
@@ -150,6 +151,7 @@ beforeAll(async () => {
   // path must be the deep link `?key=` that opens the row.
   const created = await createRow('article', { key: searchKey, actorId: userIds[0] });
   if (!created.ok) throw new Error(`the article for the palette could not be created: ${created.code}`);
+  searchArticleId = created.value.id;
   for (const [locale, title] of [
     ['ar', 'دليل الليزر البارد'],
     ['en', 'cold laser guide'],
@@ -257,7 +259,7 @@ describe('prefs resolution', () => {
 
 describe('the sidebar registry', () => {
   it('has a page file for every screen, and no page file outside it', () => {
-    const registered = [...CONSOLE_SCREENS.map((screen) => screen.path), '/console/login'].sort();
+    const registered = [...CONSOLE_SCREENS.map((screen) => screen.path), '/console/login', '/console/[kind]/[id]'].sort();
     expect(pagePaths(consoleDir, '/console').sort()).toEqual(registered);
   });
 
@@ -299,6 +301,21 @@ describe('the console is not the site', () => {
     }
   });
 
+  it('reads the token layer and the controls, never the site stylesheet', () => {
+    // BK-19.1 kept the palette in `globals.css` and the console reached it through the
+    // site's import. That is also how `img { width: 100% !important }` reached a 44px
+    // thumbnail, and why this row split the tokens into their own file: the console reads
+    // the numbers and the primitives, and nothing that could repaint its elements.
+    const layout = readFileSync(join(consoleDir, 'layout.tsx'), 'utf8');
+    expect(layout).toContain("import '../../styles/tokens.css';");
+    expect(layout).toContain("import '../../components/ui/ui.css';");
+    expect(layout).toContain("import './console.css';");
+    expect(layout).not.toMatch(/import\s+['"][^'"]*globals\.css/);
+    // The site imports the same token layer, so one palette serves both surfaces.
+    const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+    expect(globals).toContain('@import "../styles/tokens.css";');
+  });
+
   it('tells crawlers to stay out', () => {
     const layout = readFileSync(join(consoleDir, 'layout.tsx'), 'utf8');
     expect(layout).toMatch(/index:\s*false/);
@@ -308,7 +325,10 @@ describe('the console is not the site', () => {
 
 describe('the shell reaches every screen at every width (BK-13.1)', () => {
   const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
-  const globalsText = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+  // BK-240: the tokens live in their own file now. The console imports it directly and
+  // the site imports it from `globals.css`; reading them from the site stylesheet here
+  // would have passed while proving nothing about the file the console actually reads.
+  const tokensText = readFileSync(join(process.cwd(), 'src/styles/tokens.css'), 'utf8');
   const frame = readFileSync(join(process.cwd(), 'src/components/console/ConsoleFrame.tsx'), 'utf8');
 
   it('has a sidebar column, an off-canvas drawer and a phone tab bar', () => {
@@ -329,11 +349,11 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
 
   it('holds the 44px tap floor at both densities', () => {
     // BK-19.3a moved the floor out of the console and into the shared control layer, so
-    // the assertions moved with it: `--tap` is declared once in `globals.css`, the
+    // the assertions moved with it: `--tap` is declared once in `src/styles/tokens.css`, the
     // primitive reads it, and the console reads the same name for the controls it still
     // paints itself. A second `--console-tap` would be a second floor.
     const ui = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
-    expect(globalsText).toMatch(/\n\s*--tap: 2\.75rem;/);
+    expect(tokensText).toMatch(/\n\s*--tap: 2\.75rem;/);
     expect(ui).toMatch(/\.ui-button\s*\{[^}]*min-height: var\(--tap\);/);
     expect(css).not.toMatch(/--console-tap/);
     expect((css.match(/min-height: var\(--tap\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
@@ -373,7 +393,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // come back, and prose about the old one is the thing that keeps it from coming back.
     expect(css).not.toMatch(/^\.console-field[ ,{]/m);
     expect(ui).not.toMatch(/^\.console-field[ ,{]/m);
-    for (const component of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
+    for (const component of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
       const source = readFileSync(join(process.cwd(), 'src/components/console', `${component}.tsx`), 'utf8');
       expect(source, `${component} has no raw field markup`).not.toMatch(/<(input|textarea|select)\s/);
     }
@@ -412,11 +432,11 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
       // that are not transitions — a spinner and a skeleton's breath.
       '--tap', '--tap-field', '--ui-font', '--ui-font-small', '--ui-gap', '--ui-gap-tight', '--ui-pad', '--ui-stack',
       '--dur-spin', '--dur-shimmer']) {
-      expect((globalsText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} defined once`).toBe(1);
+      expect((tokensText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} defined once`).toBe(1);
     }
     for (const token of ['--hairline', '--hairline-strong', '--hairline-gold', '--elev-1', '--elev-2', '--elev-3',
       '--glass-surface', '--glass-border', '--gold-gradient']) {
-      expect((globalsText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} light + dark`).toBe(2);
+      expect((tokensText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} light + dark`).toBe(2);
     }
     // Every one the console reads must be a token, not a literal it invented.
     expect(css).not.toMatch(/border-radius: 0\.(65|9)rem/);
@@ -426,11 +446,11 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
   });
 
   it('keeps the fallback palette and the painted palette in step', () => {
-    // `globals.css` `:root` is the fallback; `siteTheme.light` is the inline style the
+    // The token layer's `:root` is the fallback; `siteTheme.light` is the inline style the
     // three document roots paint. A colour that disagrees between the two is a colour
     // that changes on whichever document forgets the style attribute — and the one that
     // can forget it is the error page, which is the worst place to discover a theme bug.
-    const root = globalsText.slice(globalsText.indexOf(':root {'), globalsText.indexOf('@theme inline'));
+    const root = tokensText.slice(tokensText.indexOf('\n:root {'), tokensText.indexOf('\nhtml[data-theme="dark"] {'));
     let compared = 0;
     for (const [name, value] of Object.entries(siteTheme.light as Record<string, string>)) {
       const at = root.indexOf(`\n  ${name}:`);
@@ -582,7 +602,9 @@ describe('the navigation reads off the grants (BK-13.2)', () => {
     expect(body.hits?.[0]).toMatchObject({
       kind: 'article',
       title: 'دليل الليزر البارد',
-      path: `/console/articles?key=${searchKey}`,
+      // The palette opens the row's own page (240), not the list it was found in: a
+      // document is a place, and the URL has to survive a paste.
+      path: `/console/articles/${searchArticleId}`,
     });
     // The same term against a resource the row is not: the query is only built for the
     // kinds the caller holds `read` on, and never for the rest.
@@ -737,15 +759,32 @@ describe('a screen only says saved when the server says saved', () => {
   });
 });
 
-describe('the editor pane is one row, edited (BK-13.4)', () => {
+describe('one row on its own page (BK-13.4, 240)', () => {
   const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
   const editor = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
-  const workspace = readFileSync(join(process.cwd(), 'src/components/console/ContentWorkspace.tsx'), 'utf8');
+  const detail = readFileSync(join(process.cwd(), 'src/components/console/ContentDetail.tsx'), 'utf8');
+  const listScreen = readFileSync(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'), 'utf8');
+
+  it('gives the list the whole width, and a row its own address', () => {
+    // The editor used to be a column beside the list, so the list got 75% of the page and
+    // a phone got neither half. A row is a document: opening it is navigation.
+    expect(css).toMatch(/\.console-work\s*\{[^}]*display: block;/);
+    expect(css).not.toMatch(/\.console-work\s*\{[^}]*grid-template-columns/);
+    expect(css).not.toMatch(/\.console-work-edit/);
+    // The old split named the editor's width from a viewport query; nothing may bring it
+    // back, because the editor now lives on a page the viewport does not describe.
+    expect(css).not.toMatch(/@media[^{]*\{\s*\.console-work/);
+    expect(listScreen).not.toMatch(/ContentWorkspace|setSelectedId/);
+    expect(listScreen).toMatch(/router\.push\(`\$\{contentDetailPath\(kind, created\.id\)\}/);
+    // The server renders the row before the editor mounts, so the first paint is the row
+    // the URL names — not an empty pane that fetches it.
+    expect(detail).toMatch(/initialRow=\{row\}/);
+  });
 
   it('splits the pane on the pane’s own width', () => {
-    // The workspace gives the editor 22rem or 60rem depending on the viewport, so a
-    // viewport media query would put a phone-width preview next to a squeezed field.
-    expect(css).toMatch(/\.console-work-edit\s*\{[^}]*container-name: console-edit/);
+    // The detail page is the container: a phone stacks the preview under the form and a
+    // laptop puts them side by side without either one guessing from the viewport.
+    expect(css).toMatch(/\.console-detail\s*\{[^}]*container-name: console-edit/);
     expect(css).toMatch(/@container console-edit \(min-width: \d+rem\)/);
     expect(css).toMatch(/\.console-editor\s*\{[^}]*grid-template-columns/);
   });
@@ -782,10 +821,12 @@ describe('the editor pane is one row, edited (BK-13.4)', () => {
   });
 
   it('holds a navigation that would lose unsaved words', () => {
-    // The gate is in the workspace, the words are in the editor: picking a row, a tab or
-    // the Trash all ask first, and only the pane that holds the form can answer.
-    expect(workspace).toMatch(/if \(!dirty\) \{\s*\w+\(\);/);
-    expect(workspace.match(/requestNav\(/g)!.length).toBeGreaterThanOrEqual(4);
+    // The gate is on the detail page, the words are in the editor: going back, switching
+    // language and Escape all ask first, and only the pane that holds the form can answer.
+    // A closed tab has no panel, so the browser's own prompt is the last resort.
+    expect(detail).toMatch(/if \(!dirty\) \{\s*run\(\);\s*return;\s*\}/);
+    expect((detail.match(/requestNav\(/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(detail).toContain("addEventListener('beforeunload', warn)");
     expect(editor).toContain("labels['content.unsaved.save']");
     expect(editor).toContain("labels['content.unsaved.discard']");
     expect(editor).toContain("labels['content.unsaved.keep']");
@@ -805,13 +846,39 @@ describe('the editor pane is one row, edited (BK-13.4)', () => {
     expect(editor).not.toMatch(/console-field/);
   });
 
-  it('leaves the row’s scope to the workspace', () => {
+  it('edits one language at a time, from tabs instead of a dropdown', () => {
+    // The old editor put the language in a `Select`, so the language a write would name
+    // was hidden behind a control. Both the list and the row now show two always-visible
+    // tabs, and the row's editor changes the content of the one the tab names.
+    expect(detail).toMatch(/const LANGUAGE_TABS: ContentLocale\[\] = \['ar', 'en'\];/);
+    expect(detail).toMatch(/<Tabs/);
+    expect(detail).not.toMatch(/<Select/);
+    expect(listScreen).toMatch(/<Tabs/);
+    expect(listScreen).not.toMatch(/<Select/);
+    // The locale term is spelled by `writeScopeQuery`, not assembled here: one rule, one
+    // place, so a request cannot name a language the guard does not read.
+    expect(detail).not.toMatch(/locale=\$\{/);
+  });
+
+  it('leaves the row’s scope to the page', () => {
     // One owner per thing: the editor never touches the selection or the tabs, and the
-    // workspace holds no form. `create()` is the one write the workspace makes, because a
-    // new row is empty — there are no words in it for the editor to protect.
+    // detail page holds no form. Creating is the one write the list makes, because a new
+    // row is empty — there are no words in it for the editor to protect.
     expect(editor).not.toMatch(/setScope|setSelectedId/);
-    expect(workspace).not.toMatch(/setForm|fieldsFromForm|formOf|RevisionView/);
-    expect(workspace).not.toMatch(/'PATCH'|\/publish|\/restore|\/rollback|\/revisions/);
+    expect(detail).not.toMatch(/setForm|fieldsFromForm|formOf|RevisionView/);
+    expect(detail).not.toMatch(/'PATCH'|\/publish|\/restore|\/rollback|\/revisions/);
+  });
+
+  it('shows the pictures the row itself carries', () => {
+    // Offers, services and result stories carry images inside JSON that a form renders
+    // as separate fields; the editor reads the live form so a newly typed URL appears
+    // without a save. URLs are arbitrary — WordPress paths, CDNs, data URLs — which is
+    // why the strip uses a plain `img` rather than a build-time allowlist.
+    expect(editor).toContain("labels['content.media']");
+    expect(editor).toMatch(/imagesOfForm\(row, form\)/);
+    expect(editor).toMatch(/<ul className="console-media-list">/);
+    expect(css).toMatch(/console-media-list img/);
+    expect(css).toMatch(/\.console-media-list img\s*\{[^}]*object-fit: cover;/);
   });
 });
 
@@ -827,11 +894,13 @@ describe('every screen reaches the primitives through one door (BK-13.5)', () =>
   const list = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
 
   it('draws a content screen from the workspace, never from a primitive', () => {
-    expect(pages.length, 'the sweep covers every registered screen').toBe(CONSOLE_SCREENS.length + 1);
+    // Every registered screen, the login screen, and the row page the four content
+    // screens share (240) — all three are real pages, so all three are in the sweep.
+    expect(pages.length, 'the sweep covers every registered screen').toBe(CONSOLE_SCREENS.length + 2);
     // A screen that imported ConsoleList would hold a second copy of the terms the address
     // bar already names, and the two answer different questions after one reload. Matched on
     // the import, not the word: `ConsoleListsPage` is a screen that is drawn correctly.
-    const primitive = /from '@\/components\/console\/(?:ConsoleList|ConsoleEditor|ContentWorkspace)'/;
+    const primitive = /from '@\/components\/console\/(?:ConsoleList|ConsoleEditor|ContentDetail)'/;
     for (const { path, source } of pages) {
       expect(source, path).not.toMatch(primitive);
     }

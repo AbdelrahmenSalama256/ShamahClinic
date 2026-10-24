@@ -44,7 +44,8 @@ interface TabsShape {
   /** Prefix for the tab and panel ids, so two tablists on one screen cannot collide. */
   idBase: string;
   className?: string;
-  children: ReactNode;
+  /** Omit it for a tablist that switches a view rather than owning a panel. */
+  children?: ReactNode;
 }
 
 const ARROWS = ['ArrowRight', 'ArrowLeft', 'Home', 'End'] as const;
@@ -53,6 +54,7 @@ export function Tabs({ items, value, onChange, label, idBase, className, childre
   const tabs = useRef<Record<string, HTMLButtonElement | null>>({});
   const tabId = (id: string) => `${idBase}-tab-${id}`;
   const panelId = `${idBase}-panel`;
+  const hasPanel = children !== undefined && children !== null;
 
   function focusTab(index: number) {
     const target = items.at(index);
@@ -83,7 +85,7 @@ export function Tabs({ items, value, onChange, label, idBase, className, childre
               role="tab"
               type="button"
               aria-selected={selected}
-              aria-controls={panelId}
+              aria-controls={hasPanel ? panelId : undefined}
               tabIndex={selected ? 0 : -1}
               active={selected}
               ref={(node) => {
@@ -98,9 +100,11 @@ export function Tabs({ items, value, onChange, label, idBase, className, childre
       </div>
       {/* No `tabIndex` on the panel: it is full of controls a visitor has to reach anyway,
           and a stop of its own would mean tabbing through the same content twice. */}
-      <div id={panelId} role="tabpanel" aria-labelledby={tabId(value)}>
-        {children}
-      </div>
+      {hasPanel && (
+        <div id={panelId} role="tabpanel" aria-labelledby={tabId(value)}>
+          {children}
+        </div>
+      )}
     </>
   );
 }

@@ -19,6 +19,7 @@ import { db } from '../db';
 import { likeOf } from '../db/like';
 import type { Resource } from '../auth/permissions';
 import { kindSpec, type ContentKind } from '../content/kinds';
+import { contentDetailPath } from './paths';
 
 /** A hit, already turned into the console URL that opens it. */
 export interface SearchHit {
@@ -36,14 +37,6 @@ const KIND_OF: Partial<Record<Resource, ContentKind>> = {
   article: 'article',
   offer: 'offer',
   page: 'page',
-};
-
-/** Where the screen of a kind lives, and the parameter that opens one row. */
-const SCREEN_OF: Record<ContentKind, string> = {
-  article: '/console/articles',
-  offer: '/console/offers',
-  page: '/console/pages',
-  list_item: '/console/lists',
 };
 
 interface HitRow {
@@ -89,7 +82,7 @@ export async function searchRows(resources: readonly Resource[], term: string, l
         key: row.row_key,
         // Arabic is the site's primary language, so it wins when a row has both.
         title: (row.title_ar || row.title_en || row.row_key).trim(),
-        path: `${SCREEN_OF[kind]}?key=${encodeURIComponent(row.row_key)}`,
+        path: contentDetailPath(kind, row.id),
       });
     }
   }

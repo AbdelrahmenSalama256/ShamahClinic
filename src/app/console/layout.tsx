@@ -4,7 +4,11 @@ import { siteConfig, siteTheme } from '@/config/site';
 import { dirOf } from '@/lib/console/prefs';
 import { message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';
-import '../globals.css';
+// The console reads the token layer and the shared controls, never the site stylesheet:
+// `globals.css` carries the public page's element rules (`img { width: 100% !important }`
+// would flatten every thumbnail) and a reset this work surface does not share.
+import '../../styles/tokens.css';
+import '../../components/ui/ui.css';
 import './console.css';
 
 /** Every console page depends on who is asking. */

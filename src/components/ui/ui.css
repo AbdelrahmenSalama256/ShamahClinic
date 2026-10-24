@@ -766,6 +766,24 @@ select.ui-control {
   text-underline-offset: var(--sp-1);
 }
 
+.ui-row-link:hover .ui-row-title {
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+/* The same row when opening it leaves the page. A document has its own address now, so
+   the thing that opens a row is an anchor — and an anchor has to give back the two things
+   the browser paints on it: the blue ink and the underline. The layout is shared with the
+   action so a row is the same row whichever element it is. */
+.ui-row-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: var(--tap);
+  color: inherit;
+  text-decoration: none;
+}
+
 .ui-row-title {
   font-weight: 600;
   overflow-wrap: anywhere;

@@ -19,6 +19,9 @@ const read = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
 
 const fontsModule = read('src/lib/fonts/index.ts');
 const globals = read('src/app/globals.css');
+// BK-240 split the token layer out of the site stylesheet; the families, the tracking
+// scale and the digit cell live here now, and both roots import this file.
+const tokens = read('src/styles/tokens.css');
 const consoleCss = read('src/app/console/console.css');
 
 /** Every `.ts`/`.tsx` under `src`, so a stray import cannot hide in a file nobody reads. */
@@ -90,7 +93,7 @@ describe('BK-19.2 the type system', () => {
   });
 
   it('names one family, and no element paints a second', () => {
-    expect(globals).toMatch(
+    expect(tokens).toMatch(
       /--font-ui:\s*var\(--font-tajawal,\s*"Segoe UI", Tahoma, Arial, sans-serif\)/,
     );
     for (const css of [globals, consoleCss]) {
@@ -120,7 +123,7 @@ describe('BK-19.2 the type system', () => {
     const base = layerBlock(globals, 'base');
     expect(base).not.toBe('');
     for (const token of ['--fs-h1', '--fs-h2', '--fs-h3', '--fs-h4', '--lh-tight']) {
-      expect(globals).toMatch(new RegExp(`\\s${token}:`));
+      expect(tokens).toMatch(new RegExp(`\\s${token}:`));
     }
     expect(base).toMatch(/h1\s*\{\s*font-size:\s*var\(--fs-h1\);/);
     expect(base).toMatch(/h4\s*\{\s*font-size:\s*var\(--fs-h4\);/);
@@ -133,7 +136,7 @@ describe('BK-19.2 the type system', () => {
     // `-0.015em` separates the tooth from the join, `0.3em` dissolves the kashida.
     // The fix is one rule that flattens the scale in RTL, not a `[dir="rtl"]` twin at
     // each of the twelve places that used to ask for tracking by hand.
-    const zeroing = /\[dir="rtl"\]\s*\{[^}]*\}/.exec(globals)?.[0] ?? '';
+    const zeroing = /\[dir="rtl"\]\s*\{[^}]*\}/.exec(tokens)?.[0] ?? '';
     expect(zeroing, 'RTL has no tracked step').not.toBe('');
     for (const token of ['--ls-heading', '--ls-eyebrow', '--ls-label', '--ls-soft']) {
       expect(zeroing, `${token} resolves to nothing in Arabic`).toMatch(
@@ -173,7 +176,7 @@ describe('BK-19.2 the type system', () => {
     // digits span 375–553 units of a 1000 upem, and the Arabic-Indic ones the Arabic
     // pages actually render span 207–633. So alignment is inline-size, not OpenType.
     expect(globals).toMatch(/no `tnum`/);
-    expect(globals).toMatch(/--num-cell:\s*max\(1ch, 0\.64em\)/);
+    expect(tokens).toMatch(/--num-cell:\s*max\(1ch, 0\.64em\)/);
     expect(globals).toMatch(
       /@utility num\s*\{[\s\S]*?min-inline-size:\s*calc\(var\(--num-digits, 1\)\s*\*\s*var\(--num-cell\)\);/,
     );

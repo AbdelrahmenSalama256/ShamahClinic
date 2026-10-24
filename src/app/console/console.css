@@ -597,21 +597,17 @@ details[open] > .console-nav-head .console-nav-caret {
   margin-block-start: var(--ui-stack);
 }
 
-/* --- the content workspace (BK-6, retuned by 13.1) ------------------------ */
+/* --- the content screens (BK-6, retuned by 13.1 and 240) ------------------- */
+/* The list is the screen. A row opens its own page (`/console/<kind>/<id>`), so there is
+   no second pane to share the width with — and no `data-open` state to switch between
+   two grids. */
 .console-work {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--ui-stack);
-  align-items: start;
+  display: block;
 }
 
-.console-work-list,
-.console-work-edit {
-  min-width: 0;
-}
-
-/* The list reads its own width, not the viewport's: see `@container console-list`. */
 .console-work-list {
+  min-width: 0;
+  /* The list reads its own width, not the viewport's: see `@container console-list`. */
   container-type: inline-size;
   container-name: console-list;
 }
@@ -643,20 +639,6 @@ details[open] > .console-nav-head .console-nav-caret {
    and `.ui-row-key` (BK-19.3d). The table cell and the card column used to be two copies of
    the same button, and the underline that said "this is what a click answers to" was
    written twice as well. */
-
-.console-work-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-block-end: 0.75rem;
-}
-
-.console-work-head h2 {
-  margin: 0;
-  font-size: 1.05rem;
-  overflow-wrap: anywhere;
-}
 
 .console-subheading {
   margin: 0 0 0.6rem;
@@ -783,6 +765,95 @@ details[open] > .console-nav-head .console-nav-caret {
   display: none;
 }
 
+/* --- the row itself (240) ------------------------------------------------- */
+/* A row is a document, so the table is drawn around the four things a person scans for:
+   the picture, the title, the identity under it, and where it stands. The title column
+   takes the leftover width; dates stay on one line and in tabular figures so a column of
+   them reads as a column; the picture is a fixed square, because a thumbnail that grew
+   with its source would make the rows different heights. */
+.console-table {
+  font-variant-numeric: tabular-nums;
+}
+
+.console-table th,
+.console-table td {
+  vertical-align: middle;
+}
+
+.console-table thead th {
+  white-space: nowrap;
+}
+
+.console-table .console-cell-title {
+  inline-size: 45%;
+  min-inline-size: 16rem;
+}
+
+/* The link itself — the pointer, the inherited ink, the 44px floor and the underline on
+   the title — is `.ui-row-link` in the control layer now, because the same row is opened
+   from the table and from a card. What is here is the cell's own target: the negative
+   margin lets the link fill the padding so the whole title area answers, without laying a
+   second hover fill inside the row's. */
+.console-row-link {
+  margin: -0.35rem -0.4rem;
+  padding: 0.35rem 0.4rem;
+  border-radius: var(--radius-control);
+}
+
+.console-row-text,
+.console-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.console-thumb {
+  display: block;
+  flex: none;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--bg-secondary);
+  object-fit: cover;
+}
+
+/* A missing picture is stated, not left blank: "the upload did not take" and "this item
+   has no picture" must not look the same in a list a person is scanning. */
+span.console-thumb[data-empty] {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.console-cell-date {
+  white-space: nowrap;
+  font-size: var(--ui-font-small);
+  color: var(--text-secondary);
+}
+
+/* The identity is under the title, so a narrow screen loses the slug before the name. */
+@container console-list (max-width: 30rem) {
+  .console-thumb {
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+  }
+}
+
+/* The create form asks one question, so it is one short card — not a panel the width of
+   the page that leaves the field floating in it. */
+.console-create {
+  display: grid;
+  gap: var(--ui-gap);
+  max-inline-size: 44rem;
+}
+
+.console-create .ui-lede,
+.console-create .ui-note {
+  margin: 0;
+}
+
 .console-cards-head {
   display: flex;
   min-block-size: var(--tap);
@@ -811,21 +882,22 @@ details[open] > .console-nav-head .console-nav-caret {
    the row's own arrangement. */
 .console-cards .ui-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--sp-2);
 }
 
 /* The row and card checkboxes are `.ui-check` now: the box's graphic is 20px, the label
  * around it is the target, and the 44px floor it carries is the primitive's — which is how
  * the editor's flag rows got a floor at all. `.console-cell-check` above still owns the
- * column's width. The title action inside the row is `.ui-row-action`, and this is the one
- * place it is not a whole cell but a column of title, state and key. */
-.console-cards .ui-row-action {
+ * column's width. The link takes the rest of the card and puts the state chip at its end,
+ * so every card reads picture, name, state in the same three places. */
+.console-cards .console-card-link {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-gap-tight);
+  min-width: 0;
+}
+
+.console-cards .console-card-link > .ui-badge {
+  margin-inline-start: auto;
 }
 
 .console-pager {
@@ -846,18 +918,48 @@ details[open] > .console-nav-head .console-nav-caret {
 
 /* --- the content editor (BK-13.4) ----------------------------------------- */
 /*
- * Fields on one side, what they produce on the other. The split is decided by the editor
- * pane's own width and not the viewport's: a 900px screen gives this pane ~22rem, a
- * 1440px screen gives it ~43rem, and a preview squeezed beside a slug field shows a
- * letter per line instead of a page. So `.console-work-edit` is a container and
- * `@container console-edit` is what puts the two columns side by side.
- *
- * Stacked, the preview comes after the save bar. On a phone the words are the work and
- * the frame is only a check, so it does not get to push the buttons off the screen.
+ * The detail page is one row and its editor, at the page's width. Fields on one side and
+ * what they produce on the other, split by the page's own width rather than the window's:
+ * `.console-detail` is the container, so a phone stacks the preview under the form and a
+ * laptop puts them side by side without either one guessing from the viewport.
  */
-.console-work-edit {
+.console-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-stack);
   container-type: inline-size;
   container-name: console-edit;
+}
+
+/* The way back, the row's name and the identity the site serves. The heading wraps instead
+   of pushing the button off the line, and the key is literal text at caption size. */
+.console-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--ui-gap);
+}
+
+.console-detail-id {
+  display: flex;
+  flex: 1 1 18rem;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.console-detail-id .console-heading {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.console-detail-key {
+  overflow-wrap: anywhere;
+}
+
+.console-detail-status {
+  align-items: center;
+  gap: var(--ui-gap-tight) var(--ui-gap);
 }
 
 .console-editor {
@@ -925,6 +1027,39 @@ details[open] > .console-nav-head .console-nav-caret {
 .console-seo h3 {
   margin: 0 0 0.4rem;
   font-size: 1rem;
+}
+
+/* The item's pictures, read from the live form. The size is the strip's, not the image's:
+   offers carry a portrait, articles a landscape, and a row of different heights would make
+   the odd one out look like a mistake. */
+.console-media {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.console-media h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.console-media-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.console-media-list img {
+  display: block;
+  inline-size: 7.5rem;
+  block-size: 5.5rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--bg-secondary);
+  object-fit: cover;
 }
 
 .console-seo-title,
@@ -1028,24 +1163,6 @@ details[open] > .console-nav-head .console-nav-caret {
        is not 19.3d's business: what it should sit over is the drawer/modal pass. */
     z-index: var(--z-scrim);
     background: rgb(0 0 0 / 45%);
-  }
-}
-
-/* --- the list/editor split, once the content is wide enough --------------- */
-/* While the editor holds nothing, the list takes the room it would have wasted. The
-   editor pane keeps 18rem because its scope tabs have to stay clickable. */
-@media (min-width: 900px) {
-  .console-work {
-    grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
-  }
-  .console-work:not([data-open]) {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
-  }
-}
-
-@media (min-width: 1280px) {
-  .console-work {
-    grid-template-columns: minmax(20rem, 28rem) minmax(0, 1fr);
   }
 }
 
