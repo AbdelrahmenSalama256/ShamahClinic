@@ -1057,6 +1057,149 @@ details[open] > .console-nav-head .console-nav-caret {
   }
 }
 
+/* --- leads (BK-17a) ------------------------------------------------------- */
+/*
+ * A request is not a document: there is no draft, so the screen is a list and the one you
+ * picked rather than the list/editor split. The list reads its own width for the hidden
+ * contact columns (`.console-cell-extra`), the same way the content list does, because
+ * the viewport width says nothing about how much of a table the split left it.
+ */
+.console-leads-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ui-stack);
+  align-items: start;
+}
+
+.console-leads-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-gap);
+  min-width: 0;
+  container-type: inline-size;
+  container-name: console-list;
+}
+
+/* Below this the pane would be narrower than a phone number, so the detail stacks under
+   the list and the page scrolls once. */
+@media (min-width: 1024px) {
+  .console-leads-split {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+  }
+
+  /* The pane follows the row you clicked while the rest of the page moves. Its own
+     `overflow` keeps a long note list from pushing the status control off-screen. */
+  .console-lead-detail {
+    position: sticky;
+    inset-block-start: 0;
+    max-block-size: calc(100vh - 8rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+
+.console-lead-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui-gap);
+  min-width: 0;
+}
+
+.console-lead-title {
+  margin: 0;
+  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+/* The double rule: the two contact lines are a description list and so are the request's
+   own columns, so neither needs its own class — only the one grid both of them sit in. */
+.console-lead-meta {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr);
+  gap: var(--ui-gap-tight) var(--ui-gap);
+  inline-size: 100%;
+  margin: 0;
+  font-size: var(--ui-font-small);
+  overflow-wrap: anywhere;
+}
+
+.console-lead-meta dt {
+  color: var(--text-secondary);
+}
+
+.console-lead-meta dd {
+  margin: 0;
+}
+
+.console-lead-message {
+  inline-size: 100%;
+}
+
+.console-lead-message p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.console-lead-caption {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--ui-font-small);
+  font-weight: 600;
+}
+
+.console-lead-actions {
+  inline-size: 100%;
+}
+
+.console-lead-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-gap-tight);
+  inline-size: 100%;
+  padding-block-start: var(--ui-gap);
+  border-block-start: 1px solid var(--border-control-soft);
+}
+
+/* A note stands alone, and `Note` is a span — same reason as the pager's caption. */
+.console-lead-note-list > .ui-note {
+  display: block;
+}
+
+.console-lead-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-gap);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.console-lead-note {
+  padding-inline-start: 0.7rem;
+  border-inline-start: 2px solid var(--border-control-soft);
+}
+
+.console-lead-note p {
+  margin: 0 0 0.2rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.console-lead-note-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui-gap-tight);
+  inline-size: 100%;
+}
+
+/* The composer's box takes the pane's width; the skin stays the control layer's. */
+.console-lead-note-input {
+  inline-size: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .console-side,
   .console-scrim {

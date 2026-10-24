@@ -117,7 +117,9 @@ export const ROLE_SEEDS: readonly RoleSeed[] = [
     name: 'Marketer',
     description: 'Leads, CTAs and statistics, with contact details. Writes no content.',
     grants: [
-      { resource: 'lead', actions: ['create', 'update', 'delete', 'export'], scope: null },
+      // `read` is spelled out beside WRITE: a worker who may move a lead but may not open
+      // the leads screen has a grant it can never exercise.
+      { resource: 'lead', actions: ['read', ...WRITE, 'export'], scope: null },
       { resource: 'cta', actions: [...WRITE, 'publish'], scope: null },
       { resource: 'media', actions: ['create', 'update'], scope: null },
       { resource: 'article', actions: ['read'], scope: null },

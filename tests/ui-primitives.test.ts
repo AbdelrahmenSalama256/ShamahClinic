@@ -688,12 +688,14 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
         expect(PLACEMENT_PROPERTIES, `${block.selector} may not set ${property}`).toContain(property);
       }
     }
-    // And the hooks that are left are the four this row expected, no more.
+    // And the hooks that are left are the ones this row expected, no more: each is a
+    // standalone `Note` that needs the line a span refuses, or a card row's arrangement.
     expect(overrides.map((block) => block.selector)).toEqual([
       '.console-palette-list > .ui-note',
       '.console-panel > .ui-note, .console-content > .ui-note',
       '.console-cards .ui-card',
       '.console-cards .ui-row-action',
+      '.console-lead-note-list > .ui-note',
     ]);
   });
 

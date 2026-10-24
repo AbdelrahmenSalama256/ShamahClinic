@@ -271,17 +271,18 @@ describe('the sidebar registry', () => {
   });
 
   it('shows each role exactly the screens its grants cover', () => {
-    // The two screens every role holds, plus what its `read` grants reach. Marketer
-    // has no `list` grant and only Owner/Admin can read `setting`, so those rows are
-    // the proof the sidebar is filtered by the catalog rather than hardcoded.
-    const content = ['overview', 'articles', 'offers', 'pages'];
+    // The screens every role holds, plus what its `read` grants reach. Leads is a
+    // workspace screen, so it comes before the content group; Marketer has no `list`
+    // grant and only Owner/Admin can read `setting`, so those rows are the proof the
+    // sidebar is filtered by the catalog rather than hardcoded.
+    const content = ['articles', 'offers', 'pages'];
     const expected: Record<RoleName, string[]> = {
-      Owner: [...content, 'lists', 'settings', 'password'],
-      Admin: [...content, 'lists', 'settings', 'password'],
-      Editor: [...content, 'lists', 'password'],
-      SEO: [...content, 'lists', 'password'],
-      Marketer: [...content, 'password'],
-      Viewer: [...content, 'lists', 'password'],
+      Owner: ['overview', 'leads', ...content, 'lists', 'settings', 'password'],
+      Admin: ['overview', 'leads', ...content, 'lists', 'settings', 'password'],
+      Editor: ['overview', 'leads', ...content, 'lists', 'password'],
+      SEO: ['overview', ...content, 'lists', 'password'],
+      Marketer: ['overview', 'leads', ...content, 'password'],
+      Viewer: ['overview', 'leads', ...content, 'lists', 'password'],
     };
     for (const name of Object.keys(expected) as RoleName[]) {
       expect(visibleScreens(grantsFor(name)).map((screen) => screen.key), name).toEqual(expected[name]);

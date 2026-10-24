@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import { NextResponse } from "next/server";
+import { recordLead } from "@/lib/leads/store";
 import { CF7_FIELDS, CF7_FORM_ID, LEAD_MODE, WHATSAPP, WP_ORIGIN } from "@/lib/wp/config";
 
 export const runtime = "nodejs";
@@ -13,6 +15,8 @@ interface LeadInput {
   branch?: string;
   message?: string;
   lang?: string;
+  /** `document.referrer` from the page that held the form; empty on a direct visit. */
+  referrer?: string;
   _website?: string; // honeypot
 }
 
@@ -73,6 +77,70 @@ function invalid(message: string) {
   return NextResponse.json({ ok: false, error: message }, { status: 400 });
 }
 
+const UTM_KEYS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const;
+
+/** Where the visitor was when they submitted: the page path and the campaign tags on it. */
+function pageContext(referer: string | null): { pagePath: string; utm: Record<string, string> | null } {
+  if (!referer) return { pagePath: '', utm: null };
+  try {
+    const url = new URL(referer);
+    const utm: Record<string, string> = {};
+    for (const key of UTM_KEYS) {
+      const value = url.searchParams.get(key);
+      if (value) utm[key] = value.slice(0, 200);
+    }
+    return {
+      pagePath: url.pathname.slice(0, 512),
+      utm: Object.keys(utm).length > 0 ? utm : null,
+    };
+  } catch {
+    return { pagePath: '', utm: null };
+  }
+}
+
+/**
+ * The booking form sends a preferred date and a branch; the contact form sends neither.
+ * That is the one reliable difference between the two — both send a service list.
+ */
+function sourceOf(input: LeadInput): string {
+  return input.date || input.branch ? 'booking' : 'contact-form';
+}
+
+/**
+ * Persist the submission before answering. A visitor's WhatsApp deep link must survive a
+ * database outage, so a failed insert is swallowed here: the console page is a record of
+ * what the clinic was told, not the channel that tells it.
+ */
+async function keepLead(input: LeadInput, ip: string, referer: string | null): Promise<void> {
+  const context = pageContext(referer);
+  // Five-minute bucket: a double tap is one lead, two real enquiries are two.
+  const bucket = Math.floor(Date.now() / 300_000);
+  const key = createHash('sha256')
+    .update([ip, input.name, input.phone, input.date ?? '', input.subject ?? '', bucket].join('|'))
+    .digest('hex');
+  const fields: Record<string, unknown> = {};
+  for (const name of ['date', 'service', 'offer', 'subject', 'branch'] as const) {
+    if (input[name]) fields[name] = input[name];
+  }
+  try {
+    await recordLead({
+      source: sourceOf(input),
+      formId: 'site',
+      name: input.name,
+      phone: input.phone,
+      message: input.message ?? null,
+      fields: Object.keys(fields).length > 0 ? fields : null,
+      locale: input.lang === 'en' ? 'en' : 'ar',
+      pagePath: context.pagePath,
+      referrer: (input.referrer ?? '').slice(0, 512),
+      utm: context.utm,
+      idempotencyKey: key,
+    });
+  } catch {
+    console.error('[lead] submission was not recorded');
+  }
+}
+
 export async function POST(req: Request) {
   let input: LeadInput;
   try {
@@ -97,6 +165,11 @@ export async function POST(req: Request) {
   }
 
   const message = buildMessage({ ...input, name, phone });
+
+  // Every submission lands in the leads table before the visitor is answered, so the
+  // console page is the record of what the site actually received. WhatsApp and CF7
+  // stay the delivery channels; this is the copy the clinic can work from.
+  await keepLead({ ...input, name, phone }, ip, req.headers.get('referer'));
 
   // Default mode: hand the user a prefilled WhatsApp deep link (no email sent).
   if (LEAD_MODE === "whatsapp") {

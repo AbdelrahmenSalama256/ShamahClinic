@@ -163,6 +163,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         .join(" — "),
       message: notes.trim() || undefined,
       lang: language,
+      referrer: document.referrer,
     };
     try {
       const res = await fetch("/api/v1/lead", {

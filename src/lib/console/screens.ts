@@ -30,7 +30,7 @@ export type EntityVocabulary = 'none' | 'locales' | 'lists';
 
 export interface ConsoleScreen {
   /** Doubles as the message key, so a screen with no label is a type error. */
-  key: 'overview' | 'articles' | 'offers' | 'pages' | 'lists' | 'settings' | 'password';
+  key: 'overview' | 'leads' | 'articles' | 'offers' | 'pages' | 'lists' | 'settings' | 'password';
   path: string;
   /** `null` is the landing screen: anyone with a session may open it. */
   resource: Resource | null;
@@ -49,6 +49,11 @@ export interface ConsoleScreen {
  */
 export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   { key: 'overview', path: '/console', resource: null, action: 'read', group: 'workspace', entities: 'none' },
+  // An enquiry is the one thing on the site that stops existing if nobody looks at it,
+  // so it sits beside the overview rather than at the end of the content group. Reads are
+  // unscoped; every role with a `lead read` grant sees the list, and the contact columns
+  // are blanked for the ones that may only count.
+  { key: 'leads', path: '/console/leads', resource: 'lead', action: 'read', group: 'workspace', entities: 'none' },
   { key: 'articles', path: '/console/articles', resource: 'article', action: 'read', group: 'content', entities: 'locales' },
   { key: 'offers', path: '/console/offers', resource: 'offer', action: 'read', group: 'content', entities: 'locales' },
   { key: 'pages', path: '/console/pages', resource: 'page', action: 'read', group: 'content', entities: 'locales' },

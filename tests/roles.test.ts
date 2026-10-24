@@ -263,6 +263,7 @@ describe('what each level can do', () => {
     { role: 'SEO', resource: 'lead', action: 'read', allowed: false, why: 'no leads at all' },
     { role: 'SEO', resource: 'media', action: 'update', allowed: false, why: 'read-only media' },
 
+    { role: 'Marketer', resource: 'lead', action: 'read', allowed: true, why: 'opens the screen it works' },
     { role: 'Marketer', resource: 'lead', action: 'update', allowed: true, why: 'works the pipeline' },
     { role: 'Marketer', resource: 'lead', action: 'export', allowed: true, why: 'CSV and Sheets' },
     { role: 'Marketer', resource: 'cta', action: 'publish', allowed: true, why: 'owns CTAs' },
@@ -450,6 +451,9 @@ describe('no console route writes without guard()', () => {
     // The saved-filter pair delegates the same way: the chips only ever hold one
     // person's own query string, so their route files stay one line long.
     ['@/lib/console/views-route', 'src/lib/console/views-route.ts'],
+    // The leads trio (list, item, notes) is one handler and three one-line routes; the
+    // source a write names comes from the query string, and the guard reads it there.
+    ['@/lib/leads/api', 'src/lib/leads/api.ts'],
   ]);
 
   function routeFiles(dir: string): string[] {
