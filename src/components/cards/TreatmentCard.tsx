@@ -18,7 +18,7 @@ export const TreatmentCard: React.FC<{ treatment: Treatment }> = ({
 
   return (
     <Link
-      href={getLocalizedHref(`/treatments/${treatment.id}`, language)}
+      href={getLocalizedHref(`/services/${treatment.id}`, language)}
       className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
     >
       <div className="relative overflow-hidden">

@@ -25,7 +25,7 @@ const destinations = [
     description: { ar: "ابدئي من جديد", en: "Start over" },
   },
   {
-    href: "/treatments",
+    href: "/services",
     icon: Sparkles,
     label: { ar: "خدماتنا", en: "Treatments" },
     description: { ar: "اكتشفي جلساتنا", en: "Explore our services" },

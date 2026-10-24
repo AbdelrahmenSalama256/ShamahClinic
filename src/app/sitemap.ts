@@ -70,7 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   const treatmentRoutes: Route[] = treatments.map((t) => ({
-    path: `/treatments/${t.id}`,
+    path: `/services/${t.id}`,
     priority: 0.8,
     changeFrequency: "monthly",
   }));

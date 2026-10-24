@@ -56,7 +56,7 @@ export async function organizationJsonLd(): Promise<Json> {
     availableService: (await getMergedTreatments()).map((t) => ({
       "@type": "MedicalProcedure",
       ...names(t.name, lang),
-      url: localized(`/treatments/${t.id}`, lang),
+      url: localized(`/services/${t.id}`, lang),
     })),
   };
 }
@@ -144,7 +144,7 @@ export async function articleJsonLd(article: Article): Promise<Json> {
 
 export async function serviceJsonLd(treatment: Treatment): Promise<Json> {
   const lang = await routeLang();
-  const path = `/treatments/${treatment.id}`;
+  const path = `/services/${treatment.id}`;
   return {
     "@context": "https://schema.org",
     "@type": "MedicalProcedure",

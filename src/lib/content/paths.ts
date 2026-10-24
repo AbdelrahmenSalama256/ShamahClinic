@@ -27,7 +27,9 @@ export function pageSlug(route: string): string {
 const LIST_PATHS: Record<string, (key: string) => string | null> = {
   branches: (key) => `/branches/${key}`,
   services: (key) => `/services/${key}`,
-  treatments: (key) => `/treatments/${key}`,
+  // A treatment row is one of the services the /services grid renders; the old
+  // `/treatments/` segment is gone and redirects here.
+  treatments: (key) => `/services/${key}`,
   specialists: () => '/doctors',
   faq: () => '/faq',
   results: () => '/results',

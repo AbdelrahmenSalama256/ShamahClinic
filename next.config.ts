@@ -36,6 +36,21 @@ const nextConfig: NextConfig = {
         destination: "/en/blogs/:path*",
         permanent: true,
       },
+      {
+        source: "/treatments/:path*",
+        destination: "/services/:path*",
+        permanent: true,
+      },
+      {
+        source: "/ar/treatments/:path*",
+        destination: "/ar/services/:path*",
+        permanent: true,
+      },
+      {
+        source: "/en/treatments/:path*",
+        destination: "/en/services/:path*",
+        permanent: true,
+      },
     ];
   },
   images: {

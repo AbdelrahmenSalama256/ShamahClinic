@@ -162,11 +162,11 @@ for (const lang of ["ar", "en"]) {
   const band = $(
     $("main > section")
       .toArray()
-      .find((s) => $(s).find(`a[href*="/treatments/"]`).length),
+      .find((s) => $(s).find(`a[href*="/services/"]`).length),
   );
 
   const cardCount = {
-    services: band.find(`a[href*="/treatments/"]`).length,
+    services: band.find(`a[href*="/services/"]`).length,
     offers: $("#offers article").length,
     branches: $(`#branches a[href*="/branches/"]`).length,
     blogs: $(`#blogs a[href*="/blogs/"]`).length,
@@ -290,7 +290,7 @@ for (const lang of ["ar", "en"]) {
     );
   }
 
-  const cards = $("main").find(`a[href*="/treatments/"]`).length;
+  const cards = $("main").find(`a[href*="/services/"]`).length;
   check(
     cards >= titles.length,
     `${lang}: /services grid renders ${cards} service card(s) for ${titles.length} WordPress section(s)`,
@@ -299,12 +299,12 @@ for (const lang of ["ar", "en"]) {
   // A service WordPress gives only a title, intro and photo must not gain an
   // invented price, an empty fact grid or blank Benefits/Steps/Aftercare blocks.
   for (const slug of WP_ONLY) {
-    const res = await fetch(`${ORIGIN}/${lang}/treatments/${slug}`, { cache: "no-store" });
+    const res = await fetch(`${ORIGIN}/${lang}/services/${slug}`, { cache: "no-store" });
     const body = await res.text();
     const $d = cheerio.load(body);
     check(
       res.ok,
-      `${lang}: /treatments/${slug} returned ${res.status}`,
+      `${lang}: /services/${slug} returned ${res.status}`,
     );
     check(
       text($d("h1")).length > 3,
@@ -396,7 +396,6 @@ for (const path of [
   "/blogs/no-such-article",
   "/offers/no-such-offer",
   "/services/no-such-service",
-  "/treatments/no-such-treatment",
   "/branches/no-such-branch",
 ]) {
   const res = await fetch(`${ORIGIN}${path}`, { cache: "no-store" });
@@ -406,6 +405,25 @@ for (const path of [
     `${path}: HTTP 404 for a slug WordPress does not have (got ${res.status})`,
   );
   check(/noindex/.test(html), `${path}: noindex`);
+}
+
+// The old treatments segment is retired. Both the list and a detail URL must answer
+// a permanent redirect onto the same slug under /services, never a 404.
+for (const [path, expected] of [
+  ["/treatments", "/services"],
+  ["/en/treatments", "/en/services"],
+  ["/ar/treatments/botox-injections", "/ar/services/botox-injections"],
+]) {
+  const res = await fetch(`${ORIGIN}${path}`, { redirect: "manual" });
+  const location = res.headers.get("location") || "";
+  check(
+    res.status === 301 || res.status === 308,
+    `${path}: permanently redirects (got ${res.status})`,
+  );
+  check(
+    location === expected,
+    `${path}: redirects to ${expected} (got "${location}")`,
+  );
 }
 
 // ── 6. /results lists the posts whose own text names a result ──

@@ -66,7 +66,7 @@ export const TreatmentDetailClient: React.FC<{
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/services", label: { ar: "الخدمات", en: "Treatments" } },
-          { href: `/treatments/${treatment.id}`, label: treatment.name },
+          { href: `/services/${treatment.id}`, label: treatment.name },
         ]}
       />
 

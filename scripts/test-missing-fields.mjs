@@ -242,7 +242,7 @@ for (const lang of ["ar", "en"]) {
 
   const fullHome = byCase("home-four-cards");
   const cardCounts = {
-    services: fullHome.find('a[href*="/treatments/"]').length,
+    services: fullHome.find('a[href*="/services/"]').length,
     offers: fullHome.find("#offers article").length,
     branches: fullHome.find('a[href*="/branches/"]').length,
     articles: fullHome.find('a[href*="/blogs/"]').length,

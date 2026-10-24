@@ -17,8 +17,6 @@ const PATHS = [
   "/[lang]/offers/[slug]",
   "/[lang]/services",
   "/[lang]/services/[slug]",
-  "/[lang]/treatments",
-  "/[lang]/treatments/[slug]",
   "/[lang]/branches",
   "/[lang]/branches/[slug]",
   "/[lang]/about",
