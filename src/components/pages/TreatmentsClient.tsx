@@ -10,13 +10,15 @@ import {
   type Treatment,
   type TreatmentCategory,
 } from "@/data/treatments";
-import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 
 interface Props {
   /** WordPress page 696 heading, with an authored fallback. */
   title: { ar: string; en: string };
   /** WordPress-titled catalog (pages/696). */
   treatments: Treatment[];
+  /** The page's banner, saved in the console or authored. */
+  banner: PhotoSlot;
 }
 
 type FilterCategory = {
@@ -24,7 +26,7 @@ type FilterCategory = {
   name: { ar: string; en: string };
 };
 
-export const TreatmentsClient: React.FC<Props> = ({ title, treatments }) => {
+export const TreatmentsClient: React.FC<Props> = ({ title, treatments, banner }) => {
   const { t } = useLanguage();
   const [active, setActive] = useState<TreatmentCategory | "all" | "other">("all");
 
@@ -65,7 +67,7 @@ export const TreatmentsClient: React.FC<Props> = ({ title, treatments }) => {
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/services", label: title },
         ]}
-        photo={images.treatments.laser}
+        photo={banner}
       />
 
       <section className="py-8 lg:py-16">

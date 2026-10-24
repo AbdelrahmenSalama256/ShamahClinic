@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { JournalClient } from "@/components/pages/JournalClient";
 import { getPosts, getCategories, getPageTitle } from "@/lib/content/site";
+import { getBanner } from "@/lib/content/banners";
 import { cardToUIArticle } from "@/lib/wp/ui";
 import { getLocalizedHref } from "@/lib/locale";
 import { SITE_URL } from "@/lib/site";
@@ -82,10 +83,13 @@ export default async function JournalPage({ searchParams }: Props) {
   await guardPage('blogs');
   const { paged, categories, category, search, page } = await read(searchParams);
   const lang = await routeLang();
-  const title = await getPageTitle("journal", {
-    ar: "مدونة شامه",
-    en: "Shamah Blog",
-  });
+  const [title, banner] = await Promise.all([
+    getPageTitle("journal", {
+      ar: "مدونة شامه",
+      en: "Shamah Blog",
+    }),
+    getBanner('blogs'),
+  ]);
 
   return (
     <>
@@ -107,6 +111,7 @@ export default async function JournalPage({ searchParams }: Props) {
         categories={categories}
         activeCategory={category}
         activeSearch={search}
+        banner={banner}
       />
     </>
   );

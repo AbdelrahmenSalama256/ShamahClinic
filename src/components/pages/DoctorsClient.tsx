@@ -9,9 +9,11 @@ import { DoctorCard } from "@/components/cards/DoctorCard";
 import { specialistsData } from "@/data/specialists";
 import type { BranchDetail } from "@/data/branches";
 import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 
-export const DoctorsClient: React.FC<{ branches: BranchDetail[] }> = ({
+export const DoctorsClient: React.FC<{ branches: BranchDetail[]; banner: PhotoSlot }> = ({
   branches,
+  banner,
 }) => {
   const { t, formatNumber } = useLanguage();
 
@@ -27,7 +29,7 @@ export const DoctorsClient: React.FC<{ branches: BranchDetail[] }> = ({
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/doctors", label: { ar: "الأطباء", en: "Doctors" } },
         ]}
-        photo={images.interiors.consultation}
+        photo={banner}
       />
 
       <section className="py-8 lg:py-16">

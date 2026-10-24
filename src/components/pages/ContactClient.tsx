@@ -11,6 +11,7 @@ import { clinicData } from "@/data/clinic";
 import type { BranchDetail } from "@/data/branches";
 import type { TreatmentOption } from "@/data/treatments";
 import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageCircle,
@@ -25,7 +26,8 @@ export const ContactClient: React.FC<{
   branches: BranchDetail[];
   /** The service picker in the lead form, named by WordPress page 696. */
   services: TreatmentOption[];
-}> = ({ branches, services }) => {
+  banner: PhotoSlot;
+}> = ({ branches, services, banner }) => {
   const { t, language } = useLanguage();
   const { openBooking } = useBooking();
 
@@ -165,7 +167,7 @@ export const ContactClient: React.FC<{
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/contact", label: { ar: "تواصلي", en: "Contact" } },
         ]}
-        photo={images.interiors.reception}
+        photo={banner}
       />
 
       <section className="py-8 lg:py-16">

@@ -8,6 +8,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Photo } from "@/components/ui/Photo";
 import { GoldLink } from "@/components/shared/Actions";
 import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 import type { AboutContent } from "@/data/about";
 
 /**
@@ -19,7 +20,8 @@ export const AboutClient: React.FC<{
   about: AboutContent;
   branchCount: number;
   treatmentCount: number;
-}> = ({ about, branchCount, treatmentCount }) => {
+  banner: PhotoSlot;
+}> = ({ about, branchCount, treatmentCount, banner }) => {
   const { t, formatNumber } = useLanguage();
 
   const reasons = [
@@ -86,7 +88,7 @@ export const AboutClient: React.FC<{
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/about", label: about.title },
         ]}
-        photo={images.interiors.reception}
+        photo={banner}
       />
 
       {/* Story / Process — one editorial split per WordPress section */}

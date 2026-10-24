@@ -6,10 +6,11 @@ import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { BranchCard } from "@/components/cards/BranchCard";
 import type { BranchDetail } from "@/data/branches";
-import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 
-export const BranchesClient: React.FC<{ branches: BranchDetail[] }> = ({
+export const BranchesClient: React.FC<{ branches: BranchDetail[]; banner: PhotoSlot }> = ({
   branches,
+  banner,
 }) => {
   const { t } = useLanguage();
 
@@ -25,7 +26,7 @@ export const BranchesClient: React.FC<{ branches: BranchDetail[] }> = ({
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/branches", label: { ar: "الفروع", en: "Branches" } },
         ]}
-        photo={images.interiors.corridor}
+        photo={banner}
       />
 
       <section className="py-8 lg:py-16">

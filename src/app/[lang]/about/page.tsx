@@ -5,6 +5,7 @@ import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { AboutClient } from "@/components/pages/AboutClient";
 import { getAbout } from "@/lib/wp/about";
 import { getBranchList } from "@/lib/content/site";
+import { getBanner } from "@/lib/content/banners";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 import { guardPage } from '@/lib/content/guard-page';
 
@@ -24,10 +25,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AboutPage() {
   await guardPage('about');
-  const [about, branches, treatments] = await Promise.all([
+  const [about, branches, treatments, banner] = await Promise.all([
     getAbout(),
     getBranchList(),
     getMergedTreatments(),
+    getBanner('about'),
   ]);
   return (
     <>
@@ -41,6 +43,7 @@ export default async function AboutPage() {
         about={about}
         branchCount={branches.length}
         treatmentCount={treatments.length}
+        banner={banner}
       />
     </>
   );

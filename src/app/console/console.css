@@ -1572,6 +1572,59 @@ span.console-thumb[data-empty] {
   font-size: 1rem;
 }
 
+/* --- page banners (BK-15a) ------------------------------------------------- */
+/*
+ * A banner is a photo and three short fields. Held to the form measure the panel uses
+ * for a field stack, nine of those become one very long column; the console's content
+ * width fits three across a desktop instead, and the minmax floor lets a narrower
+ * viewport drop to two and then one without a media query of its own.
+ */
+.settings-banners {
+  max-width: none;
+}
+
+.settings-banner-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
+  gap: var(--ui-gap);
+  margin-block-end: var(--ui-stack);
+}
+
+.settings-banner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-gap-tight);
+  min-inline-size: 0;
+  padding: var(--ui-gap);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card);
+}
+
+.settings-banner-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap-tight);
+}
+
+/* The photo is the control's evidence: the same frame the page draws, at the same
+   16:9 it is cropped to, so a path that resolves to the wrong photo is visible before
+   Save rather than after a redeploy. */
+.settings-banner-photo {
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: var(--bg-secondary);
+}
+
+/* One button at the end of a column would stretch to its width; the card's fields do
+   not ask it to. */
+.settings-banner > button {
+  align-self: flex-start;
+}
+
 @media (max-width: 46rem) {
   .settings-page {
     grid-template-columns: minmax(0, 1fr);

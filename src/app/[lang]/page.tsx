@@ -3,6 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeBody } from "@/components/home/HomeBody";
 import { getHeroPhotos, getHome, getHomeIntro, getPageTitle } from "@/lib/content/site";
+import { getBannerOverride } from "@/lib/content/banners";
 import { getMergedTreatments, getFeaturedServices } from "@/lib/wp/treatments";
 import { routeLang } from "@/lib/route-lang";
 import { offerToUI, cardToUIArticle } from "@/lib/wp/ui";
@@ -27,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   await guardPage('home');
   const lang = await routeLang();
-  const [home, treatments, hero, intro, services, servicesTitle] = await Promise.all([
+  const [home, treatments, hero, intro, services, servicesTitle, banner] = await Promise.all([
     getHome({ offers: 4, articles: 4, lang }),
     getMergedTreatments(),
     getHeroPhotos(),
@@ -37,12 +38,16 @@ export default async function HomePage() {
       ar: "خدمات عيادات شامه التجميلية",
       en: "Shamah Clinics aesthetic treatments",
     }),
+    getBannerOverride('home'),
   ]);
 
   return (
     <>
       <HomeHero
-        photos={hero}
+        // A saved banner replaces the WordPress slider rather than joining it: the
+        // operator who picked one photo asked for that photo, not for it to lead a
+        // slideshow of ones they did not choose.
+        photos={banner ? [banner] : hero}
         branchCount={home.settings.branches}
         treatmentCount={treatments.length}
       />

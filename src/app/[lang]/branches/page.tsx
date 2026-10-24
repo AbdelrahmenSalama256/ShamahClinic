@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { BranchesClient } from "@/components/pages/BranchesClient";
 import { getBranchList } from "@/lib/content/site";
+import { getBanner } from "@/lib/content/banners";
 import { guardPage } from '@/lib/content/guard-page';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -20,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BranchesPage() {
   await guardPage('branches');
-  const branches = await getBranchList();
+  const [branches, banner] = await Promise.all([getBranchList(), getBanner('branches')]);
   return (
     <>
       <JsonLd
@@ -29,7 +30,7 @@ export default async function BranchesPage() {
           { name: { ar: "الفروع", en: "Branches" }, path: "/branches" },
         ])}
       />
-      <BranchesClient branches={branches} />
+      <BranchesClient branches={branches} banner={banner} />
     </>
   );
 }

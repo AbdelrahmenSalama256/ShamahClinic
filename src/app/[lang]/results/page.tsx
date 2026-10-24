@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ResultsClient } from "@/components/pages/ResultsClient";
 import { getResultStories } from "@/lib/content/site";
+import { getBanner } from "@/lib/content/banners";
 import { cardToUIArticle } from "@/lib/wp/ui";
 import { getLocalizedHref } from "@/lib/locale";
 import { SITE_URL } from "@/lib/site";
@@ -60,7 +61,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 export default async function ResultsPage({ searchParams }: Props) {
   await guardPage('results');
-  const { paged, page } = await read(searchParams);
+  const [{ paged, page }, banner] = await Promise.all([read(searchParams), getBanner('results')]);
   const lang = await routeLang();
 
   return (
@@ -78,6 +79,7 @@ export default async function ResultsPage({ searchParams }: Props) {
         page={paged.page}
         total={paged.total}
         totalPages={paged.totalPages}
+        banner={banner}
       />
     </>
   );

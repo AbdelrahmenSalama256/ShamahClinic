@@ -11,7 +11,7 @@ import { ArticleCard } from "@/components/cards/ArticleCard";
 import { GoldLink } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
-import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 export const ResultsClient: React.FC<{
@@ -19,7 +19,8 @@ export const ResultsClient: React.FC<{
   page: number;
   totalPages: number;
   total: number;
-}> = ({ stories, page, totalPages, total }) => {
+  banner: PhotoSlot;
+}> = ({ stories, page, totalPages, total, banner }) => {
   const { t, language } = useLanguage();
   const router = useRouter();
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
@@ -38,7 +39,7 @@ export const ResultsClient: React.FC<{
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/results", label: { ar: "النتائج", en: "Results" } },
         ]}
-        photo={images.skin.after}
+        photo={banner}
       />
 
       <section className="py-8 lg:py-16">

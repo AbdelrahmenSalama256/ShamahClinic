@@ -1,11 +1,14 @@
 'use client';
 
 /**
- * The site's settings as three readable screens and one escape hatch.
+ * The site's settings as four readable screens and one escape hatch.
  *
  * Pages: every route the site actually renders, each with its own show/hide switch and an
  * optional target to redirect a hidden page to. The registry is `settings-catalog.ts`, so
  * the console cannot list a page the site does not have.
+ *
+ * Banners: the photo each listing page opens with. The default is the authored photo in
+ * `banners-catalog.ts`; a saved row replaces it, and clearing the path restores it.
  *
  * Identity and SEO: the words the site reads from the `site` and `seo` settings groups.
  * They are plain fields here rather than a JSON box, because the person editing a phone
@@ -38,6 +41,16 @@ import {
   type SettingField,
   type SitePageKey,
 } from '@/lib/content/settings-catalog';
+import {
+  BANNER_DEFAULTS,
+  BANNER_KEYS,
+  BANNER_PAGES,
+  BANNER_SETTING_GROUP,
+  safeBannerSrc,
+  type BannerPageKey,
+  type BannerSetting,
+  type SavedBanners,
+} from '@/lib/content/banners-catalog';
 import type { PageState, PageStates } from '@/lib/content/page-visibility';
 
 function encoded(value: unknown): string {
@@ -63,6 +76,7 @@ interface Notice {
 export function SettingsWorkspace({
   rows,
   pages,
+  banners,
   defaults,
   locale,
   labels,
@@ -70,6 +84,7 @@ export function SettingsWorkspace({
 }: Readonly<{
   rows: SettingView[];
   pages: PageStates;
+  banners: SavedBanners;
   defaults: Record<string, string>;
   locale: ConsoleLocale;
   labels: Record<MessageKey, string>;
@@ -79,6 +94,7 @@ export function SettingsWorkspace({
   const initial = initialValues(rows, defaults);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [pageDraft, setPageDraft] = useState<Partial<Record<SitePageKey, PageState>>>({});
+  const [bannerDraft, setBannerDraft] = useState<Partial<Record<BannerPageKey, BannerSetting>>>({});
   // Which control is in flight, not merely whether one is: the spinner has to sit on the
   // button that asked, and every other section stays put while it waits.
   const [busy, setBusy] = useState<string | null>(null);
@@ -98,6 +114,14 @@ export function SettingsWorkspace({
 
   const setPage = (key: SitePageKey, next: PageState): void => {
     setPageDraft((state) => ({ ...state, [key]: next }));
+  };
+
+  /** A page's banner as it reads now: the row when there is one, else empty fields. */
+  const bannerOf = (key: BannerPageKey): BannerSetting =>
+    bannerDraft[key] ?? { src: banners[key]?.src ?? '', altAr: banners[key]?.altAr ?? '', altEn: banners[key]?.altEn ?? '' };
+
+  const setBanner = (key: BannerPageKey, next: BannerSetting): void => {
+    setBannerDraft((state) => ({ ...state, [key]: next }));
   };
 
   const failure = (code: string | null): void => {
@@ -159,6 +183,35 @@ export function SettingsWorkspace({
     router.refresh();
   }
 
+  async function saveBanner(key: BannerPageKey): Promise<void> {
+    const value = bannerOf(key);
+    const input = value.src.trim();
+    // An empty path is a request for the authored photo, which is what removing the row
+    // means; anything else has to pass the same check the server-side reader applies.
+    const src = input === '' ? null : safeBannerSrc(input);
+    if (input !== '' && !src) {
+      setNotice({ tone: 'danger', text: labels['settings.banners.src_invalid'] });
+      return;
+    }
+    setBusy(`banner:${key}`);
+    const result = await consoleCall('/api/console/settings', 'PATCH', {
+      group: BANNER_SETTING_GROUP,
+      key,
+      value: src ? { src, altAr: value.altAr.trim(), altEn: value.altEn.trim() } : null,
+    });
+    setBusy(null);
+    if (result.error) {
+      failure(result.error);
+      return;
+    }
+    setNotice({ tone: 'ok', text: labels['content.saved'] });
+    setBannerDraft((draft) => ({
+      ...draft,
+      [key]: { src: src ?? '', altAr: src ? value.altAr.trim() : '', altEn: src ? value.altEn.trim() : '' },
+    }));
+    router.refresh();
+  }
+
   async function saveRaw(row: SettingView, text: string, id: string): Promise<void> {
     let value: unknown;
     try {
@@ -179,6 +232,8 @@ export function SettingsWorkspace({
   }
 
   const known = new Set([...SITE_SETTING_FIELDS, ...SEO_SETTING_FIELDS].map((field) => `${field.group}.${field.key}`));
+  // A banner row has a form above, so it is not an unknown row to dump into Advanced.
+  for (const key of BANNER_KEYS) known.add(`${BANNER_SETTING_GROUP}.${key}`);
   const pageKeys = new Set<string>(SITE_PAGES.map((page) => page.key));
   const advanced = rows.filter((row) => {
     const id = `${row.group}.${row.key}`;
@@ -243,6 +298,85 @@ export function SettingsWorkspace({
           })}
         </ul>
         <Note>{labels['settings.pages.detail']}</Note>
+      </Card>
+
+      <Card as="section" className="console-panel settings-panel settings-banners">
+        <h2 className="console-subheading">{labels['settings.banners.heading']}</h2>
+        <p className="ui-lede">{labels['settings.banners.intro']}</p>
+        <div className="settings-banner-grid">
+          {BANNER_PAGES.map((page) => {
+            const fallback = BANNER_DEFAULTS[page.key];
+            const saved = banners[page.key];
+            const value = bannerOf(page.key);
+            const preview = safeBannerSrc(value.src.trim()) ?? fallback.src;
+            const dirty =
+              value.src.trim() !== (saved?.src ?? '') ||
+              value.altAr.trim() !== (saved?.altAr ?? '') ||
+              value.altEn.trim() !== (saved?.altEn ?? '');
+            const srcId = `banner-src-${page.key}`;
+            const altArId = `banner-alt-ar-${page.key}`;
+            const altEnId = `banner-alt-en-${page.key}`;
+            return (
+              <article className="settings-banner" key={page.key}>
+                <header className="settings-banner-head">
+                  <span className="settings-page-label">{page.label[locale]}</span>
+                  <code className="ui-row-key" dir="ltr">
+                    {page.path === '' ? '/' : page.path}
+                  </code>
+                  {saved ? <Badge tone="ok">{labels['settings.banners.custom']}</Badge> : null}
+                </header>
+                {/* The path is typed live and may point at a file the optimizer cannot
+                    resolve yet; the plain tag shows exactly what the operator wrote. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img className="settings-banner-photo" src={preview} alt="" width={640} height={360} loading="lazy" decoding="async" />
+                <div className="ui-fields">
+                  <Field label={labels['settings.banners.src']} htmlFor={srcId} note={<Note>{labels['settings.banners.src_hint']}</Note>}>
+                    <Input
+                      id={srcId}
+                      dir="ltr"
+                      value={value.src}
+                      placeholder={fallback.src}
+                      readOnly={!canWrite}
+                      onChange={(event) => setBanner(page.key, { ...value, src: event.target.value })}
+                    />
+                  </Field>
+                  <Field label={labels['settings.banners.alt_ar']} htmlFor={altArId} note={<Note>{labels['settings.banners.alt_hint']}</Note>}>
+                    <Input
+                      id={altArId}
+                      dir="rtl"
+                      value={value.altAr}
+                      placeholder={fallback.alt.ar}
+                      readOnly={!canWrite}
+                      onChange={(event) => setBanner(page.key, { ...value, altAr: event.target.value })}
+                    />
+                  </Field>
+                  <Field label={labels['settings.banners.alt_en']} htmlFor={altEnId}>
+                    <Input
+                      id={altEnId}
+                      dir="ltr"
+                      value={value.altEn}
+                      placeholder={fallback.alt.en}
+                      readOnly={!canWrite}
+                      onChange={(event) => setBanner(page.key, { ...value, altEn: event.target.value })}
+                    />
+                  </Field>
+                </div>
+                {canWrite && (
+                  <Button
+                    size="sm"
+                    variant={dirty ? 'primary' : 'default'}
+                    loading={busy === `banner:${page.key}`}
+                    disabled={busy !== null && busy !== `banner:${page.key}`}
+                    onClick={() => void saveBanner(page.key)}
+                  >
+                    {labels['content.save']}
+                  </Button>
+                )}
+              </article>
+            );
+          })}
+        </div>
+        <Note>{labels['settings.banners.detail']}</Note>
       </Card>
 
       <Card as="section" className="console-panel settings-panel">

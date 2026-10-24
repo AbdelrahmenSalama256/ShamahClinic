@@ -7,12 +7,13 @@ import { Reveal } from "@/components/ui/Reveal";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { WhatsAppButton } from "@/components/shared/Actions";
 import type { Offer } from "@/data/offers";
-import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 
 /** `title` is the WordPress shop page (9) heading, with an authored fallback. */
-export const OffersClient: React.FC<{ offers: Offer[]; title: { ar: string; en: string } }> = ({
+export const OffersClient: React.FC<{ offers: Offer[]; title: { ar: string; en: string }; banner: PhotoSlot }> = ({
   offers,
   title,
+  banner,
 }) => {
   const { t } = useLanguage();
 
@@ -28,7 +29,7 @@ export const OffersClient: React.FC<{ offers: Offer[]; title: { ar: string; en: 
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/offers", label: title },
         ]}
-        photo={images.interiors.treatmentRoom}
+        photo={banner}
       />
 
       <section className="py-8 lg:py-16">

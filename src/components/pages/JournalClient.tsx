@@ -10,7 +10,7 @@ import { apiCardToUI } from "@/lib/wp/ui-helpers";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
 import type { ArticleCard as WpArticleCard, CategoryTerm } from "@/lib/wp/types";
-import { images } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 
 interface Paged {
   items: WpArticleCard[];
@@ -32,6 +32,8 @@ interface Props {
   categories: CategoryTerm[];
   activeCategory?: string;
   activeSearch?: string;
+  /** The page's banner, saved in the console or authored. */
+  banner: PhotoSlot;
 }
 
 const EMPTY: WpArticleCard[] = [];
@@ -60,6 +62,7 @@ export const JournalClient: React.FC<Props> = ({
   categories,
   activeCategory,
   activeSearch,
+  banner,
 }) => {
   const { t, language } = useLanguage();
   const router = useRouter();
@@ -144,7 +147,7 @@ export const JournalClient: React.FC<Props> = ({
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/blogs", label: title },
         ]}
-        photo={images.journal.routine}
+        photo={banner}
       />
 
       <section className="py-5 lg:py-16">

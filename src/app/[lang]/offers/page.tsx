@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, offerJsonLd } from "@/lib/jsonld";
 import { OffersClient } from "@/components/pages/OffersClient";
 import { getOffers, getPageTitle } from "@/lib/content/site";
+import { getBanner } from "@/lib/content/banners";
 import { offerToUI } from "@/lib/wp/ui";
 import { routeLang } from "@/lib/route-lang";
 import { guardPage } from '@/lib/content/guard-page';
@@ -25,9 +26,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function OffersPage() {
   await guardPage('offers');
   const lang = await routeLang();
-  const [paged, title] = await Promise.all([
+  const [paged, title, banner] = await Promise.all([
     getOffers({ perPage: 30 }, lang).catch(() => ({ items: [] })),
     getPageTitle("shop", { ar: "باقات وعروض الموسم", en: "Seasonal packages & offers" }),
+    getBanner('offers'),
   ]);
   const wpOffers = paged.items || [];
   const offers = wpOffers.map(offerToUI);
@@ -52,7 +54,7 @@ export default async function OffersPage() {
   return (
     <>
       <JsonLd data={jsonLd} />
-      <OffersClient offers={offers} title={title} />
+      <OffersClient offers={offers} title={title} banner={banner} />
     </>
   );
 }
