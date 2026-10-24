@@ -858,6 +858,42 @@ outside data source can be bolted on without a rewrite.
       at their target when it is hidden — the guard answers 404 there. Hiding those belongs to section control
       (14.5). The screen also has not been opened in a browser this pass: it renders in the build, but its table at
       desktop width and its stacked fallback below 46rem were not seen; that check belongs with 19.6.
+- [x] 15a.1 Page banners editable from Settings — `cdf44c5`
+      The brief's last console clause ("the banners not added in the console as something in the site need a gate to
+      be editable") was literal: every listing page drew its hero photo from `src/lib/images.ts`, so swapping one
+      meant a deploy. The photo is now the same kind of row as a page state: group `banners`, one key per page,
+      value `{ "src": string, "altAr": string, "altEn": string }`.
+      **Fail-open, like page visibility.** A missing row, an unreadable value or a database that cannot be reached
+      returns `BANNER_DEFAULTS[key]` — the exact `images.*` slot the page drew before — so the public site is
+      byte-identical until someone saves. `readBanners()` is one query per render; each page asks for its own key.
+      **What a row may name.** `safeBannerSrc` accepts only a rooted same-site path: no scheme, no `//host`, no
+      whitespace or control characters, no `.`/`..` segments (the loader would resolve them to a different file than
+      the one written). A row that fails is ignored, never repaired to a default — the same answer as "never saved"
+      and no broken frame. `next/image`'s configured host list (`shamahclinics.com` only) is why a remote URL is not
+      offered; uploading a new file is 14a's media library, not this row.
+      **Wiring.** `getBanner(key)` runs inside each page's existing `Promise.all`; the eight listing clients take
+      `banner: PhotoSlot` instead of naming `images.*` at the `PageHero`. Home is the one exception: `HomeHero` keeps
+      its WP slider, so it asks `getBannerOverride('home')` and uses the saved photo **instead of** the slideshow,
+      never appended to it (two visuals claiming the same slot would be the console promising a preview it does not
+      render). Blank captions fall back per language to the authored alt text, so a hurried photo swap cannot ship
+      with no caption. FAQ and privacy are absent on purpose: their hero is a band of type.
+      **The console card.** Between Pages and Site, one card per page in an `auto-fill, minmax(19rem, 1fr)` grid —
+      the settings panel's 34rem form measure would stack nine photos into one long column, so this panel alone
+      takes the content width. Each card shows the label, route, a "custom photo" badge once saved, the live preview
+      (16:9, the ratio `PageHero` crops to) and three fields: path, Arabic alt, English alt. Save writes only that
+      page; emptying the path writes `null`, which the reader treats as absent and the authored photo returns. Saved
+      banner rows are added to the Settings screen's `known` set, so they never reappear as JSON in Advanced.
+      **Tests.** `tests/banners.test.ts` (9): the path allowlist (remote, protocol-relative, dot segments, whitespace,
+      NUL), the parse shapes a LONGTEXT-backed column may arrive in, invalid-row and unknown-key cases, the registry
+      (every banner key is a site page; FAQ/privacy excluded; defaults local with both captions), the per-language
+      alt fallback and the 16:9 slot, plus the real `banners` group: fallback until saved, replace only the named
+      page, the home override, and an invalid row ignored. Suite **424/424**.
+      Gates: typecheck · lint · `npx vitest run` **424/424** · `next build` clean · `npm run prove:no-wp` **5/5**
+      (240 sitemap URLs, 273 routes rendered 0 failed, smallest HTML 25842 bytes, 0 requests to the WordPress origin).
+      **Not in this slice:** the Settings screen was not opened in a browser this pass (signing in needs the owner's
+      account), so the three-column grid at desktop width and the one-column fallback below 46rem were not seen; the
+      markup, the built app and every public route were. Choosing a photo from the media library belongs to 14a, the
+      home slideshow's individual slides to 14.3, and the remaining hard-coded photos inside page bodies to 14.4.
 - [ ] 15.1 Meta per entity per locale: title, description, canonical, robots (index/follow/nocache/AI), primary image
       + alt, OG title/description/image, Twitter card, focus keyword, breadcrumb label, and a `noindex` default for
       drafts. The site's `<head>` reads it, which replaces `resolveSeo`'s snapshot fallback and closes the `seo.json`
