@@ -888,6 +888,59 @@ vendor key), Bing/Webmaster and Search Console APIs (need a Google Cloud project
 schema leaves room for each, and BK-17's Connectors screen is where a key would go when that changes.
 
 ## BK-16 — Users, Roles & permissions
+- [x] 16a Accounts and roles: the two screens, the catalog in words, and the rails that keep them safe — `3750ea4`
+      **Two screens, one registry entry each.** `users` and `roles` join `CONSOLE_SCREENS` in the `site` group
+      beside Settings — accounts are configuration rather than content — behind `user read` and `role read`.
+      Admin holds `* read`, so Admin sees both lists without holding a single write; a page that cannot write
+      renders its fields as text rather than hiding the screen. `tests/console.test.ts` expects both keys in the
+      nav for Owner and Admin and nowhere else, and the page-file/registry equality still holds.
+      **One handler per route, all through `guard()`.** `/api/console/users` (GET list, POST create),
+      `/api/console/users/<id>` (PATCH), `/api/console/users/<id>/password` (POST), `/api/console/roles` (GET,
+      POST) and `/api/console/roles/<id>` (PATCH, DELETE). Permission is answered before the body is read, so
+      Admin `POST {}` answers 403 `forbidden` while a caller with `user.create` but a bad payload answers 400
+      `invalid_input` — the ordering 16.5 names, asserted in both directions. Every successful write lands in
+      `audit_log` with before/after.
+      **Three rails the browser cannot edit.** (1) Nobody changes their own role or status: `self_locked`; a name
+      or language edit on oneself still passes. (2) The last active Owner can neither be disabled nor demoted —
+      `anotherOwnerRemains()` reads the live links, not the submitted role. (3) The six catalog roles are
+      immutable here (`system_role_immutable`) because `syncRoles()` owns them and would revert the change on the
+      next deploy. A custom role that still has members answers `role_in_use` rather than deleting a link out
+      from under people; a deleted custom role goes with its grants, because `roles.name` is unique even for
+      tombstones and a leftover would block the next role of the same name.
+      **Accounts are disabled, never deleted.** Nothing in this slice writes `users.deleted_at`; disabling
+      revokes every open session immediately, so an old tab stops working now rather than at cookie expiry. A
+      password someone else sets is temporary by definition — `setPassword()` gained `mustChangePassword` — and
+      revokes every session except the one that performed the reset. Creating an account without a name still
+      gets the email's local part as a label.
+      **The catalog in words.** `src/lib/users/catalog.ts` labels every resource and action in AR/EN and groups
+      them the way the screens are (Content · Marketing · Site and accounts); a resource without a label is a
+      type error. `permissionCatalog(locale)` resolves the whole matrix on the server and passes plain data
+      down, so the browser never imports `roles.ts` (which carries a database client) and a language switch is a
+      server render. Grants are validated against `RESOURCES × ACTIONS` by zod, so a custom role can only ever
+      hold a subset of the universe; scopes are checked against `SITE_LOCALES` and `LIST_KEYS`, and only the two
+      dimensions a seeded role actually narrows are offered.
+      **What the screens do.** `UsersScreen` arrives with its first page already drawn by the server and keeps
+      `q`, `status`, `role`, `page`, `per` in the URL through `replaceState`; the detail pane is sticky above
+      1024px and stacks below it. There is no Delete button, and no fourth verb. `RolesScreen` prints system
+      roles read-only and edits a custom role's whole grant set at once — the matrix is replace-not-merge, so an
+      unchecked box is a grant that disappears. Scope is honest about `can()`: "all languages" is the *absence*
+      of `locales`, not both keys listed.
+      **A gate caught a regression outside the slice.** #240 (`99e34da`) had dropped `input, select` from the
+      dark-theme element rule in `globals.css`; the bare site inputs would have painted light-on-dark. Restored,
+      with `tests/ui-primitives.test.ts` already holding the expectation.
+      **Tests and gates.** `tests/users.test.ts` (15) covers create + temporary password + audit, duplicate
+      email, role replacement, `self_locked`, last-Owner disable and demote, reset semantics, list filters and
+      page clamps, the 403-before-400 pair, `read_required`, wholesale grant replacement, `role_name_taken`,
+      `system_role_immutable`, `role_in_use` then delete, and Owner-wildcard ordering. `tests/roles.test.ts`
+      trusts `@/lib/users/api` in the route sweep; `tests/ui-primitives.test.ts` records the two new placement
+      hooks and proves no `.ui-*` primitive is re-painted. Gates: typecheck · lint · `vitest run` **415/415** ·
+      `next build` clean · `npm run prove:no-wp` **5/5** (240 sitemap URLs, 273 routes rendered 0 failed,
+      smallest HTML 25842 bytes, 0 requests to the WordPress origin, host named 0 times).
+      **Not in this slice, and still on the rows above:** the per-account audit trail (16.1), My role (16.3),
+      access requests and the approvals inbox (16.4), and stale-grant repair (16.5) — locale scope is enforced
+      by `can()` on every read and write already, but this slice adds no test that narrows a *custom* role by
+      locale. The screens were not opened in a browser this pass; the split at ≥1024px and the stacked fallback
+      below it were not seen and belong with the 19.6 visual pass, as with 17a.
 - [ ] 16.1 Users screen: add an account, set its role and locale, reset a password, disable an account, delete nobody
       (the never-delete rule), and an audit trail filtered per account.
 - [ ] 16.2 Roles & permissions tab: create a role, and check permissions straight from the catalog (`resource × action
