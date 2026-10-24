@@ -6,6 +6,7 @@ import { OffersClient } from "@/components/pages/OffersClient";
 import { getOffers, getPageTitle } from "@/lib/content/site";
 import { offerToUI } from "@/lib/wp/ui";
 import { routeLang } from "@/lib/route-lang";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -22,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function OffersPage() {
+  await guardPage('offers');
   const lang = await routeLang();
   const [paged, title] = await Promise.all([
     getOffers({ perPage: 30 }, lang).catch(() => ({ items: [] })),

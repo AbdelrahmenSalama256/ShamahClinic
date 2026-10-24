@@ -5,6 +5,7 @@ import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { TreatmentsClient } from "@/components/pages/TreatmentsClient";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 import { getPageTitle } from "@/lib/content/site";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -24,6 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function ServicesPage() {
+  await guardPage('services');
   const [treatments, title] = await Promise.all([
     getMergedTreatments(),
     getPageTitle("our-services", {

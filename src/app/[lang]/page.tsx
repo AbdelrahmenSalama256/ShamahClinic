@@ -6,6 +6,7 @@ import { getHeroPhotos, getHome, getHomeIntro, getPageTitle } from "@/lib/conten
 import { getMergedTreatments, getFeaturedServices } from "@/lib/wp/treatments";
 import { routeLang } from "@/lib/route-lang";
 import { offerToUI, cardToUIArticle } from "@/lib/wp/ui";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -24,6 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
+  await guardPage('home');
   const lang = await routeLang();
   const [home, treatments, hero, intro, services, servicesTitle] = await Promise.all([
     getHome({ offers: 4, articles: 4, lang }),

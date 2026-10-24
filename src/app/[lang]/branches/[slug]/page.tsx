@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, branchJsonLd } from "@/lib/jsonld";
 import { BranchDetailClient } from "@/components/pages/BranchDetailClient";
 import { getBranchList } from "@/lib/content/site";
+import { guardPage } from '@/lib/content/guard-page';
 
 interface Props {
   params: Promise<{ lang: string; slug: string }>;
@@ -28,6 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function BranchDetailPage({ params }: Props) {
+  await guardPage('branches');
   const { slug } = await params;
   const branches = await getBranchList();
   const branch = branches.find((b) => b.id === slug);

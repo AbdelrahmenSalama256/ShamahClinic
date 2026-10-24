@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/jsonld";
 import { FaqClient } from "@/components/pages/FaqClient";
 import { getPageTitle } from "@/lib/content/site";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -20,6 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FaqPage() {
+  await guardPage('faq');
   const title = await getPageTitle("faq", {
     ar: "الأسئلة الشائعة",
     en: "Frequently asked questions",

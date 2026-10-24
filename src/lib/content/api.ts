@@ -19,6 +19,7 @@
  * that did not, since a page of rows that is half-allowed is an ordinary thing to send.
  */
 import { z } from 'zod';
+import { revalidatePath } from 'next/cache';
 import { guard, jsonError, type GuardResult } from '../auth/guard';
 import { can, type Action as PermissionAction, type Grant, type Resource, type Target } from '../auth/permissions';
 import { CONTENT_LOCALES, isContentKind, isContentLocale, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
@@ -330,7 +331,27 @@ export async function settingsHandler(req: Request): Promise<Response> {
     async (ctx): Promise<GuardResult<Body>> => {
       const saved = await writeSetting({ group: ctx.input.group, key: ctx.input.key, value: ctx.input.value, actorId: ctx.auth.user.id });
       if (!saved.ok) return failure(saved);
+      revalidateSite();
       return { data: { row: saved.value }, audit: { entityType: 'setting', entityId: `${ctx.input.group}.${ctx.input.key}`, after: saved.value } };
     },
   );
+}
+
+/**
+ * A setting is live the moment its row is written, but the public pages are ISR and were
+ * rendered with the old value — a renamed clinic or a hidden page would keep its old
+ * answer for up to five minutes. The pattern covers both language segments, and the
+ * layout covers every route under it, the same way the site's own revalidate endpoint
+ * names patterns rather than concrete URLs.
+ *
+ * Outside a request (the unit tests call the handler directly) there is no cache to
+ * invalidate and `revalidatePath` throws; that is not a failed save.
+ */
+function revalidateSite(): void {
+  try {
+    revalidatePath('/[lang]', 'layout');
+    revalidatePath('/sitemap.xml', 'page');
+  } catch {
+    /* no request scope */
+  }
 }

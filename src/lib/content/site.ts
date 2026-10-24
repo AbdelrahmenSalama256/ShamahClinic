@@ -40,6 +40,7 @@ import { WHATSAPP } from '../wp/config';
 import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
+import { SEO_SETTING_GROUP } from './settings-catalog';
 
 export type { PageCard, Query, WithSeo };
 
@@ -683,11 +684,11 @@ function asWord(value: unknown): string | null {
   return text ? value : null;
 }
 
-async function savedSettings(): Promise<Map<string, string>> {
+async function savedGroup(group: string): Promise<Map<string, string>> {
   const rows = await db
     .selectFrom('settings')
     .select(['setting_key', 'value'])
-    .where('group_name', '=', SETTING_GROUP)
+    .where('group_name', '=', group)
     .where('is_secret', '=', 0)
     .execute();
   const values = new Map<string, string>();
@@ -699,6 +700,8 @@ async function savedSettings(): Promise<Map<string, string>> {
   }
   return values;
 }
+
+const savedSettings = () => savedGroup(SETTING_GROUP);
 
 /**
  * The site's settings: the six words an operator can edit come from the database when
@@ -737,6 +740,35 @@ export async function getSettings(lang: Lang = 'en'): Promise<Settings> {
     email: field('email', siteConfig.contact.email),
     hours: field('hours', siteConfig.contact.workingHours.en),
     branches: branches.length,
+  };
+}
+
+export interface SiteMeta {
+  title: string;
+  description: string;
+  /** The `google-site-verification` value, or null when it has never been saved. */
+  verification: string | null;
+}
+
+/**
+ * The site-wide metadata the layout falls back to. A saved word wins; a missing row
+ * keeps the config file, so an operator can change the description without first
+ * copying every other value into the console. Unreadable settings fail back to the
+ * config rather than to an empty `<title>`.
+ */
+export async function getSiteMeta(lang: Lang): Promise<SiteMeta> {
+  let saved = new Map<string, string>();
+  try {
+    saved = await savedGroup(SEO_SETTING_GROUP);
+  } catch {
+    /* the config file is a complete fallback */
+  }
+  return {
+    title: saved.get(`title.${lang}`) ?? (lang === 'ar' ? siteConfig.metadata.title : siteConfig.metadata.titleEn),
+    description:
+      saved.get(`description.${lang}`) ??
+      (lang === 'ar' ? siteConfig.metadata.description : siteConfig.metadata.descriptionEn),
+    verification: saved.get('verification.google') ?? null,
   };
 }
 

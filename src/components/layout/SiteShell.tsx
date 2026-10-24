@@ -29,7 +29,9 @@ export const SiteShell: React.FC<{
   children: React.ReactNode;
   branches: BranchLite[];
   treatments: TreatmentOption[];
-}> = ({ children, branches, treatments }) => {
+  /** Top-level hrefs the owner has hidden; the header and footer stop linking to them. */
+  hiddenPaths: string[];
+}> = ({ children, branches, treatments, hiddenPaths }) => {
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
@@ -39,7 +41,7 @@ export const SiteShell: React.FC<{
         <ThemeProvider>
           <BookingProvider branches={branches} treatments={treatments}>
             <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
-              <Navbar />
+              <Navbar hiddenPaths={hiddenPaths} />
 
               <AnimatePresence mode="wait" initial={false}>
                 <motion.main
@@ -59,7 +61,7 @@ export const SiteShell: React.FC<{
               <div className="h-px bg-gold-gradient" />
 
               <div className="h-0.5 bg-gold-gradient" />
-              <Footer branches={branches} />
+              <Footer branches={branches} hiddenPaths={hiddenPaths} />
               <FloatingActions />
             </div>
           </BookingProvider>

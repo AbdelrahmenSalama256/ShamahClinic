@@ -7,6 +7,7 @@ import { SiteShell } from "@/components/layout/SiteShell";
 import { siteConfig, siteTheme } from "@/config/site";
 import { normalizeLang } from "@/lib/route-lang";
 import { getBranchList } from "@/lib/content/site";
+import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 
 /**
@@ -47,9 +48,10 @@ export async function notFoundMetadata(): Promise<Metadata> {
 
 export default async function NotFoundDocument() {
   const lang = await notFoundLang();
-  const [treatments, branches] = await Promise.all([
+  const [treatments, branches, pages] = await Promise.all([
     getMergedTreatments(),
     getBranchList(),
+    readPageStates(),
   ]);
 
   return (
@@ -65,7 +67,7 @@ export default async function NotFoundDocument() {
         className="min-h-full flex flex-col antialiased bg-[var(--bg-primary)] text-[var(--text-primary)]"
         suppressHydrationWarning
       >
-        <SiteShell branches={branches} treatments={treatments}>
+        <SiteShell branches={branches} treatments={treatments} hiddenPaths={hiddenPageHrefs(pages)}>
           <NotFoundClient />
         </SiteShell>
       </body>

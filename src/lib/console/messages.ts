@@ -270,6 +270,21 @@ const ar = {
   'leads.status.failed': 'لم تتحدث الحالة.',
   'leads.read_only': 'عرض فقط',
   'leads.whatsapp': 'مراسلة واتساب',
+  'settings.pages.heading': 'صفحات الموقع',
+  'settings.pages.intro': 'أظهري أي صفحة أو أخفيها من القائمة والفوتر وخريطة الموقع. الصفحة المخفية يظهر رابطها كصفحة غير موجودة، أو يحوّل إلى عنوان تختارينه.',
+  'settings.pages.enabled': 'ظاهرة للزوار',
+  'settings.pages.redirect': 'حوّلي الرابط إلى',
+  'settings.pages.redirect_hint': 'مسار داخلي مثل /offers أو رابط كامل يبدأ بـ https://. اتركيه فارغاً لصفحة 404.',
+  'settings.pages.redirect_invalid': 'العنوان غير صالح. استخدمي مساراً يبدأ بـ / أو رابطاً يبدأ بـ https://',
+  'settings.pages.detail': 'إخفاء صفحة يخفي صفحاتها الفرعية أيضاً، ويطبّق التغيير بعد الحفظ مباشرة.',
+  'settings.site.heading': 'بيانات العيادة',
+  'settings.site.intro': 'الاسم والهاتف وساعات العمل التي يقرأها الموقع في كل صفحة.',
+  'settings.seo.heading': 'إعدادات SEO العامة',
+  'settings.seo.intro': 'العنوان والوصف الافتراضيان للصفحات التي لا تحمل وصفاً خاصاً بها، وكود تحقق Google Search Console.',
+  'settings.seo.verification_hint': 'انسخي قيمة content من وسم التحقق الذي يعطيه Google، لا الوسم كاملاً.',
+  'settings.advanced.heading': 'إعدادات متقدمة',
+  'settings.advanced.intro': 'صفوف محفوظة بصيغة JSON لا يعرضها هذا القسم في نموذج. عدّليها فقط إذا كنت تعرفين أي جزء من الموقع يقرأها.',
+  'settings.no_changes': 'لا تعديلات جديدة للحفظ.',
 } satisfies Record<string, string>;
 
 export type MessageKey = keyof typeof ar;
@@ -539,6 +554,21 @@ const en: Record<MessageKey, string> = {
   'leads.status.failed': 'The status was not updated.',
   'leads.read_only': 'Read only',
   'leads.whatsapp': 'Message on WhatsApp',
+  'settings.pages.heading': 'Site pages',
+  'settings.pages.intro': 'Show or hide any page in the menu, footer and sitemap. A hidden page returns not-found at its URL, or redirects to an address you choose.',
+  'settings.pages.enabled': 'Visible to visitors',
+  'settings.pages.redirect': 'Redirect its URL to',
+  'settings.pages.redirect_hint': 'An internal path such as /offers, or a full https:// URL. Leave it empty for a 404 page.',
+  'settings.pages.redirect_invalid': 'That address is not valid. Use a path starting with / or a URL starting with https://.',
+  'settings.pages.detail': 'Hiding a page also hides its detail pages. Changes apply as soon as they are saved.',
+  'settings.site.heading': 'Clinic details',
+  'settings.site.intro': 'The name, phone and hours the site reads on every page.',
+  'settings.seo.heading': 'Site-wide SEO',
+  'settings.seo.intro': 'The default title and description for pages without their own, and the Google Search Console verification code.',
+  'settings.seo.verification_hint': 'Copy the content value from the verification tag Google gives you, not the whole tag.',
+  'settings.advanced.heading': 'Advanced settings',
+  'settings.advanced.intro': 'Rows stored as JSON that this screen has no form for. Edit one only if you know which part of the site reads it.',
+  'settings.no_changes': 'No new changes to save.',
 };
 
 const catalog: Record<ConsoleLocale, Record<MessageKey, string>> = { ar, en };

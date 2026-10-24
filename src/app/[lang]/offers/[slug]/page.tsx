@@ -7,6 +7,7 @@ import { getAllOffers, getOffer } from "@/lib/content/site";
 import { offerDetailToUI } from "@/lib/wp/ui";
 import { OfferDetailClient } from "@/components/pages/OfferDetailClient";
 import { routeLang } from "@/lib/route-lang";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 export const dynamicParams = true;
@@ -38,6 +39,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function OfferDetailPage({ params }: Props) {
+  await guardPage('offers');
   const { slug } = await params;
   const res = await getOffer(slug, await routeLang());
   if (!res) notFound();

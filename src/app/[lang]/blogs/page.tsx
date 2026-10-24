@@ -8,6 +8,7 @@ import { cardToUIArticle } from "@/lib/wp/ui";
 import { getLocalizedHref } from "@/lib/locale";
 import { SITE_URL } from "@/lib/site";
 import { routeLang } from "@/lib/route-lang";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -78,6 +79,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function JournalPage({ searchParams }: Props) {
+  await guardPage('blogs');
   const { paged, categories, category, search, page } = await read(searchParams);
   const lang = await routeLang();
   const title = await getPageTitle("journal", {

@@ -696,6 +696,10 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
       '.console-cards .ui-card',
       '.console-cards .ui-row-action',
       '.console-lead-note-list > .ui-note',
+      // BK-15a: a page row already spaces its children, so the field inside it gives up
+      // the stack margin it carries everywhere else. Placement only — the border, label
+      // and control inside stay the primitive's.
+      '.settings-page-controls .ui-field',
     ]);
   });
 

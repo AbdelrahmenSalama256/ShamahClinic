@@ -6,6 +6,7 @@ import { AboutClient } from "@/components/pages/AboutClient";
 import { getAbout } from "@/lib/wp/about";
 import { getBranchList } from "@/lib/content/site";
 import { getMergedTreatments } from "@/lib/wp/treatments";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -22,6 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
+  await guardPage('about');
   const [about, branches, treatments] = await Promise.all([
     getAbout(),
     getBranchList(),

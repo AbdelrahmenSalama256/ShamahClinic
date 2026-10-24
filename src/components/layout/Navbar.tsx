@@ -28,7 +28,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export const Navbar: React.FC = () => {
+export const Navbar: React.FC<{ hiddenPaths: string[] }> = ({ hiddenPaths }) => {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { openBooking } = useBooking();
@@ -87,7 +87,10 @@ export const Navbar: React.FC = () => {
       : "Hello Shamah Clinics, I would like to inquire about appointments and services.",
   )}`;
 
-  const mobileParent = navItems.find((l) => l.href === openMobileDropdown);
+  // A hidden page keeps its line in the authored menu but loses its way into the
+  // chrome — the route itself answers 404 (or its redirect) when reached directly.
+  const visibleNavItems = navItems.filter((item) => !hiddenPaths.includes(item.href));
+  const mobileParent = visibleNavItems.find((l) => l.href === openMobileDropdown);
 
   // Shared link styling for the desktop nav
   const desktopLinkBase =
@@ -175,7 +178,7 @@ export const Navbar: React.FC = () => {
             aria-label={t("التنقل الرئيسي", "Primary")}
             onMouseLeave={() => openMenu({ dropdown: null })}
           >
-            {navItems.map((link) => {
+            {visibleNavItems.map((link) => {
               const active = isActive(link.href);
               const hasChildren = !!link.children?.length;
               const isOpen = openDropdown === link.href;
@@ -403,7 +406,7 @@ export const Navbar: React.FC = () => {
                     className="flex flex-col mt-5"
                     aria-label={t("التنقل الرئيسي", "Primary")}
                   >
-                    {navItems.map((link) => {
+                    {visibleNavItems.map((link) => {
                       const active = isActive(link.href);
                       const hasChildren = !!link.children?.length;
 

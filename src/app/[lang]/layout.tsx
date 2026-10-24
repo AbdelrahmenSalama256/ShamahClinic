@@ -9,7 +9,8 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig, siteTheme } from "@/config/site";
 import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
-import { getBranchList } from "@/lib/content/site";
+import { getBranchList, getSiteMeta } from "@/lib/content/site";
+import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 
 export const viewport: Viewport = {
@@ -31,13 +32,15 @@ export async function generateMetadata(props: {
   const lang = normalizeLang(segment);
   if (!lang) return {};
   const home = getLocalizedHref("", lang);
+  const meta = await getSiteMeta(lang);
   return {
     metadataBase: new URL(SITE_URL),
     title: {
-      default: lang === "ar" ? siteConfig.metadata.title : siteConfig.metadata.titleEn,
+      default: meta.title,
       template: lang === "ar" ? siteConfig.metadata.titleTemplate : siteConfig.metadata.titleTemplateEn,
     },
-    description: lang === "ar" ? siteConfig.metadata.description : siteConfig.metadata.descriptionEn,
+    description: meta.description,
+    verification: meta.verification ? { google: meta.verification } : undefined,
     keywords: [...siteConfig.metadata.keywords],
     authors: [{ name: siteConfig.brand.name[lang] }],
     robots: {
@@ -81,9 +84,10 @@ export default async function RootLayout({
   const lang = normalizeLang(segment);
   if (!lang) notFound();
 
-  const [treatments, branches] = await Promise.all([
+  const [treatments, branches, pages] = await Promise.all([
     getMergedTreatments(),
     getBranchList(),
+    readPageStates(),
   ]);
 
   return (
@@ -100,7 +104,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <JsonLd data={await Promise.all([organizationJsonLd(), webSiteJsonLd()])} />
-        <SiteShell branches={branches} treatments={treatments}>
+        <SiteShell branches={branches} treatments={treatments} hiddenPaths={hiddenPageHrefs(pages)}>
           {children}
         </SiteShell>
       </body>

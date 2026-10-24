@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { PrivacyClient } from "@/components/pages/PrivacyClient";
 import { getPageTitle } from "@/lib/content/site";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -19,6 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PrivacyPage() {
+  await guardPage('privacy');
   const title = await getPageTitle("privacy-policy", {
     ar: "سياسة الخصوصية",
     en: "Privacy Policy",

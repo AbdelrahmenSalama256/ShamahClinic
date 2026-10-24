@@ -41,10 +41,12 @@ const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-export const Footer: React.FC<{ branches: BranchLite[] }> = ({
+export const Footer: React.FC<{ branches: BranchLite[]; hiddenPaths: string[] }> = ({
   branches,
+  hiddenPaths,
 }) => {
   const { language, t } = useLanguage();
+  const visibleNavItems = navItems.filter((item) => !hiddenPaths.includes(item.href));
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [newsletterError, setNewsletterError] = useState("");
@@ -166,7 +168,7 @@ export const Footer: React.FC<{ branches: BranchLite[] }> = ({
               {t("روابط الموقع", "Site")}
             </h2>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-2.5 text-xs text-gray-300">
-              {navItems.map((l) => (
+              {visibleNavItems.map((l) => (
                 <li key={l.href}>
                   <Link
                     href={getLocalizedHref(l.href, language)}

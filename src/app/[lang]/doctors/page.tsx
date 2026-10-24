@@ -4,6 +4,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { DoctorsClient } from "@/components/pages/DoctorsClient";
 import { getBranchList } from "@/lib/content/site";
+import { guardPage } from '@/lib/content/guard-page';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
@@ -18,6 +19,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function DoctorsPage() {
+  await guardPage('doctors');
   const branches = await getBranchList();
   return (
     <>

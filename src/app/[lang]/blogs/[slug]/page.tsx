@@ -7,6 +7,7 @@ import { getPost, getAllArticles } from "@/lib/content/site";
 import { articleToUI, cardToUIArticle } from "@/lib/wp/ui";
 import type { Article } from "@/data/journal";
 import { JournalArticleClient } from "@/components/pages/JournalArticleClient";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -43,6 +44,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function JournalArticlePage({ params }: Props) {
+  await guardPage('blogs');
   const { slug } = await params;
   const res = await getPost(slug);
   if (!res) notFound();

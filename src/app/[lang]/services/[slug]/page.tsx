@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, serviceJsonLd } from "@/lib/jsonld";
 import { getMergedTreatment, getMergedTreatments } from "@/lib/wp/treatments";
 import { TreatmentDetailClient } from "@/components/pages/TreatmentDetailClient";
+import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
 
@@ -32,6 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ServiceDetailPage({ params }: Props) {
+  await guardPage('services');
   const { slug } = await params;
   // `getMergedTreatment` is the variant that also pulls the treatment's own
   // WordPress page (885 for botox) into `body`, which the detail renders.
