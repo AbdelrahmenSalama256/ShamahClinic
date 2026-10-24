@@ -43,6 +43,7 @@ import { previewDocument, previewModel, seoReadout } from '@/lib/console/preview
 import { writeScopeQuery } from '@/lib/content/list-view';
 import { Button, ButtonLink } from '@/components/ui/Button';
 import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
+import { Card } from '@/components/ui/Surface';
 import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/ui/Status';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
@@ -413,8 +414,8 @@ export function ConsoleEditor({
         </div>
 
         {pendingNav && (
-          <div className="console-panel console-nav-confirm" role="alertdialog" aria-label={labels['content.unsaved.title']}>
-            <p className="console-lede">{labels['content.unsaved.body']}</p>
+          <Card className="console-panel console-nav-confirm" role="alertdialog" aria-label={labels['content.unsaved.title']}>
+            <p className="ui-lede">{labels['content.unsaved.body']}</p>
             <div className="console-controls">
               <Button variant="primary" loading={busy} onClick={() => void continueAfterSave()}>
                 {labels['content.unsaved.save']}
@@ -431,11 +432,11 @@ export function ConsoleEditor({
               </Button>
               <Button onClick={onPendingCancel}>{labels['content.unsaved.keep']}</Button>
             </div>
-          </div>
+          </Card>
         )}
 
         {history && row && history.id === row.id && (
-          <div className="console-panel console-history">
+          <Card className="console-panel console-history">
             {history.revisions.length === 0 ? (
               <Empty>{labels['content.no_history']}</Empty>
             ) : (
@@ -456,14 +457,14 @@ export function ConsoleEditor({
               </ul>
             )}
             <Button onClick={() => setHistory(null)}>{labels['content.close']}</Button>
-          </div>
+          </Card>
         )}
 
         {notice && <Alert tone={notice.tone}>{labels[notice.key]}</Alert>}
       </div>
 
       <aside className="console-editor-side">
-        <section className="console-panel console-preview">
+        <Card as="section" className="console-panel console-preview">
           <h3>{labels['content.preview']}</h3>
           <Note>{labels['content.preview.draft']}</Note>
           {seo?.path ? (
@@ -476,9 +477,9 @@ export function ConsoleEditor({
           {/* No `allow-same-origin`, no `allow-scripts`: the draft's own markup is inert
               here, and it never reaches the document that holds the session cookie. */}
           <iframe className="console-preview-frame" title={labels['content.preview']} sandbox="" srcDoc={previewSrc} />
-        </section>
+        </Card>
 
-        <section className="console-panel console-seo">
+        <Card as="section" className="console-panel console-seo">
           <h3>{labels['content.seo']}</h3>
           {seo ? (
             <>
@@ -495,7 +496,7 @@ export function ConsoleEditor({
             // coming here, which is a sentence. The word is the honest placeholder.
             <Note>{labels['content.loading']}</Note>
           )}
-        </section>
+        </Card>
       </aside>
     </div>
   );

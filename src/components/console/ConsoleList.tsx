@@ -24,6 +24,8 @@ import { consoleCall, consoleRead } from './client-api';
 import { Button } from '@/components/ui/Button';
 import { Checkbox, Field, Input, Select } from '@/components/ui/Field';
 import { Alert, Badge, Empty, Mark, Note, Skeleton, type Tone } from '@/components/ui/Status';
+import { Card, RowAction, RowKey, RowTitle } from '@/components/ui/Surface';
+import { Chip, ChipRemove, ChipRow, ChipTag } from '@/components/ui/Chip';
 import { contentStateTone } from '@/lib/console/editor-form';
 import type { ContentAbilities } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
@@ -305,20 +307,13 @@ export function ConsoleList({
   return (
     <div className="console-list" data-mode={view.mode} aria-busy={loading}>
       <div className="console-list-bar">
-        <div className="console-chips" role="group" aria-label={labels['content.filter.all']}>
+        <ChipRow label={labels['content.filter.all']}>
           {filters.map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              className="console-chip-button"
-              data-active={view.filter === filter || undefined}
-              aria-pressed={view.filter === filter}
-              onClick={() => setView(withView(view, { filter }))}
-            >
+            <Chip key={filter} active={view.filter === filter} aria-pressed={view.filter === filter} onClick={() => setView(withView(view, { filter }))}>
               {labels[FILTER_KEYS[filter]]}
-            </button>
+            </Chip>
           ))}
-        </div>
+        </ChipRow>
 
         <Input
           bar
@@ -358,23 +353,21 @@ export function ConsoleList({
       </div>
 
       {views.length > 0 && (
-        <div className="console-views" role="group" aria-label={labels['content.views']}>
+        <ChipRow label={labels['content.views']}>
           {views.map((row) => (
-            <span className="console-view-chip" key={row.id}>
-              <button type="button" className="console-chip-button" onClick={() => applyView(row.query)}>
-                {row.name}
-              </button>
-              <button type="button" className="console-chip-x" aria-label={`${labels['content.view.remove']}: ${row.name}`} onClick={() => void dropView(row.id)}>
+            <ChipTag key={row.id}>
+              <Chip onClick={() => applyView(row.query)}>{row.name}</Chip>
+              <ChipRemove aria-label={`${labels['content.view.remove']}: ${row.name}`} onClick={() => void dropView(row.id)}>
                 <X size={16} aria-hidden="true" />
-              </button>
-            </span>
+              </ChipRemove>
+            </ChipTag>
           ))}
-        </div>
+        </ChipRow>
       )}
 
       {saving && (
         <form
-          className="console-panel"
+          className="ui-card console-panel"
           onSubmit={(event) => {
             event.preventDefault();
             void saveView();
@@ -438,21 +431,21 @@ export function ConsoleList({
             {rows.map((row) => {
               const state = stateOf(row);
               return (
-                <li key={row.id} className="console-card" data-active={row.id === selectedId || undefined}>
+                <Card as="li" key={row.id} active={row.id === selectedId}>
                   <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
-                  <button type="button" className="console-card-body" onClick={() => onSelect(row.id === selectedId ? null : row)}>
-                    <span className="console-row-title">{titleOf(row, locale)}</span>
+                  <RowAction onClick={() => onSelect(row.id === selectedId ? null : row)}>
+                    <RowTitle>{titleOf(row, locale)}</RowTitle>
                     <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
-                    <code className="console-row-key">{row.key}</code>
-                  </button>
-                </li>
+                    <RowKey>{row.key}</RowKey>
+                  </RowAction>
+                </Card>
               );
             })}
           </ul>
         </>
       ) : (
-        <div className="console-table-wrap">
-          <table className="console-table">
+        <Card flat flush className="console-table-wrap">
+          <table className="ui-table">
             <thead>
               <tr>
                 <th className="console-cell-check">
@@ -462,7 +455,7 @@ export function ConsoleList({
                   <th key={sort} aria-sort={view.sort === sort ? (view.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
                     <button
                       type="button"
-                      className="console-sort"
+                      className="ui-table-sort"
                       data-active={view.sort === sort || undefined}
                       onClick={() => setView(withSort(view, sort))}
                     >
@@ -487,12 +480,12 @@ export function ConsoleList({
                       <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
                     </td>
                     <td>
-                      <button type="button" className="console-row" onClick={() => onSelect(row.id === selectedId ? null : row)}>
-                        <span className="console-row-title">{titleOf(row, locale)}</span>
-                      </button>
+                      <RowAction onClick={() => onSelect(row.id === selectedId ? null : row)}>
+                        <RowTitle>{titleOf(row, locale)}</RowTitle>
+                      </RowAction>
                     </td>
                     <td>
-                      <code className="console-row-key">{row.key}</code>
+                      <RowKey>{row.key}</RowKey>
                     </td>
                     <td>
                       <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
@@ -520,7 +513,7 @@ export function ConsoleList({
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
 
       <div className="console-pager">

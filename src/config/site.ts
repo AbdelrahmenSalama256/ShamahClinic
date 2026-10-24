@@ -97,6 +97,11 @@ export const siteTheme = {
     "--bg-secondary": "#f4ece4",
     "--bg-card": "#fffcf8",
     "--bg-card-subtle": "#fdfbf8",
+    // The two steps a surface takes — a cursor on it, and the row that is open — as
+    // translucent washes, so each composites on whichever card it lands on rather than
+    // replacing it with a fixed hex. The dark stops are the same two washes lifted.
+    "--bg-hover": "rgba(33, 26, 22, 0.045)",
+    "--bg-active": "rgba(33, 26, 22, 0.09)",
     "--bg-dark": "#191412",
     "--bg-dark-card": "#241d1a",
     "--text-primary": "#211a16",
@@ -155,6 +160,12 @@ export const siteTheme = {
     "--bg-secondary": "#24211e",
     "--bg-card": "#211e1b",
     "--bg-card-subtle": "#292522",
+    // Lifted rather than darkened: on charcoal the only way a hovered row reads as a change
+    // is a lighter wash, and the same 4.5% of cream ink is 7% at this depth. The selected
+    // row needs its own step because `--bg-secondary` sits 3 units above `--bg-card` here —
+    // measured in the built app, and less than the hover, which puts the ladder backwards.
+    "--bg-hover": "rgba(245, 238, 230, 0.07)",
+    "--bg-active": "rgba(245, 238, 230, 0.13)",
     "--bg-dark": "#100f0e",
     "--bg-dark-card": "#1b1917",
     "--text-primary": "#f5eee6",

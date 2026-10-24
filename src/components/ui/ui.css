@@ -13,7 +13,9 @@
  * component that wants a different size asks the primitive for one (`size="sm"`,
  * `variant="ghost"`) instead of fighting a utility it will lose. The cost is symmetric
  * and known: restyling a primitive from a surface stylesheet means another unlayered
- * rule later in the document, which is exactly what `console.css` does today to the tabs.
+ * rule later in the document, which is why the whitelist in `tests/ui-primitives.test.ts`
+ * allows a surface override to name a placement — `display`, a margin, a measure — and
+ * never a colour or a size.
  *
  * No physical direction anywhere in here — `inline-size`, `padding-inline`,
  * `border-block-start` — so Arabic needs no override, and no raw number where a token
@@ -582,4 +584,318 @@ select.ui-control {
    `—` must never read as a column of `○` from across the room. */
 .ui-mark[data-state='none'] {
   color: var(--text-muted);
+}
+
+/* ----------------------------------------------
+   Card (BK-19.3d). The one shell either surface raises off the page.
+
+   `console.css` painted `--bg-card` + a `--hairline` + `--radius-surface` + `--elev-1`
+   five times under five names — the overview's stat card, the panel behind every form,
+   the card-mode row, the login's card and, minus the shadow, the list's scroll box. Four
+   were the same declarations with different class names, which is how one screen's card
+   ends up 1px rounder than its neighbour's. The fifth added
+   `padding: var(--ui-pad) calc(var(--ui-pad) + 0.05rem)`: a 0.05rem nobody owned and no
+   comment explained, and the card-mode row hard-pinned `padding: 0.7rem`, which is what
+   `--ui-pad` already says in dense — a density stop written as a constant, so the
+   comfortable surface got the dense card.
+
+   Two attributes, each with a real consumer: `data-flush` for a shell whose children pad
+   themselves (a table's scroll box, whose cells carry the padding), `data-flat` for a
+   shell that cannot lift (a list that scrolls inside itself — a shadow under it would read
+   as something the page is holding up). `data-active` is the row the editor is showing.
+   ---------------------------------------------- */
+.ui-card {
+  padding: var(--ui-pad);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card);
+  box-shadow: var(--elev-1);
+}
+
+.ui-card[data-flat] {
+  box-shadow: none;
+}
+
+.ui-card[data-flush] {
+  padding: 0;
+}
+
+.ui-card[data-active] {
+  border-color: var(--text-primary);
+  background: var(--bg-active);
+}
+
+/* ----------------------------------------------
+   Lede (BK-19.3d). The sentence under a heading.
+
+   It was `.console-lede` and it is the class five screens' opening paragraphs wear, the
+   login's and the editor's "you have unsaved changes" among them — so it moves whole,
+   because a public section's subtitle is the same role said in the same voice.
+   `margin-block-end` is `--sp-6`, the 1.5rem it already had, named.
+   ---------------------------------------------- */
+.ui-lede {
+  margin-block: 0 var(--sp-6);
+  color: var(--text-secondary);
+  font-size: var(--ui-font);
+}
+
+/* ----------------------------------------------
+   Table (BK-19.3d). Rows you read across, in a box that scrolls.
+
+   The behaviour is the list's and does not move: a sticky head, a sortable column, a row
+   that is selected rather than hovered. What moves is the paint, and three things about it
+   were wrong.
+
+   `border-collapse: separate` is load-bearing and stays: a collapsed table drops the
+   border off a sticky header, so the head loses its edge the moment the body scrolls under
+   it. The comment that said so lived in `console.css`, where a second surface would never
+   have found it.
+
+   The cell padding was `0.5rem 0.7rem` — two literals, one of which (`0.7rem`) is
+   `--ui-pad` in dense and nothing in comfortable. They are `--sp-2` and `--sp-3` now,
+   which is what they always were: half a space, three quarters of one.
+
+   There was no row hover. The brief asks for one and the list has nine columns to read
+   across, so a cursor that loses its place is the defect. It is a tint, not a pointer: the
+   row is not the target — the title action and the checkbox inside it are, and they keep
+   their own cursors — so the hover is a reading aid and `[data-active]` still outranks it,
+   by source order at equal weight, because "this row is open in the editor" has to beat
+   "the cursor is on it".
+   ---------------------------------------------- */
+.ui-table {
+  inline-size: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--ui-font);
+}
+
+/* `anywhere`, not `break-word`: only `anywhere` lets auto layout compute a column's
+   min-content as one character, which is what keeps a 60-slug from widening the table.
+   It is inherited, so everything inside a cell that must not break — a badge, a chip —
+   declares that for itself (see `.ui-badge`). */
+.ui-table th,
+.ui-table td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  vertical-align: baseline;
+  border-block-end: 1px solid var(--border-control-soft);
+  overflow-wrap: anywhere;
+}
+
+/* Local to this scroll box: the head sits above the cells that pass under it, and one is
+   all it takes. `--z-*` is the page's scale — sticky, scrim, drawer, drop, modal — and a
+   header inside a table is not on it; borrowing `--z-sticky` here would put a table head in
+   the same argument as the top bar and the drawer. */
+.ui-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--ui-font-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ui-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.ui-table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+/* The row the editor is holding. A head has a border to say it is open and a row has
+   nothing but its fill, so this one takes the step above the hover rather than
+   `--bg-secondary` — which is 3 units from the card in the dark theme, less than the
+   cursor's own wash. Later than `:hover` on purpose: equal specificity, so the order is
+   the tie-break, and "open" has to beat "under the cursor". */
+.ui-table tbody tr[data-active] {
+  background: var(--bg-active);
+}
+
+/* A column head is the most-clicked control on a list, so it gets the tap floor and not
+   the text height — 13.1's rule, restated where the primitive can keep it. */
+.ui-table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-block-size: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--ui-font-small);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.ui-table-sort:hover,
+.ui-table-sort[data-active] {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ----------------------------------------------
+   Row action (BK-19.3d). The one thing in a row or a card that opens it.
+
+   `.console-row` and `.console-card-body` were the same button written twice — a block
+   that fills its cell, no border, no fill, the pointer, and the title underlined when the
+   cursor is on it — with the card's copy adding a column. The underline is on the title,
+   not on the whole row, because the row is not the target: the title is.
+   ---------------------------------------------- */
+.ui-row-action {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--ui-font);
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.ui-row-action:hover .ui-row-title {
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+.ui-row-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ui-row-key {
+  font-size: var(--ui-font-small);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Chip (BK-19.3d). A filter that is also a toggle, and a saved view that is also deletable.
+
+   `.console-chip-button`, `.console-view-chip` and `.console-chip-x` each wrote
+   `border-radius: 999px` while `--radius-pill` (9999px) sat in `globals.css` with one
+   consumer, the spinner. A literal that is 999px and a token that is 9999px draw the same
+   capsule today and diverge the day the token is retuned, which is the whole complaint.
+
+   The padding is the button's (`--sp-1 --sp-4`), not the chip's own `0.3rem 0.8rem`: a chip
+   is the button's shape in a smaller voice, and two paddings for one shape is how a filter
+   row stops aligning with the save bar under it.
+
+   `overflow-wrap: normal` is 19.3c's lesson carried to the rest of the pill family: the
+   property is inherited, so the first chip that lands in a table cell — the tag column
+   BK-17's leads list is built for — would otherwise inherit the cell's `anywhere` and set
+   its own column's width by character.
+
+   `data-active` is the filter that is on. The removable chip is a capsule with two
+   separately tappable halves inside it, which is why the capsule is `content-box`: it draws
+   the 1px border, and the floor is the *tappable* height, not the box's.
+   ---------------------------------------------- */
+.ui-chip {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--tap);
+  padding: var(--sp-1) var(--sp-4);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--ui-font-small);
+  overflow-wrap: normal;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.ui-chip:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ui-chip[data-active] {
+  border-color: var(--text-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.ui-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-chip-tag {
+  display: inline-flex;
+  box-sizing: content-box;
+  align-items: stretch;
+  min-block-size: var(--tap);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+}
+
+/* The half inside the capsule is the same control with the capsule's border removed; it is
+   the primitive reaching into its own composition, not a surface re-painting it. */
+.ui-chip-tag .ui-chip {
+  min-block-size: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.ui-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+/* Deleting a view is not a destructive act — no row goes with it — so the red is the
+   cursor's answer, not the control's resting colour. */
+.ui-chip-x:hover {
+  color: var(--text-danger);
+}
+
+.ui-chip-x:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------
+   Tabs (BK-19.3d). The group; the control inside it is the button.
+
+   `console.css` owned `.console-tabs` as a flex row with `gap: 0.35rem` written out, and
+   the header of this file used the tabs as its example of a surface overriding a primitive.
+   The group is two declarations, so that is what moves — and the tabs themselves stay
+   `Button`s, because a tab is a control with hover, pressed, disabled and focus-visible
+   states, and the button has had all four since 19.3a. A second pill-shaped tab skin would
+   have been a second definition of the thing this row exists to remove; what `Tabs.tsx`
+   adds is the wiring a `role="tablist"` promises and the console's did not have.
+   ---------------------------------------------- */
+.ui-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-gap-tight);
 }

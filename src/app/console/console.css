@@ -92,7 +92,11 @@ html[data-theme='dark'] .console-body {
   grid-column: 1 / -1;
   position: sticky;
   top: 0;
-  z-index: 20;
+  /* The scale's sticky step, which is what this has always been. It was a hand-written 20;
+     nothing else in the console sat between 20 and 30, so the number moving is inert —
+     the point is that the next overlay is measured against a named layer instead of
+     against a guess. */
+  z-index: var(--z-sticky);
   background: var(--bg-card);
   border-block-end: 1px solid var(--border-control-soft);
 }
@@ -502,11 +506,10 @@ details[open] > .console-nav-head .console-nav-caret {
   font-size: 1.4rem;
 }
 
-.console-lede {
-  margin: 0 0 1.5rem;
-  color: var(--text-secondary);
-  font-size: var(--ui-font);
-}
+/* The sentence under a heading is `.ui-lede` now (BK-19.3d) — same colour, same size, and
+   its 1.5rem named as `--sp-6`. It moves to the control layer because a public section's
+   subtitle is the same role in the same voice, and two sheets spelling it differently is
+   how a console lede and a site lede stop matching. */
 
 .console-grid {
   display: grid;
@@ -514,31 +517,26 @@ details[open] > .console-nav-head .console-nav-caret {
   gap: var(--ui-gap);
 }
 
-.console-card {
-  background: var(--bg-card);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-surface);
-  box-shadow: var(--elev-1);
-  padding: var(--ui-pad) calc(var(--ui-pad) + 0.05rem);
-}
-
-.console-card dt {
+/* The overview's tiles are a `Card` with a number in it. The shell — fill, boundary,
+   radius, lift and the `--ui-pad` that dense is allowed to lower — is the primitive's; what
+   is left is the two lines that make a figure read as a figure. The 19.5 pass (count-ups,
+   sparklines, `--num-digits`) owns a `Stat` primitive of its own, and these two rules move
+   into it. The `calc(--ui-pad + 0.05rem)` this replaces was an unowned, uncommented
+   eighth-of-a-rem: the card now has one padding on all four sides like every other card. */
+.console-stat dt {
   font-size: var(--ui-font-small);
   color: var(--text-secondary);
 }
 
-.console-card dd {
-  margin: 0.35rem 0 0;
+.console-stat dd {
+  margin: var(--ui-gap-tight) 0 0;
   font-size: 1.5rem;
   font-weight: 700;
 }
 
+/* A panel is a card that stops itself from stretching past a form's measure. The shell is
+   `.ui-card`'s; the two lines here are why a call site names `console-panel` at all. */
 .console-panel {
-  background: var(--bg-card);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-surface);
-  box-shadow: var(--elev-1);
-  padding: var(--ui-pad);
   margin-block-end: var(--ui-stack);
   max-width: var(--console-panel-w);
 }
@@ -641,36 +639,10 @@ details[open] > .console-nav-head .console-nav-caret {
   scrollbar-width: thin;
 }
 
-.console-row {
-  display: block;
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--ui-font);
-  text-align: start;
-  overflow-wrap: anywhere;
-  cursor: pointer;
-}
-
-.console-row:hover .console-row-title {
-  text-decoration: underline;
-  text-underline-offset: 0.2rem;
-}
-
-.console-row-title {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.console-row-key {
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
-  overflow-wrap: anywhere;
-}
+/* A row's one action, its title and its machine key are `.ui-row-action`, `.ui-row-title`
+   and `.ui-row-key` (BK-19.3d). The table cell and the card column used to be two copies of
+   the same button, and the underline that said "this is what a click answers to" was
+   written twice as well. */
 
 .console-work-head {
   display: flex;
@@ -691,11 +663,10 @@ details[open] > .console-nav-head .console-nav-caret {
   font-size: 1rem;
 }
 
+/* The tab *group* is `.ui-tabs` and the wiring — roving focus, arrow keys, the panel the
+   tabs point at — is `Tabs.tsx` (BK-19.3d). Only the space under the row is this screen's. */
 .console-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin-block-end: 0.9rem;
+  margin-block-end: var(--ui-stack);
 }
 
 /* The editor's field stack, its flag rows and the locale word inside a label are all in
@@ -740,35 +711,11 @@ details[open] > .console-nav-head .console-nav-caret {
   gap: var(--ui-gap-tight) var(--ui-gap);
 }
 
-.console-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.console-chip-button {
-  min-height: var(--tap);
-  padding: 0.3rem 0.8rem;
-  border: 1px solid var(--border-control-soft);
-  border-radius: 999px;
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: var(--ui-font-small);
-  cursor: pointer;
-}
-
-.console-chip-button:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-}
-
-.console-chip-button[data-active] {
-  border-color: var(--text-primary);
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-weight: 600;
-}
+/* The filter chips and the saved-view chips are the control layer's now (BK-19.3d):
+ * `.ui-chip`, `.ui-chip-row`, `.ui-chip-tag`, `.ui-chip-x`. What was here painted the same
+ * capsule three times, each with its own `border-radius: 999px` while `--radius-pill` sat
+ * in `globals.css` with one consumer, and gave the active filter a `--bg-secondary` fill
+ * the primitive keeps. The list adds nothing, so nothing is left here to add it back. */
 
 /* Only the sizing the bar gives it. The skin — boundary, radius, fill, the `--tap` floor
  * it keeps when dense lowers the fields — is `.ui-control[data-bar]`, because this box and
@@ -786,52 +733,10 @@ details[open] > .console-nav-head .console-nav-caret {
   color: var(--text-secondary);
 }
 
-.console-views {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.console-view-chip {
-  display: inline-flex;
-  /* `stretch`, not `center`: the chip is the capsule and both halves are tapped
-     independently, so each has to fill the 44px the outer box already reserves.
-     `content-box` because the capsule draws a 1px border and the halves sit inside it —
-     with the usual border-box they measured 43 and the floor is the *tappable* height. */
-  box-sizing: content-box;
-  align-items: stretch;
-  min-height: var(--tap);
-  border: 1px solid var(--border-control-soft);
-  border-radius: 999px;
-  background: var(--bg-card);
-}
-
-.console-view-chip .console-chip-button {
-  min-height: 100%;
-  border: 0;
-  background: transparent;
-}
-
-.console-chip-x {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-inline-size: var(--tap);
-  padding: 0;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 1.05rem;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.console-chip-x:hover {
-  color: var(--text-danger);
-}
+/* The saved views are `.ui-chip-tag` around a `.ui-chip` and a `.ui-chip-x`, in the
+ * control layer since 19.3d. The capsule's `content-box` and the two halves' share of the
+ * 44px floor are the primitive's argument now, and it is the same argument the leads list
+ * will need — which is the reason it left this file rather than staying a list quirk. */
 
 /* Not sticky: the table below it scrolls inside its own box, so the bar stays where the
    checkmarks were clicked without needing to clear the sticky topbar. */
@@ -852,73 +757,22 @@ details[open] > .console-nav-head .console-nav-caret {
   margin-inline-end: auto;
 }
 
+/* The box's own scroll is the list's, not the shell's: `Card flat flush` paints the card
+   (`console.css` no longer owns a border, a radius or a fill here) and these three lines
+   are why the shell exists at all — a page of rows you can wheel through without the page
+   moving under you. */
 .console-table-wrap {
   max-block-size: var(--console-list-h);
   overflow: auto;
   scrollbar-width: thin;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-surface);
-  background: var(--bg-card);
 }
 
-/* `separate`, not `collapse`: a collapsed table drops the border off a sticky header. */
-.console-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-size: var(--ui-font);
-}
-
-.console-table th,
-.console-table td {
-  padding: 0.5rem 0.7rem;
-  text-align: start;
-  vertical-align: baseline;
-  border-block-end: 1px solid var(--border-control-soft);
-  overflow-wrap: anywhere;
-}
-
-.console-table thead th {
-  position: sticky;
-  inset-block-start: 0;
-  z-index: 1;
-  background: var(--bg-card);
-  color: var(--text-secondary);
-  font-size: var(--ui-font-small);
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.console-table tbody tr:last-child td {
-  border-block-end: 0;
-}
-
-.console-table tbody tr[data-active] {
-  background: var(--bg-secondary);
-}
-
-.console-sort {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  /* the tap floor, not the text height: a column header is the most-clicked control on
-     the list and a 36 px button is a target a phone misses — 13.1's rule, restated */
-  min-height: var(--tap);
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: var(--ui-font-small);
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.console-sort:hover,
-.console-sort[data-active] {
-  color: var(--text-primary);
-  font-weight: 600;
-}
+/* The table itself — cells, the sticky head, the last row's missing rule, the selected
+   row and the row hover the brief asked for and this list never had — is `.ui-table` in
+   the control layer now (BK-19.3d), with the sortable head as `.ui-table-sort`. Two
+   numbers moved with it: the cell padding's `0.5rem 0.7rem` became `--sp-2 --sp-3`, and
+   the sort button's `gap: 0.25rem` became `--sp-1`. Nothing here re-paints them, for the
+   reason the fields stopped being re-painted above. */
 
 .console-cell-check {
   inline-size: var(--tap);
@@ -951,37 +805,27 @@ details[open] > .console-nav-head .console-nav-caret {
   scrollbar-width: thin;
 }
 
-.console-cards .console-card {
+/* A card-mode row is a `Card` with a checkbox beside the title action: the shell, the
+   padding (`--ui-pad`, so dense gets its 0.7rem back instead of pinning it into
+   comfortable) and the selected row's fill are all `.ui-card`'s. These three lines are
+   the row's own arrangement. */
+.console-cards .ui-card {
   display: flex;
   align-items: flex-start;
-  gap: 0.5rem;
-  padding: 0.7rem;
-}
-
-.console-cards .console-card[data-active] {
-  border-color: var(--text-primary);
-  background: var(--bg-secondary);
+  gap: var(--sp-2);
 }
 
 /* The row and card checkboxes are `.ui-check` now: the box's graphic is 20px, the label
  * around it is the target, and the 44px floor it carries is the primitive's — which is how
  * the editor's flag rows got a floor at all. `.console-cell-check` above still owns the
- * column's width. */
-
-.console-card-body {
+ * column's width. The title action inside the row is `.ui-row-action`, and this is the one
+ * place it is not a whole cell but a column of title, state and key. */
+.console-cards .ui-row-action {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.35rem;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
+  gap: var(--ui-gap-tight);
 }
 
 .console-pager {
@@ -1035,7 +879,10 @@ details[open] > .console-nav-head .console-nav-caret {
 }
 
 /* Pinned to the bottom of the pane, and 44px tall whatever the density: the bar holds no
-   field, so the token dense lowers has no business here. */
+   field, so the token dense lowers has no business here. Its `z-index: 6` is deliberately
+   local, like a sticky table head's: it only has to clear the fields in this pane, and
+   putting it on the page's scale (`--z-sticky` and up) would make a save bar argue with the
+   top bar and the drawer. */
 .console-editor-bar {
   position: sticky;
   bottom: 0;
@@ -1176,7 +1023,10 @@ details[open] > .console-nav-head .console-nav-caret {
     display: block;
     position: fixed;
     inset: 0;
-    z-index: 35;
+    /* `--z-scrim` is 35, so this is the same layer it has always drawn — the exact value is
+       how the scale is known to be real rather than invented. The 45%-of-pure-black wash
+       is not 19.3d's business: what it should sit over is the drawer/modal pass. */
+    z-index: var(--z-scrim);
     background: rgb(0 0 0 / 45%);
   }
 }

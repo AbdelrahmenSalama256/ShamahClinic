@@ -44,18 +44,16 @@ export function ConsoleNavTree({
   );
 
   return (
-    <nav className="console-nav console-nav-tree" aria-label={labels.screens}>
+    <nav className="console-nav" aria-label={labels.screens}>
       {groups.map((group) => (
         <div className="console-nav-group" key={group.key}>
           <p className="console-nav-heading">{group.label}</p>
           <ul className="console-nav-list">
             {group.branches.map((branch) =>
               branch.leaves.length === 0 ? (
-                <li className="console-nav-flat" key={branch.key}>
-                  {leaf(branch)}
-                </li>
+                <li key={branch.key}>{leaf(branch)}</li>
               ) : (
-                <li className="console-nav-branch" key={branch.key}>
+                <li key={branch.key}>
                   <details open={href === branch.path || branch.leaves.some((candidate) => candidate.path === href) || undefined}>
                     <summary className="console-nav-head">
                       {leaf(branch)}

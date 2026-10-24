@@ -15,6 +15,16 @@
      thing that had to move. Text ratios are measured in docs/contrast-report.md. */
   --bg-card: #fffcf8;
   --bg-card-subtle: #fdfbf8;
+  /* The two steps a surface takes: under a cursor, and while it is the row that is open.
+     Both are translucent ink rather than a fourth hex. `--bg-card-subtle` is 2 units below
+     `--bg-card`, which is not a state anyone can see, and `--bg-secondary` — the fill every
+     pressed control already uses — measured 11 units below the card in the light theme and
+     only 3 units *above* it in the dark one, where a hovered row was the stronger of the
+     two. An overlay composites over whatever it lands on, so the same numbers give a card
+     a whisper and a secondary a shade, in both themes, in the order the state machine is
+     in: card, then hover, then active. `siteTheme` carries the dark stops. */
+  --bg-hover: rgba(33, 26, 22, 0.045);
+  --bg-active: rgba(33, 26, 22, 0.09);
   --bg-dark: #191412;
   --bg-dark-card: #241d1a;
 

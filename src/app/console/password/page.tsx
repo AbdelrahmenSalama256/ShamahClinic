@@ -35,11 +35,11 @@ export default async function ConsolePasswordPage() {
         {auth.user.mustChangePassword ? (
           <Alert tone="danger">{message('password.must_change', prefs.locale)}</Alert>
         ) : (
-          <p className="console-lede">
+          <p className="ui-lede">
             <Link href="/console">{message('nav.overview', prefs.locale)}</Link>
           </p>
         )}
-        <p className="console-lede">{message('password.intro', prefs.locale)}</p>
+        <p className="ui-lede">{message('password.intro', prefs.locale)}</p>
         <PasswordForm labels={labels} />
       </section>
     </main>

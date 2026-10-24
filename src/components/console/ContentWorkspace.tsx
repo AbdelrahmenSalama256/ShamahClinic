@@ -21,6 +21,7 @@ import { ConsoleEditor } from './ConsoleEditor';
 import { Button } from '@/components/ui/Button';
 import { Field, Input } from '@/components/ui/Field';
 import { Alert, type Tone } from '@/components/ui/Status';
+import { Tabs } from '@/components/ui/Tabs';
 import { ConsoleList } from './ConsoleList';
 import { consoleCall } from './client-api';
 import type { ContentScreenData, ContentScope } from '@/lib/console/content-screen';
@@ -137,6 +138,30 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
   // `data-open` is the CSS cue that the editor has something in it. While it is empty the
   // list gets the wider column — a table of titles deserves the room, and the only thing
   // the other pane holds is the scope tabs.
+  const editor = (
+    <>
+      <ConsoleEditor
+        kind={kind}
+        api={api}
+        scopeValue={scopeValue}
+        named={named}
+        locale={locale}
+        rowId={selectedId}
+        labels={labels}
+        abilities={data.abilities}
+        publishable={publishable}
+        pendingNav={pending !== null}
+        onRequestNav={requestNav}
+        onPendingResolve={resolvePending}
+        onPendingCancel={cancelPending}
+        onDirtyChange={onDirtyChange}
+        onChanged={reloadList}
+        onClose={closeRow}
+      />
+      {notice && <Alert tone={notice.tone}>{labels[notice.key]}</Alert>}
+    </>
+  );
+
   return (
     <div className="console-work" data-kind={kind} data-open={selectedId ? 'true' : undefined}>
       <section className="console-work-list" aria-label={labels['content.rows']}>
@@ -153,7 +178,7 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
 
         {creating && (
           <form
-            className="console-panel"
+            className="ui-card console-panel"
             onSubmit={(event) => {
               event.preventDefault();
               void create();
@@ -191,47 +216,31 @@ export function ContentWorkspace({ data }: Readonly<{ data: ContentScreenData }>
 
       <section className="console-work-edit" aria-label={labels['content.editor']}>
         {/* A list screen switches lists, so its tabs are the only way to reach a list
-            whose rows are not on screen — they have to survive an empty selection. */}
-        {(named || selectedId !== null) && (
-          <div className="console-tabs" role="tablist" aria-label={labels[named ? 'content.list.pick' : 'content.language']}>
-            {data.scopes.map((candidate) => (
-              <Button
-                key={String(candidate)}
-                role="tab"
-                aria-selected={String(candidate) === String(scopeValue)}
-                active={String(candidate) === String(scopeValue)}
-                onClick={() =>
-                  requestNav(() =>
-                    named ? switchScope({ listKey: String(candidate) }) : switchScope({ locale: candidate as ContentLocale }),
-                  )
-                }
-              >
-                {named ? (data.lists.find((list) => list.key === candidate)?.label ?? String(candidate)) : labels[`content.locale.${candidate}` as MessageKey]}
-              </Button>
-            ))}
-          </div>
+            whose rows are not on screen — they have to survive an empty selection.
+            Without a row open and without a named list there is nothing to switch, and so
+            no group to name: the editor stands alone rather than wearing a panel role
+            that points at a tab that is not there. */}
+        {named || selectedId !== null ? (
+          <Tabs
+            items={data.scopes.map((candidate) => ({
+              id: String(candidate),
+              label: named
+                ? (data.lists.find((list) => list.key === candidate)?.label ?? String(candidate))
+                : labels[`content.locale.${candidate}` as MessageKey],
+            }))}
+            value={String(scopeValue)}
+            onChange={(id) =>
+              requestNav(() => (named ? switchScope({ listKey: id }) : switchScope({ locale: id as ContentLocale })))
+            }
+            label={labels[named ? 'content.list.pick' : 'content.language']}
+            idBase={`scope-${kind}`}
+            className="console-tabs"
+          >
+            {editor}
+          </Tabs>
+        ) : (
+          editor
         )}
-
-        <ConsoleEditor
-          kind={kind}
-          api={api}
-          scopeValue={scopeValue}
-          named={named}
-          locale={locale}
-          rowId={selectedId}
-          labels={labels}
-          abilities={data.abilities}
-          publishable={publishable}
-          pendingNav={pending !== null}
-          onRequestNav={requestNav}
-          onPendingResolve={resolvePending}
-          onPendingCancel={cancelPending}
-          onDirtyChange={onDirtyChange}
-          onChanged={reloadList}
-          onClose={closeRow}
-        />
-
-        {notice && <Alert tone={notice.tone}>{labels[notice.key]}</Alert>}
       </section>
     </div>
   );

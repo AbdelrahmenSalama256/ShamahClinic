@@ -41,7 +41,7 @@ export function PasswordForm({ labels }: Readonly<{ labels: Record<MessageKey, s
   }
 
   return (
-    <form className="console-panel" onSubmit={submit}>
+    <form className="ui-card console-panel" onSubmit={submit}>
       <Field label={labels['password.current']} htmlFor="current">
         <Input id="current" name="current" type="password" autoComplete="current-password" required />
       </Field>

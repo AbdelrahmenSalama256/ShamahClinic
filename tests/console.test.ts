@@ -343,11 +343,20 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // that dense lowered to 36px — all of which passed the count above. Every control the
     // list still paints itself takes `--tap` by name, and never the field token dense
     // lowers. The two that used to be in this list — the search box and the per-page
-    // select — are `.ui-control[data-bar]` now, proved in the file that paints them.
-    for (const selector of ['.console-sort', '.console-chip-button', '.console-view-chip', '.console-chip-x', '.console-cards-head', '.console-editor-bar']) {
+    // select — are `.ui-control[data-bar]` now, proved in the file that paints them, and
+    // 19.3d moved the sortable head and the whole chip family out of here the same way.
+    for (const selector of ['.console-cards-head', '.console-editor-bar']) {
       const start = css.indexOf(`\n${selector} {`);
       expect(start, `${selector} is styled`).toBeGreaterThan(-1);
       expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--tap\)/);
+    }
+    for (const selector of [
+      /\.ui-table-sort\s*\{[^}]*min-block-size: var\(--tap\);/,
+      /\.ui-chip\s*\{[^}]*min-block-size: var\(--tap\);/,
+      /\.ui-chip-tag\s*\{[^}]*min-block-size: var\(--tap\);/,
+      /\.ui-chip-x\s*\{[^}]*min-inline-size: var\(--tap\);/,
+    ]) {
+      expect(ui, `${selector.source} keeps the floor`).toMatch(selector);
     }
     expect(css).not.toMatch(/min-(?:height|inline-size|block-size): [12]\.[0-9]+rem/);
     // BK-19.3b moved the field floor out of this file entirely. A second copy of it is how

@@ -29,6 +29,70 @@ function rule(source: string, selector: string): string {
   return source.slice(start, source.indexOf('}', start));
 }
 
+/** Selector and body of every declaration block. The pattern cannot cross a brace, so an
+ *  `@media` wrapper drops out and its inner rules are read on their own — a `.ui-` override
+ *  behind a breakpoint is still a surface re-painting a primitive. */
+function blocksOf(source: string): ReadonlyArray<{ selector: string; body: string }> {
+  const out: { selector: string; body: string }[] = [];
+  for (const match of source.matchAll(/([^{}]+)\{([^{}]+)\}/g)) {
+    out.push({ selector: match[1]!.replace(/\s+/g, ' ').trim(), body: match[2]! });
+  }
+  return out;
+}
+
+/** What a surface stylesheet is allowed to say about a control-layer class: where it goes,
+ *  not what it looks like. `padding`, `border`, `background`, `color`, `font*`,
+ *  `min-*-size` and `--radius-*` are deliberately absent — those are the numbers a 44px tap
+ *  floor, a measured contrast pair and one capsule radius live in, and a call site that
+ *  re-paints them is how one screen's floor quietly becomes another's 36px. */
+const PLACEMENT_PROPERTIES = new Set([
+  'display',
+  'flex',
+  'flex-direction',
+  'flex-wrap',
+  'flex-basis',
+  'flex-grow',
+  'flex-shrink',
+  'gap',
+  'row-gap',
+  'column-gap',
+  'grid',
+  'grid-template-columns',
+  'grid-template-rows',
+  'grid-column',
+  'grid-row',
+  'place-items',
+  'align-items',
+  'align-self',
+  'justify-content',
+  'margin',
+  'margin-block',
+  'margin-block-start',
+  'margin-block-end',
+  'margin-inline',
+  'margin-inline-start',
+  'margin-inline-end',
+  'order',
+  'position',
+  'inset',
+  'inset-block',
+  'inset-block-start',
+  'inset-block-end',
+  'inset-inline',
+  'inset-inline-start',
+  'width',
+  'height',
+  'min-width',
+  'min-height',
+  'max-width',
+  'max-height',
+  'overflow',
+  'overflow-x',
+  'overflow-y',
+  'scrollbar-width',
+  'box-sizing',
+]);
+
 describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
   it('reaches every document without anyone remembering to import it', () => {
     // Asserting the import *string* is not asserting the import works: the first version
@@ -340,17 +404,17 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
     // with one exception, and it is a narrow one. A `Note` is a span so that the pager's
     // "of 4" can live inside a row, which means a caption standing alone on a page only
     // becomes a line of its own if the surface says so. Space is the surface's business and
-    // paint is the primitive's (19.3c), so a `.ui-*` selector in `console.css` may declare
-    // `display` and a margin and nothing else: enough to place a caption, never enough to
-    // re-decide what a caption looks like on one screen and not the others.
-    for (const match of consoleCode.matchAll(/([^{}]+)\{/g)) {
-      const selector = match[1].trim();
-      expect(selector, `console.css styles a bare element: ${selector}`).not.toMatch(/(^|[\s,>+~(])(input|textarea|select)(?![\w-])/);
-      if (!selector.includes('.ui-')) continue;
-      const open = match.index + match[0].length;
-      const body = consoleCode.slice(open, consoleCode.indexOf('}', open));
-      for (const line of body.split(';').map((part) => part.trim()).filter(Boolean)) {
-        expect(line, `console.css re-paints a primitive: ${line}`).toMatch(/^(display|margin(-block|-inline)?(-(start|end|top|bottom|left|right))?):/);
+    // paint is the primitive's (19.3c), so a `.ui-*` selector in `console.css` may only say
+    // where the control goes: enough to place a caption or group a card row, never enough
+    // to re-decide what a caption looks like on one screen and not the others. The set is
+    // the one 19.3d writes down, so a surface hook cleared here cannot be refused there.
+    for (const block of blocksOf(consoleCode)) {
+      expect(block.selector, `console.css styles a bare element: ${block.selector}`).not.toMatch(
+        /(^|[\s,>+~(])(input|textarea|select)(?![\w-])/,
+      );
+      if (!block.selector.includes('.ui-')) continue;
+      for (const property of [...block.body.matchAll(/([a-z-]+)\s*:/g)].map((match) => match[1]!)) {
+        expect(PLACEMENT_PROPERTIES, `${block.selector} may not set ${property}`).toContain(property);
       }
     }
     for (const name of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentWorkspace', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
@@ -539,7 +603,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
     // Not `nowrap`, which measures the same in a one-word column and overflows the 16rem
     // sidebar on a two-word role name.
     expect(rule(ui, '.ui-badge')).not.toMatch(/white-space/);
-    expect(consoleCode).toMatch(/\.console-table th,\s*\.console-table td\s*\{[^}]*overflow-wrap: anywhere;/);
+    expect(rule(ui, '.ui-table th,\n.ui-table td')).toMatch(/overflow-wrap: anywhere;/);
     // A sentence is not a pill: it has no column to collapse, so it keeps the break for the
     // URL and the slug it sometimes has to hold.
     expect(rule(ui, '.ui-note')).toMatch(/overflow-wrap: anywhere;/);
@@ -552,9 +616,229 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
     expect(rule(ui, '.ui-empty')).toMatch(/border: 1px dashed var\(--hairline-strong\);/);
     expect(rule(ui, '.ui-empty')).toMatch(/padding: var\(--sp-8\) var\(--sp-4\);/);
     expect(rule(ui, '.ui-alert')).toMatch(/gap: var\(--sp-2\) var\(--sp-3\);/);
-    // `--radius-pill` had no consumer until the badge took the radius the chip wrote by hand.
-    // Three literals survive in the console sheet, all of them inside the saved-view chips —
-    // the controls 19.3d owns when it takes the card, the table and the tabs.
+    // `--radius-pill` had no consumer until the badge took the radius the chip wrote by
+    // hand. The three chip literals 19.3c left behind are gone with the chips themselves —
+    // see the capsule case in 19.3d, which forbids the number in either sheet.
     expect(globals).toMatch(/--radius-pill: 9999px;/);
+  });
+});
+
+describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
+  const surfaceSource = readFileSync(join(process.cwd(), 'src/components/ui/Surface.tsx'), 'utf8');
+  const chipSource = readFileSync(join(process.cwd(), 'src/components/ui/Chip.tsx'), 'utf8');
+  const tabsSource = readFileSync(join(process.cwd(), 'src/components/ui/Tabs.tsx'), 'utf8');
+  const workspaceSource = readFileSync(join(process.cwd(), 'src/components/console/ContentWorkspace.tsx'), 'utf8');
+  const listSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
+  const navSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'), 'utf8');
+  const siteConfig = readFileSync(join(process.cwd(), 'src/config/site.ts'), 'utf8');
+
+  /** Names the console sheet used for things the control layer now owns. A leading dot and
+   *  a "no word character or hyphen after" test keep `.console-cards` and
+   *  `.console-table-wrap` — both still real — out of the way of `console-card` and
+   *  `console-table`. */
+  const retired = [
+    'console-lede',
+    'console-card',
+    'console-card-body',
+    'console-row',
+    'console-row-title',
+    'console-row-key',
+    'console-table',
+    'console-sort',
+    'console-chips',
+    'console-chip-button',
+    'console-chip-x',
+    'console-view-chip',
+    'console-views',
+  ];
+
+  it('leaves the console no second shell, table, chip or row', () => {
+    for (const name of retired) {
+      const gone = new RegExp(`\\.console-${name}(?![\\w-])`);
+      expect(consoleCode, `.console-${name} is not a rule any more`).not.toMatch(gone);
+      expect(`${listSource}\n${workspaceSource}\n${navSource}`, `nothing still writes console-${name}`).not.toMatch(
+        new RegExp(`console-${name}(?![\\w-])`),
+      );
+    }
+    // The panel and the tabs survive, and only as placement: what a panel is that a card is
+    // not is a measure, and what a tab row is that a chip row is not is the space under it.
+    expect(rule(consoleCode, '.console-panel')).toMatch(/max-width: var\(--console-panel-w\);/);
+    expect(rule(consoleCode, '.console-panel')).not.toMatch(/background|border|box-shadow|padding|border-radius/);
+    expect(rule(consoleCode, '.console-tabs')).toMatch(/margin-block-end: var\(--ui-stack\);/);
+    expect(rule(consoleCode, '.console-tabs')).not.toMatch(/gap|display|background|color/);
+    expect(rule(consoleCode, '.console-table-wrap')).toMatch(/max-block-size: var\(--console-list-h\);/);
+    expect(rule(consoleCode, '.console-table-wrap')).not.toMatch(/background|border|border-radius/);
+    // The three nav names styled by nothing were still in the markup, which is how a class
+    // outlives the rule that needed it.
+    for (const name of ['console-nav-tree', 'console-nav-flat', 'console-nav-branch']) {
+      expect(navSource, `${name} is gone from the markup`).not.toContain(name);
+      expect(consoleCode, `${name} is gone from the sheet`).not.toContain(name);
+    }
+  });
+
+  it('lets a surface move a primitive and never re-paint it', () => {
+    // The rule `ui.css`'s header states and `console.css` has leaned on since the tabs: an
+    // override may say where a control goes. Everything that says what it looks like —
+    // padding, a border, a fill, a colour, a font, a size floor — is the primitive's,
+    // because those are the numbers the tap floor and the measured contrast pairs live in.
+    const overrides = [...blocksOf(consoleCode), ...blocksOf(globals)].filter((block) => block.selector.includes('.ui-'));
+    expect(overrides.length, 'the console still has placement hooks on the control layer').toBeGreaterThan(0);
+    for (const block of overrides) {
+      for (const property of [...block.body.matchAll(/([a-z-]+)\s*:/g)].map((match) => match[1]!)) {
+        expect(PLACEMENT_PROPERTIES, `${block.selector} may not set ${property}`).toContain(property);
+      }
+    }
+    // And the hooks that are left are the four this row expected, no more.
+    expect(overrides.map((block) => block.selector)).toEqual([
+      '.console-palette-list > .ui-note',
+      '.console-panel > .ui-note, .console-content > .ui-note',
+      '.console-cards .ui-card',
+      '.console-cards .ui-row-action',
+    ]);
+  });
+
+  it('raises one card, and lets the call site pick the tag it deserves', () => {
+    expect(rule(ui, '.ui-card')).toMatch(/padding: var\(--ui-pad\);/);
+    expect(rule(ui, '.ui-card')).toMatch(/border: 1px solid var\(--hairline\);/);
+    expect(rule(ui, '.ui-card')).toMatch(/border-radius: var\(--radius-surface\);/);
+    expect(rule(ui, '.ui-card')).toMatch(/box-shadow: var\(--elev-1\);/);
+    expect(rule(ui, '.ui-card[data-flat]')).toMatch(/box-shadow: none;/);
+    expect(rule(ui, '.ui-card[data-flush]')).toMatch(/padding: 0;/);
+    expect(rule(ui, '.ui-card[data-active]')).toMatch(/background: var\(--bg-active\);/);
+    // The shell is a component, not a class someone has to remember to write, and the tag
+    // travels with it: a card-mode row is an `li`, a settings block is a `section`.
+    expect(surfaceSource).toMatch(/type CardTag = 'div' \| 'li' \| 'section';/);
+    expect(surfaceSource).toMatch(/className=\{clsx\('ui-card', className\)\}/);
+    // The props are written against `HTMLElement` rather than the default tag: a handler
+    // typed for a `div` is a type error on the `li` a call site is allowed to ask for, and
+    // the union of the three tags' attributes is what a variable tag is checked against.
+    expect(surfaceSource).toMatch(/type CardProps = HTMLAttributes<HTMLElement> &/);
+    expect(listSource).toMatch(/<Card as="li" key=\{row\.id\} active=\{row\.id === selectedId\}>/);
+    expect(listSource).toMatch(/<Card flat flush className="console-table-wrap">/);
+    // A call site that already owns an element puts the class on it instead of nesting a
+    // second box — the login posts from a `form`, and a form inside a card is two objects.
+    expect(readFileSync(join(process.cwd(), 'src/components/console/LoginForm.tsx'), 'utf8')).toContain('className="ui-card console-panel"');
+    // One padding on all four sides: the tile's `calc(--ui-pad + 0.05rem)` was an eighth of a
+    // rem no comment owned, and the card-mode row hard-pinned `0.7rem`, which is what
+    // `--ui-pad` already says when density is dense. Comfortable got the dense card.
+    expect(consoleCode).not.toMatch(/calc\(var\(--ui-pad\)/);
+    expect(rule(consoleCode, '.console-cards .ui-card')).toMatch(/gap: var\(--sp-2\);/);
+  });
+
+  it('tints the row under the cursor and still puts the open row first', () => {
+    // No row hover existed: nine columns to read across and nothing under the pointer.
+    expect(rule(ui, '.ui-table tbody tr:hover')).toMatch(/background: var\(--bg-hover\);/);
+    expect(ui).toMatch(/\.ui-table tbody tr:hover\s*\{[^}]*\}\s*\.ui-table tbody tr:last-child td\s*\{[^}]*\}\s*\.ui-table tbody tr\[data-active\]/);
+    // Equal specificity, so the order in the file is the tie-break and "this row is open in
+    // the editor" has to be the one that wins.
+    expect(ui.indexOf('.ui-table tbody tr:hover')).toBeLessThan(ui.indexOf('.ui-table tbody tr[data-active]'));
+    expect(rule(ui, '.ui-table tbody tr[data-active]')).toMatch(/background: var\(--bg-active\);/);
+    // Translucent washes, not a fourth hex: `--bg-card-subtle` is two units below `--bg-card`,
+    // which is not a state anyone can see, and `--bg-secondary` — what every pressed control
+    // already wears — measured 3 units *above* the dark card against a hover 15 units above
+    // it, which put the ladder backwards in the built app. An overlay composites, so the same
+    // pair of numbers steps card → hover → active in both themes.
+    expect(globals).toMatch(/--bg-hover: rgba\(33, 26, 22, 0\.045\);/);
+    expect(globals).toMatch(/--bg-active: rgba\(33, 26, 22, 0\.09\);/);
+    expect(siteConfig).toMatch(/"--bg-hover": "rgba\(33, 26, 22, 0\.045\)",/);
+    expect(siteConfig).toMatch(/"--bg-active": "rgba\(33, 26, 22, 0\.09\)",/);
+    expect(siteConfig).toMatch(/"--bg-hover": "rgba\(245, 238, 230, 0\.07\)",/);
+    expect(siteConfig).toMatch(/"--bg-active": "rgba\(245, 238, 230, 0\.13\)",/);
+    expect(siteConfig.match(/--bg-hover/g)).toHaveLength(2);
+    expect(siteConfig.match(/--bg-active/g)).toHaveLength(2);
+    // Light pair first, then dark, each hover below its own active.
+    expect([...siteConfig.matchAll(/--bg-(hover|active)": "rgba\([^)]*, ([0-9.]+)\)"/g)].map((m) => Number(m[2]))).toEqual([0.045, 0.09, 0.07, 0.13]);
+    // The head is sticky in its own scroll box and needs one layer, not the page's scale.
+    expect(rule(ui, '.ui-table thead th')).toMatch(/z-index: 1;/);
+    expect(rule(ui, '.ui-table')).toMatch(/border-collapse: separate;/);
+    expect(rule(ui, '.ui-table-sort')).toMatch(/min-block-size: var\(--tap\);/);
+    expect(listSource).toMatch(/className="ui-table"/);
+    expect(listSource).toMatch(/className="ui-table-sort"/);
+  });
+
+  it('gives a row one action, in the table and in the card', () => {
+    // `.console-row` and `.console-card-body` were the same button written twice.
+    expect(rule(ui, '.ui-row-action')).toMatch(/inline-size: 100%;/);
+    expect(rule(ui, '.ui-row-action')).toMatch(/overflow-wrap: anywhere;/);
+    expect(rule(ui, '.ui-row-action:hover .ui-row-title')).toMatch(/text-decoration: underline;/);
+    expect(rule(ui, '.ui-row-title')).toMatch(/font-weight: 600;/);
+    expect(surfaceSource).toMatch(/<button type=\{type\} className=\{clsx\('ui-row-action', className\)\}/);
+    expect(listSource).toMatch(/<RowAction onClick=\{\(\) => onSelect\(row\.id === selectedId \? null : row\)\}>/);
+    // The key is a `code`: it is literal text a person may have to type into another screen.
+    expect(surfaceSource).toMatch(/<code className=\{clsx\('ui-row-key', className\)\}/);
+  });
+
+  it('has no capsule written by hand in either sheet', () => {
+    for (const [name, source] of [
+      ['ui.css', ui],
+      ['console.css', consoleCode],
+    ] as const) {
+      expect(source, `${name} spells no pill radius`).not.toMatch(/border-radius: 999px/);
+    }
+    for (const selector of ['.ui-chip', '.ui-chip-tag', '.ui-chip-x']) {
+      expect(rule(ui, selector)).toMatch(/border-radius: var\(--radius-pill\);/);
+    }
+    // 19.3c's lesson, carried to the rest of the family: a pill that inherits the table
+    // cell's `anywhere` sets its own column's width by character.
+    expect(rule(ui, '.ui-chip')).toMatch(/overflow-wrap: normal;/);
+    expect(rule(ui, '.ui-chip')).toMatch(/min-block-size: var\(--tap\);/);
+    expect(rule(ui, '.ui-chip')).toMatch(/padding: var\(--sp-1\) var\(--sp-4\);/);
+    // The capsule is `content-box` because it draws the 1px the two halves sit inside: with
+    // border-box each measured 43 and the floor is the *tappable* height.
+    expect(rule(ui, '.ui-chip-tag')).toMatch(/box-sizing: content-box;/);
+    expect(rule(ui, '.ui-chip-tag')).toMatch(/align-items: stretch;/);
+    expect(rule(ui, '.ui-chip-x')).toMatch(/min-inline-size: var\(--tap\);/);
+    expect(chipSource).toMatch(/clsx\('ui-chip', className\)/);
+    expect(listSource).toMatch(/<ChipRow label=\{labels\['content\.filter\.all'\]\}>/);
+    expect(listSource).toMatch(/<ChipTag key=\{row\.id\}>/);
+    expect(listSource).toMatch(/<ChipRemove aria-label=\{`\$\{labels\['content\.view\.remove'\]\}: \$\{row\.name\}`\}/);
+    // Three `9999px` literals are still in `globals.css`, on the public site's own pills —
+    // the same value, so nothing draws wrong today. They are 19.7's to take.
+    expect((globals.match(/border-radius: 9999px/g) ?? []).length).toBe(3);
+  });
+
+  it('wires the tablist it claims', () => {
+    // The console had the roles and none of the behaviour: no `aria-controls`, no panel, no
+    // roving `tabIndex`, no arrow keys. A screen reader said "tab 1 of 2" and then nothing.
+    for (const hook of [
+      'role="tablist"',
+      'role="tab"',
+      'role="tabpanel"',
+      'aria-selected={selected}',
+      'aria-controls={panelId}',
+      'aria-labelledby={tabId(value)}',
+      'tabIndex={selected ? 0 : -1}',
+    ]) {
+      expect(tabsSource, `${hook} is on the tab group`).toContain(hook);
+    }
+    expect(rule(ui, '.ui-tabs')).toMatch(/gap: var\(--ui-gap-tight\);/);
+    expect(workspaceSource).toMatch(/<Tabs/);
+    expect(workspaceSource).toMatch(/idBase=\{`scope-\$\{kind\}`\}/);
+    // The arrows follow the reading direction — in Arabic the first tab is on the right, so
+    // Right goes back — and `document.dir` is read at the keypress because the console's own
+    // theme switch flips it without reloading.
+    expect(tabsSource).toMatch(/\['ArrowRight', 'ArrowLeft', 'Home', 'End'\]/);
+    expect(tabsSource).toMatch(/document\.documentElement\.dir === 'rtl'/);
+    expect(tabsSource).toMatch(/event\.preventDefault\(\);\s*\n\s*focusTab\(next\);/);
+    // Manual activation, on purpose: selecting a tab rewrites the URL and fetches another
+    // page, so automatic activation would make a held Right-arrow a request and a history
+    // entry per step.
+    const handler = tabsSource.slice(tabsSource.indexOf('function onKeyDown'), tabsSource.indexOf('return ('));
+    expect(handler).not.toContain('onChange');
+    expect(handler).toContain('focusTab');
+    expect(tabsSource).toMatch(/onClick=\{\(\) => onChange\(item\.id\)\}/);
+    // No `tabIndex` on the panel: it is full of controls a visitor has to reach anyway.
+    expect(tabsSource).not.toMatch(/role="tabpanel"[^>]*tabIndex/);
+  });
+
+  it('puts the console overlays on the one scale', () => {
+    expect(rule(consoleCode, '.console-topbar')).toMatch(/z-index: var\(--z-sticky\);/);
+    expect(consoleCode).toMatch(/z-index: var\(--z-scrim\);/);
+    expect(consoleCode).toMatch(/z-index: var\(--z-drawer\);/);
+    // The two layers that are local to their own scroll box stay local literals, with the
+    // reason said out loud: a table head and a save bar have no argument with the top bar.
+    expect((consoleCode.match(/z-index: \d/g) ?? []).length).toBe(1);
+    expect(rule(consoleCode, '.console-editor-bar')).toMatch(/z-index: 6;/);
+    expect(globals).toMatch(/--z-sticky: 30;[\s\S]*--z-scrim: 35;[\s\S]*--z-drawer: 40;/);
   });
 });

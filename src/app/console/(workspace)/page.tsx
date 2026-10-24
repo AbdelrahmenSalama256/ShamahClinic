@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/Surface';
 import { Empty, Note } from '@/components/ui/Status';
 import { message } from '@/lib/console/messages';
 import { overviewRows } from '@/lib/console/overview';
@@ -19,17 +20,17 @@ export default async function ConsoleOverviewPage() {
   return (
     <>
       <h1 className="console-heading">{message('overview.heading', prefs.locale)}</h1>
-      <p className="console-lede">{message('overview.intro', prefs.locale)}</p>
+      <p className="ui-lede">{message('overview.intro', prefs.locale)}</p>
 
       {rows.length === 0 ? (
         <Empty>{message('overview.not_allowed', prefs.locale)}</Empty>
       ) : (
         <dl className="console-grid">
           {rows.map((row) => (
-            <div className="console-card" key={row.resource}>
+            <Card className="console-stat" key={row.resource}>
               <dt>{message(row.label, prefs.locale)}</dt>
               <dd>{row.count === 0 ? message('overview.empty', prefs.locale) : row.count}</dd>
-            </div>
+            </Card>
           ))}
         </dl>
       )}

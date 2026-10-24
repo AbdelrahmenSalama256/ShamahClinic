@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { consoleCall } from './client-api';
 import { Button } from '@/components/ui/Button';
 import { Field, Textarea } from '@/components/ui/Field';
+import { Card } from '@/components/ui/Surface';
 import { Alert, Badge, Empty, Note, type Tone } from '@/components/ui/Status';
 import type { MessageKey } from '@/lib/console/messages';
 import type { SettingView } from '@/lib/content/settings';
@@ -63,7 +64,7 @@ export function SettingsWorkspace({
         const id = `${row.group}.${row.key}`;
         const current = edited[id] ?? encoded(row.value);
         return (
-          <section className="console-panel" key={id}>
+          <Card as="section" className="console-panel" key={id}>
             <h2 className="console-subheading">
               {row.key} <Badge>{row.group}</Badge>
             </h2>
@@ -88,7 +89,7 @@ export function SettingsWorkspace({
             <Note>
               {labels['content.updated_at']}: {row.updatedAt.slice(0, 10)} · {labels['content.version']} {row.version}
             </Note>
-          </section>
+          </Card>
         );
       })}
       {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}

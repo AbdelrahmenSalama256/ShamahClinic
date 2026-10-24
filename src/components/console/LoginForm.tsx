@@ -48,7 +48,7 @@ export function LoginForm({ labels }: Readonly<{ labels: Record<MessageKey, stri
   }
 
   return (
-    <form className="console-panel" onSubmit={submit}>
+    <form className="ui-card console-panel" onSubmit={submit}>
       <Field label={labels['login.email']} htmlFor="email">
         <Input id="email" name="email" type="email" autoComplete="username" required />
       </Field>
