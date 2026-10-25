@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
+import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { BranchesClient } from "@/components/pages/BranchesClient";
@@ -7,14 +8,12 @@ import { getBranchList } from "@/lib/content/site";
 import { getBanner } from "@/lib/content/banners";
 import { guardPage } from '@/lib/content/guard-page';
 
+export const revalidate = 300;
+
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     path: "/branches",
-    title: { ar: "الفروع — مدينة نصر والتجمع والشيخ زايد", en: "Our Branches" },
-    description: {
-      ar: "فروع عيادات شامه الثلاثة في القاهرة والجيزة: مدينة نصر (عباس العقاد)، التجمع الخامس (ميديكال بارك)، والشيخ زايد (تريفيوم مول). عناوين وأرقام هاتف كل فرع.",
-      en: "Shamah Clinics' three branches in Cairo and Giza: Nasr City, Fifth Settlement (Medical Park) and Sheikh Zayed (Trivium Mall). Addresses and phone numbers.",
-    },
+    ...SITE_SEO["/branches"],
     image: "/images/branch-interior.jpg",
   });
 }

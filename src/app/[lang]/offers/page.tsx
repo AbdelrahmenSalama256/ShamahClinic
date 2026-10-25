@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
+import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, offerJsonLd } from "@/lib/jsonld";
 import { OffersClient } from "@/components/pages/OffersClient";
@@ -14,11 +15,7 @@ export const revalidate = 300;
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     path: "/offers",
-    title: { ar: "العروض والباقات الموسمية", en: "Offers & Packages" },
-    description: {
-      ar: "عروض وباقات عيادات شامه الحالية بأسعارها الفعلية، سارية في فروع مدينة نصر والتجمع الخامس والشيخ زايد.",
-      en: "Current Shamah Clinics offers and packages at their real prices, valid across the Nasr City, Fifth Settlement and Zayed branches.",
-    },
+    ...SITE_SEO["/offers"],
     image: "/images/treatment-hydrafacial.jpg",
   });
 }

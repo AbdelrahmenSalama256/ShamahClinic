@@ -3,6 +3,7 @@ import { siteConfig } from "@/config/site";
 import { SITE_URL } from "./site";
 import { getLocalizedHref, type Locale } from "./locale";
 import { routeLang } from "./route-lang";
+import { readSeoOverride } from "./content/seo";
 
 interface LocalizedText {
   ar: string;
@@ -37,8 +38,12 @@ export async function buildPageMetadata({
 }: PageMetaInput): Promise<Metadata> {
   const lang = langOverride ?? (await routeLang());
   const other: Locale = lang === "ar" ? "en" : "ar";
-  const heading = title[lang] || title[other];
-  const summary = description[lang] || description[other];
+  // The SEO center writes one record per address and language; that record wins over
+  // the authored pair the caller passed. An empty or unreadable row is not a failure —
+  // the caller's copy is already the complete answer.
+  const override = await readSeoOverride(path, lang);
+  const heading = override?.title || title[lang] || title[other];
+  const summary = override?.description || description[lang] || description[other];
   const brand = siteConfig.brand.name[lang];
 
   const url = `${SITE_URL}${getLocalizedHref(path, lang)}`;

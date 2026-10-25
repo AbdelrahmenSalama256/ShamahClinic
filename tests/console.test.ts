@@ -279,12 +279,12 @@ describe('the sidebar registry', () => {
     // sidebar is filtered by the catalog rather than hardcoded.
     const content = ['articles', 'offers', 'pages'];
     const expected: Record<RoleName, string[]> = {
-      Owner: ['overview', 'leads', ...content, 'lists', 'roles', 'users', 'settings', 'password'],
-      Admin: ['overview', 'leads', ...content, 'lists', 'roles', 'users', 'settings', 'password'],
-      Editor: ['overview', 'leads', ...content, 'lists', 'password'],
-      SEO: ['overview', ...content, 'lists', 'password'],
-      Marketer: ['overview', 'leads', ...content, 'password'],
-      Viewer: ['overview', 'leads', ...content, 'lists', 'password'],
+      Owner: ['overview', 'leads', ...content, 'lists', 'seo', 'roles', 'users', 'settings', 'password'],
+      Admin: ['overview', 'leads', ...content, 'lists', 'seo', 'roles', 'users', 'settings', 'password'],
+      Editor: ['overview', 'leads', ...content, 'lists', 'seo', 'password'],
+      SEO: ['overview', ...content, 'lists', 'seo', 'password'],
+      Marketer: ['overview', 'leads', ...content, 'seo', 'password'],
+      Viewer: ['overview', 'leads', ...content, 'lists', 'seo', 'password'],
     };
     for (const name of Object.keys(expected) as RoleName[]) {
       expect(visibleScreens(grantsFor(name)).map((screen) => screen.key), name).toEqual(expected[name]);
@@ -516,6 +516,7 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
       'offers',
       'pages',
       ...LIST_KEYS,
+      'seo',
       'roles',
       'users',
       'settings',

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
+import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ResultsClient } from "@/components/pages/ResultsClient";
@@ -35,11 +36,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const lang = await routeLang();
   const base = await buildPageMetadata({
     path: "/results",
-    title: { ar: "النتائج — ما ترويه العيادة عن جلساتها", en: "Results — What the Clinic Reports" },
-    description: {
-      ar: "مقالات عيادات شامه عن نتائج الجلسات، بعنوانها ومقتطفها وصورتها كما نشرتها العيادة.",
-      en: "Shamah Clinics' own articles on treatment outcomes, with the title, excerpt and photo the clinic published.",
-    },
+    ...SITE_SEO["/results"],
     image: "/images/skin-glow.jpg",
   });
 

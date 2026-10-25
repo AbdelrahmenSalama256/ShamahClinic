@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
+import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { DoctorsClient } from "@/components/pages/DoctorsClient";
@@ -7,14 +8,12 @@ import { getBranchList } from "@/lib/content/site";
 import { getBanner } from "@/lib/content/banners";
 import { guardPage } from '@/lib/content/guard-page';
 
+export const revalidate = 300;
+
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     path: "/doctors",
-    title: { ar: "الأطباء والطبيبات", en: "Our Doctors" },
-    description: {
-      ar: "تعرّفي على طبيبات عيادات شامه: استشارية الجلدية والتجميل د. نورهان المصري، أخصائية الليزر د. سلمى عبد الله، وأخصائية العناية بالبشرة د. ريم الوكيل. طاقم نسائي بالكامل.",
-      en: "Meet Shamah Clinics' all-female medical team: dermatology and aesthetics consultant Dr. Nourhan El-Masry, laser specialist Dr. Salma Abdallah, and skincare specialist Dr. Reem El-Wakeel.",
-    },
+    ...SITE_SEO["/doctors"],
     image: "/images/consultation.jpg",
   });
 }

@@ -117,6 +117,7 @@ export function ContentDetail({ data }: Readonly<{ data: ContentDetailData }>) {
         labels={labels}
         abilities={data.abilities}
         publishable={data.publishable}
+        seo={data.seo}
         pendingNav={pending !== null}
         onRequestNav={requestNav}
         onPendingResolve={resolvePending}

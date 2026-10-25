@@ -27,6 +27,9 @@ import { loginHandler } from '../src/lib/auth/login';
 import { loadGrants } from '../src/lib/auth/sessions';
 import { assignRole, createUser, getOrCreateRole } from '../src/lib/auth/users';
 import { contentActionHandler, contentCollectionHandler, contentItemHandler, settingsHandler } from '../src/lib/content/api';
+import { seoHandler } from '../src/lib/content/seo-api';
+import { readSeoOverride, readSeoOverrides, saveSeoOverride } from '../src/lib/content/seo';
+import { seoCenterData, entitySeoOf } from '../src/lib/console/seo-center';
 import { viewItemHandler, viewsHandler } from '../src/lib/console/views-route';
 import { kindSpec, parseWrites, type ContentLocale } from '../src/lib/content/kinds';
 import { writeScopeQuery, type ListView } from '../src/lib/content/list-view';
@@ -92,6 +95,7 @@ function route(req: Request): Promise<Response> {
   const parts = new URL(req.url).pathname.split('/').filter(Boolean);
   if (parts[2] === 'views') return parts.length === 3 ? viewsHandler(req) : viewItemHandler(req);
   if (parts[2] === 'settings') return settingsHandler(req);
+  if (parts[2] === 'seo') return seoHandler(req);
   const tail = parts.slice(3);
   if (tail.length === 1) return contentCollectionHandler(req);
   if (tail.length === 2) return contentItemHandler(req);
@@ -196,6 +200,7 @@ async function purge(): Promise<void> {
   await db.deleteFrom('pages').where('route', 'like', '/bk6-%').execute();
   await db.deleteFrom('settings').where('group_name', 'like', 'bk6-%').execute();
   await db.deleteFrom('console_views').where('name', 'like', 'bk6-%').execute();
+  await db.deleteFrom('seo_entries').where('entity_id', 'like', '/bk6-%').execute();
   if (ids.length > 0) await db.deleteFrom('revisions').where('entity_id', 'in', ids).execute();
 }
 
@@ -1347,5 +1352,91 @@ describe('one function spells the scope every write names (BK-13.5)', () => {
     // An empty list is not a scope, so the language is what the write can name.
     expect(writeScopeQuery({ listKey: '', locale: 'en' })).toBe('?locale=en');
     expect(writeScopeQuery({ listKey: null, locale: null })).toBe('');
+  });
+});
+
+describe('search appearance is one override per address and language (S4)', () => {
+  const seoPath = `/bk6-seo-${run}`;
+  const secondPath = `${seoPath}/second`;
+
+  async function actorId(): Promise<string> {
+    const row = await db.selectFrom('users').select('id').where('email', '=', actors.Owner.email).executeTakeFirstOrThrow();
+    return row.id;
+  }
+
+  it('saves a trimmed pair, reads it back per language, and clears by writing an empty pair', async () => {
+    const id = await actorId();
+    await saveSeoOverride({ path: seoPath, locale: 'ar', title: '  عنوان  ', description: ' وصف ', actorId: id });
+
+    expect(await readSeoOverride(seoPath, 'ar')).toEqual({ title: 'عنوان', description: 'وصف' });
+    // The key is address plus language: the other tab still inherits.
+    expect(await readSeoOverride(seoPath, 'en')).toBeNull();
+
+    await saveSeoOverride({ path: seoPath, locale: 'ar', title: '', description: '', actorId: id });
+    expect(await readSeoOverride(seoPath, 'ar')).toBeNull();
+    expect(await db.selectFrom('seo_entries').select('id').where('entity_id', '=', seoPath).execute()).toEqual([]);
+  });
+
+  it('reads one screen’s overrides in one query, keyed by path', async () => {
+    const id = await actorId();
+    await saveSeoOverride({ path: seoPath, locale: 'en', title: 'English title', description: '', actorId: id });
+    await saveSeoOverride({ path: secondPath, locale: 'en', title: '', description: 'English description', actorId: id });
+
+    const batch = await readSeoOverrides([seoPath, secondPath, '/bk6-never-saved'], 'en');
+    expect(batch.get(seoPath)).toEqual({ title: 'English title', description: '' });
+    expect(batch.get(secondPath)).toEqual({ title: '', description: 'English description' });
+    expect(batch.has('/bk6-never-saved')).toBe(false);
+
+    await saveSeoOverride({ path: seoPath, locale: 'en', title: '', description: '', actorId: id });
+    await saveSeoOverride({ path: secondPath, locale: 'en', title: '', description: '', actorId: id });
+  });
+
+  it('checks the permission before it parses the body', async () => {
+    // No `seo update` at all: the answer is 403 even though the body is empty and invalid.
+    const denied = await call('/seo', write(actors.Viewer, 'POST', {}));
+    expect(denied.status).toBe(403);
+    expect(denied.error).toBe('forbidden');
+
+    const invalid = await call('/seo', write(actors.Owner, 'POST', { path: 'not-a-path', locale: 'ar', title: '', description: '' }));
+    expect(invalid.status).toBe(400);
+    expect(invalid.error).toBe('invalid_input');
+
+    const saved = await call(
+      '/seo',
+      write(actors.Owner, 'POST', { path: seoPath, locale: 'ar', title: 'من الرابط', description: 'وصف من الرابط' }),
+    );
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    expect(saved.body.override).toEqual({ title: 'من الرابط', description: 'وصف من الرابط' });
+
+    const cleared = await call('/seo', write(actors.Owner, 'POST', { path: seoPath, locale: 'ar', title: '', description: '' }));
+    expect(cleared.status).toBe(200);
+    expect(cleared.body.override).toBeNull();
+  });
+
+  it('builds the center from the site’s own reads and withholds the fields a role cannot write', async () => {
+    const owner = await seoCenterData({ grants: actors.Owner.grants, locale: 'ar' });
+    expect(owner).not.toBeNull();
+    expect(owner?.writable).toBe(true);
+    // The home page is a row even when the site has no article or offer at all.
+    expect(owner?.rows.some((row) => row.section === 'pages' && row.path === '')).toBe(true);
+    for (const row of owner?.rows ?? []) {
+      expect(row.href.startsWith('/ar')).toBe(true);
+      expect(['ok', 'long', 'missing']).toContain(row.status);
+    }
+
+    const viewer = await seoCenterData({ grants: actors.Viewer.grants, locale: 'en' });
+    expect(viewer).not.toBeNull();
+    expect(viewer?.writable).toBe(false);
+    expect(viewer?.rows.find((row) => row.path === '')?.href).toBe('/en');
+  });
+
+  it('gives an entity panel the path the site serves, or says it has none', async () => {
+    const about = await entitySeoOf('page', 'about', null, 'ar');
+    expect(about.path).toBe('/about');
+    expect(about.inherited.title.length).toBeGreaterThan(0);
+    expect(about.override).toBeNull();
+
+    const results = await entitySeoOf('list_item', `${ar}-result`, 'results', 'ar');
+    expect(results.path).toBeNull();
   });
 });

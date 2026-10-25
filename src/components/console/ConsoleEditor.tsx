@@ -39,7 +39,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { consoleCall, consoleRead } from './client-api';
 import { fieldOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/console/issues';
 import { contentStateKey, contentStateTone, displayForm, fieldsFromForm, formOf, isPendingIn, sameForm, storedValue, type Form } from '@/lib/console/editor-form';
-import { previewDocument, previewModel, seoReadout } from '@/lib/console/preview';
+import { previewDocument, previewModel } from '@/lib/console/preview';
+import { localizedPath } from '@/lib/content/paths';
 import { writeScopeQuery } from '@/lib/content/list-view';
 import { Button, ButtonLink } from '@/components/console/kit';
 import { Checkbox, Field, Input, Textarea } from '@/components/console/kit';
@@ -48,8 +49,10 @@ import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/con
 import { ImageGallery } from './ImageGallery';
 import { ImagePicker } from './ImagePicker';
 import { RichEditor } from './RichEditor';
+import { SeoPanel } from './SeoPanel';
 import { imageSlots, isImageField, looksLikeImage } from '@/lib/console/image-field';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
+import type { EntitySeo } from '@/lib/console/seo-center';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import type { ContentRow, FieldView } from '@/lib/content/store';
 import type { RevisionView } from '@/lib/content/publish';
@@ -75,6 +78,8 @@ export interface ConsoleEditorProps {
   abilities: ContentAbilities;
   /** the publish scopes already narrowed to this screen's list */
   publishable: ContentScope[];
+  /** the row's search result and what this role may write there */
+  seo: EntitySeo & { writable: boolean };
   /** the workspace wants to go somewhere, and this pane has to let go of the form first */
   pendingNav: boolean;
   onRequestNav: (run: () => void) => void;
@@ -100,6 +105,7 @@ export function ConsoleEditor({
   labels,
   abilities,
   publishable,
+  seo,
   pendingNav,
   onRequestNav,
   onPendingResolve,
@@ -324,24 +330,7 @@ export function ConsoleEditor({
   const model = previewModel(kind, shown, locale);
   const media = row ? imagesOfForm(row, shown) : [];
   const state = row ? contentStateKey(row) : null;
-  const other: ContentLocale = locale === 'ar' ? 'en' : 'ar';
-  const bilingual = kind !== 'list_item';
-  const titleName = kind === 'offer' ? 'name' : 'title';
-  // A page has no teaser column, so its description falls back to the heading — exactly
-  // what `publicSeo()` does when it is handed `{ ar: '', en: '' }`.
-  const introName = kind === 'article' || kind === 'offer' ? 'excerpt' : '';
-  const seo = row
-    ? seoReadout({
-        kind,
-        key: row.key,
-        listKey: named ? String(scopeValue) : undefined,
-        locale,
-        title: bilingual ? String(shown[titleName] ?? '') : model.title,
-        otherTitle: bilingual ? (row.fields[titleName]?.draft?.[other] ?? '') : model.title,
-        description: bilingual && introName ? String(shown[introName] ?? '') : model.intro,
-        otherDescription: bilingual && introName ? (row.fields[introName]?.draft?.[other] ?? '') : model.intro,
-      })
-    : null;
+  const previewPath = seo.path === null ? null : localizedPath(seo.path, locale);
 
   return (
     <div className="console-editor">
@@ -508,8 +497,8 @@ export function ConsoleEditor({
         <Card as="section" className="console-panel console-preview">
           <h3>{labels['content.preview']}</h3>
           <Note>{labels['content.preview.draft']}</Note>
-          {seo?.path ? (
-            <ButtonLink href={seo.path} target="_blank" rel="noreferrer">
+          {previewPath ? (
+            <ButtonLink href={previewPath} target="_blank" rel="noreferrer">
               {labels['content.preview.site']}
             </ButtonLink>
           ) : (
@@ -520,24 +509,16 @@ export function ConsoleEditor({
           <iframe className="console-preview-frame" title={labels['content.preview']} sandbox="" srcDoc={previewSrc} />
         </Card>
 
-        <Card as="section" className="console-panel console-seo">
-          <h3>{labels['content.seo']}</h3>
-          {seo ? (
-            <>
-              <p className="console-seo-title">{seo.title || labels['content.seo.none']}</p>
-              {seo.path && <p className="console-seo-path">{seo.path}</p>}
-              <p className="console-seo-desc">{seo.description}</p>
-              <Note>
-                {labels['content.seo.title']}: {labels['content.seo.count'].replace('{n}', String(seo.titleLength))} ·{' '}
-                {labels['content.seo.description']}: {labels['content.seo.count'].replace('{n}', String(seo.descriptionLength))}
-              </Note>
-            </>
-          ) : (
-            // Not a skeleton: three wells of row-height would not be the shape of what is
-            // coming here, which is a sentence. The word is the honest placeholder.
-            <Note>{labels['content.loading']}</Note>
-          )}
-        </Card>
+        <SeoPanel
+          key={`${seo.path ?? 'none'}:${locale}`}
+          path={seo.path}
+          locale={locale}
+          inherited={seo.inherited}
+          override={seo.override}
+          writable={seo.writable}
+          labels={labels}
+          rowLabel={model.title}
+        />
       </aside>
     </div>
   );

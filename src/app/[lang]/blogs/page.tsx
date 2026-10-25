@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
+import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { JournalClient } from "@/components/pages/JournalClient";
@@ -50,14 +51,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
   const lang = await routeLang();
   const base = await buildPageMetadata({
     path: "/blogs",
-    title: {
-      ar: "مدونة شامه — مقالات العناية بالبشرة والتجميل",
-      en: "Shamah Blogs — Skincare & Aesthetics",
-    },
-    description: {
-      ar: "مقالات طبية مبسطة من طبيبات عيادات شامه عن ليزر إزالة الشعر والعناية بالبشرة والبوتوكس والفيلر.",
-      en: "Clear medical articles from Shamah's doctors on laser hair removal, skincare, Botox and fillers.",
-    },
+    ...SITE_SEO["/blogs"],
     image: "/images/blog-flatlay.jpg",
   });
 

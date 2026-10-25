@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
+import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeBody } from "@/components/home/HomeBody";
 import { getHeroPhotos, getHome, getHomeIntro, getPageTitle } from "@/lib/content/site";
@@ -14,14 +15,7 @@ export const revalidate = 300;
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     path: "",
-    title: {
-      ar: "التجميل والليزر والعناية بالبشرة في القاهرة والجيزة",
-      en: "Home — Shamah Clinics",
-    },
-    description: {
-      ar: "عيادات شامه لطب التجميل والليزر والعناية بالبشرة في القاهرة والجيزة. ثلاثة فروع بمدينة نصر والتجمع الخامس والشيخ زايد، بإشراف طبي نسائي كامل وأجهزة حديثة. احجزي استشارتكِ الآن.",
-      en: "Shamah Clinics for aesthetic medicine, laser and skincare in Cairo and Giza. Three branches with an all-female medical team and modern devices.",
-    },
+    ...SITE_SEO[""],
   });
 }
 

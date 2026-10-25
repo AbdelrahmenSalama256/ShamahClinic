@@ -1326,6 +1326,143 @@ span.console-thumb[data-empty] {
   color: var(--c-text-2);
 }
 
+/* --- the SEO center -------------------------------------------------------- */
+/* One row per address, grouped by where it lives. The tables are not height-capped:
+   comparing every title is the reason the screen exists, and a 36rem scroll box would
+   hide the four rows that need fixing below the fold of the box. */
+.console-seo-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-gap);
+  margin-block-end: var(--c-stack);
+}
+
+.console-seo-search {
+  flex: 1 1 16rem;
+  min-inline-size: 0;
+}
+
+.console-seo-filter {
+  flex: 0 0 auto;
+}
+
+.console-seo-readonly {
+  display: block;
+  margin-block-end: var(--c-stack);
+}
+
+.console-seo-section {
+  margin-block-end: var(--c-sp-6);
+}
+
+.console-seo-section .console-table-wrap {
+  max-block-size: none;
+}
+
+.console-seo-table {
+  table-layout: fixed;
+  min-inline-size: 48rem;
+  font-variant-numeric: normal;
+}
+
+.console-seo-table th:nth-child(1) {
+  inline-size: 18%;
+}
+.console-seo-table th:nth-child(2) {
+  inline-size: 31%;
+}
+.console-seo-table th:nth-child(3) {
+  inline-size: 36%;
+}
+.console-seo-table th:nth-child(4) {
+  inline-size: 15%;
+}
+
+.console-seo-table th,
+.console-seo-table td {
+  vertical-align: top;
+}
+
+.console-seo-cell-page {
+  font-weight: 500;
+}
+
+.console-seo-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin: -0.35rem -0.45rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: var(--c-r-sm);
+}
+
+.console-seo-link:hover {
+  background: var(--c-hover);
+}
+
+.console-seo-cell-page > .console-note {
+  display: block;
+  margin-block-start: 0.25rem;
+}
+
+.console-seo-input {
+  inline-size: 100%;
+}
+
+.console-seo-textarea {
+  min-block-size: 4.5rem;
+}
+
+.console-seo-meter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-sp-1) var(--c-sp-2);
+  margin-block-start: var(--c-sp-1);
+}
+
+.console-seo-cell-status > * {
+  margin-block-end: var(--c-sp-1);
+}
+
+.console-seo-cell-status > *:last-child {
+  margin-block-end: 0;
+}
+
+.console-seo-fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.console-seo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c-gap-tight) var(--c-gap);
+}
+
+.console-seo-actions > .console-note {
+  flex: 1 1 12rem;
+}
+
+.console-seo-notice {
+  display: block;
+  margin-block-start: var(--c-sp-1);
+}
+
+.console-seo-edit .console-seo-path {
+  margin-block-end: var(--c-stack);
+}
+
+@media (max-width: 639.98px) {
+  .console-seo-tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 @container console-edit (min-width: 54rem) {
   .console-editor {
     grid-template-columns: minmax(0, 1fr) minmax(23rem, 27rem);

@@ -24,6 +24,7 @@ import { listSummaries, type ListPage } from '../content/summary';
 import { catalogFor, type MessageKey } from './messages';
 import { listSectionPath } from './paths';
 import type { ConsoleLocale } from './prefs';
+import { entitySeoOf, type EntitySeo } from './seo-center';
 
 /** The dimension a request names: a locale code, or a `lists.list_key`. */
 export type ContentScope = ContentLocale | string;
@@ -185,6 +186,8 @@ export interface ContentDetailData {
   title: string;
   /** the list screen this row came from, with its own scope kept */
   backHref: string;
+  /** the row's search result: public path, inherited copy, override, and this role's write */
+  seo: EntitySeo & { writable: boolean };
   labels: Record<MessageKey, string>;
 }
 
@@ -225,6 +228,7 @@ export async function contentDetailData(
   const titleField = spec.bi.find((field) => field.name === 'title' || field.name === 'name');
   const title = titleField ? row.fields[titleField.name]?.draft?.[activeLocale]?.trim() || row.key : row.key;
   const publishable = spec.scope === 'lists' ? abilities.publish.filter((scope) => scope === listKey) : abilities.publish;
+  const seo = await entitySeoOf(kind, row.key, listKey, activeLocale);
 
   return {
     ok: true,
@@ -240,6 +244,7 @@ export async function contentDetailData(
         spec.scope === 'lists'
           ? listSectionPath(listKey ?? '')
           : `/console/${kind}s?locale=${activeLocale}`,
+      seo: { ...seo, writable: can(input.grants, 'seo', 'update', {}) },
       labels: catalogFor(input.locale),
     },
   };

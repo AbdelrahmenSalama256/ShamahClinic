@@ -256,6 +256,7 @@ describe('what each level can do', () => {
     { role: 'Editor', resource: 'seo', action: 'update', allowed: false, why: 'SEO belongs to the SEO role' },
     { role: 'Editor', resource: 'user', action: 'read', allowed: false, why: 'no account list' },
 
+    { role: 'SEO', resource: 'seo', action: 'read', allowed: true, why: 'opens the screen it writes' },
     { role: 'SEO', resource: 'seo', action: 'publish', allowed: true, why: 'regenerates sitemap and robots' },
     { role: 'SEO', resource: 'redirect', action: 'delete', allowed: true, why: 'owns redirects' },
     { role: 'SEO', resource: 'article', action: 'read', allowed: true, why: 'reads what it optimises' },
@@ -462,6 +463,9 @@ describe('no console route writes without guard()', () => {
     // delegates to this handler — the CSRF and `media.create` checks must run before a
     // single decoded byte reaches the disk.
     ['@/lib/media/api', 'src/lib/media/api.ts'],
+    // Search appearance is one write shared by the SEO center and the panel inside every
+    // entity page, so its route file stays a one-line delegate.
+    ['@/lib/content/seo-api', 'src/lib/content/seo-api.ts'],
   ]);
 
   function routeFiles(dir: string): string[] {

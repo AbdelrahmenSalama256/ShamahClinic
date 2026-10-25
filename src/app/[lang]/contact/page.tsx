@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
+import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ContactClient } from "@/components/pages/ContactClient";
@@ -8,14 +9,12 @@ import { getBanner } from "@/lib/content/banners";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 import { guardPage } from '@/lib/content/guard-page';
 
+export const revalidate = 300;
+
 export async function generateMetadata(): Promise<Metadata> {
   return buildPageMetadata({
     path: "/contact",
-    title: { ar: "تواصلي معنا — حجز موعد واستفسار", en: "Contact & Booking" },
-    description: {
-      ar: "تواصلي مع عيادات شامه عبر واتساب أو الهاتف، أو احجزي موعدكِ مباشرة. أرقام الفروع الثلاثة في مدينة نصر والتجمع الخامس والشيخ زايد.",
-      en: "Contact Shamah Clinics on WhatsApp or by phone, or book your visit directly. Phone numbers for all three branches.",
-    },
+    ...SITE_SEO["/contact"],
     image: "/images/clinic-reception.jpg",
   });
 }
