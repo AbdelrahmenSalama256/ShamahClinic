@@ -195,6 +195,165 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* --- scoped reset and element defaults -------------------------------------
+ * The console imports no site stylesheet, so it cannot lean on one for the browser's
+ * defaults. Everything below is scoped to the surface: boxes are border-box, headings
+ * and paragraphs start at zero margin, a control inherits the console's type, and the
+ * form elements a screen draws by hand still look like a field. The console kit in the
+ * next section builds on these defaults rather than restating them.
+ */
+/* The reset lives in a layer so every class a component writes outranks it: a
+ * primitive may restyle a button without having to out-specify an element rule. */
+@layer console-reset {
+[data-surface="console"],
+[data-surface="console"] *,
+[data-surface="console"] *::before,
+[data-surface="console"] *::after {
+  box-sizing: border-box;
+}
+
+[data-surface="console"] :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
+  margin: 0;
+}
+
+[data-surface="console"] :where(h1, h2, h3, h4, h5, h6) {
+  font-weight: 650;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+[data-surface="console"] h1 { font-size: var(--c-font-title); }
+[data-surface="console"] h2 { font-size: 1.25rem; }
+[data-surface="console"] h3 { font-size: 1.1rem; }
+[data-surface="console"] h4 { font-size: 1rem; }
+[data-surface="console"] h5 { font-size: var(--c-font-small); }
+[data-surface="console"] h6 { font-size: var(--c-font-micro); }
+
+[data-surface="console"] :where(p, li, dd, dt) {
+  line-height: var(--c-line-height);
+}
+
+[data-surface="console"] :where(ul, ol) {
+  padding-inline-start: 1.25rem;
+}
+
+[data-surface="console"] :where(a) {
+  color: var(--c-accent);
+  text-decoration: none;
+}
+
+[data-surface="console"] :where(button) {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+[data-surface="console"] :where(input, select, textarea) {
+  margin: 0;
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--c-r-sm);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  min-block-size: var(--c-tap-field);
+  padding-block: 0.35rem;
+  padding-inline: 0.7rem;
+}
+
+[data-surface="console"] :where(textarea) {
+  min-block-size: 6rem;
+  padding-block: 0.6rem;
+  resize: vertical;
+}
+
+[data-surface="console"] :where(input[type="checkbox"], input[type="radio"]) {
+  inline-size: 1rem;
+  block-size: 1rem;
+  min-block-size: 0;
+  padding: 0;
+  accent-color: var(--c-accent);
+}
+
+[data-surface="console"] :where(input[type="file"]) {
+  min-block-size: 0;
+  padding: 0.35rem;
+}
+
+[data-surface="console"] :where(select) {
+  padding-inline-end: 1.75rem;
+}
+
+[data-surface="console"] :where(input, select, textarea)::placeholder {
+  color: var(--c-text-3);
+}
+
+[data-surface="console"] :where(table) {
+  border-collapse: collapse;
+  inline-size: 100%;
+}
+
+[data-surface="console"] :where(th, td) {
+  text-align: start;
+}
+
+[data-surface="console"] :where(code, kbd, samp, pre) {
+  font-family: var(--c-font-mono);
+}
+
+[data-surface="console"] :where(hr) {
+  border: 0;
+  border-block-start: 1px solid var(--c-line);
+}
+
+[data-surface="console"] :where(img, svg, video) {
+  display: block;
+  max-inline-size: 100%;
+}
+
+[data-surface="console"] :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+[data-surface="console"] ::selection {
+  background: var(--c-tint-strong);
+  color: var(--c-text);
+}
+
+/* The site's scrollbar stays gold-on-cream; the console's is quiet. */
+[data-surface="console"] ::-webkit-scrollbar {
+  inline-size: 6px;
+  block-size: 6px;
+}
+
+[data-surface="console"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-surface="console"] ::-webkit-scrollbar-thumb {
+  border-radius: var(--c-r-pill);
+  background: var(--c-line-strong);
+}
+
+[data-surface="console"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--c-text-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-surface="console"] *,
+  [data-surface="console"] *::before,
+  [data-surface="console"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+}
+
 /* --- the frame ------------------------------------------------------------- */
 .console-frame {
   display: grid;
