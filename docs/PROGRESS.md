@@ -2049,6 +2049,30 @@ owner's word.
       its section. A new DB test in `content.test.ts` pins `listKey: 'results'` to `scopes: ['results']`. Touched
       suites: `console.test.ts` 58/58, `content.test.ts` 53/53. Full run: 22 files / 549 tests passed. No dev
       address was given, so no browser measurement was made.
+- [x] S3 Flat navigation: one list of links, sidebar, phone bar and palette — `a71037c`
+      The tree is gone. `screens.ts` now exports a flat `navItems()` in the owner's order — Overview, Leads,
+      Articles, Offers, Pages, the seven content sections (each list key is its own row, Results included), then
+      Roles, Users, Settings and Password — and `PalettePlace` is that same item, so the palette draws the list the
+      sidebar draws. `NavGroupKey`/`NavGroup`/`NavLeaf`/`navTree`/`navStrip`/`leavesOf`/`leafPath` and the
+      `nav.group.*` strings are deleted; no `details`/`summary`, caret or nested leaf remains.
+      **Permissions survive the flattening.** Read filtering is unchanged (`visibleScreens`), and each row still
+      reports `writable` — per locale for Articles/Offers/Pages, per list key for the content sections, plain
+      `can(…, 'update', {})` elsewhere — so a scoped Arabic-only or single-list grant greys only what it cannot
+      write. `ConsoleNav` renders one `<ul>` for both variants (`nav`/`nav-strip`), keeps `data-locked='true'`,
+      `aria-disabled` and the read-only title, and marks the active row with `aria-current="page"`; a detail page
+      keeps its section lit. `ConsoleFrame` draws that one component twice, `ConsoleShell` passes `items`.
+      **Logout moved into the nav** and out of the three top-bar controls, as a `<button>` that issues
+      `DELETE /api/console/auth` and replaces the route: a link would be a GET a browser could prefetch, and a
+      prefetched sign-out ends a session nobody asked to end. `console.css` gained only the button-in-a-link-row
+      rules and the strip's row layout; the owner's file is otherwise untouched, and the now-dead tree rules were
+      left in place rather than reverted.
+      **Entity pages** already edit every field and show the slug read-only; both are now asserted rather than
+      assumed — `ContentEditor` renders `Object.entries(row.fields)`, `ImagePicker`/`ImageGallery`/`RichEditor` by
+      field kind, and the detail head prints `row.key` outside the form. **Guards in `console.test.ts`:** the flat
+      order and unique paths, grants greying and read filtering, strip = palette = sidebar, no tree markup, sign-out
+      is a DELETE, and the entity/slug assertions above. Gates: typecheck clean, lint clean, `console.test.ts`
+      62/62, `typography.test.ts` 11/11 (two new CSS declarations had to name `var(--c-font)`), full run 22 files /
+      553 tests passed. No dev address was given, so no browser measurement was made.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
