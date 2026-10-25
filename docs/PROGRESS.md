@@ -2002,6 +2002,28 @@ owner's word.
       selector sweeps over all three site sheets, and a scan for inline `style=` (only a `flexGrow` number). No dev
       address was given, so no browser measurement was made. Gates: typecheck clean, lint clean, 22 files / 542
       tests passed (the new file adds 8).
+- [x] S1 Settings on the console kit, every word in the catalog — `3f8fda6`
+      The screen's four English literals are gone: `"Unsaved changes"`, `"Read only"`, the banner badge's
+      `Default` and its `Reset` button now read `settings.unsaved`, `settings.read_only`,
+      `settings.banners.default` and `settings.banners.reset`, all four already present in both catalogs, so the
+      Arabic screen carries Arabic words in the Arabic document (`dir="rtl"` comes from prefs) and English in the
+      English one. The 14a.3 wiring was already in place and is untouched: the banner card stores through
+      `ImagePicker` (`ratio="wide"`, alt in both languages), and each advanced row's JSON gets `ImageGallery`,
+      which only appears where the document already holds a picture.
+      The owner's rewrite styles the workspace rhythm and the page/banner glyphs but leaves 21 `settings-*` classes
+      unpainted; this row completes them in the same soft/tonal/roomy language, from `--c-*` only. A section is
+      three bands inside the card (soft head with a tinted numeric pill, a body that owns the grid, a tonal foot
+      with that section's save); the owner's grids pad themselves, so the body de-doubles that gutter. A dirty row
+      lifts by a 1.5px accent ring rather than a second border. The banner frame holds 16:9 with the image filling
+      it and the custom/default badge plus dirty flag laid over the bottom edge in both directions (logical
+      insets). Advanced rows are tonal cards with a mono key and editor; the notice sticks to the bottom at
+      `--c-z-sticky` and lifts off the page. On a phone the section save fills the foot.
+      **New guard in `console.test.ts`** (3 tests): the four keys exist and differ in both locales; no JSX text
+      child remains in `SettingsWorkspace`; and every `settings-*` class the component writes has a rule in
+      `console.css` — which is what caught the 21 unpainted names in the first place. No dev address was given, so
+      no browser measurement was made. Gates: typecheck clean, lint clean, touched suites 4 files / 134 passed. The
+      full sweep passed 21 of 22 files (493 passed, 52 skipped); `content.test.ts` timed out in its `beforeAll`
+      database hook — a DB-contention timeout unrelated to these files — and passed 52/52 when run alone.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
