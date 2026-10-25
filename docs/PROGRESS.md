@@ -788,8 +788,64 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       1 insertion / 373 deletions, and the closing brace the no-trailing-newline `sed` dropped was restored.
       Gates: `npm run typecheck` · `npm run lint` · `npx vitest run` (**400** over 14 files) · `npm run build` ·
       `npm run prove:no-wp` (5/5; 273 routes, 0 WordPress requests).
+- [x] 13.7 No markup reaches a person: three field formats, the body filtered on save, the sentence cleaned on read,
+      and the imported columns repaired — `ac61770`
+      **What the owner asked, twice, in one breath** (brief of 2026-10-25, with a screenshot of the article editor):
+      *"when any content will added, don't share it in html tag, this will give us too many insecurities"* and
+      *"still cms has HTML tags apear in editors"*. The same sentence covers the third ask — click-to-edit image, local
+      file, compressed — and that one is 14a, recorded as not-done at the bottom of this row.
+      **The cause was storage, not the preview.** The WordPress import wrote every column verbatim, so 92 of the 94
+      article excerpts begin `<p>` and carry `&#8217;` and `&mdash;` inside them. The site prints that field as text —
+      a card teaser, a `<title>`, a meta description — so a saved `<p>` is two characters of noise in a SERP and the
+      words an operator reads in the editor. The console's preview escaped it faithfully, which is the only reason it
+      became visible instead of staying invisible in the column.
+      **A field now declares what it holds** (`format` on every `bi`/`text` field in `kinds.ts`), and there are three
+      answers because the site treats them differently:
+      - `plain` — a sentence. `plainText()` on the way in (`parseWrites`) *and* on the way out (`readStored`), so the
+        row an operator reads is the row a visitor reads even before anyone re-saves it.
+      - `html` — a body the console writes. Keeps its tags and goes through `sanitizeRichHtml()` before the INSERT, so
+        the database never holds a `<script>` or an `onerror=` at all.
+      - `source` — the page kind's body: the page-builder document `hero.ts` and `home-prose.ts` still read `rs-slide`,
+        `data-thumb` and `class="vc_row"` out of. Stored verbatim, filtered only at render. Typing this as `html` was
+        the first attempt and it would have deleted the homepage hero the moment anyone saved the page.
+      **One allowlist, two doors.** `src/lib/content/rich.ts` holds the tag and attribute list; `wp/sanitize.ts` —
+      the render filter — now imports it instead of keeping its own copy, so the copy that passes the save is the copy
+      that reaches a visitor. `rich.ts` is Node-only (`sanitize-html`, `cheerio`), `format.ts` is isomorphic, and the
+      browser shares the latter.
+      **`plainText()` settles on a fixed point.** The same function runs on both doors, so a cleaner that still changed
+      under its own next pass would shave characters off the row every time it was read and make the console disagree
+      with the column. Three tests fail without it. The cost is stated in the file: an author typing `&amp;#8217;` to
+      talk *about* an entity gets `’`, and one typing `&lt;script&gt;` gets nothing.
+      **The editor stops showing markup without rewriting the box.** `displayForm()`/`storedValue()` in
+      `editor-form.ts` run the same `plainText()` the server will, and the preview pane, the SEO read-out and the media
+      strip all read *that* rather than the raw keystrokes; a plain field is also cleaned on `blur`. The field a person
+      is typing in is never rewritten under them — cleaning per keystroke would eat the space just typed and undo
+      `12 < 15`.
+      **The import stayed idempotent only by sharing the write path.** `needsWrite()` compared the snapshot's raw string
+      against the row's now-clean draft, so a second pass reported 96 updates. `planWrites()` is exported from
+      `store.ts` and both the save and that comparison ask it, which is the same property stated as: a re-run
+      recognises the rows its first pass wrote.
+      **Then the columns were repaired, not just masked.** `npm run db:repair-plain` (dry-run default, `--apply`,
+      `--force-database`, guarded like `wp:import`) reads its column list from `KIND_SPECS`, writes an undo journal to
+      the gitignored `backups/` **before** the first UPDATE, and touches no `html` or `source` column. Applied to
+      `shamah_cms`: **394 values on 96 rows**, no `version` moved and no `revision` written, because the words a reader
+      sees did not change; the second run finds nothing, and the article from the screenshot now holds
+      `Discover Long-Lasting Beauty with Expert Care at Shamah Clinics، If you’ve been searching…`. The apply path was
+      exercised on `shamah_cms_test` against one seeded dirty row before it ran on the dev database.
+      **Tests.** `tests/html-safety.test.ts` (16): the cleaner's cases (`12 < 15`, `<3`, script/style contents, the
+      fixed point over seven values), `parseWrites` per format and the 500/501 title boundary, `sanitizeRichHtml`
+      against hostile input plus a drift check against `sanitizeHtmlBody`, the save path writing clean columns, an
+      import-shaped row written straight to the columns proving the *read* path cleans and does not flag the row
+      pending, `publishRow` carrying the clean draft to the site, and `storedValue`/`displayForm`.
+      Gates: `npm run typecheck` · `npm run lint` · `npx vitest run` (**440** over 17 files, 424 + 16) ·
+      `npm run build` · `npm run prove:no-wp` (5/5; 240 sitemap URLs, 273 routes rendered 0 failed, 0 requests to the
+      WordPress origin) — the last run after the repair, which is what proves the site renders the same with clean
+      columns.
+      **Not in this slice:** the body still opens as source in a textarea — the WYSIWYG that replaces it is #246;
+      an image is still a typed path, and click-to-edit with a local upload and compression is #245/14a; and a
+      `source` page body is *displayed* as markup on purpose, because that document is what the homepage reads.
 
-**BK-13 is closed** (13.1–13.6). The console has one shell, one list primitive, one editor primitive and one
+**BK-13 is closed** (13.1–13.7). The console has one shell, one list primitive, one editor primitive and one
 write-scope spelling; a new screen is built by naming a kind and a scope, not by copying a pane. Still open in this
 plan, oldest first: BK-6 (6.3c), BK-7.5, then BK-14 → BK-18.
 
