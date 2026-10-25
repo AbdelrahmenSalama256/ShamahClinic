@@ -45,6 +45,9 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
 import { Card } from '@/components/ui/Surface';
 import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/ui/Status';
+import { ImageGallery } from './ImageGallery';
+import { ImagePicker } from './ImagePicker';
+import { imageSlots, isImageField, looksLikeImage } from '@/lib/console/image-field';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
 import type { ContentRow, FieldView } from '@/lib/content/store';
@@ -589,19 +592,28 @@ function FieldRow({
     if (stored !== text) onChange(stored);
   };
 
+  const labelNode = (
+    <>
+      {label}
+      {field.kind === 'bi' ? <span className="ui-label-note">{labels[`content.locale.${locale}` as MessageKey]}</span> : null}
+      {pending ? <Badge tone="warn">{labels['content.state.pending']}</Badge> : null}
+    </>
+  );
+
+  // BK-14a: a picture is chosen from the disk, never typed. The row keeps its label and its
+  // `id` — the id now belongs to the file input the picker stretches over the frame — so the
+  // `<label>` still names a real control and a keyboard reaches the upload the same way it
+  // reached the box it replaced.
+  if (isImageField(name, field)) {
+    return (
+      <Field htmlFor={id} errors={errors} label={labelNode} note={field.immediate && !invalid ? <Note>{labels['content.immediate']}</Note> : null}>
+        <ImagePicker labels={labels} value={text} disabled={disabled} inputId={id} onChange={(next) => onChange(next)} />
+      </Field>
+    );
+  }
+
   return (
-    <Field
-      htmlFor={id}
-      errors={errors}
-      note={field.immediate && !invalid ? <Note>{labels['content.immediate']}</Note> : null}
-      label={
-        <>
-          {label}
-          {field.kind === 'bi' ? <span className="ui-label-note">{labels[`content.locale.${locale}` as MessageKey]}</span> : null}
-          {pending ? <Badge tone="warn">{labels['content.state.pending']}</Badge> : null}
-        </>
-      }
-    >
+    <Field htmlFor={id} errors={errors} label={labelNode} note={field.immediate && !invalid ? <Note>{labels['content.immediate']}</Note> : null}>
       {field.multiline ? (
         <Textarea
           id={id}
@@ -624,59 +636,38 @@ function FieldRow({
           onBlur={leaveField}
         />
       )}
+      {/* A JSON field keeps its text area — the shape is the document's and a person editing
+          `data` has to be able to see it — but every address inside it also gets a tile. */}
+      {field.kind === 'json' ? <ImageGallery labels={labels} value={text} disabled={disabled} onChange={onChange} /> : null}
     </Field>
   );
 }
 
-/** A field whose name talks about pictures, or any string that reads as a picture URL. */
-const IMAGE_NAME = /image|photo|thumb|logo|before|after/i;
-const IMAGE_PATH = /^(https?:\/\/|\/|data:image\/)/i;
-const IMAGE_EXT = /\.(avif|webp|jpe?g|png|gif|svg)(\?|#|$)/i;
+/** The pictures the live form would put on the site, in document order, for the strip. */
 const MAX_PREVIEWS = 6;
 
-function looksLikeImage(value: string): boolean {
-  const text = value.trim();
-  return text !== '' && (IMAGE_PATH.test(text) || IMAGE_EXT.test(text));
-}
-
-/**
- * Every picture a JSON value carries, in the order it appears.
- *
- * Offers keep `images` as `{ ar: [{src}], en: [{src}] }`, services and results keep one
- * `image` string, and a list item's `data` is authored by whatever list it belongs to —
- * so the walk does not trust a shape, only the strings that read as image addresses.
- */
-function collectImages(value: unknown, out: string[], depth = 0): void {
-  if (out.length >= MAX_PREVIEWS || depth > 4) return;
-  if (typeof value === 'string') {
-    if (looksLikeImage(value) && !out.includes(value.trim())) out.push(value.trim());
-    return;
-  }
-  if (Array.isArray(value)) {
-    for (const item of value) collectImages(item, out, depth + 1);
-    return;
-  }
-  if (value === null || typeof value !== 'object') return;
-  for (const inner of Object.values(value as Record<string, unknown>)) collectImages(inner, out, depth + 1);
-}
-
-/** The pictures the live form would put on the site, read before it is saved. */
 function imagesOfForm(row: ContentRow, form: Form): string[] {
   const out: string[] = [];
+  const add = (src: string): void => {
+    if (!out.includes(src)) out.push(src);
+  };
+
   for (const [name, field] of Object.entries(row.fields)) {
     const value = form[name];
     if (field.kind === 'json') {
-      // `data` is a list item's whole document: the list itself decides which key holds
-      // a picture, so the walk looks at all of it.
-      if (name !== 'data' && !IMAGE_NAME.test(name)) continue;
+      // `data` is a list item's whole document and `images` an offer's gallery: the walk
+      // finds an address wherever an image-shaped key holds one, so neither needs a name.
       try {
-        collectImages(JSON.parse(String(value ?? '')), out);
+        for (const slot of imageSlots(JSON.parse(String(value ?? '')))) add(slot.src);
       } catch {
         // Half-typed JSON is the field's own complaint to make; a preview cannot add one.
       }
       continue;
     }
-    if (field.kind === 'text' && IMAGE_NAME.test(name)) collectImages(value, out);
+    if (isImageField(name, field)) {
+      const text = String(value ?? '').trim();
+      if (looksLikeImage(text)) add(text);
+    }
   }
-  return out;
+  return out.slice(0, MAX_PREVIEWS);
 }

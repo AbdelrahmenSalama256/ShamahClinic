@@ -917,3 +917,198 @@ select.ui-control {
   flex-wrap: wrap;
   gap: var(--ui-gap-tight);
 }
+
+/* ----------------------------------------------
+   Image picker (BK-14a). The one control that puts a picture on the site.
+
+   There is no text box here on purpose, so the box's whole job is to show a picture and to
+   be hit. The `<input type="file">` is the control the row's `<label>` names, and it is
+   stretched invisibly over the frame instead of hidden with `opacity` or `clip`: the focus
+   ring is the single one in `globals.css` and this file declares no `outline`, so the ring
+   has to land on an element that still draws — and a click anywhere on the frame opening
+   the file dialog is the behaviour the brief asked for, not a side effect.
+
+   `data-ratio` is the shape of the slot the picture fills — a banner is wide, a specialist
+   portrait is not — and `data-empty` is the only reason the border goes dashed: an empty
+   well and a broken address must not be the same sentence. Both sit on the frame rather than
+   the picker, because the gallery reuses the frame on its own.
+   ---------------------------------------------- */
+.ui-picker {
+  display: grid;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-picker-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card-subtle);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.ui-picker-frame[data-empty='true'] {
+  border-style: dashed;
+}
+
+.ui-picker-frame:where(:hover, :focus-within) {
+  border-color: var(--border-control);
+}
+
+.ui-picker-frame[data-ratio='wide'] {
+  aspect-ratio: 16 / 9;
+}
+
+.ui-picker-frame[data-ratio='square'] {
+  aspect-ratio: 1 / 1;
+}
+
+.ui-picker-frame[data-ratio='tall'] {
+  aspect-ratio: 3 / 4;
+}
+
+.ui-picker-frame img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.ui-picker-empty {
+  padding: var(--sp-4);
+  color: var(--text-muted);
+  font-size: var(--ui-font-small);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.ui-picker-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: transparent;
+  font-size: var(--ui-font);
+  cursor: pointer;
+}
+
+.ui-picker-input::file-selector-button {
+  display: none;
+}
+
+.ui-picker-input:disabled {
+  cursor: default;
+}
+
+.ui-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-picker-library {
+  display: grid;
+  gap: var(--ui-gap-tight);
+  border-block-start: 1px solid var(--hairline);
+  padding-block-start: var(--sp-2);
+}
+
+.ui-picker-library > summary {
+  min-height: var(--tap);
+  padding-block: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--ui-font);
+  cursor: pointer;
+}
+
+.ui-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--ui-gap-tight);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-picker-grid > li {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.ui-picker-tile {
+  display: grid;
+  gap: var(--ui-gap-tight);
+  min-inline-size: 0;
+  padding: var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.ui-picker-tile:where(:hover, :focus-visible) {
+  border-color: var(--border-control);
+}
+
+.ui-picker-tile[data-active='true'] {
+  border-color: var(--border-control);
+  background: var(--bg-active);
+}
+
+.ui-picker-tile:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ui-picker-tile img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--radius-control);
+}
+
+.ui-picker-tile-meta {
+  display: grid;
+  gap: var(--ui-gap-tight);
+  font-size: var(--ui-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Image gallery (BK-14a). The pictures a JSON field already holds.
+
+   The picker paints one picture; this arranges many, and reuses the picker's frame and file
+   input for each of them so a tile in a gallery and a field's own picture are the same
+   object. Only the arrangement is here: a grid of frames and the two buttons that change
+   the list. The list itself is the document's — this adds to an array that already carries
+   a picture and never invents a key to hold one.
+   ---------------------------------------------- */
+.ui-gallery {
+  display: grid;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-gallery-item {
+  display: grid;
+  gap: var(--ui-gap-tight);
+  min-inline-size: 0;
+}
+
+.ui-gallery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap-tight);
+}
