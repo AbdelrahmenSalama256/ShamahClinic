@@ -843,12 +843,92 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       columns.
       **Not in this slice:** the body still opens as source in a textarea — the WYSIWYG that replaces it is #246;
       an image is still a typed path, and click-to-edit with a local upload and compression is #245/14a *(the path
-      box is gone as of 14a.2 — `0f6be31`; the textarea in the first clause is still true)*; and a
+      box is gone as of 14a.2 — `0f6be31`; the textarea is gone as of 13.8 — `0177c2c`)*; and a
       `source` page body is *displayed* as markup on purpose, because that document is what the homepage reads.
+- [x] 13.8 The body becomes a page you write, not a document you read: one allowlist, and a paste that cannot cross
+      it — `0177c2c`
+      The owner's third sentence, still open after 13.7 cleaned the *fields*: *"still cms has HTML tags apear in
+      editors"*. No amount of sanitizing could answer it, because the complaint is about what a person has to look at
+      to fix a sentence. Exactly two columns are printed as markup by the site — an article's `content` and an offer's
+      `body`, the two `format: 'html'` fields in `KIND_SPECS` — and both opened as a textarea holding
+      `<p class="wp-block-paragraph">`.
+      **A contenteditable surface, not a block list.** Measured before chosen: 234 imported WordPress bodies, longest
+      40 866 characters, `strong:10408 p:9614 li:7868 div:4412 h2:4036 br:809 td:644 a:440 table:32`, and the
+      attributes dominated by `class` — `wp-block-paragraph`, `translation-block` — which the site's own stylesheets
+      hang off. A block model has to decide what to do with a table it does not model, and anything it cannot name it
+      drops: silent data loss in a text editor. Here the document *is* the model, so a table stays a table and the
+      classes ride along untouched while nobody sees a bracket.
+      **One allowlist, three doors.** The policy — tags, per-tag attributes, URL schemes — moved out of the Node-only
+      engine into `src/lib/content/rich-policy.ts`, and the three consumers now import it: `sanitizeRichHtml()` on the
+      way in, `sanitizeHtmlBody()` on the way out, and `cleanPaste()` in a browser. `rich.ts`'s header says which file
+      owns which half; `tests/html-safety.test.ts` had its import repointed, which is the only edit that suite needed.
+      **A paste is filtered by the server's opinion, not a second one.** `src/lib/console/paste-filter.ts` mirrors
+      `disallowedTagsMode: 'discard'` — a tag nobody allowed loses its markers and keeps its words, so pasting from
+      Word costs the styling and not the sentence — and is *stricter* in exactly one place, elements whose contents are
+      not prose (`script`, `style`, `noscript`, `iframe`, `object`, `embed`, `template`, `form`, `svg` go with what is
+      inside them). Never looser: a body that survives the paste cannot gain anything on the way in. `on*` is refused
+      before the allowlist is read; `href`/`src` are decoded, stripped of leading control characters and then
+      scheme-checked, so `java&#09;script:` is refused rather than admired; an `a` with `target` gains
+      `rel="noopener noreferrer"`, the same rewrite the save makes so the paste does not change underneath the person.
+      It is pure string work with no `DOMParser`, because a cleaner a Node suite cannot reach is a cleaner nobody can
+      trust with the corpus, and it **settles** — `cleanPaste(cleanPaste(x)) === cleanPaste(x)` — the fixed-point rule
+      `plainText()` already follows, since the same function runs on the way in (seeding the surface) and on every
+      paste.
+      **The caret is not a thing this component fights.** The surface is uncontrolled: React never writes into it while
+      a person types (that is what drags a caret to the top of a document), and an effect seeds it only when the column
+      and the screen genuinely differ, through `cleanPaste()`. The suite renders the component and asserts the body
+      markup is *absent* from the server output — the words arrive by the effect, in a browser, and the render proves
+      only the frame: `role="textbox" aria-multiline`, the row's own `id`, eleven named tool buttons, `dir` from the
+      locale tab, no `<textarea>` in the tree.
+      **A photo is inserted the way every other picture arrives** (14a.1/14a.2): the toolbar button opens the file
+      dialog, the browser compresses, and the address the *server returned* is the only thing written into the body —
+      no URL box, no path field. The one typed address left in the console is the link row, and it is checked twice
+      before it wraps a word (`LINK_SCHEMES` for a person, `isAllowedHref()` for the policy). And nothing is
+      silently eaten: a paste that cost the person something says so (`rich.paste_cleaned`), because the difference
+      between a cleaner and a surprise is telling them.
+      **The toolbar is data at module scope, not closures built in render.** Not a style choice: React's own
+      `react-hooks/refs` rule rejected `npm run lint` on a `tools` array whose entries read `surface.current`, because a
+      ref-reading function reached from render is how a component stops updating. `{ key, command, argument }` (plus
+      one `{ press: 'link' }`) and a single handler fixed it, and `formatBlock`'s argument is typed as
+      `` `<${Block}>` `` so a new tool cannot pass a bare tag name.
+      **Catalog and sheet.** 17 `rich.*` keys in both languages (the suite asserts every key the component quotes has
+      an Arabic and an English sentence, and that they are not the same string). The styling went in `ui.css`, not the
+      console sheet — it is a primitive now — and keeps that file's invariants: logical properties only, sizes from
+      `tokens.css` (`min-block-size: var(--sp-20)`), no `outline:`, no hand-written radius. `.ui-rich-file` *is*
+      `display: none`, unlike the picker's `position: absolute; inset: 0`: there the frame **is** the control, so a
+      hidden input would hide the only thing a mouse can hit; here the button is named, reachable and labelled, and the
+      input is a private door behind it. That difference is written into the sheet's comment so the next reader does
+      not "fix" one into the other.
+      **Tests.** `tests/rich-editor.test.ts` (33): the paste table (WordPress prose kept whole with its `class`, a
+      table kept, a script discarded with its contents, `style` stripped, `javascript:` and newline-padded schemes
+      dropped with the words around them surviving, `onerror` off an `img`, `target` gaining `rel`, an unknown tag
+      losing markers and keeping text, a comment removed, `12 < 15 and <3` untouched, a quoted attribute holding a
+      bracket, the fixed point, an empty body); the three-door import check and a per-tag keep/refuse loop over the
+      policy; the editor source in order (`format === 'html'` branches before `<Textarea`, `inputId={id}`, `title={label}`,
+      `rtl={locale === 'ar'}`) and the count that makes the claim small (`format: 'html'` is 2 fields, `'source'` is 1);
+      a real render of the surface; the catalog, the sheet and the address. The entity-padded scheme assertions arrived
+      in `e907d2d`, after the row's own commit, because writing the claim down was what showed it was only half proved.
+      Gates: `npm run typecheck` (0 errors) · `npm run lint` (repo-wide, 0 errors) · `npx vitest run
+      tests/rich-editor.test.ts` **33/33** · `tests/html-safety.test.ts` **16/16** · whole run
+      `Test Files 3 failed | 18 passed (21)`, `Tests 11 failed | 523 passed (534)` — all eleven failures are
+      `console.test.ts`/`typography.test.ts`/`ui-primitives.test.ts` reading `src/app/console/console.css` and
+      `src/app/globals.css` from the concurrent session's uncommitted rewrite (a `border-radius: 999px`, three
+      `z-index` instead of one, `[data-locked]` gone, hard-coded `.settings-*` rules), and every one of them tests a
+      file this row does not touch. `npm run build` and `npm run prove:no-wp` are **still unrun** for 14a and this
+      row, for the reason 14a.2 states: a production build writes the `.next/` the already-running `:3000` dev server
+      owns.
+      **What this row could not see:** no browser was opened, so the actual typing — caret behaviour across an RTL
+      Arabic body, what `execCommand('formatBlock')` does inside an existing table cell, and the pixel rhythm of the
+      toolbar — is asserted from markup and left for a walk of the live console. `document.execCommand` is deprecated
+      and universal; the alternatives were a hand-written selection model or a dependency, and this repo's gates stay
+      install-free (the same reason 14a.1 keeps `sharp` out).
+      **Not in this slice:** active-state on the tool buttons (bold does not light up when the selection is already
+      bold), undo/redo, and any toolbar beyond the ten commands and the photo — each needs the live walk above before
+      it is worth an affordance. The `source` page body stays a textarea, on purpose and unchanged.
 
-**BK-13 is closed** (13.1–13.7). The console has one shell, one list primitive, one editor primitive and one
-write-scope spelling; a new screen is built by naming a kind and a scope, not by copying a pane. Still open in this
-plan, oldest first: BK-6 (6.3c), BK-7.5, then BK-14 → BK-18.
+**BK-13 is closed** (13.1–13.8). The console has one shell, one list primitive, one editor primitive, one write-scope
+spelling and a body a person writes as a page; a new screen is built by naming a kind and a scope, not by copying a
+pane. Still open in this plan, oldest first: BK-6 (6.3c), BK-7.5, then BK-14 → BK-18.
 
 ## BK-14 — every element of the site editable
 Reality to design against: the copy today sits in three places — database content rows (BK-6, BK-7.2), authored files
