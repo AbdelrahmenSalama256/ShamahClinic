@@ -13,6 +13,7 @@
  * gains a field is visible here without a fourth copy of the column list.
  */
 import { db } from '../db';
+import { readStored } from './format';
 import { kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 
 /** A bilingual field's public copy, or `null` when neither locale was ever published. */
@@ -51,6 +52,7 @@ function asText(value: unknown): string {
   return value === null || value === undefined ? '' : String(value);
 }
 
+/** MariaDB keeps JSON as LONGTEXT; the driver parses it back, but not on every path. */
 function asJsonValue(value: unknown): unknown {
   if (typeof value !== 'string') return value ?? null;
   try {
@@ -60,14 +62,22 @@ function asJsonValue(value: unknown): unknown {
   }
 }
 
-/** The one value of a field a visitor sees, read off the row by the spec's column names. */
+/**
+ * The one value of a field a visitor sees, read off the row by the spec's column names.
+ *
+ * Every string goes through `readStored()`: a `plain` column is cleaned on the way out as
+ * well as on the way in, because the WordPress import wrote 92 excerpts that begin `<p>`
+ * and a row is only rewritten when someone edits it — the site must not wait for that to
+ * stop printing markup. `html` and `source` keep theirs; a body is the one thing printed
+ * as markup, and it is filtered by `sanitizeHtmlBody()` at render.
+ */
 function publicValue(spec: KindSpec, row: AnyRow, name: string): PublicValue | null {
   const bi = spec.bi.find((field) => field.name === name);
   if (bi) {
     // With a published twin the draft is invisible; without one the column is the
     // live value, because saving it was never gated by publishing.
-    if (bi.pub) return { kind: 'bi', ar: asText(row[bi.pub.ar]), en: asText(row[bi.pub.en]) };
-    return { kind: 'bi', ar: asText(row[bi.draft.ar]), en: asText(row[bi.draft.en]) };
+    const [ar, en] = bi.pub ? [row[bi.pub.ar], row[bi.pub.en]] : [row[bi.draft.ar], row[bi.draft.en]];
+    return { kind: 'bi', ar: readStored(bi.format, ar), en: readStored(bi.format, en) };
   }
 
   const json = spec.json.find((field) => field.name === name);
@@ -75,8 +85,8 @@ function publicValue(spec: KindSpec, row: AnyRow, name: string): PublicValue | n
 
   const text = spec.text.find((field) => field.name === name);
   if (text) {
-    const raw = row[text.column];
-    return { kind: 'text', value: raw === null || raw === undefined || raw === '' ? null : String(raw) };
+    const value = readStored(text.format, row[text.column]);
+    return { kind: 'text', value: value === '' ? null : value };
   }
 
   const number = spec.number.find((field) => field.name === name);

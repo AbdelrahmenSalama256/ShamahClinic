@@ -18,6 +18,7 @@ import { sql, type SqlBool } from 'kysely';
 import { db } from '../db';
 import { likeOf } from '../db/like';
 import type { Resource } from '../auth/permissions';
+import { readStored } from '../content/format';
 import { kindSpec, type ContentKind } from '../content/kinds';
 import { contentDetailPath } from './paths';
 
@@ -81,7 +82,9 @@ export async function searchRows(resources: readonly Resource[], term: string, l
         id: row.id,
         key: row.row_key,
         // Arabic is the site's primary language, so it wins when a row has both.
-        title: (row.title_ar || row.title_en || row.row_key).trim(),
+        // Read through the title's format: a palette result is a link an operator reads,
+        // and `<p>` from the import in front of a headline looks like a broken search.
+        title: readStored(title.format, row.title_ar) || readStored(title.format, row.title_en) || row.row_key,
         path: contentDetailPath(kind, row.id),
       });
     }

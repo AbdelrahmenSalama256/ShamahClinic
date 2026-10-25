@@ -38,7 +38,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { consoleCall, consoleRead } from './client-api';
 import { fieldOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/console/issues';
-import { contentStateKey, contentStateTone, fieldsFromForm, formOf, isPendingIn, sameForm, type Form } from '@/lib/console/editor-form';
+import { contentStateKey, contentStateTone, displayForm, fieldsFromForm, formOf, isPendingIn, sameForm, storedValue, type Form } from '@/lib/console/editor-form';
 import { previewDocument, previewModel, seoReadout } from '@/lib/console/preview';
 import { writeScopeQuery } from '@/lib/content/list-view';
 import { Button, ButtonLink } from '@/components/ui/Button';
@@ -166,6 +166,10 @@ export function ConsoleEditor({
   }, [api, initialRow, rowId, nonce]);
 
   const parsed = useMemo(() => (row ? fieldsFromForm(row, form) : { fields: {}, issues: [] }), [row, form]);
+  // What the pane shows on the right is the cleaned document, not the raw keystrokes:
+  // an imported `<p>` in a plain box must not become a visible tag in the preview or a
+  // `<p>` counted into the SEO description's length.
+  const shown = useMemo(() => (row ? displayForm(row, form) : form), [row, form]);
   const dirty = row !== null && !sameForm(form, savedForm);
   // A server message is dropped as soon as the value it was written for is gone: corrected
   // text under a red box reads as a bug in the box, not as advice.
@@ -231,9 +235,9 @@ export function ConsoleEditor({
   }, [autosaveStopped, busy, canEditRow, dirty, invalid, pendingNav, save]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setPreviewSrc(previewDocument(previewModel(kind, form, locale), locale)), PREVIEW_MS);
+    const timer = setTimeout(() => setPreviewSrc(previewDocument(previewModel(kind, shown, locale), locale)), PREVIEW_MS);
     return () => clearTimeout(timer);
-  }, [form, kind, locale]);
+  }, [kind, locale, shown]);
 
   async function publish(): Promise<void> {
     if (!row) return;
@@ -313,8 +317,8 @@ export function ConsoleEditor({
 
   if (!rowId) return <Empty>{labels['content.pick_row']}</Empty>;
 
-  const model = previewModel(kind, form, locale);
-  const media = row ? imagesOfForm(row, form) : [];
+  const model = previewModel(kind, shown, locale);
+  const media = row ? imagesOfForm(row, shown) : [];
   const state = row ? contentStateKey(row) : null;
   const other: ContentLocale = locale === 'ar' ? 'en' : 'ar';
   const bilingual = kind !== 'list_item';
@@ -328,9 +332,9 @@ export function ConsoleEditor({
         key: row.key,
         listKey: named ? String(scopeValue) : undefined,
         locale,
-        title: bilingual ? String(form[titleName] ?? '') : model.title,
+        title: bilingual ? String(shown[titleName] ?? '') : model.title,
         otherTitle: bilingual ? (row.fields[titleName]?.draft?.[other] ?? '') : model.title,
-        description: bilingual && introName ? String(form[introName] ?? '') : model.intro,
+        description: bilingual && introName ? String(shown[introName] ?? '') : model.intro,
         otherDescription: bilingual && introName ? (row.fields[introName]?.draft?.[other] ?? '') : model.intro,
       })
     : null;
@@ -576,6 +580,14 @@ function FieldRow({
 
   const text = typeof value === 'string' ? value : '';
   const pending = !disabled && !invalid && (field.kind === 'bi' ? isPendingIn(field, locale) : field.pending);
+  // A plain box keeps the person's keystrokes while they type and loses its markup when
+  // they leave it — the same `plainText()` the server runs, so the box ends up saying
+  // exactly what the site will read. Cleaning on every keystroke would eat the space they
+  // just typed and undo `12 < 15`.
+  const leaveField = (): void => {
+    const stored = storedValue(field, text);
+    if (stored !== text) onChange(stored);
+  };
 
   return (
     <Field
@@ -598,6 +610,7 @@ function FieldRow({
           disabled={disabled}
           aria-invalid={invalid || undefined}
           onChange={(event) => onChange(event.target.value)}
+          onBlur={leaveField}
         />
       ) : (
         <Input
@@ -608,6 +621,7 @@ function FieldRow({
           maxLength={field.max > 0 && field.max < 100_000 ? field.max : undefined}
           aria-invalid={invalid || undefined}
           onChange={(event) => onChange(event.target.value)}
+          onBlur={leaveField}
         />
       )}
     </Field>

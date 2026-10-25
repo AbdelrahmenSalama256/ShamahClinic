@@ -874,8 +874,10 @@ describe('one row on its own page (BK-13.4, 240)', () => {
     // as separate fields; the editor reads the live form so a newly typed URL appears
     // without a save. URLs are arbitrary — WordPress paths, CDNs, data URLs — which is
     // why the strip uses a plain `img` rather than a build-time allowlist.
+    // `shown`, not `form`: the strip prints the copy the column will hold, so a value
+    // still carrying its pasted markup does not become a broken `img src`.
     expect(editor).toContain("labels['content.media']");
-    expect(editor).toMatch(/imagesOfForm\(row, form\)/);
+    expect(editor).toMatch(/imagesOfForm\(row, shown\)/);
     expect(editor).toMatch(/<ul className="console-media-list">/);
     expect(css).toMatch(/console-media-list img/);
     expect(css).toMatch(/\.console-media-list img\s*\{[^}]*object-fit: cover;/);

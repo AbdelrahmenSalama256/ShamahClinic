@@ -24,6 +24,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db, destroyDb } from '../src/lib/db';
 import { assertTestDb } from '../src/lib/db/guard';
 import { readDbConfig } from '../src/lib/db/index';
+import { plainText } from '../src/lib/content/format';
 import { kindSpec, parseWrites, type ContentLocale } from '../src/lib/content/kinds';
 import { importSnapshot, planArticles, planCategories, planDocs, planOffers, planPages, planResultStories, type ImportReport } from '../src/lib/content/import-wp';
 import { syncLists } from '../src/lib/content/lists';
@@ -224,8 +225,12 @@ describe('the imported rows answer the site', () => {
       // The numeric id is the WordPress post id, so an API consumer cannot tell an
       // imported article from one it served yesterday.
       expect(mine.id).toBe(card.id);
-      expect(mine.title).toEqual(card.title);
-      expect(mine.excerpt).toEqual(card.excerpt);
+      // A title and an excerpt are `plain` fields: the sentence the column holds is the
+      // snapshot's with its markup and its page-builder padding folded away. The site
+      // never prints the doubled space WordPress renders between two runs, so the card
+      // it builds is the same sentence either way.
+      expect(mine.title).toEqual({ ar: plainText(card.title.ar), en: plainText(card.title.en) });
+      expect(mine.excerpt).toEqual({ ar: plainText(card.excerpt.ar), en: plainText(card.excerpt.en) });
       expect(mine.image).toBe(card.image);
       expect(mine.imageAlt).toEqual(card.imageAlt);
       expect(mine.categorySlug).toBe(card.categorySlug);

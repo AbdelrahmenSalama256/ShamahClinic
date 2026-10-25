@@ -33,9 +33,9 @@ import { mirrorSrc } from '../wp/mirror';
 import { readSnapshot, snapshotMedia, snapshotMeta, snapshotResultStories } from '../wp/snapshot';
 import { bestImageSrc } from '../wp/sanitize';
 import type { WCStoreProduct, WPTerm } from '../wp/types';
-import { kindSpec, parseWrites, type ContentKind, type ContentLocale } from './kinds';
+import { kindSpec, parseWrites, type ColumnWrites, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 import { publishRow } from './publish';
-import { createRow, getRow, listIdForKey, saveDraft, type ContentRow } from './store';
+import { createRow, getRow, listIdForKey, planWrites, saveDraft, type ContentRow } from './store';
 
 /** Every kind the snapshot can speak for, list items included since 7.5. */
 export type ImportKind = ContentKind;
@@ -287,22 +287,39 @@ export function planDocs(): ImportDoc[] {
 
 // --- writing -------------------------------------------------------------------
 
-function draftMatches(row: ContentRow, name: string, value: unknown, locale: ContentLocale): boolean {
+function asWritten(value: string | number | boolean | null | undefined): string {
+  return value === null || value === undefined ? '' : String(value);
+}
+
+/**
+ * Does the row's draft already say what this write would store?
+ *
+ * The question is asked of `planWrites()`, not of the snapshot's raw string. The import
+ * is meant to be run again, and the write path now cleans a plain field and filters a
+ * body: compared against the document, all 96 rows the first pass wrote looked new on
+ * the second, because the column holds the cleaned sentence rather than the `<p>` that
+ * used to wrap it. Asking the same function the save asks makes the second pass a
+ * no-op, which is the property the `prove:no-wp` ledger depends on.
+ */
+function draftMatches(row: ContentRow, spec: KindSpec, columns: ColumnWrites, name: string, value: unknown, locale: ContentLocale): boolean {
   const field = row.fields[name];
   if (!field) return false;
-  if (field.kind === 'bi') return (field.draft?.[locale] ?? '') === text(value);
+  const bi = spec.bi.find((candidate) => candidate.name === name);
+  if (bi) return (field.draft?.[locale] ?? '') === asWritten(columns[bi.draft[locale]]);
+  const text = spec.text.find((candidate) => candidate.name === name);
+  if (text) return asWritten(field.value) === asWritten(columns[text.column]);
   if (field.kind === 'json') return JSON.stringify(field.draftJson ?? null) === JSON.stringify(value ?? null);
-  if (field.kind === 'text') return (field.value ?? '') === text(value);
   if (field.kind === 'number') return (field.value ?? null) === (value === null || value === undefined ? null : Number(value));
   if (field.kind === 'flag') return field.value === Boolean(value);
   return false;
 }
 
-function needsWrite(row: ContentRow, fields: Partial<Record<ContentLocale, Record<string, unknown>>>): boolean {
+function needsWrite(row: ContentRow, spec: KindSpec, fields: Partial<Record<ContentLocale, Record<string, unknown>>>): boolean {
   for (const locale of ['ar', 'en'] as const) {
     const values = fields[locale];
     if (!values) continue;
-    if (!Object.entries(values).every(([name, value]) => draftMatches(row, name, value, locale))) return true;
+    const planned = planWrites(spec, values, locale);
+    if (!Object.entries(values).every(([name, value]) => draftMatches(row, spec, planned.columns, name, value, locale))) return true;
   }
   return false;
 }
@@ -407,7 +424,7 @@ async function importDoc(doc: ImportDoc, ids: Map<string, string>, lists: Map<st
   }
   const current = await getRow(doc.kind, existing.id);
   if (!current) return { why: 'row disappeared' };
-  const changed = needsWrite(current, fields) || !existing.legacy_id;
+  const changed = needsWrite(current, spec, fields) || !existing.legacy_id;
   const unpublished = current.status !== 'published';
   if (!changed && !unpublished) return 'unchanged';
   if (!apply) return 'updated';

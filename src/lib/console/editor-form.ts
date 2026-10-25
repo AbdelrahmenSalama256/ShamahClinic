@@ -18,6 +18,7 @@
 import type { Tone } from '@/components/ui/Status';
 import type { MessageKey } from './messages';
 import type { FieldIssue } from './issues';
+import { plainText } from '../content/format';
 import type { ContentLocale } from '../content/kinds';
 import type { ContentRow, FieldView } from '../content/store';
 
@@ -82,6 +83,27 @@ export interface ParsedForm {
   issues: FieldIssue[];
 }
 
+/**
+ * The value a text field's format says the column should hold.
+ *
+ * A `plain` box is cleaned here with the server's own `plainText()`, so what the console
+ * posts, what the preview shows and what the database stores are one string. Doing it on
+ * every keystroke instead would fight the caret — typing `12 < 15` or a space between two
+ * words would undo itself mid-sentence — so the box keeps the person's text until they
+ * leave it, and the save is cleaned either way.
+ */
+export function storedValue(field: FieldView, value: FormValue | undefined): string {
+  const text = String(value ?? '');
+  return field.format === 'plain' ? plainText(text) : text;
+}
+
+/** The form as the site would read it: every plain field cleaned, the rest as typed. */
+export function displayForm(row: ContentRow, form: Form): Form {
+  const out: Form = {};
+  for (const [name, field] of Object.entries(row.fields)) out[name] = storedValue(field, form[name]);
+  return out;
+}
+
 /** Turn the form into the API's `fields` object, collecting what cannot be sent. */
 export function fieldsFromForm(row: ContentRow, form: Form): ParsedForm {
   const fields: Record<string, unknown> = {};
@@ -118,7 +140,7 @@ export function fieldsFromForm(row: ContentRow, form: Form): ParsedForm {
       }
       continue;
     }
-    fields[name] = String(value ?? '');
+    fields[name] = storedValue(field, value);
   }
 
   return { fields, issues };

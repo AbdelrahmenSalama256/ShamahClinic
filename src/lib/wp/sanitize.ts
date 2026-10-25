@@ -2,6 +2,7 @@ import sanitizeHtml from "sanitize-html";
 import * as cheerio from "cheerio";
 import { WP_ORIGIN } from "./config";
 import { mirrorSrc, mirrorHtml } from "./mirror";
+import { RICH_ALLOWED_ATTRIBUTES, RICH_ALLOWED_TAGS } from "../content/rich";
 
 const NAMED: Record<string, string> = {
   amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—",
@@ -33,22 +34,18 @@ export function stripBuilderNoise(html: string): string {
     .replace(/\[(?:vc_[^\]]*|rev_slider[^\]]*|\/)[^\]]*\]/gi, "");
 }
 
-const ALLOWED_TAGS = [
-  "p", "br", "hr", "h2", "h3", "h4", "h5", "strong", "b", "em", "i", "u", "s",
-  "ul", "ol", "li", "blockquote", "a", "img", "figure", "figcaption", "table",
-  "thead", "tbody", "tr", "th", "td", "span", "div",
-];
-
-/** Sanitize + clean + rewrite internal WordPress links to first-party routes. */
+/**
+ * Sanitize + clean + rewrite internal WordPress links to first-party routes.
+ *
+ * The tags and attributes are the ones `../content/rich.ts` filters a console save with,
+ * so the markup that passes the door going in is the markup allowed through the door
+ * going out. Only builder noise and WordPress URLs are this function's own business.
+ */
 export function sanitizeHtmlBody(html: string): string {
   const cleaned = stripBuilderNoise(html || "");
   const safe = sanitizeHtml(cleaned, {
-    allowedTags: ALLOWED_TAGS,
-    allowedAttributes: {
-      a: ["href", "title", "target", "rel"],
-      img: ["src", "alt", "title", "width", "height", "loading"],
-      "*": ["class"],
-    },
+    allowedTags: [...RICH_ALLOWED_TAGS],
+    allowedAttributes: Object.fromEntries(Object.entries(RICH_ALLOWED_ATTRIBUTES).map(([tag, list]) => [tag, [...list]])),
     allowedSchemes: ["http", "https", "mailto", "tel"],
     disallowedTagsMode: "discard",
   });

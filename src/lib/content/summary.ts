@@ -20,6 +20,7 @@
 import { sql, type AliasedRawBuilder, type RawBuilder, type SqlBool } from 'kysely';
 import { db } from '../db';
 import { likeOf } from '../db/like';
+import { readStored, type FieldFormat } from './format';
 import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 import { listIdForKey } from './store';
 import type { ListFilter, ListSort, ListView } from './list-view';
@@ -417,9 +418,14 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
   for (const expression of selects) rowsQuery = rowsQuery.select(expression);
 
   const raw = await rowsQuery.execute();
+  const titleFormat: FieldFormat = titled?.format ?? 'plain';
   const rows: ListSummary[] = raw.map((row) => {
     const doc = spec.table === 'list_items' ? parseDoc(row.doc) : null;
-    const titles = doc ? labelsOf(doc, schema as ListSchema) : { ar: asText(row.title_ar), en: asText(row.title_en) };
+    // The title column is read through its format, so the list shows the same sentence
+    // the editor will load: an imported `<p>` in front of a headline is noise twice over.
+    const titles = doc
+      ? labelsOf(doc, schema as ListSchema)
+      : { ar: readStored(titleFormat, row.title_ar), en: readStored(titleFormat, row.title_en) };
     return {
       id: asText(row.id),
       kind,

@@ -12,7 +12,9 @@
  */
 import { randomUUID } from 'node:crypto';
 import { db } from '../db';
-import { CONTENT_LOCALES, kindSpec, parseWrites, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
+import { readStored, type FieldFormat } from './format';
+import { sanitizeRichHtml } from './rich';
+import { CONTENT_LOCALES, kindSpec, parseWrites, type ContentKind, type ContentLocale, type KindSpec, type ParseResult } from './kinds';
 
 type AnyRow = Record<string, unknown>;
 
@@ -30,6 +32,14 @@ export interface FieldView {
   immediate: boolean;
   multiline: boolean;
   max: number;
+  /**
+   * What the column holds, for the fields that hold text.
+   *
+   * The editor uses it to clean a `plain` box when the person leaves it — the same
+   * `plainText()` the server runs, so the words in the box are the words in the database.
+   * A `json`, `number` or `flag` field has no format to report and leaves it off.
+   */
+  format?: FieldFormat;
 }
 
 export interface ContentRow {
@@ -80,8 +90,11 @@ function mapRow(spec: KindSpec, row: AnyRow): ContentRow {
   };
 
   for (const field of spec.bi) {
-    const draft = { ar: asText(row[field.draft.ar]), en: asText(row[field.draft.en]) };
-    const pub = field.pub ? { ar: asText(row[field.pub.ar]), en: asText(row[field.pub.en]) } : null;
+    // Read through the field's format, so a WordPress `<p>` left in a plain column never
+    // reaches the editor that is about to re-save it. The published twin is cleaned the
+    // same way, otherwise the two sides of a pending diff differ only by markup noise.
+    const draft = { ar: readStored(field.format, row[field.draft.ar]), en: readStored(field.format, row[field.draft.en]) };
+    const pub = field.pub ? { ar: readStored(field.format, row[field.pub.ar]), en: readStored(field.format, row[field.pub.en]) } : null;
     // Only the locale whose pair actually differs is pending: an editor reading the
     // English tab of an article whose Arabic was just rewritten must not be told
     // their language has unpublished changes.
@@ -95,6 +108,7 @@ function mapRow(spec: KindSpec, row: AnyRow): ContentRow {
       immediate: field.pub === null,
       multiline: field.multiline,
       max: field.max,
+      format: field.format,
     };
   }
 
@@ -115,14 +129,15 @@ function mapRow(spec: KindSpec, row: AnyRow): ContentRow {
   }
 
   for (const field of spec.text) {
-    const raw = row[field.column];
+    const value = readStored(field.format, row[field.column]);
     fields[field.name] = {
       kind: 'text',
-      value: raw === null || raw === undefined || raw === '' ? null : String(raw),
+      value: value === '' ? null : value,
       pending: false,
       immediate: true,
       multiline: false,
       max: field.max,
+      format: field.format,
     };
   }
   for (const field of spec.number) {
@@ -251,6 +266,28 @@ export async function createRow(
 }
 
 /**
+ * One locale's field values as the columns they would be written to.
+ *
+ * `parseWrites()` cleans the plain fields and names the body columns; the allowlist runs
+ * here, because `sanitize-html` is Node-only and `./kinds.ts` is imported by the console's
+ * client bundle. Both callers go through this — the save, and the WordPress import's "does
+ * this row already say that?" check — so a re-run of the import recognises the rows its
+ * first pass wrote instead of rewriting all 96 of them on every run.
+ */
+export function planWrites(spec: KindSpec, fields: Record<string, unknown>, locale: ContentLocale): ParseResult {
+  const parsed = parseWrites(spec, { key: '', fields }, locale);
+  // A body is the only thing the site prints as markup, so the allowlist runs here: the
+  // database ends up holding prose, never a `<script>` or an `onerror=` that a future
+  // renderer, a dump or a restore could turn into an attack. `./rich.ts` is the same
+  // allowlist the render path filters with, so what survives here is what reaches a visitor.
+  for (const column of parsed.htmlColumns) {
+    const written = parsed.columns[column];
+    if (typeof written === 'string') parsed.columns[column] = sanitizeRichHtml(written);
+  }
+  return parsed;
+}
+
+/**
  * Save one locale's draft. The row's `version` is the optimistic lock: if another
  * editor wrote first, this update matches no row and the caller is told to reload
  * rather than having their colleague's change silently overwritten.
@@ -266,7 +303,7 @@ export async function saveDraft(
   if (!current) return { ok: false, status: 404, code: 'not_found' };
   if (current.trashed) return { ok: false, status: 409, code: 'in_trash' };
 
-  const parsed = parseWrites(spec, { key: current.key, fields: input.fields }, input.locale);
+  const parsed = planWrites(spec, input.fields, input.locale);
   if (parsed.issues.length > 0) return { ok: false, status: 400, code: 'invalid_input', issues: parsed.issues };
 
   const patch: Record<string, unknown> = { ...parsed.columns, updated_by: input.actorId, version: current.version + 1 };

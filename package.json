@@ -19,7 +19,8 @@
     "owner:reset": "tsx scripts/db/owner-reset.ts",
     "doctor": "tsx scripts/doctor.ts",
     "test": "vitest run",
-    "wp:import": "tsx scripts/db/import-wp.ts"
+    "wp:import": "tsx scripts/db/import-wp.ts",
+    "db:repair-plain": "tsx scripts/db/repair-plain.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

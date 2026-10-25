@@ -17,6 +17,7 @@
  */
 import { z } from 'zod';
 import type { Resource } from '../auth/permissions';
+import { plainText, type FieldFormat } from './format';
 
 export const CONTENT_KINDS = ['article', 'offer', 'page', 'list_item'] as const;
 export type ContentKind = (typeof CONTENT_KINDS)[number];
@@ -33,6 +34,18 @@ export interface BiField {
   /** the longest value the columns accept, enforced before the INSERT */
   max: number;
   multiline: boolean;
+  /**
+   * What the column holds, and so what the store does with the value on the way in.
+   *
+   * `plain` is printed as text by the site — a card teaser, a `<title>`, an `alt` — so
+   * tags and entities are stripped rather than stored: the WordPress import left `<p>`
+   * and `&#8217;` inside 92 of the 94 excerpts, and an operator reading that box sees
+   * markup where their sentence should be. `html` is a prose body: it keeps its tags and
+   * is filtered by `sanitizeRichHtml()` before it is written. `source` is an imported
+   * builder document — see the page kind — which is stored as typed and filtered only
+   * on the way out.
+   */
+  format: FieldFormat;
 }
 
 /** A field whose value is one JSON document, optionally with a published twin. */
@@ -49,6 +62,8 @@ export interface TextField {
   max: number;
   /** a NOT NULL column needs something to fall back to when the editor clears it */
   fallback: string | null;
+  /** always `plain` today: a path, a route or a currency code, never a document */
+  format: FieldFormat;
 }
 
 export interface KindSpec {
@@ -77,15 +92,15 @@ export const KIND_SPECS: readonly KindSpec[] = [
     perLocale: true,
     scope: 'locales',
     bi: [
-      { name: 'title', draft: { ar: 'title_ar', en: 'title_en' }, pub: { ar: 'pub_title_ar', en: 'pub_title_en' }, max: 500, multiline: false },
-      { name: 'excerpt', draft: { ar: 'excerpt_ar', en: 'excerpt_en' }, pub: { ar: 'pub_excerpt_ar', en: 'pub_excerpt_en' }, max: 1000, multiline: true },
-      { name: 'content', draft: { ar: 'content_ar', en: 'content_en' }, pub: { ar: 'pub_content_ar', en: 'pub_content_en' }, max: LONGTEXT, multiline: true },
-      { name: 'imageAlt', draft: { ar: 'image_alt_ar', en: 'image_alt_en' }, pub: null, max: 500, multiline: false },
+      { name: 'title', draft: { ar: 'title_ar', en: 'title_en' }, pub: { ar: 'pub_title_ar', en: 'pub_title_en' }, max: 500, multiline: false, format: 'plain' },
+      { name: 'excerpt', draft: { ar: 'excerpt_ar', en: 'excerpt_en' }, pub: { ar: 'pub_excerpt_ar', en: 'pub_excerpt_en' }, max: 1000, multiline: true, format: 'plain' },
+      { name: 'content', draft: { ar: 'content_ar', en: 'content_en' }, pub: { ar: 'pub_content_ar', en: 'pub_content_en' }, max: LONGTEXT, multiline: true, format: 'html' },
+      { name: 'imageAlt', draft: { ar: 'image_alt_ar', en: 'image_alt_en' }, pub: null, max: 500, multiline: false, format: 'plain' },
     ],
     json: [],
     text: [
-      { name: 'image', column: 'image', max: 512, fallback: null },
-      { name: 'categoryId', column: 'category_id', max: 36, fallback: null },
+      { name: 'image', column: 'image', max: 512, fallback: null, format: 'plain' },
+      { name: 'categoryId', column: 'category_id', max: 36, fallback: null, format: 'plain' },
     ],
     number: [],
     flag: [],
@@ -98,12 +113,12 @@ export const KIND_SPECS: readonly KindSpec[] = [
     perLocale: true,
     scope: 'locales',
     bi: [
-      { name: 'name', draft: { ar: 'name_ar', en: 'name_en' }, pub: { ar: 'pub_name_ar', en: 'pub_name_en' }, max: 500, multiline: false },
-      { name: 'excerpt', draft: { ar: 'excerpt_ar', en: 'excerpt_en' }, pub: { ar: 'pub_excerpt_ar', en: 'pub_excerpt_en' }, max: 1000, multiline: true },
-      { name: 'body', draft: { ar: 'body_ar', en: 'body_en' }, pub: { ar: 'pub_body_ar', en: 'pub_body_en' }, max: LONGTEXT, multiline: true },
+      { name: 'name', draft: { ar: 'name_ar', en: 'name_en' }, pub: { ar: 'pub_name_ar', en: 'pub_name_en' }, max: 500, multiline: false, format: 'plain' },
+      { name: 'excerpt', draft: { ar: 'excerpt_ar', en: 'excerpt_en' }, pub: { ar: 'pub_excerpt_ar', en: 'pub_excerpt_en' }, max: 1000, multiline: true, format: 'plain' },
+      { name: 'body', draft: { ar: 'body_ar', en: 'body_en' }, pub: { ar: 'pub_body_ar', en: 'pub_body_en' }, max: LONGTEXT, multiline: true, format: 'html' },
     ],
     json: [{ name: 'images', draft: 'images', pub: null, required: false }],
-    text: [{ name: 'currency', column: 'currency', max: 8, fallback: 'EGP' }],
+    text: [{ name: 'currency', column: 'currency', max: 8, fallback: 'EGP', format: 'plain' }],
     number: [
       { name: 'price', column: 'price' },
       { name: 'regularPrice', column: 'regular_price' },
@@ -122,11 +137,16 @@ export const KIND_SPECS: readonly KindSpec[] = [
     perLocale: true,
     scope: 'locales',
     bi: [
-      { name: 'title', draft: { ar: 'title_ar', en: 'title_en' }, pub: { ar: 'pub_title_ar', en: 'pub_title_en' }, max: 500, multiline: false },
-      { name: 'content', draft: { ar: 'content_ar', en: 'content_en' }, pub: { ar: 'pub_content_ar', en: 'pub_content_en' }, max: LONGTEXT, multiline: true },
+      { name: 'title', draft: { ar: 'title_ar', en: 'title_en' }, pub: { ar: 'pub_title_ar', en: 'pub_title_en' }, max: 500, multiline: false, format: 'plain' },
+      // `source`, not `html`: the homepage row's body is the WordPress page builder's own
+      // document, and `hero.ts` and `home-prose.ts` still read the slider and the prose
+      // rows out of it (`rs-slide`, `data-thumb`, `class="vc_row"`). Filtering on the way
+      // in would delete the home hero the first time anyone saved the page, so a page
+      // body is stored as typed and `sanitizeHtmlBody()` filters it on every render.
+      { name: 'content', draft: { ar: 'content_ar', en: 'content_en' }, pub: { ar: 'pub_content_ar', en: 'pub_content_en' }, max: LONGTEXT, multiline: true, format: 'source' },
     ],
     json: [],
-    text: [{ name: 'redirectTo', column: 'redirect_to', max: 512, fallback: null }],
+    text: [{ name: 'redirectTo', column: 'redirect_to', max: 512, fallback: null, format: 'plain' }],
     number: [],
     flag: [{ name: 'enabled', column: 'enabled' }],
   },
@@ -201,6 +221,16 @@ export type ColumnWrites = Record<string, string | number | null>;
 export interface ParseResult {
   columns: ColumnWrites;
   issues: { path: string; message: string }[];
+  /**
+   * The columns that hold a body, so the caller can run them through
+   * `sanitizeRichHtml()` before the INSERT.
+   *
+   * The filtering is not done here because this module is imported by the console's
+   * client bundle (through `./kinds` types) and `sanitize-html` is Node-only. Plain
+   * fields *are* cleaned here, because `./format.ts` has no dependencies and the
+   * operator's browser and the database must reach the same string.
+   */
+  htmlColumns: string[];
 }
 
 /**
@@ -209,26 +239,37 @@ export interface ParseResult {
  * A bilingual field writes only the column for the locale the request named; that
  * is what makes the `locales` scope honest. A JSON field is stringified here,
  * because MariaDB stores it as LONGTEXT with a `json_valid()` check and a raw
- * object arrives as SQL text.
+ * object arrives as SQL text. A plain field is cleaned by `plainText()` first, so
+ * a pasted headline never carries its `<strong>` into a `<title>` tag.
  */
 export function parseWrites(spec: KindSpec, input: WriteInput, locale: ContentLocale): ParseResult {
   const columns: ColumnWrites = {};
   const issues: { path: string; message: string }[] = [];
+  const htmlColumns: string[] = [];
 
   for (const [name, value] of Object.entries(input.fields)) {
     const bi = spec.bi.find((field) => field.name === name);
     if (bi) {
       if (typeof value !== 'string') issues.push({ path: name, message: 'expected text' });
-      else if (value.length > bi.max) issues.push({ path: name, message: `longer than ${bi.max} characters` });
-      else columns[bi.draft[locale]] = value;
+      else {
+        const written = bi.format === 'plain' ? plainText(value) : value;
+        if (written.length > bi.max) issues.push({ path: name, message: `longer than ${bi.max} characters` });
+        else {
+          columns[bi.draft[locale]] = written;
+          if (bi.format === 'html') htmlColumns.push(bi.draft[locale]);
+        }
+      }
       continue;
     }
 
     const text = spec.text.find((field) => field.name === name);
     if (text) {
       if (value !== null && typeof value !== 'string') issues.push({ path: name, message: 'expected text' });
-      else if (typeof value === 'string' && value.length > text.max) issues.push({ path: name, message: `longer than ${text.max} characters` });
-      else columns[text.column] = value === '' || value === null ? text.fallback : (value as string);
+      else {
+        const written = value === null || value === undefined ? null : plainText(String(value));
+        if (written !== null && written.length > text.max) issues.push({ path: name, message: `longer than ${text.max} characters` });
+        else columns[text.column] = written === '' || written === null ? text.fallback : written;
+      }
       continue;
     }
 
@@ -267,7 +308,7 @@ export function parseWrites(spec: KindSpec, input: WriteInput, locale: ContentLo
     }
   }
 
-  return { columns, issues };
+  return { columns, issues, htmlColumns };
 }
 
 /** The fields whose values reach the public site only after a publish. */
