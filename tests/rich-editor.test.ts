@@ -83,6 +83,10 @@ describe('a paste keeps the words and loses the markup nobody allowed', () => {
     expect(isAllowedHref('java\nscript:alert(1)')).toBe(false);
     expect(isAllowedHref(' javascript:alert(1)')).toBe(false);
     expect(cleanPaste('<a href="java\nscript:alert(1)">x</a>')).toBe('<a>x</a>');
+    // The entity is what an email client actually sends, and the attribute is decoded before it
+    // is judged — so the same refusal has to hold after `&#09;` becomes a tab.
+    expect(cleanPaste('<a href="java&#09;script:alert(1)">x</a>')).toBe('<a>x</a>');
+    expect(cleanPaste('<a href="&#106;avascript:alert(1)">x</a>')).toBe('<a>x</a>');
   });
 
   it('drops an event handler an image arrived with, and keeps the picture', () => {
