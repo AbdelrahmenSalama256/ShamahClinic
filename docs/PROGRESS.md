@@ -2024,6 +2024,31 @@ owner's word.
       no browser measurement was made. Gates: typecheck clean, lint clean, touched suites 4 files / 134 passed. The
       full sweep passed 21 of 22 files (493 passed, 52 skipped); `content.test.ts` timed out in its `beforeAll`
       database hook — a DB-contention timeout unrelated to these files — and passed 52/52 when run alone.
+- [x] S2 Every list is its own section; the aggregate list redirects — `9802367`
+      **Reading, stated first as the brief asked:** every list-backed entity (Results first) becomes its own CMS
+      section, its media gallery lives inside each item's page, and the separate `/console/lists` screen is removed
+      and redirected. There was no media-library page to delete; the "separate list page" was the aggregate screen
+      over all seven lists, and the gallery already existed in the item editor (`ConsoleEditor` renders
+      `ImageGallery` for the JSON `data` field, which `imageSlots()` finds in `results`, `branches`, etc.), so this
+      row changed structure, not the picker.
+      **Routes.** `src/app/console/(workspace)/[kind]/page.tsx` resolves a list key (`/console/results`) against
+      `knownListKeys()` rather than a hardcoded map, and passes `listKey` to `ContentScreen`; the heading comes from
+      `LIST_LABELS`, so it reads "Result stories"/"قصص النتائج" without a tab. `[kind]/[id]` now treats a list key
+      as a section: `/console/results/<id>` renders the item, and `contentDetailData` rejects an id whose own list
+      differs from the section, so one row cannot appear under two headings. `/console/lists` is a redirect: it
+      keeps `?list=` when the key is registered, otherwise lands on `results` (the multi-media example), then the
+      first registered list; every other term (`trash`, filter, page) moves with it. Legacy `/console/lists/<id>`
+      resolves the item's list and redirects to its section.
+      **One list, no tabs.** `contentScreenData` takes a pinned `listKey` and reports `scopes` as that one list;
+      `ContentListScreen` draws the language tabs for bilingual content and none for a list section. Row links and
+      the create redirect are list-aware (`contentDetailPath(kind, id, listKey)`), and a saved view can no longer
+      switch the section's list — the old `?list=` in a saved query is ignored, because the path is the identity.
+      `screens.ts` emits `/console/<listKey>` for each nav leaf and the palette, so both point at the sections.
+      **Guards.** Three new source tests in `console.test.ts` prove the old page is a redirect that keeps the view,
+      the section route pins `listKey` and the list screen has no list tabs, and the old item address resolves to
+      its section. A new DB test in `content.test.ts` pins `listKey: 'results'` to `scopes: ['results']`. Touched
+      suites: `console.test.ts` 58/58, `content.test.ts` 53/53. Full run: 22 files / 549 tests passed. No dev
+      address was given, so no browser measurement was made.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
