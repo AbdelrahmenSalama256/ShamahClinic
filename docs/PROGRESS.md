@@ -1945,6 +1945,38 @@ day and calls "very bad") before 19.7 (public site, which is already on-brand an
 data-layer rows — 7.5's `seo.json` + `offer-categories`, 6.3c-d's prop plumbing, BK-14→18 — keep their own rows and
 are not renumbered here; the cut-over in `D:\shamah` is task #220 and is gated on the backup + verification rules.
 
+## BK-20 — the console redesign brief of 2026-10-25 (soft / tonal / roomy)
+
+The owner replaced `src/app/console/console.css` with a new design that keeps every existing class name, including
+`[data-locked='true']` and the `.console-nav-*` family, and declared that file the source of truth. The brief is six
+slices, in this order: **S0** hard isolation of the console's stylesheet and load path; **S1** Settings on the console
+kit, every string in the catalog, plus 14a.3's banner card and raw-settings gallery; **S2** multi-media entities own
+their gallery and the separate list route redirects; **S3** flat navigation (sidebar, phone bar, palette) with the
+permission tree removed but filtering and locked state kept; **S4** one SEO table plus the same panel in each entity;
+**S5** three top-bar controls at `var(--c-tap)`, density removed. Slice 0 lands complete and green before 1–5.
+Gate per commit: typecheck, lint, the touched suites, then the full run; nothing pushed; no `next build` without the
+owner's word.
+
+- [x] S0.1 Give the console its own palette and token block — `bb43b5a`
+      `console.css` no longer reads one site token: colours for light and dark keyed on the console's own
+      `data-theme`, plus type, spacing, radii, z-index, durations, tap sizes and a focus ring, all under
+      `[data-surface="console"]` with a `--c-` prefix. The dark block is a child of the surface, not of the site's
+      `html[data-theme]`, so the two surfaces can never repaint each other from a cookie they do not share.
+- [x] S0.2 Carry a scoped reset and element defaults — `836ce43`
+      `@layer console-reset` resets only `[data-surface="console"] :where(...)`: `a`, `button`, `input`, `select`,
+      `textarea`, `table`, `h1`–`h6`, `p`, `ul`, `img`. Unlayered component rules win over it, which is what lets
+      the reset stay blunt. No bare element selector reaches a page that is not the console.
+- [x] S0.3 The console kit, and every screen moved onto it — `2c38801`
+      `src/components/console/kit.tsx` (server-compatible) and `kit-tabs.tsx` (`'use client'`) export the controls a
+      work surface needs — `Button`, `ButtonLink`, `Input`, `Textarea`, `Select`, `Checkbox`, `Field`, `Badge`,
+      `Alert`, `Note`, `Empty`, `Skeleton`, `Mark`, `Card`, `RowAction`, `RowTitle`, `RowKey` and the chip family —
+      painted only by `console-kit.css` from `--c-*` tokens. Every console component now imports this kit; nothing
+      under `src/components/console` names a `ui-*` class or imports `@/components/ui`. The owner's own rewrites of
+      `LeadsScreen` and `SettingsWorkspace` were kept and migrated, not reverted. `console.css` keeps placement only
+      and is imported after the kit so the owner's tuning still wins. The four suites that asserted the old shared
+      classes (`console`, `ui-primitives`, `image-picker`, `rich-editor`) were moved to the console spellings rather
+      than deleting their coverage. Gates: typecheck clean, lint clean, 21 files / 534 tests passed.
+
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
