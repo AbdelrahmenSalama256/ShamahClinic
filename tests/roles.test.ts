@@ -458,6 +458,10 @@ describe('no console route writes without guard()', () => {
     // Accounts and permissions are the writes an Owner makes with no page to revert them,
     // so the thin delegate is the only shape allowed here.
     ['@/lib/users/api', 'src/lib/users/api.ts'],
+    // Media: an upload is the one write that carries bytes, so both route files stay thin
+    // delegates to this handler — the CSRF and `media.create` checks must run before a
+    // single decoded byte reaches the disk.
+    ['@/lib/media/api', 'src/lib/media/api.ts'],
   ]);
 
   function routeFiles(dir: string): string[] {

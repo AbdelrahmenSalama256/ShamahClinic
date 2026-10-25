@@ -142,7 +142,7 @@ async function main(): Promise<void> {
     byRow.set(`${edit.table}:${edit.id}`, entry);
   }
   for (const entry of byRow.values()) {
-    let update = db.updateTable(entry.table as never) as unknown as UpdateShape;
+    const update = db.updateTable(entry.table as never) as unknown as UpdateShape;
     await update.set(entry.patch).where('id', '=', entry.id).execute();
   }
   console.log(`Repaired ${edits.length} column value(s) on ${byRow.size} row(s). No version moved and no revision was written.`);
