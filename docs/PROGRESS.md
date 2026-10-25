@@ -2109,6 +2109,30 @@ owner's word.
       and `roles.test.ts` moved to the new screen/grant and name `seo-api` as a trusted write delegate.
       No dev address was given, so no browser measurement was made. Gates: typecheck clean, lint clean, touched
       suites 7 files / 269 passed, full run 23 files / 566 passed.
+- [x] S5 Three top-bar tools, one comfortable rhythm — `a98ab93`
+      **Three controls, one square.** Search, light/dark and language are now one shape: a `Button size="icon"`
+      carrying `.console-tool` — `var(--c-tap)` square, pill radius, a 1.15rem stroke-1.75 glyph — so the header
+      reads as a row of equal tools instead of a search box with two afterthoughts. The search trigger moved out
+      of `ConsoleControls` and into `ConsolePalette`, where the dialog it opens lives; theme and language stay in
+      `ConsoleControls`, all three saving through the same prefs call. The site link left the header for the
+      account block (`.console-account-site`, a 44px row beside sign-out), because the rule is three controls and
+      "view site" leaves the console like signing out does. The drawer toggle's glyph became an SVG at the same
+      stroke weight; the phone header drops gaps and padding, sets the brand to ellipsis and hides the toggle's
+      word with `font-size: 0` while keeping its 44px box.
+      **Density is gone end to end, not just hidden.** `ConsolePrefs` is `{ locale, theme }`; the cookie is
+      `locale.theme`; the route schema requires exactly those two (a body without one is a 400, not a silent
+      reset); the layout no longer writes `data-density`; the dense token block and its `.console-tool`/nav
+      overrides are deleted from `console.css`; both `shell.density.*` strings are out of the catalogs. A cookie
+      written while density existed — `ar.dark.dense` — still decodes, because the third term is ignored rather
+      than treated as corruption. Comfortable is the only rhythm the console ships.
+      **Guards.** `console.test.ts` now pins the three-term cookie decoding, the two-field prefs round-trip, and a
+      source test that the header builds exactly two `Button`s plus the palette's trigger, each naming
+      `.console-tool`, that `.console-tool` is `var(--c-tap)` square with the pill radius and the SVG stroke
+      weight, that `layout.tsx` and `prefs.ts` carry no density and the catalogs no `shell.density`, and that
+      `.console-account-site` exists. `ui-primitives.test.ts` asserts the same token floor with
+      `not.toMatch(/data-density/)` in place of the old dense slice. No dev address was given, so no browser
+      measurement was made. Gates: typecheck clean, lint clean, touched suites 4 files / 125 passed, full run
+      23 files / 566 passed.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
