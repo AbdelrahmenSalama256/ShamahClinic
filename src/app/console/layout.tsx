@@ -1,14 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import { tajawal } from '@/lib/fonts';
-import { siteConfig, siteTheme } from '@/config/site';
+import { siteConfig } from '@/config/site';
 import { dirOf } from '@/lib/console/prefs';
 import { message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';
-// The console reads the token layer and the shared controls, never the site stylesheet:
-// `globals.css` carries the public page's element rules (`img { width: 100% !important }`
-// would flatten every thumbnail) and a reset this work surface does not share.
-import '../../styles/tokens.css';
-import '../../components/ui/ui.css';
+// The console is a document root of its own and reads only its own two sheets. It never
+// imports `globals.css` (the public page's element rules, `img { width: 100% !important }`,
+// would flatten every thumbnail), and it no longer imports the site token layer or the
+// shared controls either: `console.css` declares a complete `--c-*` palette, and
+// `console-kit.css` paints every control from it.
 import './console-kit.css';
 import './console.css';
 
@@ -42,7 +42,6 @@ export default async function ConsoleRootLayout({ children }: Readonly<{ childre
       data-density={prefs.density}
       data-surface="console"
       className={`${tajawal.variable}`}
-      style={(prefs.theme === 'dark' ? siteTheme.dark : siteTheme.light) as React.CSSProperties}
     >
       <body className="console-body">{children}</body>
     </html>

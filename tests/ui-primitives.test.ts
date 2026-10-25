@@ -60,15 +60,18 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
     const resolved = join(process.cwd(), 'src/app', match![1]!);
     expect(existsSync(resolved), `${match![1]} resolves from src/app`).toBe(true);
     expect(readFileSync(resolved, 'utf8')).toContain('.ui-button');
-    // The console is its own root, so it names the control layer itself — and the token
-    // file with it. It never reads `globals.css`: that file's `img { width: 100% !important }`
-    // is the public page's, and it would size every thumbnail in a list.
+    // The console is its own root with its own two sheets, and it names neither the site's
+    // token file nor the shared control layer: `globals.css` carries the public page's
+    // element rules (`img { width: 100% !important }` would flatten every thumbnail), and
+    // `ui.css` paints the site's controls in the site's palette.
     const layout = readFileSync(join(process.cwd(), 'src/app/console/layout.tsx'), 'utf8');
-    expect(layout).toContain("import '../../components/ui/ui.css';");
-    expect(layout).toContain("import '../../styles/tokens.css';");
+    expect(layout).toContain("import './console-kit.css';");
+    expect(layout).toContain("import './console.css';");
+    expect(layout).not.toContain('components/ui/ui.css');
+    expect(layout).not.toContain('styles/tokens.css');
     expect(layout).not.toMatch(/import\s+['"][^'"]*globals\.css/);
     expect(ui).not.toMatch(/@import/);
-    // Both roots read one token file, so a palette never has two spellings.
+    // The site still reads the token file from its own root.
     expect(globals).toContain('@import "../styles/tokens.css";');
   });
 

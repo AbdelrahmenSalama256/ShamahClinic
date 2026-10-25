@@ -174,10 +174,10 @@ describe('the picker is painted once, by the console kit (BK-14a.2)', () => {
   });
 
   it('gives the frame the shape of the slot it fills', () => {
-    expect(rule(kit, ".console-picker-frame[data-ratio='wide']")).toMatch(/aspect-ratio: 16 \/ 9;/);
-    expect(rule(kit, ".console-picker-frame[data-ratio='square']")).toMatch(/aspect-ratio: 1 \/ 1;/);
-    expect(rule(kit, ".console-picker-frame[data-ratio='tall']")).toMatch(/aspect-ratio: 3 \/ 4;/);
-    expect(rule(kit, ".console-picker-frame[data-empty='true']")).toMatch(/border-style: dashed;/);
+    expect(rule(kit, '.console-picker-frame[data-ratio="wide"]')).toMatch(/aspect-ratio: 16 \/ 9;/);
+    expect(rule(kit, '.console-picker-frame[data-ratio="square"]')).toMatch(/aspect-ratio: 1 \/ 1;/);
+    expect(rule(kit, '.console-picker-frame[data-ratio="tall"]')).toMatch(/aspect-ratio: 3 \/ 4;/);
+    expect(rule(kit, '.console-picker-frame[data-empty="true"]')).toMatch(/border-style: dashed;/);
   });
 });
 

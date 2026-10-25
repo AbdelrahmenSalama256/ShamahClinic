@@ -1,20 +1,8 @@
-/*
- * The console kit: one definition per control, painted only from `--c-*` tokens.
- *
- * This is the console's own copy of the primitives. The public site has a control layer
- * of its own; the two share a design language, not a stylesheet, because a console field
- * sits in a dense form and a public field sits in a page. Every colour, radius, floor and
- * duration below is declared in `console.css` on `[data-surface="console"]`.
- *
- * The rules are unlayered on purpose: the scoped reset lives in `@layer console-reset`,
- * so anything a component writes outranks it, and the touch floor cannot be undone by an
- * element rule.
- *
- * Logical properties throughout — no `left`, `right`, `margin-left` — so Arabic needs no
- * override. The one number every control honours is `--c-tap` (a control) or
- * `--c-tap-field` (a field, the only floor density may lower).
- */
-
+a,
+button,
+div {
+  transition: 0.3s all ease;
+}
 /* --- button ---------------------------------------------------------------- */
 .console-btn {
   display: inline-flex;
@@ -51,39 +39,39 @@
   box-shadow: none;
 }
 
-.console-btn[data-variant='primary'] {
+.console-btn[data-variant="primary"] {
   border-color: color-mix(in srgb, var(--c-accent) 70%, var(--c-text));
   background: var(--c-accent);
   color: var(--c-on-fill);
   font-weight: 600;
 }
 
-.console-btn[data-variant='primary']:hover:not(:disabled) {
+.console-btn[data-variant="primary"]:hover:not(:disabled) {
   background: color-mix(in srgb, var(--c-accent) 86%, var(--c-text));
   box-shadow: 0 8px 20px -12px var(--c-accent);
 }
 
-.console-btn[data-variant='ghost'] {
+.console-btn[data-variant="ghost"] {
   border-color: transparent;
   background: transparent;
   color: var(--c-text-2);
   padding-inline: var(--c-sp-2);
 }
 
-.console-btn[data-variant='ghost']:hover:not(:disabled) {
+.console-btn[data-variant="ghost"]:hover:not(:disabled) {
   background: var(--c-hover);
   box-shadow: none;
   color: var(--c-text);
 }
 
-.console-btn[data-variant='danger'] {
+.console-btn[data-variant="danger"] {
   border-color: transparent;
   background: var(--c-danger);
   color: var(--c-on-fill);
   font-weight: 600;
 }
 
-.console-btn[data-variant='danger']:hover:not(:disabled) {
+.console-btn[data-variant="danger"]:hover:not(:disabled) {
   background: color-mix(in srgb, var(--c-danger) 86%, var(--c-text));
   box-shadow: var(--c-lift);
 }
@@ -96,12 +84,12 @@
   font-weight: 600;
 }
 
-.console-btn[data-size='sm'] {
+.console-btn[data-size="sm"] {
   padding-inline: var(--c-sp-3);
   font-size: var(--c-font-small);
 }
 
-.console-btn[data-size='icon'] {
+.console-btn[data-size="icon"] {
   min-inline-size: var(--c-tap);
   padding-inline: var(--c-sp-1);
   gap: 0;
@@ -221,7 +209,7 @@ select.console-control {
 
 /* A search field filters as it is typed, so the browser's own clear glyph is a second way
    to do what is already done — and on a narrow bar it overlaps the text. */
-.console-control[type='search']::-webkit-search-cancel-button {
+.console-control[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
 }
@@ -236,7 +224,7 @@ select.console-control {
   opacity: 0.7;
 }
 
-.console-control[aria-invalid='true'] {
+.console-control[aria-invalid="true"] {
   border-color: var(--c-danger);
 }
 
@@ -245,17 +233,19 @@ select.console-control {
   font-size: var(--c-font-small);
   overflow-wrap: anywhere;
 }
-
 /* --- checkbox -------------------------------------------------------------- */
+/* The native box, painted by the platform: the kit's markup is a label around the
+   input and its words, so hiding the input would leave the person with nothing. */
 .console-check {
-  display: inline-flex;
   align-items: center;
   gap: var(--c-sp-2);
-  min-inline-size: var(--c-tap);
-  min-block-size: var(--c-tap);
   color: var(--c-text);
   font-size: var(--c-font-size);
   cursor: pointer;
+  display: inline-flex;
+  position: absolute;
+  right: 12px;
+  top: 20px;
 }
 
 .console-check input {
@@ -263,7 +253,7 @@ select.console-control {
   inline-size: var(--c-sp-5);
   block-size: var(--c-sp-5);
   margin: 0;
-  accent-color: var(--c-accent);
+  accent-color: var(--c-focus);
 }
 
 .console-check[data-disabled] {
@@ -276,25 +266,25 @@ select.console-control {
    `--c-tone-*` has no fallback here; the neutral default lives in each consumer's own
    `var(--c-tone-fg, …)` line, which is what lets a badge and an alert disagree about
    what "no tone" looks like without a selector to win. */
-.console-badge[data-tone='ok'],
-.console-alert[data-tone='ok'],
-.console-note[data-tone='ok'] {
+.console-badge[data-tone="ok"],
+.console-alert[data-tone="ok"],
+.console-note[data-tone="ok"] {
   --c-tone-fg: var(--c-success);
   --c-tone-bg: color-mix(in srgb, var(--c-success) 11%, var(--c-surface));
   --c-tone-border: color-mix(in srgb, var(--c-success) 36%, var(--c-line));
 }
 
-.console-badge[data-tone='warn'],
-.console-alert[data-tone='warn'],
-.console-note[data-tone='warn'] {
+.console-badge[data-tone="warn"],
+.console-alert[data-tone="warn"],
+.console-note[data-tone="warn"] {
   --c-tone-fg: var(--c-accent);
   --c-tone-bg: color-mix(in srgb, var(--c-accent) 11%, var(--c-surface));
   --c-tone-border: color-mix(in srgb, var(--c-accent) 38%, var(--c-line));
 }
 
-.console-badge[data-tone='danger'],
-.console-alert[data-tone='danger'],
-.console-note[data-tone='danger'] {
+.console-badge[data-tone="danger"],
+.console-alert[data-tone="danger"],
+.console-note[data-tone="danger"] {
   --c-tone-fg: var(--c-danger);
   --c-tone-bg: color-mix(in srgb, var(--c-danger) 11%, var(--c-surface));
   --c-tone-border: color-mix(in srgb, var(--c-danger) 36%, var(--c-line));
@@ -352,7 +342,6 @@ select.console-control {
   font-size: var(--c-font-size);
   text-align: center;
 }
-
 /* --- skeleton -------------------------------------------------------------- */
 .console-skeletons {
   display: grid;
@@ -382,12 +371,12 @@ select.console-control {
   line-height: 1;
 }
 
-.console-mark[data-state='yes'] {
+.console-mark[data-state="yes"] {
   color: var(--c-success);
 }
 
 /* An absent value is not a false one, so it is the quietest of the three. */
-.console-mark[data-state='none'] {
+.console-mark[data-state="none"] {
   color: var(--c-text-3);
 }
 
@@ -410,7 +399,9 @@ select.console-control {
 
 .console-card[data-active] {
   background: var(--c-surface-soft);
-  box-shadow: 0 0 0 1.5px var(--c-accent), var(--c-lift);
+  box-shadow:
+    0 0 0 1.5px var(--c-accent),
+    var(--c-lift);
 }
 
 /* --- lede ------------------------------------------------------------------ */
@@ -642,7 +633,7 @@ select.console-control {
     box-shadow var(--c-dur-base) var(--c-ease-soft);
 }
 
-.console-picker-frame[data-empty='true'] {
+.console-picker-frame[data-empty="true"] {
   border-style: dashed;
 }
 
@@ -650,15 +641,15 @@ select.console-control {
   border-color: var(--c-accent);
 }
 
-.console-picker-frame[data-ratio='wide'] {
+.console-picker-frame[data-ratio="wide"] {
   aspect-ratio: 16 / 9;
 }
 
-.console-picker-frame[data-ratio='square'] {
+.console-picker-frame[data-ratio="square"] {
   aspect-ratio: 1 / 1;
 }
 
-.console-picker-frame[data-ratio='tall'] {
+.console-picker-frame[data-ratio="tall"] {
   aspect-ratio: 3 / 4;
 }
 
@@ -755,7 +746,7 @@ select.console-control {
   border-color: var(--c-accent);
 }
 
-.console-picker-tile[data-active='true'] {
+.console-picker-tile[data-active="true"] {
   border-color: var(--c-accent);
   background: var(--c-tint);
 }
@@ -836,7 +827,7 @@ select.console-control {
   color: var(--c-text-3);
 }
 
-.console-rich-surface[data-disabled='true'] {
+.console-rich-surface[data-disabled="true"] {
   background: var(--c-surface-soft);
   color: var(--c-text-3);
   cursor: not-allowed;

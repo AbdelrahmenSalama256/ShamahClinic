@@ -301,17 +301,18 @@ describe('the console is not the site', () => {
     }
   });
 
-  it('reads the token layer and the controls, never the site stylesheet', () => {
+  it('reads only its own two sheets, never the site stylesheet or token layer', () => {
     // BK-19.1 kept the palette in `globals.css` and the console reached it through the
     // site's import. That is also how `img { width: 100% !important }` reached a 44px
-    // thumbnail, and why this row split the tokens into their own file: the console reads
-    // the numbers and the primitives, and nothing that could repaint its elements.
+    // thumbnail. Slice 0 went the rest of the way: the console declares its own `--c-*`
+    // palette and kit, so its root names neither the site tokens nor the shared controls.
     const layout = readFileSync(join(consoleDir, 'layout.tsx'), 'utf8');
-    expect(layout).toContain("import '../../styles/tokens.css';");
-    expect(layout).toContain("import '../../components/ui/ui.css';");
+    expect(layout).toContain("import './console-kit.css';");
     expect(layout).toContain("import './console.css';");
+    expect(layout).not.toContain('tokens.css');
+    expect(layout).not.toContain('ui.css');
     expect(layout).not.toMatch(/import\s+['"][^'"]*globals\.css/);
-    // The site imports the same token layer, so one palette serves both surfaces.
+    // The site keeps reading the shared token layer from its own root.
     const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
     expect(globals).toContain('@import "../styles/tokens.css";');
   });
@@ -425,8 +426,12 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     }
     const defined = new Set([...css.matchAll(/(?:^|[;{])\s*(--[a-z0-9-]+)\s*:/gm)].map((match) => match[1]));
     const used = [...css.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1]!);
-    expect(used.filter((token) => !defined.has(token)), 'every var() in console.css is declared there').toEqual([]);
-    expect(used.filter((token) => !token.startsWith('--c-')), 'console.css reads no site token').toEqual([]);
+    // `--font-tajawal` is the one name the console reads without declaring: `next/font`
+    // writes it on the root from `tajawal.variable`, and `--c-font` names it first in its
+    // stack. Everything else has to be a `--c-*` token declared here.
+    const fontVariable = '--font-tajawal';
+    expect(used.filter((token) => token !== fontVariable && !defined.has(token)), 'every var() in console.css is declared there').toEqual([]);
+    expect(used.filter((token) => token !== fontVariable && !token.startsWith('--c-')), 'console.css reads no site token').toEqual([]);
 
     // Every one the console draws with must be a token, not a literal it invented.
     expect(css).not.toMatch(/border-radius: 0\.(65|9)rem/);

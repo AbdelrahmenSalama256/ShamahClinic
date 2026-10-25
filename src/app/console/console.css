@@ -68,9 +68,9 @@
   --c-overlay: rgb(20 14 10 / 0.45);
   --c-backdrop: rgb(0 0 0 / 45%);
 
-  /* Type. `--c-font` is a working system stack; the console layout replaces it on
-     the root with the family `next/font` loaded, so no site font rule is needed. */
-  --c-font: "Segoe UI", Tahoma, Arial, sans-serif;
+  /* Type. The console layout puts the family `next/font` loaded on the root as
+     `--font-tajawal`; the stack after it is the fallback while the file loads. */
+  --c-font: var(--font-tajawal), "Segoe UI", Tahoma, Arial, sans-serif;
   --c-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --c-font-size: 0.9rem;
   --c-font-small: 0.8rem;
@@ -1113,9 +1113,10 @@ span.console-thumb[data-empty] {
 }
 
 .console-cards .console-card {
-  display: flex;
+  display: block;
   align-items: center;
   gap: var(--c-sp-2);
+  position: relative;
 }
 
 .console-cards .console-card-link {
