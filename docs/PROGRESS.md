@@ -1002,6 +1002,17 @@ last two into the database so the team never needs a developer for a word.
       1639 lines, the working copy 2315, and `[data-locked='true']` is gone). Neither file is staged or touched by
       this row. `npm run build` and `npm run prove:no-wp` are **not yet run for 14a.1**; re-run both once that
       session lands. The `prefer-const` in `scripts/db/repair-plain.ts` was mine from `ac61770` and is fixed here.
+      *(Re-measured at 13.8 — `325864a`: the compile half of that block is gone, and the numbers moved. The other
+      session's `LeadsScreen.tsx` no longer names `leads.back` or `leads.section.context` anywhere, so
+      `npm run typecheck` and `npm run lint` are both clean repo-wide today. `console.css` is 1850 lines against HEAD's
+      1639 and `[data-locked]` is back in it twice, so the 5 tests this row named are down to **11 failures across 3
+      suites** — 4 in `console.test.ts` (tap floor, drawer reveal, one set of numbers, the nav folding with the
+      browser), 1 in `typography.test.ts`, 6 in `ui-primitives.test.ts` — every one of them an assertion about the
+      shape of `src/app/console/console.css` or `src/app/globals.css` in that session's uncommitted rewrite
+      (`border-radius: 999px` back in the sheet, three `z-index` where the scale allows one, hand-written
+      `.settings-*` rules). They are still not this row's files, and `npm run build` / `npm run prove:no-wp` are still
+      unrun for 14a and for 13.8 for the reason 14a.2 gives: `next build` in Next 16.3.6 has no `--dist-dir` option in
+      its own `--help`, so a production build writes the `.next/` the already-running dev server owns.)*
       **Not in this slice:** the picker itself (14a.2), deleting or replacing a stored file (media is append-only
       until a row proves what usage means), and the public site's existing `/wp` mirrors — those stay the frozen
       backup and are not written to.
