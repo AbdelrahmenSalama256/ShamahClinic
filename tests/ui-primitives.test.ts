@@ -311,8 +311,11 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
     // touches — the two are different numbers under `[data-density='dense']`.
     expect(rule(ui, '.ui-control[data-bar]')).toMatch(/min-height: var\(--tap\);/);
     expect(tokens).toMatch(/--tap-field: 2\.75rem;/);
-    expect(consoleCode).toMatch(/\[data-density='dense'\] \{\s*--tap-field: /);
-    expect(consoleCode).not.toMatch(/--tap:/);
+    // The console owns its own field floor (slice 0); density may lower it, never a tap.
+    expect(consoleCode).toMatch(/\n\s*--c-tap: 2\.75rem;/);
+    expect(consoleCode).toMatch(/\[data-density="dense"\] \{\s*--c-tap-field: /);
+    const dense = consoleCode.slice(consoleCode.indexOf('[data-density="dense"]'));
+    expect(dense.slice(0, dense.indexOf('}'))).not.toContain('--c-tap:');
   });
 
   it('gives the checkbox its floor on the label, which is the thing you hit', () => {
@@ -799,15 +802,13 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
   });
 
   it('has no capsule written by hand in either sheet', () => {
-    for (const [name, source] of [
-      ['ui.css', ui],
-      ['console.css', consoleCode],
-    ] as const) {
-      expect(source, `${name} spells no pill radius`).not.toMatch(/border-radius: 999px/);
-    }
+    // The site's capsule family still reads its shared pill token.
+    expect(ui).not.toMatch(/border-radius: 999px/);
     for (const selector of ['.ui-chip', '.ui-chip-tag', '.ui-chip-x']) {
       expect(rule(ui, selector)).toMatch(/border-radius: var\(--radius-pill\);/);
     }
+    // The console owns its pill and its arch, both drawn from its own token block.
+    expect(consoleCode).toMatch(/--c-r-pill: 999px;/);
     // 19.3c's lesson, carried to the rest of the family: a pill that inherits the table
     // cell's `anywhere` sets its own column's width by character.
     expect(rule(ui, '.ui-chip')).toMatch(/overflow-wrap: normal;/);
@@ -866,13 +867,14 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
   });
 
   it('puts the console overlays on the one scale', () => {
-    expect(rule(consoleCode, '.console-topbar')).toMatch(/z-index: var\(--z-sticky\);/);
-    expect(consoleCode).toMatch(/z-index: var\(--z-scrim\);/);
-    expect(consoleCode).toMatch(/z-index: var\(--z-drawer\);/);
-    // The two layers that are local to their own scroll box stay local literals, with the
-    // reason said out loud: a table head and a save bar have no argument with the top bar.
-    expect((consoleCode.match(/z-index: \d/g) ?? []).length).toBe(1);
+    expect(rule(consoleCode, '.console-topbar')).toMatch(/z-index: var\(--c-z-sticky\);/);
+    expect(consoleCode).toMatch(/z-index: var\(--c-z-scrim\);/);
+    expect(consoleCode).toMatch(/z-index: var\(--c-z-drawer\);/);
+    // The layers that are local to their own scroll box stay local literals, with the
+    // reason said out loud: a lead sheet's own bar and a save bar have no argument with
+    // the top bar.
+    expect((consoleCode.match(/z-index: \d/g) ?? []).length).toBe(2);
     expect(rule(consoleCode, '.console-editor-bar')).toMatch(/z-index: 6;/);
-    expect(tokens).toMatch(/--z-sticky: 30;[\s\S]*--z-scrim: 35;[\s\S]*--z-drawer: 40;/);
+    expect(consoleCode).toMatch(/--c-z-sticky: 30;[\s\S]*--c-z-scrim: 35;[\s\S]*--c-z-drawer: 40;/);
   });
 });

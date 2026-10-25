@@ -96,12 +96,17 @@ describe('BK-19.2 the type system', () => {
     expect(tokens).toMatch(
       /--font-ui:\s*var\(--font-tajawal,\s*"Segoe UI", Tahoma, Arial, sans-serif\)/,
     );
-    for (const css of [globals, consoleCss]) {
-      for (const line of css.split('\n').filter((l) => l.includes('font-family:'))) {
-        expect(line.trim(), 'every family declaration goes through the one token').toBe(
-          'font-family: var(--font-ui);',
-        );
-      }
+    for (const line of globals.split('\n').filter((l) => l.includes('font-family:'))) {
+      expect(line.trim(), 'every site family declaration goes through the one token').toBe(
+        'font-family: var(--font-ui);',
+      );
+    }
+    // The console owns its family token too (slice 0): it reads `--c-font` or its own
+    // mono face, never the site's `--font-ui`.
+    for (const line of consoleCss.split('\n').filter((l) => l.includes('font-family:'))) {
+      expect(line.trim(), 'the console paints one of its own families').toMatch(
+        /^font-family: var\(--c-font(?:-mono)?[),]/,
+      );
     }
     // The two faces this replaced must not survive as a name anywhere.
     expect(sourceFiles().join('\n')).not.toMatch(/readex|montserrat/i);

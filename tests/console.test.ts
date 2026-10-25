@@ -348,51 +348,31 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
   });
 
   it('holds the 44px tap floor at both densities', () => {
-    // BK-19.3a moved the floor out of the console and into the shared control layer, so
-    // the assertions moved with it: `--tap` is declared once in `src/styles/tokens.css`, the
-    // primitive reads it, and the console reads the same name for the controls it still
-    // paints itself. A second `--console-tap` would be a second floor.
-    const ui = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
-    expect(tokensText).toMatch(/\n\s*--tap: 2\.75rem;/);
-    expect(ui).toMatch(/\.ui-button\s*\{[^}]*min-height: var\(--tap\);/);
+    // The console owns its own floor: `--c-tap` is declared once in console.css and every
+    // control the console paints reads it. Density is allowed to lower a *field*, never a
+    // tap — the floor is about what a finger can miss, and a denser layout does not make
+    // it smaller.
+    expect(css).toMatch(/\n\s*--c-tap: 2\.75rem;/);
+    expect(css).toMatch(/\n\s*--c-tap-field: 2\.75rem;/);
     expect(css).not.toMatch(/--console-tap/);
-    expect((css.match(/min-height: var\(--tap\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
-    const dense = css.slice(css.indexOf("[data-density='dense']"));
-    expect(dense.slice(0, dense.indexOf('}'))).not.toContain('--tap:');
+    expect((css.match(/min-(?:height|block-size): var\(--c-tap\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
+    const dense = css.slice(css.indexOf('[data-density="dense"]'));
+    expect(dense.slice(0, dense.indexOf('}'))).not.toContain('--c-tap:');
 
-    // Measuring 13.3 caught a 36px column header, 34px saved-view halves and a search box
-    // that dense lowered to 36px — all of which passed the count above. Every control the
-    // list still paints itself takes `--tap` by name, and never the field token dense
-    // lowers. The two that used to be in this list — the search box and the per-page
-    // select — are `.ui-control[data-bar]` now, proved in the file that paints them, and
-    // 19.3d moved the sortable head and the whole chip family out of here the same way.
+    // Every control the list still paints itself takes `--c-tap` by name, and never the
+    // field token dense lowers.
     for (const selector of ['.console-cards-head', '.console-editor-bar']) {
       const start = css.indexOf(`\n${selector} {`);
       expect(start, `${selector} is styled`).toBeGreaterThan(-1);
-      expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--tap\)/);
+      expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--c-tap\)/);
     }
-    for (const selector of [
-      /\.ui-table-sort\s*\{[^}]*min-block-size: var\(--tap\);/,
-      /\.ui-chip\s*\{[^}]*min-block-size: var\(--tap\);/,
-      /\.ui-chip-tag\s*\{[^}]*min-block-size: var\(--tap\);/,
-      /\.ui-chip-x\s*\{[^}]*min-inline-size: var\(--tap\);/,
-    ]) {
-      expect(ui, `${selector.source} keeps the floor`).toMatch(selector);
-    }
-    expect(css).not.toMatch(/min-(?:height|inline-size|block-size): [12]\.[0-9]+rem/);
-    // BK-19.3b moved the field floor out of this file entirely. A second copy of it is how
-    // a dense step meant for every form ends up applied to one pane and not the other.
-    expect(ui).toMatch(/\.ui-control\s*\{[^}]*min-height: var\(--tap-field\);/);
-    expect(ui).toMatch(/\.ui-control\[data-bar\]\s*\{[^}]*min-height: var\(--tap\);/);
-    expect(ui).toMatch(/\.ui-check\s*\{[^}]*min-block-size: var\(--tap\);/);
-    expect(css).not.toMatch(/min-height: var\(--tap-field\)/);
-    expect((css.match(/min-height: var\(--tap\)/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    // The redesign deliberately draws compact list rows (36–40px) for a data screen; what
+    // may not shrink is a control, and the kit proves that floor in its own file.
 
     // Nothing may still paint a field by hand. Anchored to the start of a line because
     // the comments in both files name the class they replaced — a rule is what must not
     // come back, and prose about the old one is the thing that keeps it from coming back.
     expect(css).not.toMatch(/^\.console-field[ ,{]/m);
-    expect(ui).not.toMatch(/^\.console-field[ ,{]/m);
     for (const component of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
       const source = readFileSync(join(process.cwd(), 'src/components/console', `${component}.tsx`), 'utf8');
       expect(source, `${component} has no raw field markup`).not.toMatch(/<(input|textarea|select)\s/);
@@ -414,22 +394,17 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // The replacement is a named list, so a state change cannot touch a layout property.
     expect(globals).toMatch(/transition:\s+color var\(--dur-base\) var\(--ease-out\),/);
     expect(globals).toMatch(/transform var\(--dur-base\) var\(--ease-out\),/);
-    expect(css).toMatch(/\.console-side\s*\{[^}]*transition: transform var\(--dur-base\) var\(--ease-out\);/);
+    expect(css).toMatch(/\.console-side\s*\{[^}]*transition: transform var\(--c-dur-slow\) var\(--c-ease-soft\);/);
   });
 
-  it('keeps one set of numbers behind both surfaces', () => {
-    // The console and the site already read the same palette; what BK-19.1 added is the
-    // part that does not travel with colour — the spacing scale, the two radii the
-    // console drew by hand, elevation, hairlines and the named motion curves. They live
-    // in one file. A token that changes with the theme is defined twice there on
-    // purpose (`:root` and `html[data-theme="dark"]`); one that does not may be defined
-    // once, and a screen that reaches for a raw number instead is the start of a second
-    // system nobody maintains.
+  it('keeps one set of numbers per surface', () => {
+    // The site still keeps its non-colour system in one file: the spacing scale, the two
+    // radii, elevation, hairlines and named motion curves. A token that changes with the
+    // theme is defined twice there on purpose (`:root` and `html[data-theme="dark"]`);
+    // one that does not may be defined once.
     for (const token of ['--sp-1', '--sp-4', '--sp-8', '--radius-control', '--radius-surface', '--radius-pill',
       '--z-sticky', '--z-scrim', '--z-drawer', '--z-drop', '--z-modal', '--z-palette', '--z-toast',
       '--dur-fast', '--dur-base', '--dur-slow', '--dur-reveal', '--ease-out', '--ease-in-out', '--ease-spring',
-      // BK-19.3a: the control geometry both surfaces' buttons read, and the two durations
-      // that are not transitions — a spinner and a skeleton's breath.
       '--tap', '--tap-field', '--ui-font', '--ui-font-small', '--ui-gap', '--ui-gap-tight', '--ui-pad', '--ui-stack',
       '--dur-spin', '--dur-shimmer']) {
       expect((tokensText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} defined once`).toBe(1);
@@ -438,11 +413,26 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
       '--glass-surface', '--glass-border', '--gold-gradient']) {
       expect((tokensText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} light + dark`).toBe(2);
     }
-    // Every one the console reads must be a token, not a literal it invented.
+
+    // The console has its own set, declared entirely in its own file: no `var()` it reads
+    // is undefined, and no name it reads belongs to the site. That is what lets the two
+    // stylesheets load into separate pages without either one waiting on the other.
+    for (const token of ['--c-tap', '--c-tap-field', '--c-font', '--c-font-mono',
+      '--c-text', '--c-text-2', '--c-text-3', '--c-surface', '--c-line', '--c-accent',
+      '--c-gap', '--c-stack', '--c-r-md', '--c-z-sticky', '--c-z-drawer', '--c-dur-base',
+      '--c-ease-soft']) {
+      expect((css.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} is console-owned`).toBeGreaterThanOrEqual(1);
+    }
+    const defined = new Set([...css.matchAll(/(?:^|[;{])\s*(--[a-z0-9-]+)\s*:/gm)].map((match) => match[1]));
+    const used = [...css.matchAll(/var\((--[a-z0-9-]+)/g)].map((match) => match[1]!);
+    expect(used.filter((token) => !defined.has(token)), 'every var() in console.css is declared there').toEqual([]);
+    expect(used.filter((token) => !token.startsWith('--c-')), 'console.css reads no site token').toEqual([]);
+
+    // Every one the console draws with must be a token, not a literal it invented.
     expect(css).not.toMatch(/border-radius: 0\.(65|9)rem/);
     expect(css).not.toMatch(/transition: transform 0?\.\d+s/);
-    expect(css).toMatch(/border: 1px solid var\(--hairline\)/);
-    expect(css).toMatch(/box-shadow: var\(--elev-3\)/);
+    expect(css).toMatch(/border-block-end: 1px solid var\(--c-line\)/);
+    expect(css).toMatch(/box-shadow: var\(--c-ring\), var\(--c-lift\)/);
   });
 
   it('keeps the fallback palette and the painted palette in step', () => {
@@ -575,7 +565,7 @@ describe('the navigation reads off the grants (BK-13.2)', () => {
     expect(css).toMatch(/\.console-nav-leaves/);
     expect(css).toMatch(/\.console-palette\s*\{/);
     // The greyed state is a cue, not a colour alone: the row keeps its own title text.
-    expect(css).toMatch(/\[data-locked='true'\]/);
+    expect(css).toMatch(/\[data-locked=['"]true['"]\]/);
   });
 
   it('answers 401, 403 and 400 before it reads a single row', async () => {
@@ -794,7 +784,7 @@ describe('one row on its own page (BK-13.4, 240)', () => {
     const ui = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
     // The bar still owns its own floor; the controls inside it are the primitive's, so
     // their floor is proved in the file that paints them (19.3a) and not re-declared here.
-    expect(css.slice(css.indexOf('\n.console-editor-bar {'), css.indexOf('}', css.indexOf('\n.console-editor-bar {')))).toMatch(/var\(--tap\)/);
+    expect(css.slice(css.indexOf('\n.console-editor-bar {'), css.indexOf('}', css.indexOf('\n.console-editor-bar {')))).toMatch(/var\(--c-tap\)/);
     expect(ui).toMatch(/\.ui-button\s*\{[^}]*min-height: var\(--tap\);/);
     expect(editor).toContain('<Button');
     expect(editor).not.toContain('console-button');

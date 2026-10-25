@@ -2,15 +2,17 @@
  * Console chrome: the tokens every screen reads, the responsive frame, and the shared
  * primitives (cards, fields, buttons, the list/editor workspace).
  *
- * Colour is not decided here — the variables come from globals.css and the `siteTheme`
- * inline style on <html>, so light/dark is the same palette the public site uses.
+ * This file is self-contained. Every custom property it reads is declared in the
+ * token block below under the `--c-` prefix; it imports no site stylesheet and reads
+ * no site token (`--bg-*`, `--text-*`, `--hairline*`, `--tap`, `--sp-*`, `--z-*`,
+ * `--ui-*`). The two surfaces share a design language, not a stylesheet.
  *
  * Two attributes set the whole look, both written by the server from the prefs cookie
  * (src/lib/console/prefs.ts), so there is no script and no flash:
- *   data-theme='light'|'dark'      the palette
- *   data-density='comfortable'|'dense'  the tokens at the bottom of this file
+ *   data-theme='light'|'dark'            the console's own palette, below
+ *   data-density='comfortable'|'dense'   the tokens near the top of this file
  * Density changes spacing, type size and how many rows fit above the fold. It never
- * changes `--tap`: a dense layout is about fewer pixels per row of *content*,
+ * changes `--c-tap`: a dense layout is about fewer pixels per row of *content*,
  * not about smaller things to hit.
  *
  * Three breakpoints, spelled out in px because a media query cannot read a custom
@@ -26,61 +28,174 @@
  *
  * Logical properties (`-inline-*`) throughout so the same file works in RTL; the one
  * physical property is the drawer's slide, which gets its sign from `[dir]`.
+ *
+ * ---------------------------------------------------------------------------
+ * Design language (2026): SOFT / TONAL / ROOMY
+ *   Surfaces separate by tone and a faint ring, not by rules. Corners are generous,
+ *   depth is a short, quiet lift, labels are sentence case, and the active state is
+ *   a gold-tinted pill. The one signature is the arch: it stays on the leads screen
+ *   (empty state and the detail avatar). Motion is 160–240ms and answers an action.
+ * ---------------------------------------------------------------------------
  */
 
-/* The control tokens (`--tap`, `--tap-field`, `--ui-*`) are declared once, in
- * globals.css `:root`, next to the spacing scale and the radii they sit beside —
- * the same file the public site reads. Only what the console genuinely draws
- * differently is repeated here, and dense only ever names the tokens it lowers.
- * A value written twice is two values that will disagree by the next commit. */
-[data-surface='console'] {
-  --ui-font: 0.9rem; /* rows are the product here; the site's UI size is a step too large */
-  --console-page-pad: 1.25rem;
-  --console-side-w: 16rem;
-  --console-topbar-h: 4.5rem;
-  --console-content-w: 72rem;
-  --console-panel-w: 34rem;
-  --console-list-h: 30rem;
-  --console-off: translateX(-100%);
+/* --- tokens ---------------------------------------------------------------- */
+/*
+ * One palette, owned here. Light and dark are both declared on the console root,
+ * keyed on the console's own `data-theme` (written by the console layout from the
+ * prefs cookie), so an `html[data-theme]` rule elsewhere cannot repaint the console.
+ */
+[data-surface="console"] {
+  color-scheme: light;
+
+  /* Colour */
+  --c-bg: #faf7f2;
+  --c-bg-alt: #f4ece4;
+  --c-canvas: #f4ece4;
+  --c-surface: #fffcf8;
+  --c-surface-soft: #fdfbf8;
+  --c-hover: rgba(33, 26, 22, 0.045);
+  --c-active: rgba(33, 26, 22, 0.09);
+  --c-text: #211a16;
+  --c-text-2: #6b5e57;
+  --c-text-3: #6e675c;
+  --c-accent: #85640f;
+  --c-success: #0a6636;
+  --c-danger: #b3261e;
+  --c-line: rgba(33, 26, 22, 0.1);
+  --c-line-strong: rgba(33, 26, 22, 0.16);
+  --c-focus: #85640f;
+  --c-overlay: rgb(20 14 10 / 0.45);
+  --c-backdrop: rgb(0 0 0 / 45%);
+
+  /* Type. `--c-font` is a working system stack; the console layout replaces it on
+     the root with the family `next/font` loaded, so no site font rule is needed. */
+  --c-font: "Segoe UI", Tahoma, Arial, sans-serif;
+  --c-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --c-font-size: 0.9rem;
+  --c-font-small: 0.8rem;
+  --c-font-micro: 0.75rem;
+  --c-font-title: 1.5rem;
+  --c-line-height: 1.5;
+
+  /* Space */
+  --c-sp-1: 0.25rem;
+  --c-sp-2: 0.5rem;
+  --c-sp-3: 0.75rem;
+  --c-sp-4: 1rem;
+  --c-sp-5: 1.25rem;
+  --c-sp-6: 1.5rem;
+  --c-sp-8: 2rem;
+  --c-gap-tight: 0.35rem;
+  --c-gap: 0.85rem;
+  --c-pad: 1.1rem;
+  --c-stack: 1rem;
+
+  /* Frame */
+  --c-page-pad: 1.75rem;
+  --c-side-w: 16rem;
+  --c-topbar-h: 3.75rem;
+  --c-content-w: 78rem;
+  --c-panel-w: 32rem;
+  --c-list-h: 36rem;
+  --c-off: translateX(-100%);
+
+  /* Targets. Density never lowers `--c-tap`. */
+  --c-tap: 2.75rem;
+  --c-tap-field: 2.75rem;
+
+  /* Soft local radii. */
+  --c-r-xs: 0.35rem;
+  --c-r-sm: 0.55rem;
+  --c-r-md: 0.85rem;
+  --c-r-lg: 1.15rem;
+  --c-r-pill: 999px;
+
+  /* Depth: a ring that replaces the border, and a short, quiet lift. */
+  --c-ring: 0 0 0 1px var(--c-line);
+  --c-lift: 0 1px 2px rgb(0 0 0 / 0.04), 0 10px 24px -14px rgb(0 0 0 / 0.18);
+  --c-lift-lg: 0 14px 32px -12px rgb(0 0 0 / 0.3);
+  --c-tint: color-mix(in srgb, var(--c-accent) 13%, transparent);
+  --c-tint-strong: color-mix(in srgb, var(--c-accent) 24%, transparent);
+
+  /* Stacking */
+  --c-z-sticky: 30;
+  --c-z-scrim: 35;
+  --c-z-drawer: 40;
+  --c-z-drop: 60;
+  --c-z-modal: 70;
+  --c-z-palette: 75;
+  --c-z-toast: 80;
+
+  /* Motion */
+  --c-dur-fast: 140ms;
+  --c-dur-base: 160ms;
+  --c-dur-slow: 240ms;
+  --c-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --c-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --c-ease-soft: cubic-bezier(0.25, 0.8, 0.3, 1);
 }
 
-[data-surface='console'][dir='rtl'] {
-  --console-off: translateX(100%);
+[data-surface="console"][data-theme="dark"] {
+  color-scheme: dark;
+
+  --c-bg: #171513;
+  --c-bg-alt: #24211e;
+  --c-canvas: #171513;
+  --c-surface: #211e1b;
+  --c-surface-soft: #292522;
+  --c-hover: rgba(245, 238, 230, 0.07);
+  --c-active: rgba(245, 238, 230, 0.13);
+  --c-text: #f5eee6;
+  --c-text-2: #c9bdb1;
+  --c-text-3: #b8aa9a;
+  --c-accent: #e1c15b;
+  --c-success: #3ddc84;
+  --c-danger: #f2a0a0;
+  --c-line: rgba(245, 238, 230, 0.12);
+  --c-line-strong: rgba(245, 238, 230, 0.2);
+  --c-focus: #e1c15b;
+  --c-overlay: rgb(0 0 0 / 0.6);
+  --c-backdrop: rgb(0 0 0 / 55%);
+  --c-lift: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 24px -14px rgb(0 0 0 / 0.5);
+  --c-lift-lg: 0 14px 32px -12px rgb(0 0 0 / 0.55);
 }
 
-[data-surface='console'][data-density='dense'] {
-  --tap-field: 2.25rem;
-  --ui-gap: 0.55rem;
-  --ui-stack: 0.7rem;
-  --ui-pad: 0.7rem;
-  --ui-font: 0.83rem;
-  --ui-font-small: 0.74rem;
-  --console-page-pad: 0.85rem;
-  --console-side-w: 14rem;
-  --console-topbar-h: 3.75rem;
-  --console-content-w: 88rem;
-  --console-list-h: 44rem;
+[data-surface="console"][dir="rtl"] {
+  --c-off: translateX(100%);
 }
 
+[data-surface="console"][data-density="dense"] {
+  --c-tap-field: 2.4rem;
+  --c-gap: 0.55rem;
+  --c-stack: 0.8rem;
+  --c-pad: 0.8rem;
+  --c-font-size: 0.8375rem;
+  --c-font-small: 0.75rem;
+  --c-page-pad: 1rem;
+  --c-side-w: 14rem;
+  --c-topbar-h: 3.25rem;
+  --c-content-w: 94rem;
+  --c-list-h: 48rem;
+  --c-r-xs: 0.25rem;
+  --c-r-sm: 0.4rem;
+  --c-r-md: 0.6rem;
+  --c-r-lg: 0.85rem;
+}
+
+/* --- base ----------------------------------------------------------------- */
 .console-body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: var(--ui-font);
+  background: var(--c-canvas);
+  color: var(--c-text);
+  font-family: var(--c-font);
+  font-size: var(--c-font-size);
+  line-height: var(--c-line-height);
   -webkit-font-smoothing: antialiased;
-}
-
-html[data-theme='dark'] .console-body {
-  background: var(--bg-primary);
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* --- the frame ------------------------------------------------------------- */
-/* Flow order is topbar → sidebar → scrim → main. The sidebar is a grid item at
-   desktop sizes and a fixed overlay below them, which is why it sits between the
-   topbar and the main in the markup: `.console-side:target ~ .console-scrim` needs
-   the scrim to be a later sibling. */
 .console-frame {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -92,42 +207,43 @@ html[data-theme='dark'] .console-body {
   grid-column: 1 / -1;
   position: sticky;
   top: 0;
-  /* The scale's sticky step, which is what this has always been. It was a hand-written 20;
-     nothing else in the console sat between 20 and 30, so the number moving is inert —
-     the point is that the next overlay is measured against a named layer instead of
-     against a guess. */
-  z-index: var(--z-sticky);
-  background: var(--bg-card);
-  border-block-end: 1px solid var(--border-control-soft);
+  z-index: var(--c-z-sticky);
+  background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(14px);
+  backdrop-filter: saturate(1.4) blur(14px);
+  border-block-end: 1px solid var(--c-line);
 }
 
 .console-header {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem var(--console-page-pad);
+  gap: 0.85rem;
+  padding: 0 var(--c-page-pad);
+  min-height: var(--c-topbar-h);
 }
 
 .console-brand {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   margin-inline-end: auto;
   min-width: 0;
+  line-height: 1.15;
 }
 
 .console-brand strong {
-  font-size: 1.05rem;
-  letter-spacing: var(--ls-soft);
+  font-size: 1.02rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
 }
 
 .console-brand span {
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--c-text-3);
 }
 
-/* The header is the desktop chrome; below 1024px these four controls live in the
-   drawer instead, so one row of toggle + brand is all a small screen spends. */
 .console-header .console-controls {
   display: none;
 }
@@ -135,37 +251,43 @@ html[data-theme='dark'] .console-body {
 .console-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  min-height: var(--tap);
-  padding: 0 0.8rem;
-  border: 1px solid var(--border-control-soft);
-  border-radius: var(--radius-control);
-  background: var(--bg-card-subtle);
-  color: var(--text-primary);
-  font-size: var(--ui-font);
+  gap: 0.5rem;
+  min-height: var(--c-tap);
+  padding: 0 1rem;
+  border: 0;
+  border-radius: var(--c-r-pill);
+  background: var(--c-bg-alt);
+  box-shadow: var(--c-ring);
+  color: var(--c-text);
+  font-size: var(--c-font-size);
+  font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
+  transition:
+    background var(--c-dur-base) var(--c-ease-soft),
+    box-shadow var(--c-dur-base) var(--c-ease-soft);
 }
 
 .console-toggle span {
-  font-size: 1.1rem;
+  font-size: 1rem;
   line-height: 1;
 }
 
 .console-toggle:hover {
-  background: var(--bg-secondary);
+  background: var(--c-tint);
+  box-shadow: 0 0 0 1px var(--c-line-strong);
 }
 
 .console-main {
   grid-column: 1;
   grid-row: 2;
-  padding: 1.5rem var(--console-page-pad) 3rem;
+  padding: 2rem var(--c-page-pad) 5rem;
   min-width: 0;
 }
 
 .console-content {
   width: 100%;
-  max-width: var(--console-content-w);
+  max-width: var(--c-content-w);
   margin-inline: auto;
 }
 
@@ -174,32 +296,20 @@ html[data-theme='dark'] .console-body {
   position: fixed;
   inset-block: 0;
   inset-inline-start: 0;
-  z-index: var(--z-drawer);
-  width: min(20rem, 88vw);
-  padding: 1rem 0.85rem 2rem;
-  background: var(--bg-card);
-  border-inline-end: 1px solid var(--border-control-soft);
-  box-shadow: var(--elev-3);
+  z-index: var(--c-z-drawer);
+  width: min(19rem, 88vw);
+  padding: 1.1rem 0 2rem;
+  background: var(--c-surface);
+  box-shadow:
+    0 0 0 1px var(--c-line),
+    12px 0 40px -16px rgb(0 0 0 / 0.3);
   overflow-y: auto;
-  transform: var(--console-off);
+  transform: var(--c-off);
   visibility: hidden;
-  /* `transform` only. A drawer that transitions `visibility` cannot hold focus the
-     frame it opens, and `ConsoleFrame` moves focus into it in the same task as the
-     click — this is the rule the old site-wide `transition: all !important` used to
-     break, and the reason it named `!important`. See the note under the open rule. */
-  transition: transform var(--dur-base) var(--ease-out);
+  transition: transform var(--c-dur-slow) var(--c-ease-soft);
 }
 
-/* Opened either by the frame's own state or by the URL fragment, which is the path a
-   browser without JavaScript takes: the toggle is an <a href="#console-side">.
-   Nothing here may transition `visibility`: an element inside a hidden subtree cannot
-   take focus, and `ConsoleFrame` moves focus into the drawer in the same task as the
-   click. Measured twice — with `visibility 0s linear .18s`, and again while the site
-   stylesheet still carried a blanket `transition: all`, the drawer was still `hidden`
-   a frame after it opened and the focus call was a no-op. That blanket rule is gone —
-   globals.css names its transitions now — so the drawer no longer has to outrank it
-   with `!important`, and cannot, because naming `transform` is the whole point. */
-.console-frame[data-nav='open'] .console-side,
+.console-frame[data-nav="open"] .console-side,
 .console-side:target {
   visibility: visible;
   transform: none;
@@ -213,100 +323,135 @@ html[data-theme='dark'] .console-body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-block-end: 0.85rem;
+  padding: 0 1.1rem 0.9rem;
+  margin-block-end: 0.5rem;
 }
 
 .console-side-heading {
   margin: 0;
   margin-inline-end: auto;
-  font-size: var(--ui-font-small);
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: var(--c-text-3);
 }
 
 .console-side-close {
   display: inline-flex;
   align-items: center;
-  min-height: var(--tap);
-  padding: 0 0.75rem;
-  border-radius: 0.6rem;
-  border: 1px solid var(--border-control-soft);
-  color: var(--text-secondary);
-  font-size: var(--ui-font-small);
+  min-height: 2.1rem;
+  padding: 0 0.85rem;
+  border-radius: var(--c-r-pill);
+  box-shadow: var(--c-ring);
+  color: var(--c-text-2);
+  font-size: var(--c-font-small);
+  font-weight: 500;
   text-decoration: none;
+  transition:
+    background var(--c-dur-base) var(--c-ease-soft),
+    color var(--c-dur-base) var(--c-ease-soft);
 }
 
 .console-side-close:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--c-bg-alt);
+  color: var(--c-text);
 }
 
 .console-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.1rem;
+  padding: 0 0.75rem;
 }
 
 .console-nav a {
   display: flex;
   align-items: center;
-  min-height: var(--tap);
-  padding: 0.4rem 0.75rem;
-  border-radius: 0.6rem;
-  color: var(--text-secondary);
+  position: relative;
+  min-height: 2.25rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: var(--c-r-sm);
+  color: var(--c-text-2);
   text-decoration: none;
-  font-size: var(--ui-font);
+  font-size: var(--c-font-size);
+  transition:
+    background var(--c-dur-base) var(--c-ease-soft),
+    color var(--c-dur-base) var(--c-ease-soft);
 }
 
 .console-nav a:hover {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--c-surface);
+  color: var(--c-text);
 }
 
-.console-nav a[aria-current='page'] {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+.console-nav a[aria-current="page"] {
+  background: var(--c-tint);
+  color: var(--c-text);
   font-weight: 600;
+}
+
+/* The active marker is a small gold dot at the end of the pill. */
+.console-nav a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: 0.8rem;
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  margin-block-start: -0.2rem;
+  border-radius: 50%;
+  background: var(--c-accent);
 }
 
 .console-nav a:focus-visible,
 .console-toggle:focus-visible,
 .console-side-close:focus-visible {
-  outline: 2px solid var(--text-gold);
+  outline: 2px solid var(--c-focus);
   outline-offset: 2px;
 }
 
 /* --- the phone tab bar ----------------------------------------------------- */
-/* The same `ConsoleNav`, rendered horizontally and sticky. Only one of the two navs is
-   ever displayed, so only one is in the accessibility tree or the tab order. */
 .console-nav-strip {
   display: none;
   flex-direction: row;
   gap: 0.35rem;
-  padding: 0.35rem var(--console-page-pad) 0.45rem;
+  padding: 0.5rem var(--c-page-pad);
   overflow-x: auto;
-  scrollbar-width: thin;
-  border-block-end: 1px solid var(--border-control-soft);
-  background: var(--bg-card);
+  scrollbar-width: none;
+  border-block-end: 1px solid var(--c-line);
+  background: var(--c-surface);
+}
+
+.console-nav-strip::-webkit-scrollbar {
+  display: none;
 }
 
 .console-nav-strip a {
-  min-height: var(--tap);
-  padding: 0 0.8rem;
+  position: relative;
+  min-height: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 1rem;
   white-space: nowrap;
-  border: 1px solid transparent;
-  background: var(--bg-card-subtle);
+  border: 0;
+  border-radius: var(--c-r-pill);
+  background: transparent;
+  color: var(--c-text-2);
+  font-size: var(--c-font-small);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--c-dur-base) var(--c-ease-soft);
 }
 
-.console-nav-strip a[aria-current='page'] {
-  border-color: var(--text-primary);
-  background: var(--bg-card);
+.console-nav-strip a[aria-current="page"] {
+  color: var(--c-text);
+  background: var(--c-tint-strong);
+}
+
+.console-nav-strip a[aria-current="page"]::after {
+  content: none;
 }
 
 /* --- the permission tree --------------------------------------------------- */
-/* Group → screen → entity, from `navTree()`. The fold is a native `<details>`, so the
-   leaves open with JavaScript switched off; the caret is a border drawn as a chevron
-   because a glyph would need a font that has it in both languages. */
 .console-nav-group {
   display: flex;
   flex-direction: column;
@@ -314,17 +459,15 @@ html[data-theme='dark'] .console-body {
 }
 
 .console-nav-heading {
-  margin: 0.85rem 0 0.15rem;
-  padding-inline: 0.75rem;
-  color: var(--text-secondary);
-  font-size: 0.7rem;
+  margin: 1.25rem 0 0.3rem;
+  padding-inline: 0.85rem;
+  color: var(--c-text-3);
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: var(--ls-label);
-  text-transform: uppercase;
 }
 
 .console-nav-group:first-child .console-nav-heading {
-  margin-block-start: 0;
+  margin-block-start: 0.25rem;
 }
 
 .console-nav-list,
@@ -338,11 +481,11 @@ html[data-theme='dark'] .console-body {
 }
 
 .console-nav-leaves {
-  gap: 0;
-  margin-block: 0.1rem 0.35rem;
+  margin-block: 0.15rem 0.3rem;
   margin-inline-start: 1.1rem;
-  padding-inline-start: 0.3rem;
-  border-inline-start: 1px solid var(--border-control-soft);
+  padding-inline-start: 0.4rem;
+  border-inline-start: 2px solid var(--c-line);
+  border-radius: 1px;
 }
 
 .console-nav-head {
@@ -366,15 +509,15 @@ html[data-theme='dark'] .console-body {
   flex: none;
   inline-size: 0.45rem;
   block-size: 0.45rem;
-  margin-inline: 0.45rem;
-  border-inline-end: 2px solid var(--text-secondary);
-  border-block-end: 2px solid var(--text-secondary);
-  /* closed points forward (right in LTR, left in RTL), open points down */
+  margin-inline: 0.6rem;
+  border-inline-end: 2px solid var(--c-text-2);
+  border-block-end: 2px solid var(--c-text-2);
+  border-end-end-radius: 1px;
   transform: rotate(-45deg);
-  transition: transform var(--dur-fast) var(--ease-out);
+  transition: transform 180ms var(--c-ease-soft);
 }
 
-[dir='rtl'] .console-nav-caret {
+[dir="rtl"] .console-nav-caret {
   transform: rotate(135deg);
 }
 
@@ -383,39 +526,36 @@ details[open] > .console-nav-head .console-nav-caret {
 }
 
 .console-nav-leaf {
-  font-size: var(--ui-font-small);
+  font-size: var(--c-font-small);
 }
 
-/* Readable, not writable: the row is there because the role may read the screen, and
-   greyed because `content-*` would answer 403. `aria-disabled`, not `disabled`, so the
-   row stays in the tab order and the keyboard user can read its title. */
-.console-nav a[data-locked='true'],
-.console-palette-row[data-locked='true'] {
-  color: var(--text-muted);
+.console-nav a[data-locked="true"],
+.console-palette-row[data-locked="true"] {
+  color: var(--c-text-3);
   text-decoration: none;
-  border-bottom: 1px dotted var(--border-control-soft);
-  border-radius: 0;
+  opacity: 0.7;
 }
 
 /* --- the command palette --------------------------------------------------- */
-/* The one piece of chrome that does need script: a `<dialog>` gives the focus trap, Esc
-   and an inert background for free, and every place it reaches is also in the nav tree.
-   The trigger that opens it is a `Button` — the primitive's floor and padding are
-   enough, so there is no rule for it here to fall out of date. */
 .console-palette {
   inline-size: min(38rem, 92vw);
   max-block-size: none;
   margin: 10vh auto auto;
   padding: 0;
-  color: var(--text-primary);
-  background: var(--bg-card);
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-surface);
-  box-shadow: var(--elev-3);
+  color: var(--c-text);
+  background: var(--c-surface);
+  border: 0;
+  border-radius: var(--c-r-lg);
+  box-shadow:
+    0 0 0 1px var(--c-line-strong),
+    0 32px 64px -20px rgb(0 0 0 / 0.45);
+  overflow: hidden;
 }
 
 .console-palette::backdrop {
-  background: rgba(20, 14, 10, 0.55);
+  background: var(--c-overlay);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
 
 .console-palette-form {
@@ -423,8 +563,8 @@ details[open] > .console-nav-head .console-nav-caret {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0.35rem 0.8rem;
-  padding: var(--ui-pad);
-  border-block-end: 1px solid var(--border-control-soft);
+  padding: 1rem 1.15rem;
+  border-block-end: 1px solid var(--c-line);
 }
 
 .console-palette-input {
@@ -434,14 +574,15 @@ details[open] > .console-nav-head .console-nav-caret {
 
 .console-palette-hint {
   margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--ui-font-small);
+  color: var(--c-text-2);
+  font-size: var(--c-font-small);
 }
 
 .console-palette-list {
   max-block-size: 55vh;
   overflow-y: auto;
-  padding: 0.4rem var(--ui-pad) var(--ui-pad);
+  padding: 0.5rem 0.65rem 0.75rem;
+  scrollbar-width: thin;
 }
 
 .console-palette-list section {
@@ -449,37 +590,39 @@ details[open] > .console-nav-head .console-nav-caret {
 }
 
 .console-palette-section {
-  margin: 0.7rem 0 0.2rem;
-  color: var(--text-secondary);
-  font-size: 0.7rem;
+  margin: 0.9rem 0 0.3rem;
+  padding-inline: 0.5rem;
+  color: var(--c-text-3);
+  font-size: 0.78rem;
   font-weight: 600;
-  letter-spacing: var(--ls-label);
-  text-transform: uppercase;
 }
 
 .console-palette-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  min-height: var(--tap);
-  padding: 0.4rem 0.6rem;
-  border-radius: 0.6rem;
-  color: var(--text-secondary);
+  gap: 0.65rem;
+  min-height: 2.4rem;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--c-r-sm);
+  color: var(--c-text-2);
   text-decoration: none;
+  transition:
+    background 140ms var(--c-ease-soft),
+    color 140ms var(--c-ease-soft);
 }
 
 .console-palette-row:hover,
 .console-palette-row:focus-visible {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
+  background: var(--c-tint);
+  color: var(--c-text);
 }
 
 .console-palette-group {
   flex: none;
   max-inline-size: 11rem;
   overflow: hidden;
-  color: var(--text-muted);
-  font-size: var(--ui-font-small);
+  color: var(--c-text-3);
+  font-size: var(--c-font-small);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -489,175 +632,142 @@ details[open] > .console-nav-head .console-nav-caret {
   overflow-wrap: anywhere;
 }
 
-/* The palette's "no results" is a `Note`, and a note is a span so that it can sit inside
-   the pager's row. Here it stands alone, so the dialog gives it the line and the space. */
 .console-palette-list > .ui-note {
   display: block;
-  margin-block: 0.8rem 0.2rem;
+  margin-block: 0.9rem 0.25rem;
 }
 
 .console-scrim {
   display: none;
 }
 
-/* --- one set of primitives ------------------------------------------------- */
+/* --- shared primitives ----------------------------------------------------- */
 .console-heading {
-  margin: 0 0 0.35rem;
-  font-size: 1.4rem;
+  margin: 0 0 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 1.2;
 }
-
-/* The sentence under a heading is `.ui-lede` now (BK-19.3d) — same colour, same size, and
-   its 1.5rem named as `--sp-6`. It moves to the control layer because a public section's
-   subtitle is the same role in the same voice, and two sheets spelling it differently is
-   how a console lede and a site lede stop matching. */
 
 .console-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: var(--ui-gap);
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--c-gap);
 }
 
-/* The overview's tiles are a `Card` with a number in it. The shell — fill, boundary,
-   radius, lift and the `--ui-pad` that dense is allowed to lower — is the primitive's; what
-   is left is the two lines that make a figure read as a figure. The 19.5 pass (count-ups,
-   sparklines, `--num-digits`) owns a `Stat` primitive of its own, and these two rules move
-   into it. The `calc(--ui-pad + 0.05rem)` this replaces was an unowned, uncommented
-   eighth-of-a-rem: the card now has one padding on all four sides like every other card. */
 .console-stat dt {
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--c-text-3);
 }
 
 .console-stat dd {
-  margin: var(--ui-gap-tight) 0 0;
-  font-size: 1.5rem;
-  font-weight: 700;
+  margin: 0.35rem 0 0;
+  font-size: 1.75rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
 }
 
-/* A panel is a card that stops itself from stretching past a form's measure. The shell is
-   `.ui-card`'s; the two lines here are why a call site names `console-panel` at all. */
 .console-panel {
-  margin-block-end: var(--ui-stack);
-  max-width: var(--console-panel-w);
+  margin-block-end: var(--c-stack);
+  max-width: var(--c-panel-w);
 }
 
 .console-controls {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ui-gap-tight);
+  gap: var(--c-gap-tight);
 }
 
 .console-account {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.4rem;
   margin-block-start: 1.5rem;
-  padding-block-start: 1rem;
-  border-block-start: 1px solid var(--border-control-soft);
-  font-size: var(--ui-font-small);
+  margin-inline: 0.75rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--c-r-md);
+  background: var(--c-bg-alt);
+  font-size: var(--c-font-small);
   overflow-wrap: anywhere;
 }
 
-/* The roles are `Badge`s, which carry no margin of their own, so the group spaces them. */
 .console-account-roles {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ui-gap-tight);
+  gap: var(--c-gap-tight);
 }
-
-/* Fields, controls and checkboxes live in `src/components/ui/ui.css` now (BK-19.3b), for
- * both surfaces. What used to be here painted an input, a textarea, its own focus ring,
- * its own radius and its own disabled step — six properties the site's forms also painted
- * elsewhere with different numbers — and the palette's search box carried the wrapper
- * class by mistake, so it got the wrapper's bottom margin and none of its skin: a bare
- * native field at the top of the dialog. Nothing here re-paints them, for the same reason
- * the buttons stopped being re-painted: a surface override is how one screen's 44px floor
- * quietly becomes another's 36px. */
 
 .console-center {
   display: grid;
   place-items: center;
   min-height: 100vh;
-  padding: 2rem var(--console-page-pad);
+  padding: 2rem var(--c-page-pad);
 }
 
 .console-login {
-  width: min(26rem, 100%);
+  width: min(25rem, 100%);
 }
 
-/* `Note` is a span — the pager's "of 4" has to live inside a span — so a caption standing
-   alone gets its block-ness and its space from the surface it stands on: a panel, or the
-   page under its cards. Inside a field stack or a controls row the note is a flex item and
-   `display` is ignored, which is how this reaches only the standalone ones. `--ui-stack` is
-   what two panels put between themselves; the 1.5rem this replaces was a `margin-block-start`
-   that a field stack inherited as a mile. */
 .console-panel > .ui-note,
 .console-content > .ui-note {
   display: block;
-  margin-block-start: var(--ui-stack);
+  margin-block-start: var(--c-stack);
 }
 
-/* --- the content screens (BK-6, retuned by 13.1 and 240) ------------------- */
-/* The list is the screen. A row opens its own page (`/console/<kind>/<id>`), so there is
-   no second pane to share the width with — and no `data-open` state to switch between
-   two grids. */
+/* --- the content screens --------------------------------------------------- */
 .console-work {
   display: block;
 }
 
 .console-work-list {
   min-width: 0;
-  /* The list reads its own width, not the viewport's: see `@container console-list`. */
   container-type: inline-size;
   container-name: console-list;
 }
 
 .console-work-bar {
   align-items: center;
-  margin-block-end: 0.75rem;
+  margin-block-end: 1rem;
 }
 
-/* Placement only: the type is `.ui-note`'s. This is the one caption in a row that pushes to
-   the far edge, and the three overrides below say when a row should not push. */
 .console-count {
   margin-inline-start: auto;
+  font-size: var(--c-font-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--c-text-3);
 }
 
 .console-rows {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0.35rem;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  max-height: var(--console-list-h);
+  gap: 0.15rem;
+  max-height: var(--c-list-h);
   overflow-y: auto;
   scrollbar-width: thin;
+  background: var(--c-surface);
+  box-shadow: var(--c-ring), var(--c-lift);
+  border-radius: var(--c-r-lg);
 }
-
-/* A row's one action, its title and its machine key are `.ui-row-action`, `.ui-row-title`
-   and `.ui-row-key` (BK-19.3d). The table cell and the card column used to be two copies of
-   the same button, and the underline that said "this is what a click answers to" was
-   written twice as well. */
 
 .console-subheading {
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.65rem;
   font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-/* The tab *group* is `.ui-tabs` and the wiring — roving focus, arrow keys, the panel the
-   tabs point at — is `Tabs.tsx` (BK-19.3d). Only the space under the row is this screen's. */
 .console-tabs {
-  margin-block-end: var(--ui-stack);
+  margin-block-end: var(--c-stack);
 }
-
-/* The editor's field stack, its flag rows and the locale word inside a label are all in
- * the control layer now — `.ui-fields`, `.ui-check`, `.ui-label-note`. The caption override
- * that used to lift a flag's label back to body size went with them: a `Checkbox` label is
- * body size by definition, which is the size the settings row's checkbox wanted anyway. */
 
 .console-history {
-  margin-block-start: var(--ui-stack);
+  margin-block-start: var(--c-stack);
 }
 
 .console-revision {
@@ -665,24 +775,16 @@ details[open] > .console-nav-head .console-nav-caret {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
+  font-size: var(--c-font-small);
+  color: var(--c-text-2);
   overflow-wrap: anywhere;
 }
 
-/* --- the content list (BK-13.3) ------------------------------------------- */
-/*
- * The list is the screen a data-entry person lives in, so it gets the width the editor
- * is not using, and it keeps a 44px tap floor on every control the way the rest of the
- * console does. Two rules decide how much of a row is shown:
- *   `.console-cell-extra` is hidden until its own container is wide enough, because the
- *   pane's width comes from the split, not from the viewport;
- *   the table scrolls sideways instead of squeezing a slug into one letter per line.
- */
+/* --- the content list ------------------------------------------------------ */
 .console-list {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-gap);
+  gap: var(--c-gap);
   min-width: 0;
 }
 
@@ -690,18 +792,9 @@ details[open] > .console-nav-head .console-nav-caret {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--ui-gap-tight) var(--ui-gap);
+  gap: var(--c-gap-tight) var(--c-gap);
 }
 
-/* The filter chips and the saved-view chips are the control layer's now (BK-19.3d):
- * `.ui-chip`, `.ui-chip-row`, `.ui-chip-tag`, `.ui-chip-x`. What was here painted the same
- * capsule three times, each with its own `border-radius: 999px` while `--radius-pill` sat
- * in `globals.css` with one consumer, and gave the active filter a `--bg-secondary` fill
- * the primitive keeps. The list adds nothing, so nothing is left here to add it back. */
-
-/* Only the sizing the bar gives it. The skin — boundary, radius, fill, the `--tap` floor
- * it keeps when dense lowers the fields — is `.ui-control[data-bar]`, because this box and
- * the one below the filters are the same control in the same situation. */
 .console-search {
   flex: 1 1 11rem;
   min-width: 0;
@@ -710,28 +803,20 @@ details[open] > .console-nav-head .console-nav-caret {
 .console-inline {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
+  gap: 0.45rem;
+  font-size: var(--c-font-small);
+  color: var(--c-text-2);
 }
 
-/* The saved views are `.ui-chip-tag` around a `.ui-chip` and a `.ui-chip-x`, in the
- * control layer since 19.3d. The capsule's `content-box` and the two halves' share of the
- * 44px floor are the primitive's argument now, and it is the same argument the leads list
- * will need — which is the reason it left this file rather than staying a list quirk. */
-
-/* Not sticky: the table below it scrolls inside its own box, so the bar stays where the
-   checkmarks were clicked without needing to clear the sticky topbar. */
 .console-bulk {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--ui-gap-tight);
-  padding: 0.5rem 0.7rem;
-  border: 1px solid var(--hairline-strong);
-  border-radius: var(--radius-control);
-  background: var(--bg-card);
-  box-shadow: var(--elev-2);
+  gap: var(--c-gap-tight);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--c-r-md);
+  background: var(--c-tint);
+  box-shadow: 0 0 0 1px var(--c-tint-strong);
 }
 
 .console-bulk .console-count {
@@ -739,25 +824,17 @@ details[open] > .console-nav-head .console-nav-caret {
   margin-inline-end: auto;
 }
 
-/* The box's own scroll is the list's, not the shell's: `Card flat flush` paints the card
-   (`console.css` no longer owns a border, a radius or a fill here) and these three lines
-   are why the shell exists at all — a page of rows you can wheel through without the page
-   moving under you. */
 .console-table-wrap {
-  max-block-size: var(--console-list-h);
+  max-block-size: var(--c-list-h);
   overflow: auto;
   scrollbar-width: thin;
+  border-radius: var(--c-r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--c-ring), var(--c-lift);
 }
 
-/* The table itself — cells, the sticky head, the last row's missing rule, the selected
-   row and the row hover the brief asked for and this list never had — is `.ui-table` in
-   the control layer now (BK-19.3d), with the sortable head as `.ui-table-sort`. Two
-   numbers moved with it: the cell padding's `0.5rem 0.7rem` became `--sp-2 --sp-3`, and
-   the sort button's `gap: 0.25rem` became `--sp-1`. Nothing here re-paints them, for the
-   reason the fields stopped being re-painted above. */
-
 .console-cell-check {
-  inline-size: var(--tap);
+  inline-size: var(--c-tap);
   text-align: center;
 }
 
@@ -765,12 +842,7 @@ details[open] > .console-nav-head .console-nav-caret {
   display: none;
 }
 
-/* --- the row itself (240) ------------------------------------------------- */
-/* A row is a document, so the table is drawn around the four things a person scans for:
-   the picture, the title, the identity under it, and where it stands. The title column
-   takes the leftover width; dates stay on one line and in tabular figures so a column of
-   them reads as a column; the picture is a fixed square, because a thumbnail that grew
-   with its source would make the rows different heights. */
+/* --- the row itself -------------------------------------------------------- */
 .console-table {
   font-variant-numeric: tabular-nums;
 }
@@ -789,22 +861,17 @@ details[open] > .console-nav-head .console-nav-caret {
   min-inline-size: 16rem;
 }
 
-/* The link itself — the pointer, the inherited ink, the 44px floor and the underline on
-   the title — is `.ui-row-link` in the control layer now, because the same row is opened
-   from the table and from a card. What is here is the cell's own target: the negative
-   margin lets the link fill the padding so the whole title area answers, without laying a
-   second hover fill inside the row's. */
 .console-row-link {
-  margin: -0.35rem -0.4rem;
-  padding: 0.35rem 0.4rem;
-  border-radius: var(--radius-control);
+  margin: -0.35rem -0.45rem;
+  padding: 0.35rem 0.45rem;
+  border-radius: var(--c-r-sm);
 }
 
 .console-row-text,
 .console-card-text {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
   min-width: 0;
 }
 
@@ -813,40 +880,36 @@ details[open] > .console-nav-head .console-nav-caret {
   flex: none;
   inline-size: 2.75rem;
   block-size: 2.75rem;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--bg-secondary);
+  border-radius: var(--c-r-sm);
+  background: var(--c-bg-alt);
+  box-shadow: var(--c-ring);
   object-fit: cover;
 }
 
-/* A missing picture is stated, not left blank: "the upload did not take" and "this item
-   has no picture" must not look the same in a list a person is scanning. */
 span.console-thumb[data-empty] {
   display: grid;
   place-items: center;
-  color: var(--text-secondary);
+  color: var(--c-text-2);
 }
 
 .console-cell-date {
   white-space: nowrap;
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
+  font-size: var(--c-font-small);
+  color: var(--c-text-2);
+  font-variant-numeric: tabular-nums;
 }
 
-/* The identity is under the title, so a narrow screen loses the slug before the name. */
 @container console-list (max-width: 30rem) {
   .console-thumb {
-    inline-size: 2.25rem;
-    block-size: 2.25rem;
+    inline-size: 2.4rem;
+    block-size: 2.4rem;
   }
 }
 
-/* The create form asks one question, so it is one short card — not a panel the width of
-   the page that leaves the field floating in it. */
 .console-create {
   display: grid;
-  gap: var(--ui-gap);
-  max-inline-size: 44rem;
+  gap: var(--c-gap);
+  max-inline-size: 42rem;
 }
 
 .console-create .ui-lede,
@@ -856,41 +919,29 @@ span.console-thumb[data-empty] {
 
 .console-cards-head {
   display: flex;
-  min-block-size: var(--tap);
+  min-block-size: var(--c-tap);
   align-items: center;
-  /* The one number the deleted `.console-cards-head .console-inline` was adding: the
-   * select-all box now takes its floor and its cursor from `.ui-check`, and only this
-   * indent belongs to the head. */
-  padding-inline: 0.4rem;
+  padding-inline: 0.5rem;
 }
 
 .console-cards {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0.2rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-  gap: var(--ui-gap);
-  max-block-size: var(--console-list-h);
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--c-gap);
+  max-block-size: var(--c-list-h);
   overflow-y: auto;
   scrollbar-width: thin;
 }
 
-/* A card-mode row is a `Card` with a checkbox beside the title action: the shell, the
-   padding (`--ui-pad`, so dense gets its 0.7rem back instead of pinning it into
-   comfortable) and the selected row's fill are all `.ui-card`'s. These three lines are
-   the row's own arrangement. */
 .console-cards .ui-card {
   display: flex;
   align-items: center;
-  gap: var(--sp-2);
+  gap: var(--c-sp-2);
 }
 
-/* The row and card checkboxes are `.ui-check` now: the box's graphic is 20px, the label
- * around it is the target, and the 44px floor it carries is the primitive's — which is how
- * the editor's flag rows got a floor at all. `.console-cell-check` above still owns the
- * column's width. The link takes the rest of the card and puts the state chip at its end,
- * so every card reads picture, name, state in the same three places. */
 .console-cards .console-card-link {
   flex: 1;
   min-width: 0;
@@ -904,7 +955,7 @@ span.console-thumb[data-empty] {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--ui-gap-tight);
+  gap: var(--c-gap-tight);
 }
 
 .console-pager .console-count {
@@ -916,35 +967,28 @@ span.console-thumb[data-empty] {
   align-items: center;
 }
 
-/* --- the content editor (BK-13.4) ----------------------------------------- */
-/*
- * The detail page is one row and its editor, at the page's width. Fields on one side and
- * what they produce on the other, split by the page's own width rather than the window's:
- * `.console-detail` is the container, so a phone stacks the preview under the form and a
- * laptop puts them side by side without either one guessing from the viewport.
- */
+/* --- the content editor ---------------------------------------------------- */
 .console-detail {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-stack);
+  gap: var(--c-stack);
   container-type: inline-size;
   container-name: console-edit;
 }
 
-/* The way back, the row's name and the identity the site serves. The heading wraps instead
-   of pushing the button off the line, and the key is literal text at caption size. */
 .console-detail-head {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-start;
-  gap: var(--ui-gap);
+  gap: var(--c-gap);
+  padding-block-end: 1.1rem;
 }
 
 .console-detail-id {
   display: flex;
   flex: 1 1 18rem;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
   min-width: 0;
 }
 
@@ -955,17 +999,20 @@ span.console-thumb[data-empty] {
 
 .console-detail-key {
   overflow-wrap: anywhere;
+  font-family: var(--c-font-mono, ui-monospace, "SFMono-Regular", monospace);
+  font-size: 0.78rem;
+  color: var(--c-text-3);
 }
 
 .console-detail-status {
   align-items: center;
-  gap: var(--ui-gap-tight) var(--ui-gap);
+  gap: var(--c-gap-tight) var(--c-gap);
 }
 
 .console-editor {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--ui-stack);
+  gap: var(--c-stack);
   align-items: start;
 }
 
@@ -974,28 +1021,27 @@ span.console-thumb[data-empty] {
   min-width: 0;
 }
 
-/* The panels in this column are the column: they take its width instead of the card cap
-   the rest of the console uses, because a preview of a page is not a form. */
 .console-editor-side .console-panel {
   max-width: none;
 }
 
-/* Pinned to the bottom of the pane, and 44px tall whatever the density: the bar holds no
-   field, so the token dense lowers has no business here. Its `z-index: 6` is deliberately
-   local, like a sticky table head's: it only has to clear the fields in this pane, and
-   putting it on the page's scale (`--z-sticky` and up) would make a save bar argue with the
-   top bar and the drawer. */
+/* The save bar floats above the page as a pill-cornered tray. */
 .console-editor-bar {
   position: sticky;
-  bottom: 0;
+  bottom: 0.9rem;
   z-index: 6;
-  min-height: var(--tap);
+  min-height: var(--c-tap);
   align-items: center;
-  gap: var(--ui-gap-tight) var(--ui-gap);
-  margin-block-start: var(--ui-stack);
-  padding-block: 0.5rem;
-  background: var(--bg-secondary);
-  border-block-start: 1px solid var(--border-control-soft);
+  gap: var(--c-gap-tight) var(--c-gap);
+  margin-block-start: var(--c-stack);
+  padding: 0.65rem 0.9rem;
+  background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-radius: var(--c-r-lg);
+  box-shadow:
+    var(--c-ring),
+    0 14px 32px -12px rgb(0 0 0 / 0.3);
 }
 
 .console-editor-bar .console-count {
@@ -1004,49 +1050,41 @@ span.console-thumb[data-empty] {
 }
 
 .console-nav-confirm {
-  border-color: var(--text-danger);
+  border-color: var(--c-danger);
 }
 
-/* An invalid field, its caption and its message are the control layer's — `.ui-field`
- * carries `data-invalid`, `.ui-control` answers to `aria-invalid`, and `.ui-field-error`
- * is the line under it. The editor pane adds nothing, which is the point: the list's
- * create-form and the login screen use the same primitive and were painted by a rule that
- * only reached `.console-field` descendants inside this pane. */
-
-/* The draft's own markup, inert: `sandbox=""` in the component gives the frame no origin,
-   no scripts and no way to move the window, so no same-origin rule is needed here. */
 .console-preview-frame {
   inline-size: 100%;
   min-height: 20rem;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--bg-card);
+  border: 0;
+  border-radius: var(--c-r-md);
+  background: var(--c-surface);
+  box-shadow: var(--c-ring), var(--c-lift);
 }
 
 .console-preview h3,
 .console-seo h3 {
-  margin: 0 0 0.4rem;
-  font-size: 1rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
-/* The item's pictures, read from the live form. The size is the strip's, not the image's:
-   offers carry a portrait, articles a landscape, and a row of different heights would make
-   the odd one out look like a mistake. */
 .console-media {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 
 .console-media h3 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
 }
 
 .console-media-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.6rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -1056,9 +1094,9 @@ span.console-thumb[data-empty] {
   display: block;
   inline-size: 7.5rem;
   block-size: 5.5rem;
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-control);
-  background: var(--bg-secondary);
+  border-radius: var(--c-r-md);
+  background: var(--c-bg-alt);
+  box-shadow: var(--c-ring);
   object-fit: cover;
 }
 
@@ -1070,20 +1108,16 @@ span.console-thumb[data-empty] {
 }
 
 .console-seo-path {
-  font-size: var(--ui-font-small);
-  color: var(--text-gold);
+  font-family: var(--c-font-mono, ui-monospace, "SFMono-Regular", monospace);
+  font-size: 0.75rem;
+  color: var(--c-accent);
 }
 
 .console-seo-desc {
-  font-size: var(--ui-font-small);
-  color: var(--text-secondary);
+  font-size: var(--c-font-small);
+  color: var(--c-text-2);
 }
 
-/* Wide enough that both halves are worth reading at once. Measured: the comfortable
-   density caps the page at 72rem, so this pane is 42rem on a 1440px laptop and 59rem on a
-   1920px one in dense. At 42rem a split gave the fields 21rem and the frame 15.7rem — a
-   squeezed page and a column you cannot write an article in — so it stays one column there,
-   where each gets the whole pane. */
 @container console-edit (min-width: 54rem) {
   .console-editor {
     grid-template-columns: minmax(0, 1fr) minmax(23rem, 27rem);
@@ -1093,24 +1127,22 @@ span.console-thumb[data-empty] {
 /* --- ≥ 1024px: the sidebar is a column ------------------------------------ */
 @media (min-width: 1024px) {
   .console-frame {
-    grid-template-columns: var(--console-side-w) minmax(0, 1fr);
-  }
-  .console-header {
-    min-height: var(--console-topbar-h);
+    grid-template-columns: var(--c-side-w) minmax(0, 1fr);
   }
   .console-header .console-controls {
     display: flex;
   }
+  /* In the column the sidebar sits on the page itself, no card, no edge. */
   .console-side {
     grid-column: 1;
     grid-row: 2;
     position: sticky;
-    top: var(--console-topbar-h);
+    top: var(--c-topbar-h);
     align-self: start;
     width: auto;
-    max-height: calc(100vh - var(--console-topbar-h));
-    padding: 1rem 0.75rem;
-    border-block-end: 0;
+    max-height: calc(100vh - var(--c-topbar-h));
+    padding: 1rem 0 2rem;
+    background: transparent;
     box-shadow: none;
     transform: none;
     visibility: visible;
@@ -1128,14 +1160,14 @@ span.console-thumb[data-empty] {
   }
 }
 
-/* --- 640–1023px: a drawer, and nothing else ------------------------------- */
+/* --- 640–1023px: drawer only, no strip ----------------------------------- */
 @media (min-width: 640px) and (max-width: 1023.98px) {
   .console-nav-strip {
     display: none;
   }
 }
 
-/* --- < 640px: the tab bar, and a header that fits ------------------------- */
+/* --- < 640px: tab bar and a compact header ------------------------------- */
 @media (max-width: 639.98px) {
   .console-nav-strip {
     display: flex;
@@ -1144,490 +1176,666 @@ span.console-thumb[data-empty] {
     display: none;
   }
   .console-main {
-    padding-block-start: 1rem;
+    padding-block-start: 1.25rem;
   }
   .console-grid {
-    grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
   }
 }
 
-/* The scrim is only ever a drawer affordance, and only while it is open. */
 @media (max-width: 1023.98px) {
-  .console-frame[data-nav='open'] .console-scrim,
+  .console-frame[data-nav="open"] .console-scrim,
   .console-side:target ~ .console-scrim {
     display: block;
     position: fixed;
     inset: 0;
-    /* `--z-scrim` is 35, so this is the same layer it has always drawn — the exact value is
-       how the scale is known to be real rather than invented. The 45%-of-pure-black wash
-       is not 19.3d's business: what it should sit over is the drawer/modal pass. */
-    z-index: var(--z-scrim);
-    background: rgb(0 0 0 / 45%);
+    z-index: var(--c-z-scrim);
+    background: var(--c-backdrop);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
   }
 }
 
-/* A kind's own columns are worth a cell only once the pane can show a word, not a
-   letter — measured on the pane, because 900px of viewport can still be a 22rem list. */
 @container console-list (min-width: 34rem) {
   .console-cell-extra {
     display: table-cell;
   }
 }
 
-/* --- leads (BK-17a) ------------------------------------------------------- */
-/*
- * A request is not a document: there is no draft, so the screen is a list and the one you
- * picked rather than the list/editor split. The list reads its own width for the hidden
- * contact columns (`.console-cell-extra`), the same way the content list does, because
- * the viewport width says nothing about how much of a table the split left it.
- */
+/* --- leads ---------------------------------------------------------------- */
+.console-leads {
+  --c-lead-dir: 1;
+  --c-lead-ease: cubic-bezier(0.25, 0.8, 0.3, 1);
+  --c-lead-accent: var(--c-accent);
+  --c-lead-new: var(--c-accent);
+  --c-lead-contacted: var(--c-text-2);
+  --c-lead-booked: var(--c-success, #2f8f5b);
+  --c-lead-done: color-mix(in srgb, var(--c-lead-booked) 70%, var(--c-text));
+  --c-lead-lost: var(--c-danger);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap);
+  min-width: 0;
+}
+
+:where([dir="rtl"]) .console-leads {
+  --c-lead-dir: -1;
+}
+
+.console-leads [data-status="new"] {
+  --c-lead-c: var(--c-lead-new);
+}
+.console-leads [data-status="contacted"] {
+  --c-lead-c: var(--c-lead-contacted);
+}
+.console-leads [data-status="booked"] {
+  --c-lead-c: var(--c-lead-booked);
+}
+.console-leads [data-status="done"] {
+  --c-lead-c: var(--c-lead-done);
+}
+.console-leads [data-status="lost"] {
+  --c-lead-c: var(--c-lead-lost);
+}
+
+.console-leads > .ui-lede {
+  margin-block-end: 0;
+}
+
+/* Pipeline: rounded capsules sharing one track, widths follow the counts. */
+.console-leads-pipeline {
+  display: flex;
+  gap: 3px;
+  block-size: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--c-r-pill);
+  background: var(--c-bg-alt);
+}
+
+.console-leads-pipeline > span {
+  flex: 1 1 0;
+  min-inline-size: 0.5rem;
+  border-radius: var(--c-r-pill);
+  background: var(--c-lead-c);
+  transition: flex-grow 420ms var(--c-lead-ease);
+}
+
+.console-lead-dot {
+  display: inline-block;
+  flex: none;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  margin-inline-end: 0.45rem;
+  border-radius: 50%;
+  background: var(--c-lead-c);
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+
 .console-leads-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--ui-stack);
+  gap: var(--c-stack);
   align-items: start;
 }
 
 .console-leads-list {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-gap);
+  gap: var(--c-gap);
   min-width: 0;
   container-type: inline-size;
-  container-name: console-list;
+  container-name: leads-list;
 }
 
-/* Below this the pane would be narrower than a phone number, so the detail stacks under
-   the list and the page scrolls once. */
 @media (min-width: 1024px) {
   .console-leads-split {
-    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
-  }
-
-  /* The pane follows the row you clicked while the rest of the page moves. Its own
-     `overflow` keeps a long note list from pushing the status control off-screen. */
-  .console-lead-detail {
-    position: sticky;
-    inset-block-start: 0;
-    max-block-size: calc(100vh - 8rem);
-    overflow-y: auto;
-    scrollbar-width: thin;
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem);
   }
 }
+
+@media (max-width: 639.98px) {
+  .console-leads .console-search {
+    flex-basis: 100%;
+  }
+}
+
+/* ── The list: each lead is its own tile ─────────────────────────────────── */
+
+.console-lead-list {
+  margin: 0;
+  padding: 0.2rem;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+@media (min-width: 1024px) {
+  .console-lead-list {
+    max-block-size: var(--c-list-h);
+  }
+}
+
+.console-lead-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.15rem 0.85rem;
+  inline-size: 100%;
+  min-block-size: 3.25rem;
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+  border: 0;
+  border-radius: var(--c-r-md);
+  background: var(--c-surface);
+  box-shadow: var(--c-ring);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background var(--c-dur-base) var(--c-ease-soft),
+    box-shadow var(--c-dur-base) var(--c-ease-soft);
+}
+
+.console-lead-row:hover {
+  box-shadow:
+    0 0 0 1px var(--c-line-strong),
+    var(--c-lift);
+}
+
+.console-lead-row[data-active] {
+  background: var(--c-tint);
+  box-shadow: 0 0 0 1.5px var(--c-lead-accent);
+}
+
+.console-lead-row:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+/* Round avatar, ringed in the lead's status colour. */
+.console-lead-avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 50%;
+  background: color-mix(
+    in srgb,
+    var(--c-lead-c, var(--c-line-strong)) 14%,
+    var(--c-surface)
+  );
+  box-shadow: inset 0 0 0 1.5px var(--c-lead-c, var(--c-line-strong));
+  color: var(--c-text);
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1;
+}
+
+/* The big avatar is the arch — the one signature of this screen. */
+.console-lead-avatar-lg {
+  inline-size: 3.1rem;
+  block-size: 3.6rem;
+  border-radius: 999px 999px var(--c-r-sm) var(--c-r-sm);
+  font-size: 1.15rem;
+}
+
+.console-lead-who {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.console-lead-name,
+.console-lead-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.console-lead-name {
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.console-lead-row[data-fresh] .console-lead-name {
+  font-weight: 700;
+}
+
+.console-lead-sub {
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.78rem;
+}
+
+.console-lead-col {
+  display: none;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
+.console-lead-phone {
+  font-variant-numeric: tabular-nums;
+}
+
+.console-lead-when {
+  color: var(--c-text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.console-lead-when > span {
+  display: block;
+}
+
+@container leads-list (min-width: 36rem) {
+  .console-lead-row {
+    grid-template-columns:
+      auto minmax(0, 1.5fr) minmax(5rem, 1fr) minmax(7.5rem, 1fr)
+      auto auto;
+    gap: 0 1.1rem;
+  }
+  .console-lead-col {
+    display: block;
+  }
+  .console-lead-row .console-lead-sub {
+    display: none;
+  }
+}
+
+/* ── The detail ──────────────────────────────────────────────────────────── */
 
 .console-lead-detail {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-gap);
+  gap: var(--c-stack);
+  min-width: 0;
+  padding: var(--c-pad);
+  border-radius: var(--c-r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--c-ring), var(--c-lift);
+}
+
+.console-lead-detail:focus {
+  outline: none;
+}
+
+@media (min-width: 1024px) {
+  .console-lead-detail {
+    position: sticky;
+    inset-block-start: calc(var(--c-topbar-h) + 0.75rem);
+    max-block-size: calc(100dvh - var(--c-topbar-h) - 1.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+
+  .console-lead-back,
+  .console-lead-scrim {
+    display: none;
+  }
+}
+
+.console-lead-stage {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.75rem;
+  min-block-size: 16rem;
+  padding: 2rem 1.25rem;
+  border-radius: var(--c-r-lg);
+  background: var(--c-tint);
+  text-align: center;
+}
+
+.console-lead-stage p {
+  max-inline-size: 28ch;
+  margin: 0;
+  color: var(--c-text-2);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.console-lead-arch {
+  inline-size: 3.25rem;
+  block-size: 4rem;
+  border-radius: 999px 999px 0.5rem 0.5rem;
+  border: 0;
+  background: linear-gradient(
+    to bottom,
+    var(--c-tint-strong),
+    color-mix(in srgb, var(--c-accent) 4%, transparent)
+  );
+  box-shadow: inset 0 0 0 1.5px var(--c-accent);
+}
+
+.console-lead-bar {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: calc(-1 * var(--c-pad)) calc(-1 * var(--c-pad)) 0;
+  padding: 0.65rem var(--c-pad);
+  border-start-start-radius: var(--c-r-lg);
+  border-start-end-radius: var(--c-r-lg);
+  background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.console-lead-state {
+  margin-inline-start: auto;
+}
+
+.console-lead-id {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
   min-width: 0;
 }
 
 .console-lead-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
   overflow-wrap: anywhere;
 }
 
-/* The double rule: the two contact lines are a description list and so are the request's
-   own columns, so neither needs its own class — only the one grid both of them sit in. */
+.console-lead-id .console-lead-sub {
+  overflow: visible;
+  white-space: normal;
+}
+
+.console-lead-contact {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.console-lead-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-block-size: var(--c-tap);
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--c-r-md);
+  background: var(--c-bg-alt);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    background var(--c-dur-base) var(--c-ease-soft),
+    box-shadow var(--c-dur-base) var(--c-ease-soft);
+}
+
+.console-lead-link:hover {
+  background: var(--c-tint);
+  box-shadow: inset 0 0 0 1px var(--c-tint-strong);
+}
+
+.console-lead-link:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+}
+
+.console-lead-link > svg {
+  flex: none;
+  color: var(--c-accent);
+}
+
+.console-lead-label,
+.console-lead-value {
+  display: block;
+}
+
+.console-lead-label {
+  color: var(--c-text-3);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.console-lead-value {
+  font-size: 0.92rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.console-lead-caption {
+  margin: 0 0 0.4rem;
+  color: var(--c-text-3);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.console-lead-message,
+.console-lead-actions {
+  min-width: 0;
+}
+
+.console-lead-quote {
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+  border-radius: var(--c-r-md);
+  background: var(--c-bg-alt);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
 .console-lead-meta {
   display: grid;
   grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr);
-  gap: var(--ui-gap-tight) var(--ui-gap);
-  inline-size: 100%;
+  gap: var(--c-gap-tight) var(--c-gap);
   margin: 0;
-  font-size: var(--ui-font-small);
+  font-size: var(--c-font-small);
   overflow-wrap: anywhere;
 }
 
 .console-lead-meta dt {
-  color: var(--text-secondary);
+  color: var(--c-text-3);
 }
 
 .console-lead-meta dd {
   margin: 0;
 }
 
-.console-lead-message {
-  inline-size: 100%;
-}
-
-.console-lead-message p {
-  margin: 0;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-}
-
-.console-lead-caption {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: var(--ui-font-small);
-  font-weight: 600;
-}
-
-.console-lead-actions {
-  inline-size: 100%;
-}
+/* ── Notes: a thread ─────────────────────────────────────────────────────── */
 
 .console-lead-notes {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-gap-tight);
-  inline-size: 100%;
-  padding-block-start: var(--ui-gap);
-  border-block-start: 1px solid var(--border-control-soft);
+  gap: var(--c-gap-tight);
+  padding-block-start: var(--c-gap);
 }
 
-/* A note stands alone, and `Note` is a span — same reason as the pager's caption. */
-.console-lead-note-list > .ui-note {
-  display: block;
+.console-lead-notes .console-lead-caption {
+  margin: 0;
 }
 
-.console-lead-note-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-gap);
-  list-style: none;
+.console-lead-timeline {
   margin: 0;
   padding: 0;
+  list-style: none;
 }
 
-.console-lead-note {
-  padding-inline-start: 0.7rem;
-  border-inline-start: 2px solid var(--border-control-soft);
+.console-lead-timeline > li {
+  position: relative;
+  margin-inline-start: 0.35rem;
+  padding-block-end: var(--c-gap);
+  padding-inline-start: 1rem;
+  border-inline-start: 2px solid var(--c-line);
 }
 
-.console-lead-note p {
-  margin: 0 0 0.2rem;
+.console-lead-timeline > li:last-child {
+  padding-block-end: 0;
+  border-color: transparent;
+}
+
+.console-lead-timeline > li::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0.35rem;
+  inset-inline-start: -6px;
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-surface);
+}
+
+.console-lead-timeline p {
+  margin: 0 0 0.25rem;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  font-size: 0.88rem;
 }
 
 .console-lead-note-form {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: var(--ui-gap-tight);
-  inline-size: 100%;
+  gap: var(--c-gap-tight);
 }
 
-/* The composer's box takes the pane's width; the skin stays the control layer's. */
 .console-lead-note-input {
   inline-size: 100%;
 }
 
-/* --- accounts + roles (BK-16a) -------------------------------------------- */
-/*
- * Both screens are the leads shape — a list and the one you picked — because an account
- * and a role are records you configure, not documents with a draft. The root owns the
- * vertical rhythm so the create card, a notice and the split do not each guess it; the
- * lede's own bottom margin is the one the gap replaces.
- *
- * The role screen puts its *wide* half on the inline-end side instead: a matrix is read
- * across, so the list of roles is the narrow column and the permissions are the pane.
- */
-.console-users,
-.console-roles {
+/* ── Source / context ────────────────────────────────────────────────────── */
+
+.console-lead-context {
+  padding: 0 0.9rem var(--c-gap-tight);
+  border-radius: var(--c-r-md);
+  background: var(--c-bg-alt);
+}
+
+.console-lead-context > summary {
   display: flex;
-  flex-direction: column;
-  gap: var(--ui-gap);
-  min-width: 0;
-}
-
-.console-users > .ui-lede,
-.console-roles > .ui-lede {
-  margin-block-end: 0;
-}
-
-.console-users-split,
-.console-roles-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--ui-stack);
-  align-items: start;
-}
-
-.console-users-list,
-.console-roles-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-gap);
-  min-width: 0;
-  container-type: inline-size;
-  container-name: console-list;
-}
-
-@media (min-width: 1024px) {
-  .console-users-split {
-    grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
-  }
-
-  .console-roles-split {
-    grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr);
-  }
-
-  /* The pane follows the row you clicked while the rest of the page moves. Its own
-     `overflow` keeps a long permission matrix from pushing Save off-screen. */
-  .console-user-detail,
-  .console-role-detail {
-    position: sticky;
-    inset-block-start: 0;
-    max-block-size: calc(100vh - 8rem);
-    overflow-y: auto;
-    scrollbar-width: thin;
-  }
-}
-
-.console-user-detail,
-.console-role-detail {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-gap);
-  min-width: 0;
-}
-
-.console-badges {
-  display: inline-flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: var(--sp-1);
-}
-
-/* Both editors are a column of fields inside a card that already pads them: the field's
-   own bottom margin would double the gap the form sets. */
-.console-user-form,
-.console-role-form {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--ui-gap);
-  inline-size: 100%;
-  min-width: 0;
-}
-
-/* The form is already full width and stretches its children, so a field needs only its
-   own bottom margin removed; `inline-size` here would be the surface repainting the
-   primitive, which `tests/ui-primitives.test.ts` refuses. */
-.console-user-form .ui-field,
-.console-role-form .ui-field,
-.console-role-grid .ui-field {
-  margin-block-end: 0;
-}
-
-/* The same two-column question the editor's grid answers, at the width a card has. */
-.console-user-grid,
-.console-role-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
-  gap: var(--ui-gap-tight) var(--ui-gap);
-  inline-size: 100%;
-}
-
-.console-role-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-gap-tight);
-  inline-size: 100%;
-}
-
-/* --- the permission matrix ------------------------------------------------ */
-/* The matrix is the one table whose cells are controls, so the action columns centre and
-   shrink to the checkbox while the resource names keep the reading edge. */
-.console-role-table th:not(:first-child),
-.console-role-table td {
-  text-align: center;
-  vertical-align: middle;
-}
-
-.console-role-table th:not(:first-child) {
-  inline-size: 1%;
-}
-
-.console-role-table td {
-  padding-block: var(--sp-1);
-}
-
-/* A group heading inside `tbody` is not a column head: it does not stick, and its fill is
-   the step under the card's so the eye can close one group before opening the next. */
-.console-role-group-row th {
-  padding-block: var(--sp-1);
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: var(--ui-font-small);
+  gap: 0.5rem;
+  min-block-size: var(--c-tap);
+  color: var(--c-text-2);
+  font-size: var(--c-font-small);
   font-weight: 600;
-}
-
-.console-role-scopes {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-gap-tight);
-  inline-size: 100%;
-  padding-block-start: var(--ui-gap);
-  border-block-start: 1px solid var(--border-control-soft);
-}
-
-/* One grant with a narrowed dimension: its name on one line, each dimension beneath it.
-   The rule is per-grant because the list is a list of decisions, not of fieldsets. */
-.console-role-scope {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ui-gap-tight) var(--ui-gap);
-  padding-block: var(--ui-gap-tight);
-  border-block-end: 1px solid var(--border-control-soft);
-  font-size: var(--ui-font-small);
-}
-
-.console-role-scope > strong {
-  flex: 1 1 100%;
-  font-size: var(--ui-font);
-}
-
-/* `fieldset` has no layout of its own worth keeping: no margin, no border, and the legend
-   spans the row the boxes wrap under. */
-.console-role-scope-field {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(7rem, max-content));
-  align-items: center;
-  gap: var(--sp-1) var(--ui-gap);
-  min-inline-size: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.console-role-scope-field > legend {
-  grid-column: 1 / -1;
-  padding: 0;
-  color: var(--text-secondary);
-  font-size: var(--ui-font-small);
-  font-weight: 600;
-}
-
-/* --- settings (BK-15a) ---------------------------------------------------- */
-/*
- * One row per public page: its name and route on the first line, the switch (and, once
- * it is off, the redirect target) beside it, and the row's own Save at the end. The grid
- * keeps those three aligned down the list instead of letting each row find its own
- * width, and the narrow fallback stacks them so a phone does not squeeze the route into
- * a column of single letters.
- */
-.settings-pages {
+  cursor: pointer;
   list-style: none;
-  margin: 0 0 var(--ui-stack);
-  padding: 0;
-  display: flex;
-  flex-direction: column;
 }
 
-.settings-page {
-  display: grid;
-  grid-template-columns: minmax(9rem, 1fr) minmax(12rem, 2fr) auto;
-  align-items: start;
-  gap: var(--ui-gap-tight) var(--ui-gap);
-  padding-block: var(--ui-gap-tight);
-  border-block-end: 1px solid var(--border-control-soft);
+.console-lead-context > summary::-webkit-details-marker {
+  display: none;
 }
 
-.settings-page:last-child {
-  border-block-end: 0;
+.console-lead-context > summary:focus-visible {
+  outline: 2px solid var(--c-focus);
+  outline-offset: 2px;
+  border-radius: var(--c-r-sm);
 }
 
-.settings-page-id {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
+.console-lead-context > summary::after {
+  content: "";
+  inline-size: 0.45rem;
+  block-size: 0.45rem;
+  margin-inline-start: auto;
+  border-inline-end: 2px solid var(--c-text-2);
+  border-block-end: 2px solid var(--c-text-2);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 180ms var(--c-ease-soft);
 }
 
-.settings-page-label {
-  font-weight: 600;
+.console-lead-context[open] > summary::after {
+  transform: translateY(2px) rotate(-135deg);
 }
 
-.settings-page-controls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-gap-tight);
+.console-lead-context .console-lead-meta {
+  padding-block-end: var(--c-gap-tight);
 }
 
-/* The fields inside a page row already sit on the row's rhythm; the field's own
-   bottom margin would double the row's padding. */
-.settings-page-controls .ui-field {
-  margin-block-end: 0;
+/* ── Narrow screens ──────────────────────────────────────────────────────── */
+
+.console-lead-scrim {
+  display: none;
 }
 
-.settings-raw {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-gap-tight);
-  margin-block-end: var(--ui-stack);
+@media (max-width: 1023.98px) {
+  .console-lead-detail {
+    display: none;
+  }
+  .console-lead-detail[data-sheet="open"] {
+    display: flex;
+    position: fixed;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: var(--c-z-drawer);
+    inline-size: min(32rem, 100%);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: var(--c-r-lg) 0 0 var(--c-r-lg);
+    box-shadow: -16px 0 48px -12px rgb(0 0 0 / 0.35);
+    animation: console-lead-sheet var(--c-dur-slow) var(--c-lead-ease) both;
+  }
+  :where([dir="rtl"]) .console-lead-detail[data-sheet="open"] {
+    border-radius: 0 var(--c-r-lg) var(--c-r-lg) 0;
+  }
+  .console-lead-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--c-z-scrim);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--c-backdrop);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    animation: console-lead-fade var(--c-dur-slow) var(--c-lead-ease) both;
+  }
 }
 
-.settings-raw-heading {
-  margin: 0;
-  font-size: 1rem;
+/* ── Toast ───────────────────────────────────────────────────────────────── */
+
+.console-leads-toast {
+  position: fixed;
+  inset-block-end: 20px;
+  inset-inline-end: 20px;
+  z-index: var(--c-z-toast);
+  inline-size: min(360px, calc(100vw - 40px));
+  filter: drop-shadow(0 14px 28px rgb(0 0 0 / 0.22));
+  animation: console-lead-toast 260ms var(--c-lead-ease) both;
 }
 
-/* --- page banners (BK-15a) ------------------------------------------------- */
-/*
- * A banner is a photo and three short fields. Held to the form measure the panel uses
- * for a field stack, nine of those become one very long column; the console's content
- * width fits three across a desktop instead, and the minmax floor lets a narrower
- * viewport drop to two and then one without a media query of its own.
- */
-.settings-banners {
-  max-width: none;
+/* ── Motion ──────────────────────────────────────────────────────────────── */
+
+@keyframes console-lead-sheet {
+  from {
+    translate: calc(var(--c-lead-dir) * 100%) 0;
+  }
 }
 
-.settings-banner-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(19rem, 1fr));
-  gap: var(--ui-gap);
-  margin-block-end: var(--ui-stack);
+@keyframes console-lead-fade {
+  from {
+    opacity: 0;
+  }
 }
 
-.settings-banner {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-gap-tight);
-  min-inline-size: 0;
-  padding: var(--ui-gap);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-surface);
-  background: var(--bg-card);
-}
-
-.settings-banner-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ui-gap-tight);
-}
-
-/* The photo is the control's evidence: the same frame the page draws, at the same
-   16:9 it is cropped to, so a path that resolves to the wrong photo is visible before
-   Save rather than after a redeploy. */
-.settings-banner-photo {
-  inline-size: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  border-radius: var(--radius-control);
-  background: var(--bg-secondary);
-}
-
-/* One button at the end of a column would stretch to its width; the card's fields do
-   not ask it to. */
-.settings-banner > button {
-  align-self: flex-start;
-}
-
-@media (max-width: 46rem) {
-  .settings-page {
-    grid-template-columns: minmax(0, 1fr);
+@keyframes console-lead-toast {
+  from {
+    opacity: 0;
+    translate: calc(var(--c-lead-dir) * 12px) 12px;
   }
 }
 
@@ -1635,5 +1843,102 @@ span.console-thumb[data-empty] {
   .console-side,
   .console-scrim {
     transition: none !important;
+  }
+  .console-leads *,
+  .console-leads-toast,
+  .console-lead-scrim {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+.settings-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-stack);
+}
+/* --- Settings Workspace Fixes --------------------------------------------- */
+
+/* Override the narrow panel width for settings so it uses the full page */
+.settings-section {
+  max-width: none; /* Breaks out of --c-panel-w */
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+}
+
+.settings-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-stack);
+  max-width: 100%;
+}
+
+/* Force the page list into a grid, kill the bullets */
+.settings-pages,
+.settings-banner-grid,
+.settings-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+  gap: var(--c-gap);
+  list-style: none; /* Kills the bullets */
+  margin: 0;
+  padding: var(--c-pad);
+  align-items: start;
+}
+
+/* Fix the individual row layout */
+.settings-page {
+  display: flex;
+  flex-direction: column; /* Stack the ID, toggle, and save button */
+  gap: var(--c-gap-tight);
+  padding: var(--c-gap);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-md);
+  background: var(--c-surface-soft);
+  border-block-end: 1px solid var(--c-line); /* Override old rule */
+}
+
+/* Clean up the ID and path inside the row */
+.settings-page-id {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.settings-page-label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.settings-page-path {
+  font-family: var(--c-font-mono, ui-monospace, monospace);
+  font-size: 0.75rem;
+  color: var(--c-text-3);
+}
+
+/* Ensure the controls row is clean */
+.settings-page-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap-tight);
+  margin-block: 0.5rem;
+}
+
+/* Force the fields inside sections to use the full width nicely */
+.settings-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  gap: var(--c-gap);
+  max-inline-size: none; /* Remove the 64rem cap */
+}
+
+/* Mobile fallback so the 24rem grid doesn't overflow */
+@media (max-width: 640px) {
+  .settings-pages,
+  .settings-banner-grid,
+  .settings-field-grid {
+    grid-template-columns: 1fr;
   }
 }
