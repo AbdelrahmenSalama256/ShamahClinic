@@ -1,32 +1,34 @@
 /**
- * The navigation, as the permission catalog describes it.
+ * The navigation, as one flat list.
  *
- * Three levels — group, screen, entity — because that is the shape the grants
- * themselves have: a role holds `article update` scoped to `{locales:['ar']}`, or
- * `list update` scoped to `{lists:['branches']}`. So the tree reads directly off
- * `can()` instead of a second list of "who may see what" that would drift.
+ * The sidebar used to be a permission tree — group, screen, entity — because that is the
+ * shape the grants have. But a tree made a person open a fold to reach the Arabic articles
+ * and another to reach the branches list, and the console is a work surface: every
+ * destination this role can read is one row, in the order the work is done.
  *
  * Two rules, both inherited from BK-5 and both asserted in `tests/console.test.ts`:
- *   - a screen the caller cannot **read** is not rendered at all, so nobody tabs
+ *   - a destination the caller cannot **read** is not rendered at all, so nobody tabs
  *     through a control that would answer 403;
- *   - an entity the caller can read but not **write** is rendered and greyed, because
- *     reading the Arabic articles is a real job and hiding the tab would hide the
- *     screen's own structure.
+ *   - a destination the caller can read but not **write** is rendered and greyed, because
+ *     reading the Arabic articles is a real job and hiding the row would hide the work.
  *
- * The entity vocabulary is the catalog's, not the database's: `LIST_KEYS` from
+ * The list vocabulary is the catalog's, not the database's: `LIST_KEYS` from
  * `src/lib/auth/roles.ts` is what a scoped grant can name, so a `lists` row that
- * somehow exists outside it would be an editable-looking leaf no role can write.
+ * somehow exists outside it would be an editable-looking row no role can write.
+ *
+ * Sign-out is not here: it is an action, not a screen, and `ConsoleNav` renders it after
+ * these rows. The palette takes the same list, so a section is findable two ways and
+ * both answer with the same address.
  */
 import { can, type Action, type Grant, type Resource } from '../auth/permissions';
 import { LIST_KEYS } from '../auth/roles';
 import { CONTENT_LOCALES, type ContentLocale } from '../content/kinds';
-import { LIST_LABELS, type ListKey } from '../content/lists';
+import { LIST_LABELS } from '../content/lists';
 import { message, type MessageKey } from './messages';
 import { listSectionPath } from './paths';
 import type { ConsoleLocale } from './prefs';
 
-export type NavGroupKey = 'workspace' | 'content' | 'site' | 'account';
-/** Which vocabulary this screen's leaves come from. */
+/** Which vocabulary this screen's rows come from. */
 export type EntityVocabulary = 'none' | 'locales' | 'lists';
 
 export interface ConsoleScreen {
@@ -36,150 +38,114 @@ export interface ConsoleScreen {
   /** `null` is the landing screen: anyone with a session may open it. */
   resource: Resource | null;
   action: Action;
-  group: NavGroupKey;
   entities: EntityVocabulary;
 }
 
 /**
- * The sidebar is this list filtered by what the caller may read. Each BK appends its
- * own entry when the page exists — nothing here links to a screen not built yet.
+ * Every screen the console has, in the order its row appears in the sidebar. A screen
+ * whose entities are lists expands into one row per list at this position — the
+ * aggregate `/console/lists` path is a redirect, not a destination.
  *
- * The order is the order the sidebar shows inside each group, and
- * `tests/console.test.ts` asserts both halves of it: a screen with no page file and a
- * page file with no screen each fail the suite.
+ * The order is asserted in `tests/console.test.ts`: the working screens come first, the
+ * site's configuration next, then the account's own screen. Nothing here links to a
+ * screen that is not built.
  */
 export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
-  { key: 'overview', path: '/console', resource: null, action: 'read', group: 'workspace', entities: 'none' },
+  { key: 'overview', path: '/console', resource: null, action: 'read', entities: 'none' },
   // An enquiry is the one thing on the site that stops existing if nobody looks at it,
-  // so it sits beside the overview rather than at the end of the content group. Reads are
-  // unscoped; every role with a `lead read` grant sees the list, and the contact columns
-  // are blanked for the ones that may only count.
-  { key: 'leads', path: '/console/leads', resource: 'lead', action: 'read', group: 'workspace', entities: 'none' },
-  { key: 'articles', path: '/console/articles', resource: 'article', action: 'read', group: 'content', entities: 'locales' },
-  { key: 'offers', path: '/console/offers', resource: 'offer', action: 'read', group: 'content', entities: 'locales' },
-  { key: 'pages', path: '/console/pages', resource: 'page', action: 'read', group: 'content', entities: 'locales' },
-  { key: 'lists', path: '/console/lists', resource: 'list', action: 'read', group: 'content', entities: 'lists' },
-  // Only Owner and Admin hold `setting read`, so this is the one content screen a
+  // so it sits beside the overview rather than at the end of the content screens. Reads
+  // are unscoped; every role with a `lead read` grant sees the list, and the contact
+  // columns are blanked for the ones that may only count.
+  { key: 'leads', path: '/console/leads', resource: 'lead', action: 'read', entities: 'none' },
+  { key: 'articles', path: '/console/articles', resource: 'article', action: 'read', entities: 'locales' },
+  { key: 'offers', path: '/console/offers', resource: 'offer', action: 'read', entities: 'locales' },
+  { key: 'pages', path: '/console/pages', resource: 'page', action: 'read', entities: 'locales' },
+  // Each named list is its own section, so the aggregate row is never rendered; the
+  // screen stays here because the page file and the `list read` grant still exist.
+  { key: 'lists', path: '/console/lists', resource: 'list', action: 'read', entities: 'lists' },
+  // The site's configuration, in the order the owner named it: who may do what, who has
+  // an account, and then the settings both of those roles share.
+  // Only Owner and Admin hold `setting read`, so Settings is the one content screen a
   // content role never sees. `is_secret` rows are hidden inside it, not here.
-  // Settings have no permission dimension of their own — `PermissionScope` names
-  // locales, lists, pages and lead sources — so a tree of group names would be
-  // decoration, and this screen stays a single leaf.
-  { key: 'settings', path: '/console/settings', resource: 'setting', action: 'read', group: 'site', entities: 'none' },
-  // Accounts and roles sit beside Settings because they are the same kind of thing: the
-  // site's configuration rather than its content. `* read` is what Admin holds, so Admin
-  // sees both screens but holds neither `user.create` nor `role.update` — reading the
-  // list is a real job even when changing it is the Owner's.
-  { key: 'users', path: '/console/users', resource: 'user', action: 'read', group: 'site', entities: 'none' },
-  { key: 'roles', path: '/console/roles', resource: 'role', action: 'read', group: 'site', entities: 'none' },
+  { key: 'roles', path: '/console/roles', resource: 'role', action: 'read', entities: 'none' },
+  { key: 'users', path: '/console/users', resource: 'user', action: 'read', entities: 'none' },
+  { key: 'settings', path: '/console/settings', resource: 'setting', action: 'read', entities: 'none' },
   // `self` needs no grant, so this is the one screen every role is expected to hold.
-  { key: 'password', path: '/console/password', resource: 'self', action: 'update', group: 'account', entities: 'none' },
+  { key: 'password', path: '/console/password', resource: 'self', action: 'update', entities: 'none' },
 ];
 
-const GROUP_ORDER: readonly NavGroupKey[] = ['workspace', 'content', 'site', 'account'];
-
-export interface NavLeaf {
+/** One destination: a screen, or one named list's section. */
+export interface NavItem {
   key: string;
   label: string;
   path: string;
   writable: boolean;
 }
 
-export interface NavBranch {
-  key: string;
-  label: string;
-  path: string;
-  /** the screen level is greyed when every one of its entities is, and it has some */
-  writable: boolean;
-  leaves: NavLeaf[];
-}
-
-export interface NavGroup {
-  key: NavGroupKey;
-  label: string;
-  branches: NavBranch[];
-}
+/** The palette's section rows are the navigation's rows; a place has no second shape. */
+export type PalettePlace = NavItem;
 
 export function visibleScreens(grants: readonly Grant[]): ConsoleScreen[] {
   return CONSOLE_SCREENS.filter((screen) => screen.resource === null || can(grants, screen.resource, screen.action, {}));
 }
 
-function leafPath(screen: ConsoleScreen, param: string, value: string): string {
-  return `${screen.path}?${param}=${encodeURIComponent(value)}`;
+/**
+ * Whether a screen can take a write at the scope its rows name.
+ *
+ * A grant scoped to Arabic never matches an unscoped `can(…, {})`, so a content screen
+ * asks each locale and is writable when any one of them is. A list screen asks each list;
+ * every other screen has no scope and asks once.
+ */
+function writableOf(screen: ConsoleScreen, grants: readonly Grant[]): boolean {
+  if (!screen.resource) return true;
+  if (screen.entities === 'locales') {
+    return CONTENT_LOCALES.some((code: ContentLocale) => can(grants, screen.resource as Resource, 'update', { locales: code }));
+  }
+  return can(grants, screen.resource, 'update', {});
 }
 
-function leavesOf(screen: ConsoleScreen, grants: readonly Grant[], locale: ConsoleLocale): NavLeaf[] {
-  if (!screen.resource || screen.entities === 'none') return [];
-  // Reads are unscoped in this catalog, so every entity of a readable screen is a leaf.
-  const writable = (target: Parameters<typeof can>[3]): boolean => can(grants, screen.resource as Resource, 'update', target);
+/**
+ * The sidebar's rows and the phone strip's pills, in one order.
+ *
+ * A list screen contributes one row per list at the screen's position, so "Services" is a
+ * destination of its own rather than a tab inside "Lists". Every row is a link a person
+ * can read; the `writable` flag only decides whether it is greyed.
+ */
+export function navItems(grants: readonly Grant[], locale: ConsoleLocale): NavItem[] {
+  const out: NavItem[] = [];
 
-  if (screen.entities === 'locales') {
-    return CONTENT_LOCALES.map((code: ContentLocale) => ({
-      key: code,
-      label: message(`content.locale.${code}` as MessageKey, locale),
-      path: leafPath(screen, 'locale', code),
-      writable: writable({ locales: code }),
-    }));
+  for (const screen of visibleScreens(grants)) {
+    if (screen.entities === 'lists' && screen.resource) {
+      for (const listKey of LIST_KEYS) {
+        out.push({
+          key: listKey,
+          label: LIST_LABELS[listKey]?.[locale] ?? listKey,
+          path: listSectionPath(listKey),
+          writable: can(grants, screen.resource, 'update', { lists: listKey }),
+        });
+      }
+      continue;
+    }
+
+    out.push({
+      key: screen.key,
+      label: message(`nav.${screen.key}` as MessageKey, locale),
+      path: screen.path,
+      writable: writableOf(screen, grants),
+    });
   }
 
-  return LIST_KEYS.map((listKey: ListKey) => ({
-    key: listKey,
-    label: LIST_LABELS[listKey]?.[locale] ?? listKey,
-    // Each list is its own section now: `/console/results`, not `/console/lists?list=`.
-    path: listSectionPath(listKey),
-    writable: writable({ lists: listKey }),
-  }));
-}
-
-/** Screens grouped for the sidebar, with each screen's entities and their write state. */
-export function navTree(grants: readonly Grant[], locale: ConsoleLocale): NavGroup[] {
-  const visible = visibleScreens(grants);
-
-  return GROUP_ORDER.map((group) => ({
-    key: group,
-    label: message(`nav.group.${group}` as MessageKey, locale),
-    branches: visible
-      .filter((screen) => screen.group === group)
-      .map((screen) => {
-        const leaves = leavesOf(screen, grants, locale);
-        return {
-          key: screen.key,
-          label: message(`nav.${screen.key}` as MessageKey, locale),
-          path: screen.path,
-          writable: !screen.resource || can(grants, screen.resource, 'update', {}) || leaves.some((leaf) => leaf.writable),
-          leaves,
-        };
-      }),
-  })).filter((group) => group.branches.length > 0);
-}
-
-/** The phone tab bar: the same screens, flat, because a drawer holds the tree. */
-export function navStrip(grants: readonly Grant[], locale: ConsoleLocale): NavBranch[] {
-  return navTree(grants, locale).flatMap((group) => group.branches.map((branch) => ({ ...branch, leaves: [] })));
+  return out;
 }
 
 /**
  * One reachable place for the palette.
  *
- * Both levels of the tree are listed, because they answer two different requests:
- * "open the lists screen" and "show me the branches list". The `group` string is what
- * the palette filters on besides the label, so a leaf carries its screen inside it.
+ * The list is the navigation's own, because a palette that answered to a second list
+ * would be a second navigation: two places to add a section, and one of them would fall
+ * behind. A section the role cannot write is still listed, marked — the palette is also
+ * how someone finds the screen they may only read.
  */
-export interface PalettePlace {
-  path: string;
-  label: string;
-  group: string;
-  writable: boolean;
-}
-
 export function palettePlaces(grants: readonly Grant[], locale: ConsoleLocale): PalettePlace[] {
-  const out: PalettePlace[] = [];
-  for (const group of navTree(grants, locale)) {
-    for (const branch of group.branches) {
-      out.push({ path: branch.path, label: branch.label, group: group.label, writable: branch.writable });
-      for (const leaf of branch.leaves) {
-        out.push({ path: leaf.path, label: leaf.label, group: `${group.label} · ${branch.label}`, writable: leaf.writable });
-      }
-    }
-  }
-  return out;
+  return navItems(grants, locale);
 }

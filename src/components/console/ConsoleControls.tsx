@@ -8,7 +8,6 @@ import type { ConsolePrefs } from '@/lib/console/prefs';
 
 interface Labels {
   viewSite: string;
-  signOut: string;
   toLight: string;
   toDark: string;
   switchLocale: string;
@@ -25,7 +24,7 @@ interface Labels {
  * `ConsoleFrame` renders this twice: once in the header (shown at ≥1024px) and once
  * inside the drawer (shown below it). CSS hides the other copy with `display:none`,
  * which takes it out of both the accessibility tree and the tab order, so a phone
- * never tabs through two "Sign out" buttons.
+ * never tabs through two copies of the same control.
  */
 export function ConsoleControls({ prefs, labels }: Readonly<{ prefs: ConsolePrefs; labels: Labels }>) {
   const router = useRouter();
@@ -36,14 +35,6 @@ export function ConsoleControls({ prefs, labels }: Readonly<{ prefs: ConsolePref
     await consoleCall('/api/console/prefs', 'PATCH', next);
     router.refresh();
     setBusy(false);
-  }
-
-  async function signOut() {
-    setBusy(true);
-    await consoleCall('/api/console/auth', 'DELETE');
-    // The cookies are already gone, so the login page renders without a session;
-    // a client navigation keeps the SPA alive instead of reloading the world.
-    router.replace('/console/login');
   }
 
   return (
@@ -59,9 +50,6 @@ export function ConsoleControls({ prefs, labels }: Readonly<{ prefs: ConsolePref
       </Button>
       <Button disabled={busy} onClick={() => save({ ...prefs, locale: prefs.locale === 'ar' ? 'en' : 'ar' })}>
         {labels.switchLocale}
-      </Button>
-      <Button disabled={busy} onClick={signOut}>
-        {labels.signOut}
       </Button>
     </span>
   );

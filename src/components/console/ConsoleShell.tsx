@@ -1,7 +1,7 @@
 import type { ConsoleUser } from '@/lib/auth/sessions';
 import { message } from '@/lib/console/messages';
 import type { ConsolePrefs } from '@/lib/console/prefs';
-import { navStrip, navTree, palettePlaces } from '@/lib/console/screens';
+import { navItems, palettePlaces } from '@/lib/console/screens';
 import { ConsoleControls } from './ConsoleControls';
 import { ConsoleFrame } from './ConsoleFrame';
 import { Badge, Note } from '@/components/console/kit';
@@ -17,7 +17,7 @@ import { Badge, Note } from '@/components/console/kit';
  *
  * The navigation comes from the grants, not from a list of screens: what the role may
  * read decides which rows exist at all, and what it may write decides which are greyed.
- * See `navTree`.
+ * See `navItems`.
  */
 export function ConsoleShell({
   prefs,
@@ -28,8 +28,7 @@ export function ConsoleShell({
   user: ConsoleUser;
   children: React.ReactNode;
 }>) {
-  const tree = navTree(user.grants, prefs.locale);
-  const strip = navStrip(user.grants, prefs.locale);
+  const items = navItems(user.grants, prefs.locale);
   const places = palettePlaces(user.grants, prefs.locale);
 
   const brand = (
@@ -44,7 +43,6 @@ export function ConsoleShell({
       prefs={prefs}
       labels={{
         viewSite: message('shell.view_site', prefs.locale),
-        signOut: message('shell.sign_out', prefs.locale),
         toLight: message('shell.theme.light', prefs.locale),
         toDark: message('shell.theme.dark', prefs.locale),
         switchLocale: message('shell.locale.switch', prefs.locale),
@@ -71,13 +69,13 @@ export function ConsoleShell({
 
   return (
     <ConsoleFrame
-      tree={tree}
-      strip={strip}
+      items={items}
       places={places}
       labels={{
         screens: message('shell.screens', prefs.locale),
         close: message('shell.close', prefs.locale),
         readOnly: message('nav.readonly', prefs.locale),
+        signOut: message('shell.sign_out', prefs.locale),
         palette: {
           open: message('palette.open', prefs.locale),
           placeholder: message('palette.placeholder', prefs.locale),

@@ -541,7 +541,8 @@
   padding: 0 0.75rem;
 }
 
-.console-nav a {
+.console-nav a,
+.console-nav button.console-nav-link {
   display: flex;
   align-items: center;
   position: relative;
@@ -556,7 +557,23 @@
     color var(--c-dur-base) var(--c-ease-soft);
 }
 
-.console-nav a:hover {
+/* Sign-out is the one row that acts instead of navigating: a DELETE, not an address a
+   browser could prefetch. It keeps the row's shape and loses only the browser's chrome. */
+.console-nav button.console-nav-link {
+  inline-size: 100%;
+  border: 0;
+  background: transparent;
+  font-family: var(--c-font);
+  text-align: start;
+  cursor: pointer;
+}
+
+.console-nav button.console-nav-link:disabled {
+  cursor: progress;
+}
+
+.console-nav a:hover,
+.console-nav button.console-nav-link:hover:not(:disabled) {
   background: var(--c-surface);
   color: var(--c-text);
 }
@@ -581,6 +598,7 @@
 }
 
 .console-nav a:focus-visible,
+.console-nav button.console-nav-link:focus-visible,
 .console-toggle:focus-visible,
 .console-side-close:focus-visible {
   outline: 2px solid var(--c-focus);
@@ -603,7 +621,15 @@
   display: none;
 }
 
-.console-nav-strip a {
+/* The same list, laid along the strip instead of down the column. */
+.console-nav-strip .console-nav-list {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.console-nav-strip a,
+.console-nav-strip button.console-nav-link {
   position: relative;
   min-height: 2.5rem;
   display: inline-flex;
@@ -618,6 +644,11 @@
   font-weight: 600;
   text-decoration: none;
   transition: background var(--c-dur-base) var(--c-ease-soft);
+}
+
+.console-nav-strip button.console-nav-link {
+  font-family: var(--c-font);
+  cursor: pointer;
 }
 
 .console-nav-strip a[aria-current="page"] {

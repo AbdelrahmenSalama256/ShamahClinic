@@ -29,7 +29,7 @@ import {
   localeFromAcceptLanguage,
   resolvePrefs,
 } from '../src/lib/console/prefs';
-import { CONSOLE_SCREENS, navStrip, navTree, palettePlaces, visibleScreens } from '../src/lib/console/screens';
+import { CONSOLE_SCREENS, navItems, palettePlaces, visibleScreens } from '../src/lib/console/screens';
 import { message, type MessageKey } from '../src/lib/console/messages';
 import { overviewRows } from '../src/lib/console/overview';
 import { updatePrefsHandler } from '../src/lib/console/prefs-route';
@@ -279,8 +279,8 @@ describe('the sidebar registry', () => {
     // sidebar is filtered by the catalog rather than hardcoded.
     const content = ['articles', 'offers', 'pages'];
     const expected: Record<RoleName, string[]> = {
-      Owner: ['overview', 'leads', ...content, 'lists', 'settings', 'users', 'roles', 'password'],
-      Admin: ['overview', 'leads', ...content, 'lists', 'settings', 'users', 'roles', 'password'],
+      Owner: ['overview', 'leads', ...content, 'lists', 'roles', 'users', 'settings', 'password'],
+      Admin: ['overview', 'leads', ...content, 'lists', 'roles', 'users', 'settings', 'password'],
       Editor: ['overview', 'leads', ...content, 'lists', 'password'],
       SEO: ['overview', ...content, 'lists', 'password'],
       Marketer: ['overview', 'leads', ...content, 'password'],
@@ -341,11 +341,11 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect(frame).toContain('href="#console-side"');
     expect(frame).toContain('aria-controls="console-side"');
     expect(frame).toContain('data-nav=');
-    // One tree (sidebar column and drawer share it) and one phone strip: CSS shows
-    // exactly one of the two per width.
-    expect(frame).toContain('<ConsoleNavTree');
-    expect(frame).toContain('<ConsoleNavStrip');
-    expect((frame.match(/<ConsoleNavTree/g) ?? []).length).toBe(1);
+    // One flat list, rendered twice: the sidebar column (and the drawer that shares it)
+    // and the phone strip. CSS shows exactly one per width.
+    expect(frame).toContain('<ConsoleNav');
+    expect((frame.match(/<ConsoleNav/g) ?? []).length).toBe(2);
+    expect(frame).toContain('variant="strip"');
   });
 
   it('holds the 44px tap floor at both densities', () => {
@@ -466,86 +466,95 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
   });
 });
 
-describe('the navigation reads off the grants (BK-13.2)', () => {
+describe('the navigation reads off the grants (BK-13.2, S3)', () => {
   const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
   const nav = readFileSync(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'), 'utf8');
   const frame = readFileSync(join(process.cwd(), 'src/components/console/ConsoleFrame.tsx'), 'utf8');
+  const shell = readFileSync(join(process.cwd(), 'src/components/console/ConsoleShell.tsx'), 'utf8');
+  const palette = readFileSync(join(process.cwd(), 'src/components/console/ConsolePalette.tsx'), 'utf8');
 
-  it('hides a screen the role cannot read and greys an entity it cannot write', () => {
+  it('hides a screen the role cannot read and greys a screen it cannot write', () => {
     const grants: Grant[] = [
       { resource: 'article', action: 'read', scope: null },
       { resource: 'article', action: 'update', scope: { locales: ['ar'] } },
     ];
-    const content = navTree(grants, 'en').find((group) => group.key === 'content');
-    // Read on one resource only: the other three content screens are absent, not greyed.
-    expect(content?.branches.map((branch) => branch.key)).toEqual(['articles']);
+    const items = navItems(grants, 'en');
+    // Read on one content resource only: the other three screen rows are absent, not greyed.
+    expect(items.filter((item) => ['articles', 'offers', 'pages'].includes(item.key)).map((item) => item.key)).toEqual(['articles']);
 
-    const articles = content?.branches[0];
-    expect(articles?.leaves.map((leaf) => [leaf.key, leaf.writable])).toEqual([
-      ['ar', true],
-      ['en', false],
-    ]);
-    // One writable entity is enough to make the screen itself writable, and a scoped
-    // grant never matches an unscoped `can(…, {})` — that is why the branch asks its
-    // leaves rather than the catalog.
-    expect(articles?.writable).toBe(true);
+    // One writable locale is enough to make the screen row writable, and a scoped grant
+    // never matches an unscoped `can(…, {})` — that is why the row asks its locales.
+    expect(items.find((item) => item.key === 'articles')?.writable).toBe(true);
   });
 
   it('shows a read-only role the whole structure, greyed', () => {
-    const branches = navTree(grantsFor('SEO'), 'en').flatMap((group) => group.branches);
-    const articles = branches.find((branch) => branch.key === 'articles');
-    expect(articles?.leaves).toHaveLength(2);
-    expect(articles?.writable).toBe(false);
-    expect(articles?.leaves.every((leaf) => !leaf.writable)).toBe(true);
-    // The SEO role has no `setting` read, so the Site group is not in the tree at all.
-    expect(navTree(grantsFor('SEO'), 'en').map((group) => group.key)).not.toContain('site');
-  });
-
-  it('greys the navigation list even for the Owner, because the catalog scopes it out', () => {
-    const lists = navTree(grantsFor('Editor'), 'ar')
-      .flatMap((group) => group.branches)
-      .find((branch) => branch.key === 'lists');
-    expect(lists?.leaves.map((leaf) => [leaf.key, leaf.writable])).toEqual([
-      ['nav', false],
-      ['branches', true],
-      ['specialists', true],
-      ['treatments', true],
-      ['services', true],
-      ['faq', true],
-      ['results', true],
-    ]);
-  });
-
-  it('names the scope in every leaf URL, and keeps the strip flat', () => {
-    const grants = grantsFor('Owner');
-    const leaves = navTree(grants, 'ar').flatMap((group) => group.branches.flatMap((branch) => branch.leaves));
-    expect(leaves).toHaveLength(3 * 2 + LIST_KEYS.length);
-    for (const leaf of leaves) {
-      expect(leaf.path).toMatch(/^\/console\/(articles|offers|pages)\?locale=(ar|en)$|^\/console\/(nav|branches|specialists|treatments|services|faq|results)$/);
+    const items = navItems(grantsFor('SEO'), 'en');
+    expect(items.find((item) => item.key === 'articles')?.writable).toBe(false);
+    for (const listKey of LIST_KEYS) {
+      expect(items.find((item) => item.key === listKey)?.writable, listKey).toBe(false);
     }
-    // The phone bar holds the screens, never the tree: a 640 px strip has no room for it.
-    const strip = navStrip(grants, 'ar');
-    expect(strip.map((branch) => branch.key)).toEqual(navTree(grants, 'ar').flatMap((group) => group.branches.map((branch) => branch.key)));
-    expect(strip.every((branch) => branch.leaves.length === 0)).toBe(true);
+    // The SEO role holds no `setting`, `user` or `role` read, so those rows never exist.
+    for (const key of ['settings', 'users', 'roles']) {
+      expect(items.some((item) => item.key === key), key).toBe(false);
+    }
   });
 
-  it('lists both screens and entities for the palette, in the console language', () => {
+  it('greys the navigation list even for the Editor, because the catalog scopes it out', () => {
+    const items = navItems(grantsFor('Editor'), 'ar');
+    expect(items.find((item) => item.key === 'nav')?.writable).toBe(false);
+    for (const listKey of LIST_KEYS.filter((key) => key !== 'nav')) {
+      expect(items.find((item) => item.key === listKey)?.writable, listKey).toBe(true);
+    }
+  });
+
+  it('draws one flat row per destination, in the owner’s order', () => {
+    const items = navItems(grantsFor('Owner'), 'ar');
+    expect(items.map((item) => item.key)).toEqual([
+      'overview',
+      'leads',
+      'articles',
+      'offers',
+      'pages',
+      ...LIST_KEYS,
+      'roles',
+      'users',
+      'settings',
+      'password',
+    ]);
+    // No duplicate address, and no empty row: each named list is its own section.
+    expect(new Set(items.map((item) => item.path)).size).toBe(items.length);
+    for (const item of items) {
+      expect(item.label.length).toBeGreaterThan(0);
+      expect(item.path).toMatch(/^\/console(?:\/[a-z]+)?$/);
+    }
+    expect(items.find((item) => item.key === 'articles')?.path).toBe('/console/articles');
+    expect(items.find((item) => item.key === 'services')?.path).toBe('/console/services');
+  });
+
+  it('uses the same flat list for the phone strip and the palette', () => {
+    // Both are the sidebar, not a second navigation: one list decides what a section is
+    // called and where it lives, at every width and in both search boxes.
+    expect(shell).toMatch(/const items = navItems\(user\.grants, prefs\.locale\)/);
+    expect(frame).toMatch(/<ConsoleNav items=\{items\} labels=\{navLabels\} variant="strip" \/>/);
+    expect(frame).toMatch(/<ConsoleNav items=\{items\} labels=\{navLabels\} \/>/);
+    expect(frame).toMatch(/<ConsolePalette entries=\{places\}/);
+    expect(palette).not.toMatch(/entry\.group/);
+  });
+
+  it('lists the flat sections for the palette, in the console language', () => {
     const places = palettePlaces(grantsFor('Editor'), 'ar');
-    expect(places.map((place) => place.path)).toContain('/console/articles?locale=ar');
+    expect(places.map((place) => place.path)).toContain('/console/articles');
     expect(places.map((place) => place.path)).toContain('/console/branches');
-    expect(places.every((place) => place.label.length > 0 && place.group.length > 0)).toBe(true);
+    expect(places.every((place) => place.label.length > 0)).toBe(true);
     // A place the role cannot write is in the list, marked, not missing — the palette is
     // also how someone finds the screen they can only read.
     expect(places.find((place) => place.path === '/console/nav')?.writable).toBe(false);
   });
 
-  it('labels every group and palette string in both languages', () => {
+  it('labels every screen and palette string in both languages', () => {
     const keys = [
-      'nav.group.workspace',
-      'nav.group.content',
-      'nav.group.site',
-      'nav.group.account',
       'nav.readonly',
+      'shell.sign_out',
       'palette.open',
       'palette.placeholder',
       'palette.screens',
@@ -561,16 +570,23 @@ describe('the navigation reads off the grants (BK-13.2)', () => {
     }
   });
 
-  it('folds with the browser, not with script', () => {
-    // BK-5's rule: the console's chrome works with JavaScript switched off. The tree's
-    // fold is a native `<details>` and the leaves are ordinary links.
-    expect(nav).toContain('<details');
-    expect(nav).not.toMatch(/useState/);
+  it('is one flat list of links, with no fold and no tree', () => {
+    // S3 removed the group → screen → entity tree. A `<details>` here would be the fold
+    // coming back; the carets, leaves and group headings would be its clothes.
+    expect(nav).not.toMatch(/<details|<summary|console-nav-caret|console-nav-leaves|console-nav-group|console-nav-heading/);
+    expect(nav).toMatch(/className="console-nav-link"/);
+    expect(nav).toMatch(/data-locked=\{item\.writable \? undefined : 'true'\}/);
     expect(frame).toContain('<ConsolePalette');
-    expect(css).toMatch(/\.console-nav-leaves/);
     expect(css).toMatch(/\.console-palette\s*\{/);
     // The greyed state is a cue, not a colour alone: the row keeps its own title text.
     expect(css).toMatch(/\[data-locked=['"]true['"]\]/);
+  });
+
+  it('signs out with a request, not a link a prefetch could fire', () => {
+    expect(nav).toMatch(/consoleCall\('\/api\/console\/auth', 'DELETE'\)/);
+    expect(nav).toMatch(/className="console-nav-link console-nav-signout"/);
+    // The old header control is gone: one sign-out row, at the end of the navigation.
+    expect(readFileSync(join(process.cwd(), 'src/components/console/ConsoleControls.tsx'), 'utf8')).not.toMatch(/signOut/);
   });
 
   it('answers 401, 403 and 400 before it reads a single row', async () => {
@@ -611,6 +627,26 @@ describe('the navigation reads off the grants (BK-13.2)', () => {
   it('escapes what LIKE would otherwise treat as a wildcard', () => {
     expect(likeOf('a%c_d\\e')).toBe('%a\\%c\\_d\\\\e%');
     expect(likeOf('  cold  ')).toBe('%cold%');
+  });
+});
+
+describe('a section opens its entity with every field editable (S3)', () => {
+  const detail = readFileSync(join(process.cwd(), 'src/components/console/ContentDetail.tsx'), 'utf8');
+  const editor = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
+
+  it('shows the slug without ever making it a form value', () => {
+    // The identity came from the first save's title and is what the site's URL means;
+    // changing it in place would break links. It is printed beside the heading only.
+    expect(detail).toMatch(/className="console-detail-key">\{row\.key\}/);
+    expect(editor).toMatch(/Object\.entries\(row\.fields\)/);
+    expect(editor).not.toMatch(/onChange\([^)]*row\.key/);
+  });
+
+  it('gives every picture a picker and a body the rich editor', () => {
+    expect(editor).toMatch(/<ImagePicker/);
+    expect(editor).toMatch(/<ImageGallery/);
+    expect(editor).toMatch(/<RichEditor/);
+    expect(editor).toMatch(/field\.kind === 'json'/);
   });
 });
 

@@ -2,8 +2,8 @@
 
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import type { NavBranch, NavGroup, PalettePlace } from '@/lib/console/screens';
-import { ConsoleNavStrip, ConsoleNavTree } from './ConsoleNav';
+import type { NavItem, PalettePlace } from '@/lib/console/screens';
+import { ConsoleNav } from './ConsoleNav';
 import { ConsolePalette, type PaletteLabels } from './ConsolePalette';
 
 /**
@@ -27,8 +27,7 @@ import { ConsolePalette, type PaletteLabels } from './ConsolePalette';
  * clears the hash, because a hash left pointing at the drawer would outrank "closed".
  */
 export function ConsoleFrame({
-  tree,
-  strip,
+  items,
   places,
   labels,
   brand,
@@ -36,13 +35,13 @@ export function ConsoleFrame({
   account,
   children,
 }: Readonly<{
-  tree: NavGroup[];
-  strip: NavBranch[];
+  items: NavItem[];
   places: PalettePlace[];
   labels: {
     screens: string;
     close: string;
     readOnly: string;
+    signOut: string;
     palette: PaletteLabels;
   };
   brand: React.ReactNode;
@@ -94,7 +93,7 @@ export function ConsoleFrame({
     if (sideRef.current?.contains(document.activeElement)) toggleRef.current?.focus();
   };
 
-  const navLabels = { screens: labels.screens, readOnly: labels.readOnly };
+  const navLabels = { screens: labels.screens, readOnly: labels.readOnly, signOut: labels.signOut };
 
   return (
     <div className="console-frame" data-nav={open ? 'open' : 'closed'}>
@@ -119,7 +118,7 @@ export function ConsoleFrame({
           <ConsolePalette entries={places} labels={labels.palette} />
           {controls}
         </header>
-        <ConsoleNavStrip items={strip} labels={navLabels} />
+        <ConsoleNav items={items} labels={navLabels} variant="strip" />
       </div>
 
       <aside ref={sideRef} id="console-side" className="console-side" tabIndex={-1}>
@@ -137,7 +136,7 @@ export function ConsoleFrame({
             {labels.close}
           </a>
         </div>
-        <ConsoleNavTree groups={tree} labels={navLabels} />
+        <ConsoleNav items={items} labels={navLabels} />
         {controls}
         {account}
       </aside>

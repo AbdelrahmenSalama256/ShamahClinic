@@ -1,114 +1,82 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
-import type { NavBranch, NavGroup } from '@/lib/console/screens';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import type { NavItem } from '@/lib/console/screens';
+import { consoleCall } from './client-api';
 
 /**
- * The sidebar's tree: group → screen → entity, straight off the grant catalog.
+ * One flat list of destinations — the sidebar's column and the phone's tab bar.
  *
- * The fold is a native `<details>` rather than React state for the same reason the
- * drawer's toggle is a link: with JavaScript switched off the leaves still open, and
- * the console's rule since BK-5 is that navigation does not need script. The branch's
- * own link stops the toggle from firing, because navigating and folding are two
- * different intentions on one row.
+ * There are no folds, no carets and no entity leaves: a screen a role may read is one
+ * link, and a named list ("Services", "Result stories") is a screen of its own rather
+ * than a leaf under "Lists". The order comes from `navItems`, which reads the grants, so
+ * what a role may read decides which rows exist and what it may write decides which are
+ * greyed.
  *
- * Rendered by `ConsoleFrame` twice as a tree (sidebar and drawer) and once as the flat
- * phone strip, and CSS shows exactly one of them at any width, so only one nav landmark
- * is ever in the accessibility tree or the tab order.
+ * Rendered by `ConsoleFrame` twice — the sidebar and the sticky phone strip — and CSS
+ * shows exactly one at any width, so only one nav landmark is ever in the accessibility
+ * tree or the tab order.
  */
-export function ConsoleNavTree({
-  groups,
+export function ConsoleNav({
+  items,
   labels,
+  variant = 'side',
 }: Readonly<{
-  groups: NavGroup[];
-  labels: { screens: string; readOnly: string };
+  items: readonly NavItem[];
+  labels: { screens: string; readOnly: string; signOut: string };
+  variant?: 'side' | 'strip';
 }>) {
   const pathname = usePathname();
-  const params = useSearchParams();
-  const search = params.toString();
-  const href = search ? `${pathname}?${search}` : pathname;
-
-  const leaf = (branch: NavBranch) => (
-    <Link
-      href={branch.path}
-      className="console-nav-link"
-      aria-current={href === branch.path ? 'page' : undefined}
-      aria-disabled={branch.writable ? undefined : true}
-      title={branch.writable ? undefined : labels.readOnly}
-      data-locked={branch.writable ? undefined : 'true'}
-      onClick={(event) => event.stopPropagation()}
-    >
-      {branch.label}
-    </Link>
-  );
+  // `/console` is a prefix of every address, so it is the one row that must match exactly.
+  const current = (path: string): boolean =>
+    path === '/console' ? pathname === '/console' : pathname === path || pathname.startsWith(`${path}/`);
 
   return (
-    <nav className="console-nav" aria-label={labels.screens}>
-      {groups.map((group) => (
-        <div className="console-nav-group" key={group.key}>
-          <p className="console-nav-heading">{group.label}</p>
-          <ul className="console-nav-list">
-            {group.branches.map((branch) =>
-              branch.leaves.length === 0 ? (
-                <li key={branch.key}>{leaf(branch)}</li>
-              ) : (
-                <li key={branch.key}>
-                  <details open={href === branch.path || branch.leaves.some((candidate) => candidate.path === href) || undefined}>
-                    <summary className="console-nav-head">
-                      {leaf(branch)}
-                      <span className="console-nav-caret" aria-hidden="true" />
-                    </summary>
-                    <ul className="console-nav-leaves">
-                      {branch.leaves.map((candidate) => (
-                        <li key={candidate.key}>
-                          <Link
-                            href={candidate.path}
-                            className="console-nav-leaf"
-                            aria-current={href === candidate.path ? 'page' : undefined}
-                            aria-disabled={candidate.writable ? undefined : true}
-                            title={candidate.writable ? undefined : labels.readOnly}
-                            data-locked={candidate.writable ? undefined : 'true'}
-                          >
-                            {candidate.label}
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </details>
-                </li>
-              ),
-            )}
-          </ul>
-        </div>
-      ))}
+    <nav className={variant === 'strip' ? 'console-nav console-nav-strip' : 'console-nav'} aria-label={labels.screens}>
+      <ul className="console-nav-list">
+        {items.map((item) => (
+          <li key={item.key}>
+            <Link
+              href={item.path}
+              className="console-nav-link"
+              aria-current={current(item.path) ? 'page' : undefined}
+              aria-disabled={item.writable ? undefined : true}
+              title={item.writable ? undefined : labels.readOnly}
+              data-locked={item.writable ? undefined : 'true'}
+            >
+              {item.label}
+            </Link>
+          </li>
+        ))}
+        <li>
+          <SignOut label={labels.signOut} />
+        </li>
+      </ul>
     </nav>
   );
 }
 
-/** The phone tab bar: the same screens, flat, because a 640 px strip holds no tree. */
-export function ConsoleNavStrip({
-  items,
-  labels,
-}: Readonly<{
-  items: readonly NavBranch[];
-  labels: { screens: string; readOnly: string };
-}>) {
-  const pathname = usePathname();
+/**
+ * The last row. Signing out is a `DELETE` with the session cookie, not a link: a GET a
+ * browser could prefetch would end the session when the row scrolled into view.
+ */
+function SignOut({ label }: Readonly<{ label: string }>) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  async function signOut(): Promise<void> {
+    setBusy(true);
+    await consoleCall('/api/console/auth', 'DELETE');
+    // The cookies are already gone, so the login page renders without a session;
+    // a client navigation keeps the SPA alive instead of reloading the world.
+    router.replace('/console/login');
+  }
+
   return (
-    <nav className="console-nav console-nav-strip" aria-label={labels.screens}>
-      {items.map((item) => (
-        <Link
-          key={item.key}
-          href={item.path}
-          aria-current={pathname === item.path ? 'page' : undefined}
-          aria-disabled={item.writable ? undefined : true}
-          title={item.writable ? undefined : labels.readOnly}
-          data-locked={item.writable ? undefined : 'true'}
-        >
-          {item.label}
-        </Link>
-      ))}
-    </nav>
+    <button type="button" className="console-nav-link console-nav-signout" disabled={busy} onClick={() => void signOut()}>
+      {label}
+    </button>
   );
 }

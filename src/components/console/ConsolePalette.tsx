@@ -26,14 +26,14 @@ const KEYS = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
  * ⌘K / Ctrl+K over the places this role may open, plus the titled rows it may read.
  *
  * Two halves, because they answer two different questions. The sections are already
- * in the shell's own props — the nav tree — so filtering them is a keystroke with no
- * request; the records need the database, so they arrive from `/api/console/search`
- * after a pause, and only for the kinds this caller holds `read` on.
+ * in the shell's own props — the same flat list the sidebar draws — so filtering them
+ * is a keystroke with no request; the records need the database, so they arrive from
+ * `/api/console/search` after a pause, and only for the kinds this caller holds `read` on.
  *
  * A `<dialog>` shown with `showModal()` gives the browser's own focus trap, Esc and
  * inert background for free. That also makes the palette the one piece of the console
- * that *does* need JavaScript: the nav tree and the drawer stay reachable without it,
- * and nothing you can reach here is unreachable there.
+ * that *does* need JavaScript: the nav and the drawer stay reachable without it, and
+ * nothing you can reach here is unreachable there.
  */
 export function ConsolePalette({ entries, labels }: Readonly<{ entries: PalettePlace[]; labels: PaletteLabels }>) {
   const router = useRouter();
@@ -53,7 +53,7 @@ export function ConsolePalette({ entries, labels }: Readonly<{ entries: PaletteP
   const needle = term.trim();
   const pending = needle.length >= 2 && found.for !== needle;
 
-  const places = needle ? entries.filter((entry) => entry.label.toLowerCase().includes(needle.toLowerCase()) || entry.group.toLowerCase().includes(needle.toLowerCase())) : entries;
+  const places = needle ? entries.filter((entry) => entry.label.toLowerCase().includes(needle.toLowerCase())) : entries;
   const hits = found.for === needle ? found.hits : [];
   const nothing = needle.length > 0 && places.length === 0 && !pending && hits.length === 0;
 
@@ -153,7 +153,6 @@ export function ConsolePalette({ entries, labels }: Readonly<{ entries: PaletteP
                     go(entry.path);
                   }}
                 >
-                  <span className="console-palette-group">{entry.group}</span>
                   <span className="console-palette-label">{entry.label}</span>
                   {!entry.writable && <Badge>{labels.readOnly}</Badge>}
                 </a>
