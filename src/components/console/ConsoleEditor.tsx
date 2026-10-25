@@ -47,6 +47,7 @@ import { Card } from '@/components/ui/Surface';
 import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/ui/Status';
 import { ImageGallery } from './ImageGallery';
 import { ImagePicker } from './ImagePicker';
+import { RichEditor } from './RichEditor';
 import { imageSlots, isImageField, looksLikeImage } from '@/lib/console/image-field';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
@@ -608,6 +609,25 @@ function FieldRow({
     return (
       <Field htmlFor={id} errors={errors} label={labelNode} note={field.immediate && !invalid ? <Note>{labels['content.immediate']}</Note> : null}>
         <ImagePicker labels={labels} value={text} disabled={disabled} inputId={id} onChange={(next) => onChange(next)} />
+      </Field>
+    );
+  }
+
+  // #246. A `html` column is the only content the site prints as markup, and the only place a
+  // person used to read `<p class="wp-block-paragraph">` while trying to fix a sentence. They get
+  // a page instead. The row keeps the same `id`, which now names the surface they type in.
+  if (field.format === 'html') {
+    return (
+      <Field htmlFor={id} errors={errors} label={labelNode} note={field.immediate && !invalid ? <Note>{labels['content.immediate']}</Note> : null}>
+        <RichEditor
+          labels={labels}
+          value={text}
+          disabled={disabled}
+          inputId={id}
+          title={label}
+          rtl={locale === 'ar'}
+          onChange={(next) => onChange(next)}
+        />
       </Field>
     );
   }

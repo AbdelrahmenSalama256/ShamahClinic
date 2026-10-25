@@ -2,7 +2,7 @@ import sanitizeHtml from "sanitize-html";
 import * as cheerio from "cheerio";
 import { WP_ORIGIN } from "./config";
 import { mirrorSrc, mirrorHtml } from "./mirror";
-import { RICH_ALLOWED_ATTRIBUTES, RICH_ALLOWED_TAGS } from "../content/rich";
+import { RICH_ALLOWED_ATTRIBUTES, RICH_ALLOWED_TAGS } from "../content/rich-policy";
 
 const NAMED: Record<string, string> = {
   amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—",

@@ -1112,3 +1112,120 @@ select.ui-control {
   align-items: center;
   gap: var(--ui-gap-tight);
 }
+
+/* ----------------------------------------------
+   Body editor (#246). The one place the site's prose is written.
+
+   The surface is a document, not a box of text: the tags it holds are the tags the site
+   prints, and the person typing in them sees a heading, a list and a quote — never a
+   bracket. So the sheet's job is to make the *rendered* markup legible inside a console card,
+   at console scale, without reaching for the public site's prose stylesheet (which is sized
+   for a page and would make an article body taller than the screen it is edited on).
+
+   `min-block-size` is a token, not a fixed box: an empty body still reads as somewhere to
+   write, and a long one grows instead of hiding its own tail behind a scroll.
+
+   The file input is `display: none` here and *is not* the control the row's label names — the
+   toolbar's photo button is, which is the arrangement `ImagePicker` deliberately is not
+   allowed to use. A button that opens a dialog is reachable; an input nobody can see is only
+   ever a target.
+   ---------------------------------------------- */
+.ui-rich {
+  display: grid;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-rich-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.ui-rich-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-rich-surface {
+  min-block-size: var(--sp-20);
+  padding: var(--ui-pad);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: var(--ui-font);
+  line-height: var(--lh-body);
+}
+
+.ui-rich-surface:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+}
+
+.ui-rich-surface[data-disabled='true'] {
+  background: var(--bg-card-subtle);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.ui-rich-surface > :first-child {
+  margin-block-start: 0;
+}
+
+.ui-rich-surface > :last-child {
+  margin-block-end: 0;
+}
+
+.ui-rich-surface p,
+.ui-rich-surface ul,
+.ui-rich-surface ol,
+.ui-rich-surface blockquote,
+.ui-rich-surface figure,
+.ui-rich-surface table {
+  margin-block: var(--sp-2);
+}
+
+.ui-rich-surface h2,
+.ui-rich-surface h3,
+.ui-rich-surface h4 {
+  margin-block: var(--sp-4) var(--sp-2);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+}
+
+.ui-rich-surface ul,
+.ui-rich-surface ol {
+  padding-inline-start: var(--sp-5);
+}
+
+.ui-rich-surface blockquote {
+  margin-inline: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 2px solid var(--hairline-strong);
+  color: var(--text-secondary);
+}
+
+.ui-rich-surface a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+.ui-rich-surface img {
+  max-inline-size: 100%;
+  border-radius: var(--radius-control);
+}
+
+.ui-rich-surface th,
+.ui-rich-surface td {
+  padding: var(--sp-1);
+  border: 1px solid var(--hairline);
+  text-align: start;
+}
+
+.ui-rich-file {
+  display: none;
+}
