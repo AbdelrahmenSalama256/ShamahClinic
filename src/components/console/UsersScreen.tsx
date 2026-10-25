@@ -18,10 +18,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { consoleCall, consoleRead } from './client-api';
-import { Button } from '@/components/ui/Button';
-import { Field, Input, Select } from '@/components/ui/Field';
-import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/ui/Status';
-import { Card, RowAction, RowTitle } from '@/components/ui/Surface';
+import { Button } from '@/components/console/kit';
+import { Field, Input, Select } from '@/components/console/kit';
+import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/console/kit';
+import { Card, RowAction, RowTitle } from '@/components/console/kit';
 import type { MessageKey } from '@/lib/console/messages';
 import type { ConsoleLocale } from '@/lib/console/prefs';
 import type { RoleView, UserStatus, UsersScreenData, UsersView } from '@/lib/users/view';
@@ -267,7 +267,7 @@ export function UsersScreen({
 
   return (
     <div className="console-users">
-      <p className="ui-lede">{labels['users.intro']}</p>
+      <p className="console-lede">{labels['users.intro']}</p>
 
       <div className="console-list-bar">
         <Input
@@ -424,7 +424,7 @@ export function UsersScreen({
             <Empty>{labels['users.empty']}</Empty>
           ) : (
             <Card flat flush className="console-table-wrap">
-              <table className="ui-table">
+              <table className="console-table">
                 <thead>
                   <tr>
                     <th>{labels['users.field.name']}</th>

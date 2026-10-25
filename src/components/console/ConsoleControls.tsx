@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { consoleCall } from './client-api';
-import { Button, ButtonLink } from '@/components/ui/Button';
+import { Button, ButtonLink } from '@/components/console/kit';
 import type { ConsolePrefs } from '@/lib/console/prefs';
 
 interface Labels {

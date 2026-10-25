@@ -44,7 +44,9 @@ const outSource = read('src', 'lib', 'wp', 'sanitize.ts');
 /** Declarations, not prose: `ui-primitives.test.ts` strips the comments for the same reason —
  *  a header that quotes the rule it replaced is not a second definition of it. */
 const code = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, '');
-const ui = code(read('src', 'components', 'ui', 'ui.css'));
+// Slice 0 of the console redesign: the editor is a console component and its sheet is the
+// console kit, not the public site's control layer.
+const kit = code(read('src', 'app', 'console', 'console-kit.css'));
 
 /** The first declaration block for a selector, exactly as `ui-primitives.test.ts` reads one. */
 function rule(source: string, selector: string): string {
@@ -206,7 +208,7 @@ describe('what the person sees is a page, not a document’s source', () => {
 
   it('renders an editable surface with the row’s own id', () => {
     const markup = markupOf();
-    expect(markup).toMatch(/class="ui-rich-surface"/);
+    expect(markup).toMatch(/class="console-rich-surface"/);
     expect(markup).toMatch(/id="field-content"/);
     expect(markup).toMatch(/role="textbox"/);
     expect(markup).toMatch(/aria-multiline="true"/);
@@ -290,14 +292,14 @@ describe('the catalog, the sheet and the address', () => {
   });
 
   it('styles every class it puts on a node', () => {
-    const classes = [...new Set([...richSource.matchAll(/(?:className="|clsx\(')(ui-rich[a-z-]*)/g)].map((match) => match[1]!))];
+    const classes = [...new Set([...richSource.matchAll(/(?:className="|clsx\(')(console-rich[a-z-]*)/g)].map((match) => match[1]!))];
     expect(classes.length).toBeGreaterThan(4);
-    for (const name of classes) expect(rule(ui, `.${name}`), `.${name} is styled`).toBeTruthy();
-    expect(rule(ui, '.ui-rich-surface')).toMatch(/min-block-size: var\(--sp-20\);/);
-    expect(rule(ui, '.ui-rich-surface')).not.toMatch(/min-height: [0-9.]+(rem|px)/);
-    expect(rule(ui, '.ui-rich-surface:empty::before')).toMatch(/content: attr\(data-placeholder\)/);
-    expect(ui).not.toMatch(/outline:/);
-    expect(ui).not.toMatch(/border-radius: [0-9.]+(rem|px|%)/);
+    for (const name of classes) expect(rule(kit, `.${name}`), `.${name} is styled`).toBeTruthy();
+    expect(rule(kit, '.console-rich-surface')).toMatch(/min-block-size: 12rem;/);
+    expect(rule(kit, '.console-rich-surface')).not.toMatch(/min-height: [0-9.]+(rem|px)/);
+    expect(rule(kit, '.console-rich-surface:empty::before')).toMatch(/content: attr\(data-placeholder\)/);
+    expect(kit).not.toMatch(/outline:/);
+    expect(kit).not.toMatch(/border-radius: [0-9.]+(rem|px|%)/);
   });
 
   it('does not touch the markup the site prints', () => {

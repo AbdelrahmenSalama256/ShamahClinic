@@ -1,5 +1,5 @@
 import { SettingsWorkspace } from '@/components/console/SettingsWorkspace';
-import { Empty } from '@/components/ui/Status';
+import { Empty } from '@/components/console/kit';
 import { siteConfig } from '@/config/site';
 import { can } from '@/lib/auth/permissions';
 import { catalogFor, message } from '@/lib/console/messages';

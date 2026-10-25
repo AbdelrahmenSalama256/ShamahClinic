@@ -16,10 +16,10 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ConsoleList } from './ConsoleList';
-import { Button } from '@/components/ui/Button';
-import { Field, Input } from '@/components/ui/Field';
-import { Alert, type Tone } from '@/components/ui/Status';
-import { Tabs } from '@/components/ui/Tabs';
+import { Button } from '@/components/console/kit';
+import { Field, Input } from '@/components/console/kit';
+import { Alert, type Tone } from '@/components/console/kit';
+import { Tabs } from '@/components/console/kit-tabs';
 import { consoleCall } from './client-api';
 import type { ContentScreenData } from '@/lib/console/content-screen';
 import type { ContentLocale } from '@/lib/content/kinds';
@@ -119,13 +119,13 @@ export function ContentListScreen({ data }: Readonly<{ data: ContentScreenData }
 
         {creating && (
           <form
-            className="ui-card console-panel console-create"
+            className="console-card console-panel console-create"
             onSubmit={(event) => {
               event.preventDefault();
               void create();
             }}
           >
-            <Field label={labels['content.title']} htmlFor="new-title" note={<span className="ui-label-note">{labels[`content.locale.${locale}` as MessageKey]}</span>}>
+            <Field label={labels['content.title']} htmlFor="new-title" note={<span className="console-label-note">{labels[`content.locale.${locale}` as MessageKey]}</span>}>
               <Input
                 id="new-title"
                 value={title}
@@ -141,7 +141,7 @@ export function ContentListScreen({ data }: Readonly<{ data: ContentScreenData }
               </Button>
               <Button onClick={() => setCreating(false)}>{labels['content.cancel']}</Button>
             </div>
-            <p className="ui-lede">{labels['content.slug_auto']}</p>
+            <p className="console-lede">{labels['content.slug_auto']}</p>
           </form>
         )}
 

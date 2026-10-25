@@ -27,11 +27,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import Link from 'next/link';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, ImageOff, X } from 'lucide-react';
 import { consoleCall, consoleRead } from './client-api';
-import { Button } from '@/components/ui/Button';
-import { Checkbox, Field, Input, Select } from '@/components/ui/Field';
-import { Alert, Badge, Empty, Mark, Note, Skeleton, type Tone } from '@/components/ui/Status';
-import { Card, RowKey, RowTitle } from '@/components/ui/Surface';
-import { Chip, ChipRemove, ChipRow, ChipTag } from '@/components/ui/Chip';
+import { Button } from '@/components/console/kit';
+import { Checkbox, Field, Input, Select } from '@/components/console/kit';
+import { Alert, Badge, Empty, Mark, Note, Skeleton, type Tone } from '@/components/console/kit';
+import { Card, RowKey, RowTitle } from '@/components/console/kit';
+import { Chip, ChipRemove, ChipRow, ChipTag } from '@/components/console/kit';
 import { contentStateTone } from '@/lib/console/editor-form';
 import { contentDetailPath } from '@/lib/console/paths';
 import type { ContentAbilities } from '@/lib/console/content-screen';
@@ -323,7 +323,7 @@ export function ConsoleList({
   /** A column header, sortable when the kind honours that order. */
   const sortable = (sort: ListSort, className?: string): ReactNode => (
     <th key={sort} className={className} aria-sort={view.sort === sort ? (view.dir === 'asc' ? 'ascending' : 'descending') : 'none'}>
-      <button type="button" className="ui-table-sort" data-active={view.sort === sort || undefined} onClick={() => setView(withSort(view, sort))}>
+      <button type="button" className="console-table-sort" data-active={view.sort === sort || undefined} onClick={() => setView(withSort(view, sort))}>
         {labels[SORT_KEYS[sort]]}
         {view.sort === sort ? (view.dir === 'asc' ? <ArrowUp size={14} aria-hidden="true" /> : <ArrowDown size={14} aria-hidden="true" />) : null}
       </button>
@@ -393,7 +393,7 @@ export function ConsoleList({
 
       {saving && (
         <form
-          className="ui-card console-panel"
+          className="console-card console-panel"
           onSubmit={(event) => {
             event.preventDefault();
             void saveView();
@@ -455,7 +455,7 @@ export function ConsoleList({
               return (
                 <Card as="li" key={row.id}>
                   <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
-                  <Link className="ui-row-link console-card-link" href={detailHref(row)}>
+                  <Link className="console-row-link console-card-link" href={detailHref(row)}>
                     {page.hasImages && <Thumb src={row.image} labels={labels} />}
                     <span className="console-card-text">
                       <RowTitle>{titleOf(row, locale)}</RowTitle>
@@ -470,7 +470,7 @@ export function ConsoleList({
         </>
       ) : (
         <Card flat flush className="console-table-wrap">
-          <table className="ui-table console-table">
+          <table className="console-table">
             <thead>
               <tr>
                 <th className="console-cell-check">
@@ -497,7 +497,7 @@ export function ConsoleList({
                       <Checkbox checked={checked.has(row.id)} onChange={() => toggleRow(row.id)} aria-label={titleOf(row, locale)} />
                     </td>
                     <td className="console-cell-title">
-                      <Link className="ui-row-link console-row-link" href={detailHref(row)}>
+                      <Link className="console-row-link" href={detailHref(row)}>
                         {page.hasImages && <Thumb src={row.image} labels={labels} />}
                         <span className="console-row-text">
                           <RowTitle>{titleOf(row, locale)}</RowTitle>

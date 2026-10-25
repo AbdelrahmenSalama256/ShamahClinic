@@ -3,9 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { consoleCall } from './client-api';
-import { Button } from '@/components/ui/Button';
-import { Field, Input } from '@/components/ui/Field';
-import { Alert } from '@/components/ui/Status';
+import { Button } from '@/components/console/kit';
+import { Field, Input } from '@/components/console/kit';
+import { Alert } from '@/components/console/kit';
 import type { MessageKey } from '@/lib/console/messages';
 
 const ERRORS: Record<string, MessageKey> = {
@@ -41,7 +41,7 @@ export function PasswordForm({ labels }: Readonly<{ labels: Record<MessageKey, s
   }
 
   return (
-    <form className="ui-card console-panel" onSubmit={submit}>
+    <form className="console-card console-panel" onSubmit={submit}>
       <Field label={labels['password.current']} htmlFor="current">
         <Input id="current" name="current" type="password" autoComplete="current-password" required />
       </Field>

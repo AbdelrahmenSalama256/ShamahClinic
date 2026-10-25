@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import type { PalettePlace } from '@/lib/console/screens';
 import type { SearchHit } from '@/lib/console/search';
 import { consoleRead } from './client-api';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Field';
-import { Badge, Note, Skeleton } from '@/components/ui/Status';
+import { Button } from '@/components/console/kit';
+import { Input } from '@/components/console/kit';
+import { Badge, Note, Skeleton } from '@/components/console/kit';
 
 export type PaletteLabels = {
   open: string;

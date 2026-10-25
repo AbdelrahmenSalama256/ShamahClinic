@@ -833,7 +833,11 @@ describe('one row on its own page (BK-13.4, 240)', () => {
     expect(editor).toMatch(/errors=\{issues\.byField\[name\] \?\? \[\]\}/);
     expect(editor).toMatch(/aria-invalid=\{invalid \|\| undefined\}/);
     expect(editor).toMatch(/<Field\s+htmlFor=\{id\}/);
-    expect(editor).not.toMatch(/console-field/);
+    // The field's paint belongs to the console kit: the editor writes no raw control, and
+    // the only `.console-field` it names is the wrapper around a flag, whose target is the
+    // kit's own checkbox label.
+    expect(editor).not.toMatch(/<(input|textarea|select)\s/);
+    expect(editor).not.toMatch(/className="console-control"/);
   });
 
   it('edits one language at a time, from tabs instead of a dropdown', () => {

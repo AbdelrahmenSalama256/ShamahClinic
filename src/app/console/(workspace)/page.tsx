@@ -1,5 +1,5 @@
-import { Card } from '@/components/ui/Surface';
-import { Empty, Note } from '@/components/ui/Status';
+import { Card } from '@/components/console/kit';
+import { Empty, Note } from '@/components/console/kit';
 import { message } from '@/lib/console/messages';
 import { overviewRows } from '@/lib/console/overview';
 import { consoleView } from '@/lib/console/server';
@@ -20,7 +20,7 @@ export default async function ConsoleOverviewPage() {
   return (
     <>
       <h1 className="console-heading">{message('overview.heading', prefs.locale)}</h1>
-      <p className="ui-lede">{message('overview.intro', prefs.locale)}</p>
+      <p className="console-lede">{message('overview.intro', prefs.locale)}</p>
 
       {rows.length === 0 ? (
         <Empty>{message('overview.not_allowed', prefs.locale)}</Empty>

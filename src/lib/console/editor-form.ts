@@ -15,7 +15,7 @@
  * belongs under is the same either way. An issue is not a rejection of the whole save —
  * the other fields are still edited — but no request goes out while one is open.
  */
-import type { Tone } from '@/components/ui/Status';
+import type { Tone } from '@/components/console/kit';
 import type { MessageKey } from './messages';
 import type { FieldIssue } from './issues';
 import { plainText } from '../content/format';

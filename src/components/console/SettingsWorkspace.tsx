@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * The site's settings as four readable screens and one escape hatch.
@@ -21,16 +21,24 @@
  * a token needs to learn it is configured in the environment, not that the console is
  * broken.
  */
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { consoleCall } from './client-api';
-import { Button } from '@/components/ui/Button';
-import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
-import { Card } from '@/components/ui/Surface';
-import { Alert, Badge, Note, type Tone } from '@/components/ui/Status';
-import type { MessageKey } from '@/lib/console/messages';
-import type { ConsoleLocale } from '@/lib/console/prefs';
-import type { SettingView } from '@/lib/content/settings';
+import { useId, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { consoleCall } from "./client-api";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Checkbox,
+  Field,
+  Input,
+  Note,
+  Textarea,
+  type Tone,
+} from "@/components/console/kit";
+import type { MessageKey } from "@/lib/console/messages";
+import type { ConsoleLocale } from "@/lib/console/prefs";
+import type { SettingView } from "@/lib/content/settings";
 import {
   PAGE_SETTING_GROUP,
   SEO_SETTING_FIELDS,
@@ -40,7 +48,7 @@ import {
   safeRedirect,
   type SettingField,
   type SitePageKey,
-} from '@/lib/content/settings-catalog';
+} from "@/lib/content/settings-catalog";
 import {
   BANNER_DEFAULTS,
   BANNER_KEYS,
@@ -50,16 +58,21 @@ import {
   type BannerPageKey,
   type BannerSetting,
   type SavedBanners,
-} from '@/lib/content/banners-catalog';
-import type { PageState, PageStates } from '@/lib/content/page-visibility';
+} from "@/lib/content/banners-catalog";
+import type { PageState, PageStates } from "@/lib/content/page-visibility";
+import { ImageGallery } from "./ImageGallery";
+import { ImagePicker } from "./ImagePicker";
 
 function encoded(value: unknown): string {
-  if (typeof value === 'string') return value;
+  if (typeof value === "string") return value;
   return JSON.stringify(value ?? null, null, 2);
 }
 
 /** What each field reads before it is saved: the row when there is one, else the authored value. */
-function initialValues(rows: readonly SettingView[], defaults: Record<string, string>): Record<string, string> {
+function initialValues(
+  rows: readonly SettingView[],
+  defaults: Record<string, string>,
+): Record<string, string> {
   const values = { ...defaults };
   for (const row of rows) {
     if (row.secret) continue;
@@ -71,6 +84,74 @@ function initialValues(rows: readonly SettingView[], defaults: Record<string, st
 interface Notice {
   tone: Tone;
   text: string;
+}
+
+/**
+ * A section frame: sticky header, body, sticky-on-mobile footer.
+ */
+function SettingsSection({
+  index,
+  title,
+  lede,
+  detail,
+  dirty,
+  dirtyLabel,
+  busy,
+  children,
+  footer,
+  id,
+}: Readonly<{
+  index: string;
+  title: string;
+  lede: string;
+  detail?: React.ReactNode;
+  dirty: boolean;
+  dirtyLabel: string;
+  busy: boolean;
+  children: React.ReactNode;
+  footer?: React.ReactNode;
+  id: string;
+}>) {
+  const titleId = `${id}-title`;
+  const ledeId = `${id}-lede`;
+  return (
+    <Card
+      as="section"
+      className="console-panel settings-section"
+      aria-labelledby={titleId}
+      aria-describedby={ledeId}
+      aria-busy={busy || undefined}
+      data-dirty={dirty || undefined}
+      id={id}
+    >
+      <header className="settings-section-head">
+        <div className="settings-section-title">
+          <span className="settings-section-index" aria-hidden="true">
+            {index}
+          </span>
+          <h2 className="console-subheading" id={titleId}>
+            {title}
+          </h2>
+          {dirty && (
+            <span className="settings-dirty" role="status">
+              <span className="settings-dirty-dot" aria-hidden="true" />
+              {dirtyLabel}
+            </span>
+          )}
+        </div>
+        <p className="console-lede" id={ledeId}>
+          {lede}
+        </p>
+      </header>
+      <div className="settings-section-body">{children}</div>
+      {(footer || detail) && (
+        <footer className="settings-section-foot">
+          {detail ? <Note>{detail}</Note> : null}
+          {footer}
+        </footer>
+      )}
+    </Card>
+  );
 }
 
 export function SettingsWorkspace({
@@ -93,16 +174,19 @@ export function SettingsWorkspace({
   const router = useRouter();
   const initial = initialValues(rows, defaults);
   const [draft, setDraft] = useState<Record<string, string>>({});
-  const [pageDraft, setPageDraft] = useState<Partial<Record<SitePageKey, PageState>>>({});
-  const [bannerDraft, setBannerDraft] = useState<Partial<Record<BannerPageKey, BannerSetting>>>({});
-  // Which control is in flight, not merely whether one is: the spinner has to sit on the
-  // button that asked, and every other section stays put while it waits.
+  const [pageDraft, setPageDraft] = useState<
+    Partial<Record<SitePageKey, PageState>>
+  >({});
+  const [bannerDraft, setBannerDraft] = useState<
+    Partial<Record<BannerPageKey, BannerSetting>>
+  >({});
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const noticeId = useId();
 
   const valueOf = (field: SettingField): string => {
     const id = `${field.group}.${field.key}`;
-    return draft[id] ?? initial[id] ?? '';
+    return draft[id] ?? initial[id] ?? "";
   };
 
   const stateOf = (key: SitePageKey): PageState => pageDraft[key] ?? pages[key];
@@ -116,9 +200,12 @@ export function SettingsWorkspace({
     setPageDraft((state) => ({ ...state, [key]: next }));
   };
 
-  /** A page's banner as it reads now: the row when there is one, else empty fields. */
   const bannerOf = (key: BannerPageKey): BannerSetting =>
-    bannerDraft[key] ?? { src: banners[key]?.src ?? '', altAr: banners[key]?.altAr ?? '', altEn: banners[key]?.altEn ?? '' };
+    bannerDraft[key] ?? {
+      src: banners[key]?.src ?? "",
+      altAr: banners[key]?.altAr ?? "",
+      altEn: banners[key]?.altEn ?? "",
+    };
 
   const setBanner = (key: BannerPageKey, next: BannerSetting): void => {
     setBannerDraft((state) => ({ ...state, [key]: next }));
@@ -126,27 +213,31 @@ export function SettingsWorkspace({
 
   const failure = (code: string | null): void => {
     const mapped = `content.error.${code}` as MessageKey;
-    setNotice({ tone: 'danger', text: labels[mapped] ?? labels['content.error.save'] });
+    setNotice({
+      tone: "danger",
+      text: labels[mapped] ?? labels["content.error.save"],
+    });
   };
 
-  async function saveFields(section: string, fields: readonly SettingField[]): Promise<void> {
+  async function saveFields(
+    section: string,
+    fields: readonly SettingField[],
+  ): Promise<void> {
     const dirty = fields.filter((field) => {
       const id = `${field.group}.${field.key}`;
-      return valueOf(field) !== (initial[id] ?? '');
+      return valueOf(field) !== (initial[id] ?? "");
     });
     if (dirty.length === 0) {
-      setNotice({ tone: 'neutral', text: labels['settings.no_changes'] });
+      setNotice({ tone: "neutral", text: labels["settings.no_changes"] });
       return;
     }
     setBusy(section);
     for (const field of dirty) {
       const text = valueOf(field);
-      const result = await consoleCall('/api/console/settings', 'PATCH', {
+      const result = await consoleCall("/api/console/settings", "PATCH", {
         group: field.group,
         key: field.key,
-        // An empty box unsets the row; the site falls back to the authored value, which is
-        // what an operator emptying "tagline" means.
-        value: text === '' ? null : text,
+        value: text === "" ? null : text,
       });
       if (result.error) {
         setBusy(null);
@@ -155,20 +246,23 @@ export function SettingsWorkspace({
       }
     }
     setBusy(null);
-    setNotice({ tone: 'ok', text: labels['content.saved'] });
+    setNotice({ tone: "ok", text: labels["content.saved"] });
     router.refresh();
   }
 
   async function savePage(key: SitePageKey): Promise<void> {
     const state = stateOf(key);
-    const target = state.redirectTo?.trim() ?? '';
+    const target = state.redirectTo?.trim() ?? "";
     const redirectTo = target ? safeRedirect(target) : null;
     if (target && !redirectTo) {
-      setNotice({ tone: 'danger', text: labels['settings.pages.redirect_invalid'] });
+      setNotice({
+        tone: "danger",
+        text: labels["settings.pages.redirect_invalid"],
+      });
       return;
     }
     setBusy(`page:${key}`);
-    const result = await consoleCall('/api/console/settings', 'PATCH', {
+    const result = await consoleCall("/api/console/settings", "PATCH", {
       group: PAGE_SETTING_GROUP,
       key,
       value: { enabled: state.enabled, redirectTo },
@@ -178,61 +272,129 @@ export function SettingsWorkspace({
       failure(result.error);
       return;
     }
-    setNotice({ tone: 'ok', text: labels['content.saved'] });
-    setPageDraft((draft) => ({ ...draft, [key]: { enabled: state.enabled, redirectTo: redirectTo ?? '' } }));
+    setNotice({ tone: "ok", text: labels["content.saved"] });
+    setPageDraft((draft) => ({
+      ...draft,
+      [key]: { enabled: state.enabled, redirectTo: redirectTo ?? "" },
+    }));
     router.refresh();
   }
 
   async function saveBanner(key: BannerPageKey): Promise<void> {
     const value = bannerOf(key);
     const input = value.src.trim();
-    // An empty path is a request for the authored photo, which is what removing the row
-    // means; anything else has to pass the same check the server-side reader applies.
-    const src = input === '' ? null : safeBannerSrc(input);
-    if (input !== '' && !src) {
-      setNotice({ tone: 'danger', text: labels['settings.banners.src_invalid'] });
+    const src = input === "" ? null : safeBannerSrc(input);
+    if (input !== "" && !src) {
+      setNotice({
+        tone: "danger",
+        text: labels["settings.banners.src_invalid"],
+      });
       return;
     }
     setBusy(`banner:${key}`);
-    const result = await consoleCall('/api/console/settings', 'PATCH', {
+    const result = await consoleCall("/api/console/settings", "PATCH", {
       group: BANNER_SETTING_GROUP,
       key,
-      value: src ? { src, altAr: value.altAr.trim(), altEn: value.altEn.trim() } : null,
+      value: src
+        ? { src, altAr: value.altAr.trim(), altEn: value.altEn.trim() }
+        : null,
     });
     setBusy(null);
     if (result.error) {
       failure(result.error);
       return;
     }
-    setNotice({ tone: 'ok', text: labels['content.saved'] });
+    setNotice({ tone: "ok", text: labels["content.saved"] });
     setBannerDraft((draft) => ({
       ...draft,
-      [key]: { src: src ?? '', altAr: src ? value.altAr.trim() : '', altEn: src ? value.altEn.trim() : '' },
+      [key]: {
+        src: src ?? "",
+        altAr: src ? value.altAr.trim() : "",
+        altEn: src ? value.altEn.trim() : "",
+      },
     }));
     router.refresh();
   }
 
-  async function saveRaw(row: SettingView, text: string, id: string): Promise<void> {
+  async function saveRaw(
+    row: SettingView,
+    text: string,
+    id: string,
+  ): Promise<void> {
     let value: unknown;
     try {
       value = JSON.parse(text) as unknown;
     } catch {
-      setNotice({ tone: 'danger', text: labels['content.error.json'] });
+      setNotice({ tone: "danger", text: labels["content.error.json"] });
       return;
     }
     setBusy(`raw:${id}`);
-    const result = await consoleCall('/api/console/settings', 'PATCH', { group: row.group, key: row.key, value });
+    const result = await consoleCall("/api/console/settings", "PATCH", {
+      group: row.group,
+      key: row.key,
+      value,
+    });
     setBusy(null);
     if (result.error) {
       failure(result.error);
       return;
     }
-    setNotice({ tone: 'ok', text: labels['content.saved'] });
+    setNotice({ tone: "ok", text: labels["content.saved"] });
     router.refresh();
   }
 
-  const known = new Set([...SITE_SETTING_FIELDS, ...SEO_SETTING_FIELDS].map((field) => `${field.group}.${field.key}`));
-  // A banner row has a form above, so it is not an unknown row to dump into Advanced.
+  const identityDirty = useMemo(
+    () =>
+      SITE_SETTING_FIELDS.some((field) => {
+        const id = `${field.group}.${field.key}`;
+        return valueOf(field) !== (initial[id] ?? "");
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draft, initial],
+  );
+
+  const seoDirty = useMemo(
+    () =>
+      SEO_SETTING_FIELDS.some((field) => {
+        const id = `${field.group}.${field.key}`;
+        return valueOf(field) !== (initial[id] ?? "");
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [draft, initial],
+  );
+
+  const pagesDirty = useMemo(
+    () =>
+      SITE_PAGES.some((page) => {
+        const state = pageDraft[page.key] ?? pages[page.key];
+        return (
+          state.enabled !== pages[page.key].enabled ||
+          (state.redirectTo ?? "").trim() !== (pages[page.key].redirectTo ?? "")
+        );
+      }),
+    [pageDraft, pages],
+  );
+
+  const bannersDirty = useMemo(
+    () =>
+      BANNER_PAGES.some((page) => {
+        const saved = banners[page.key];
+        const value = bannerDraft[page.key];
+        if (!value) return false;
+        return (
+          value.src.trim() !== (saved?.src ?? "") ||
+          value.altAr.trim() !== (saved?.altAr ?? "") ||
+          value.altEn.trim() !== (saved?.altEn ?? "")
+        );
+      }),
+    [bannerDraft, banners],
+  );
+
+  const known = new Set(
+    [...SITE_SETTING_FIELDS, ...SEO_SETTING_FIELDS].map(
+      (field) => `${field.group}.${field.key}`,
+    ),
+  );
   for (const key of BANNER_KEYS) known.add(`${BANNER_SETTING_GROUP}.${key}`);
   const pageKeys = new Set<string>(SITE_PAGES.map((page) => page.key));
   const advanced = rows.filter((row) => {
@@ -241,148 +403,285 @@ export function SettingsWorkspace({
     return !(row.group === PAGE_SETTING_GROUP && pageKeys.has(row.key));
   });
 
+  // Note: replace these with the real keys when you add them to messages.ts
+  const dirtyLabel = "Unsaved changes";
+  const readOnlyLabel = "Read only";
+
   return (
-    <>
-      <Card as="section" className="console-panel settings-panel">
-        <h2 className="console-subheading">{labels['settings.pages.heading']}</h2>
-        <p className="ui-lede">{labels['settings.pages.intro']}</p>
+    <div className="settings-workspace">
+      {!canWrite && <Alert tone="neutral">{readOnlyLabel}</Alert>}
+
+      <SettingsSection
+        id="settings-pages"
+        index="01"
+        title={labels["settings.pages.heading"]}
+        lede={labels["settings.pages.intro"]}
+        detail={labels["settings.pages.detail"]}
+        dirty={pagesDirty}
+        dirtyLabel={dirtyLabel}
+        busy={busy !== null && busy.startsWith("page:")}
+      >
         <ul className="settings-pages">
           {SITE_PAGES.map((page) => {
             const state = stateOf(page.key);
-            const dirty =
+            const rowDirty =
               state.enabled !== pages[page.key].enabled ||
-              (state.redirectTo ?? '').trim() !== (pages[page.key].redirectTo ?? '');
+              (state.redirectTo ?? "").trim() !==
+                (pages[page.key].redirectTo ?? "");
             const redirectId = `page-redirect-${page.key}`;
+            const enabledId = `page-enabled-${page.key}`;
             return (
-              <li className="settings-page" key={page.key}>
+              <li
+                className="settings-page"
+                key={page.key}
+                data-dirty={rowDirty || undefined}
+              >
                 <div className="settings-page-id">
-                  <span className="settings-page-label">{page.label[locale]}</span>
-                  <code className="ui-row-key" dir="ltr">
+                  <span className="settings-page-label">
+                    {page.label[locale]}
+                  </span>
+                  <code className="console-row-key settings-page-path" dir="ltr">
                     {hrefOfPage(page)}
                   </code>
                 </div>
+
                 <div className="settings-page-controls">
                   <Checkbox
-                    id={`page-enabled-${page.key}`}
+                    id={enabledId}
                     checked={state.enabled}
                     disabled={!canWrite || busy !== null}
-                    onChange={(event) => setPage(page.key, { ...state, enabled: event.target.checked })}
-                    label={labels['settings.pages.enabled']}
+                    onChange={(event) =>
+                      setPage(page.key, {
+                        ...state,
+                        enabled: event.target.checked,
+                      })
+                    }
+                    label={labels["settings.pages.enabled"]}
                   />
                   {!state.enabled && (
-                    <Field label={labels['settings.pages.redirect']} htmlFor={redirectId} note={<Note>{labels['settings.pages.redirect_hint']}</Note>}>
+                    <Field
+                      label={labels["settings.pages.redirect"]}
+                      htmlFor={redirectId}
+                      note={
+                        <Note>{labels["settings.pages.redirect_hint"]}</Note>
+                      }
+                    >
                       <Input
                         id={redirectId}
                         dir="ltr"
-                        value={state.redirectTo ?? ''}
+                        value={state.redirectTo ?? ""}
                         placeholder="/offers"
                         disabled={!canWrite || busy !== null}
-                        onChange={(event) => setPage(page.key, { ...state, redirectTo: event.target.value })}
+                        onChange={(event) =>
+                          setPage(page.key, {
+                            ...state,
+                            redirectTo: event.target.value,
+                          })
+                        }
                       />
                     </Field>
                   )}
                 </div>
+
                 {canWrite && (
-                  <Button
-                    size="sm"
-                    variant={dirty ? 'primary' : 'default'}
-                    loading={busy === `page:${page.key}`}
-                    disabled={busy !== null && busy !== `page:${page.key}`}
-                    onClick={() => void savePage(page.key)}
-                  >
-                    {labels['content.save']}
-                  </Button>
+                  <div className="settings-page-actions">
+                    <Button
+                      size="sm"
+                      variant={rowDirty ? "primary" : "default"}
+                      loading={busy === `page:${page.key}`}
+                      disabled={busy !== null && busy !== `page:${page.key}`}
+                      onClick={() => void savePage(page.key)}
+                    >
+                      {labels["content.save"]}
+                    </Button>
+                  </div>
                 )}
               </li>
             );
           })}
         </ul>
-        <Note>{labels['settings.pages.detail']}</Note>
-      </Card>
+      </SettingsSection>
 
-      <Card as="section" className="console-panel settings-panel settings-banners">
-        <h2 className="console-subheading">{labels['settings.banners.heading']}</h2>
-        <p className="ui-lede">{labels['settings.banners.intro']}</p>
+      <SettingsSection
+        id="settings-banners"
+        index="02"
+        title={labels["settings.banners.heading"]}
+        lede={labels["settings.banners.intro"]}
+        detail={labels["settings.banners.detail"]}
+        dirty={bannersDirty}
+        dirtyLabel={dirtyLabel}
+        busy={busy !== null && busy.startsWith("banner:")}
+      >
         <div className="settings-banner-grid">
           {BANNER_PAGES.map((page) => {
             const fallback = BANNER_DEFAULTS[page.key];
             const saved = banners[page.key];
             const value = bannerOf(page.key);
             const preview = safeBannerSrc(value.src.trim()) ?? fallback.src;
-            const dirty =
-              value.src.trim() !== (saved?.src ?? '') ||
-              value.altAr.trim() !== (saved?.altAr ?? '') ||
-              value.altEn.trim() !== (saved?.altEn ?? '');
+            const rowDirty =
+              value.src.trim() !== (saved?.src ?? "") ||
+              value.altAr.trim() !== (saved?.altAr ?? "") ||
+              value.altEn.trim() !== (saved?.altEn ?? "");
             const srcId = `banner-src-${page.key}`;
             const altArId = `banner-alt-ar-${page.key}`;
             const altEnId = `banner-alt-en-${page.key}`;
             return (
-              <article className="settings-banner" key={page.key}>
+              <article
+                className="settings-banner"
+                key={page.key}
+                data-dirty={rowDirty || undefined}
+              >
+                <div className="settings-banner-frame">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    className="settings-banner-photo"
+                    src={preview}
+                    alt=""
+                    width={640}
+                    height={360}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div className="settings-banner-meta">
+                    {saved ? (
+                      <Badge tone="ok">
+                        {labels["settings.banners.custom"]}
+                      </Badge>
+                    ) : (
+                      <Badge>Default</Badge>
+                    )}
+                    {rowDirty && (
+                      <span className="settings-dirty">
+                        <span
+                          className="settings-dirty-dot"
+                          aria-hidden="true"
+                        />
+                        {dirtyLabel}
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <header className="settings-banner-head">
-                  <span className="settings-page-label">{page.label[locale]}</span>
-                  <code className="ui-row-key" dir="ltr">
-                    {page.path === '' ? '/' : page.path}
+                  <span className="settings-page-label">
+                    {page.label[locale]}
+                  </span>
+                  <code className="console-row-key settings-page-path" dir="ltr">
+                    {page.path === "" ? "/" : page.path}
                   </code>
-                  {saved ? <Badge tone="ok">{labels['settings.banners.custom']}</Badge> : null}
                 </header>
-                {/* The path is typed live and may point at a file the optimizer cannot
-                    resolve yet; the plain tag shows exactly what the operator wrote. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="settings-banner-photo" src={preview} alt="" width={640} height={360} loading="lazy" decoding="async" />
-                <div className="ui-fields">
-                  <Field label={labels['settings.banners.src']} htmlFor={srcId} note={<Note>{labels['settings.banners.src_hint']}</Note>}>
-                    <Input
-                      id={srcId}
-                      dir="ltr"
+                <div className="console-fields">
+                  <Field
+                    label={labels["settings.banners.src"]}
+                    htmlFor={srcId}
+                    note={<Note>{labels["settings.banners.src_hint"]}</Note>}
+                  >
+                    <ImagePicker
+                      labels={labels}
                       value={value.src}
-                      placeholder={fallback.src}
-                      readOnly={!canWrite}
-                      onChange={(event) => setBanner(page.key, { ...value, src: event.target.value })}
+                      disabled={!canWrite}
+                      inputId={srcId}
+                      ratio="wide"
+                      alt={{ ar: value.altAr, en: value.altEn }}
+                      onChange={(next) =>
+                        setBanner(page.key, { ...value, src: next })
+                      }
                     />
                   </Field>
-                  <Field label={labels['settings.banners.alt_ar']} htmlFor={altArId} note={<Note>{labels['settings.banners.alt_hint']}</Note>}>
+                  <Field
+                    label={labels["settings.banners.alt_ar"]}
+                    htmlFor={altArId}
+                    note={<Note>{labels["settings.banners.alt_hint"]}</Note>}
+                  >
                     <Input
                       id={altArId}
                       dir="rtl"
                       value={value.altAr}
                       placeholder={fallback.alt.ar}
                       readOnly={!canWrite}
-                      onChange={(event) => setBanner(page.key, { ...value, altAr: event.target.value })}
+                      onChange={(event) =>
+                        setBanner(page.key, {
+                          ...value,
+                          altAr: event.target.value,
+                        })
+                      }
                     />
                   </Field>
-                  <Field label={labels['settings.banners.alt_en']} htmlFor={altEnId}>
+                  <Field
+                    label={labels["settings.banners.alt_en"]}
+                    htmlFor={altEnId}
+                  >
                     <Input
                       id={altEnId}
                       dir="ltr"
                       value={value.altEn}
                       placeholder={fallback.alt.en}
                       readOnly={!canWrite}
-                      onChange={(event) => setBanner(page.key, { ...value, altEn: event.target.value })}
+                      onChange={(event) =>
+                        setBanner(page.key, {
+                          ...value,
+                          altEn: event.target.value,
+                        })
+                      }
                     />
                   </Field>
                 </div>
                 {canWrite && (
-                  <Button
-                    size="sm"
-                    variant={dirty ? 'primary' : 'default'}
-                    loading={busy === `banner:${page.key}`}
-                    disabled={busy !== null && busy !== `banner:${page.key}`}
-                    onClick={() => void saveBanner(page.key)}
-                  >
-                    {labels['content.save']}
-                  </Button>
+                  <div className="settings-banner-actions">
+                    {rowDirty && (
+                      <Button
+                        size="sm"
+                        variant="default"
+                        onClick={() =>
+                          setBanner(page.key, {
+                            src: saved?.src ?? "",
+                            altAr: saved?.altAr ?? "",
+                            altEn: saved?.altEn ?? "",
+                          })
+                        }
+                        disabled={busy !== null}
+                      >
+                        Reset
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant={rowDirty ? "primary" : "default"}
+                      loading={busy === `banner:${page.key}`}
+                      disabled={busy !== null && busy !== `banner:${page.key}`}
+                      onClick={() => void saveBanner(page.key)}
+                    >
+                      {labels["content.save"]}
+                    </Button>
+                  </div>
                 )}
               </article>
             );
           })}
         </div>
-        <Note>{labels['settings.banners.detail']}</Note>
-      </Card>
+      </SettingsSection>
 
-      <Card as="section" className="console-panel settings-panel">
-        <h2 className="console-subheading">{labels['settings.site.heading']}</h2>
-        <p className="ui-lede">{labels['settings.site.intro']}</p>
-        <div className="ui-fields">
+      <SettingsSection
+        id="settings-site"
+        index="03"
+        title={labels["settings.site.heading"]}
+        lede={labels["settings.site.intro"]}
+        dirty={identityDirty}
+        dirtyLabel={dirtyLabel}
+        busy={busy === "site"}
+        footer={
+          canWrite ? (
+            <Button
+              variant="primary"
+              loading={busy === "site"}
+              disabled={(busy !== null && busy !== "site") || !identityDirty}
+              onClick={() => void saveFields("site", SITE_SETTING_FIELDS)}
+            >
+              {labels["content.save"]}
+            </Button>
+          ) : null
+        }
+      >
+        <div className="console-fields settings-field-grid">
           {SITE_SETTING_FIELDS.map((field) => {
             const id = `setting-${field.group}-${field.key}`;
             return (
@@ -409,26 +708,47 @@ export function SettingsWorkspace({
             );
           })}
         </div>
-        {canWrite && (
-          <Button variant="primary" loading={busy === 'site'} disabled={busy !== null && busy !== 'site'} onClick={() => void saveFields('site', SITE_SETTING_FIELDS)}>
-            {labels['content.save']}
-          </Button>
-        )}
-      </Card>
+      </SettingsSection>
 
-      <Card as="section" className="console-panel settings-panel">
-        <h2 className="console-subheading">{labels['settings.seo.heading']}</h2>
-        <p className="ui-lede">{labels['settings.seo.intro']}</p>
-        <div className="ui-fields">
+      <SettingsSection
+        id="settings-seo"
+        index="04"
+        title={labels["settings.seo.heading"]}
+        lede={labels["settings.seo.intro"]}
+        dirty={seoDirty}
+        dirtyLabel={dirtyLabel}
+        busy={busy === "seo"}
+        footer={
+          canWrite ? (
+            <Button
+              variant="primary"
+              loading={busy === "seo"}
+              disabled={(busy !== null && busy !== "seo") || !seoDirty}
+              onClick={() => void saveFields("seo", SEO_SETTING_FIELDS)}
+            >
+              {labels["content.save"]}
+            </Button>
+          ) : null
+        }
+      >
+        <div className="console-fields settings-field-grid">
           {SEO_SETTING_FIELDS.map((field) => {
             const id = `setting-${field.group}-${field.key}`;
-            const hint = field.key === 'verification.google' ? <Note>{labels['settings.seo.verification_hint']}</Note> : undefined;
+            const hint =
+              field.key === "verification.google" ? (
+                <Note>{labels["settings.seo.verification_hint"]}</Note>
+              ) : undefined;
             return (
-              <Field key={id} label={field.label[locale]} htmlFor={id} note={hint}>
+              <Field
+                key={id}
+                label={field.label[locale]}
+                htmlFor={id}
+                note={hint}
+              >
                 <Textarea
                   id={id}
                   rows={field.multiline ? 3 : 1}
-                  dir={field.key === 'verification.google' ? 'ltr' : undefined}
+                  dir={field.key === "verification.google" ? "ltr" : undefined}
                   value={valueOf(field)}
                   readOnly={!canWrite}
                   onChange={(event) => setField(field, event.target.value)}
@@ -437,63 +757,108 @@ export function SettingsWorkspace({
             );
           })}
         </div>
-        {canWrite && (
-          <Button variant="primary" loading={busy === 'seo'} disabled={busy !== null && busy !== 'seo'} onClick={() => void saveFields('seo', SEO_SETTING_FIELDS)}>
-            {labels['content.save']}
-          </Button>
-        )}
-      </Card>
+      </SettingsSection>
 
       {advanced.length > 0 && (
-        <Card as="section" className="console-panel settings-panel">
-          <h2 className="console-subheading">{labels['settings.advanced.heading']}</h2>
-          <p className="ui-lede">{labels['settings.advanced.intro']}</p>
-          {advanced.map((row) => {
-            const id = `${row.group}.${row.key}`;
-            const current = draft[id] ?? encoded(row.value);
-            const dirty = current !== encoded(row.value);
-            return (
-              <div className="settings-raw" key={id}>
-                <h3 className="settings-raw-heading">
-                  {row.key} <Badge>{row.group}</Badge>
-                </h3>
-                {row.secret ? (
-                  <Alert>{labels['content.secret']}</Alert>
-                ) : (
-                  <>
-                    <Field label={id} htmlFor={`setting-${id}`}>
-                      <Textarea
-                        id={`setting-${id}`}
-                        rows={5}
-                        dir="ltr"
-                        value={current}
-                        readOnly={!canWrite}
-                        onChange={(event) => setDraft((state) => ({ ...state, [id]: event.target.value }))}
-                      />
-                    </Field>
-                    {canWrite && (
-                      <Button
-                        variant={dirty ? 'primary' : 'default'}
-                        size="sm"
-                        loading={busy === `raw:${id}`}
-                        disabled={busy !== null && busy !== `raw:${id}`}
-                        onClick={() => void saveRaw(row, current, id)}
-                      >
-                        {labels['content.save']}
-                      </Button>
+        <SettingsSection
+          id="settings-advanced"
+          index="05"
+          title={labels["settings.advanced.heading"]}
+          lede={labels["settings.advanced.intro"]}
+          dirty={false}
+          dirtyLabel={dirtyLabel}
+          busy={false}
+        >
+          <div className="settings-advanced">
+            {advanced.map((row) => {
+              const id = `${row.group}.${row.key}`;
+              const current = draft[id] ?? encoded(row.value);
+              const rowDirty = current !== encoded(row.value);
+              return (
+                <div
+                  className="settings-raw"
+                  key={id}
+                  data-dirty={rowDirty || undefined}
+                >
+                  <header className="settings-raw-head">
+                    <h3 className="settings-raw-heading">
+                      <code className="settings-raw-key">{row.key}</code>
+                      <Badge>{row.group}</Badge>
+                    </h3>
+                    {rowDirty && (
+                      <span className="settings-dirty">
+                        <span
+                          className="settings-dirty-dot"
+                          aria-hidden="true"
+                        />
+                        {dirtyLabel}
+                      </span>
                     )}
-                  </>
-                )}
-                <Note>
-                  {labels['content.updated_at']}: {row.updatedAt.slice(0, 10)} · {labels['content.version']} {row.version}
-                </Note>
-              </div>
-            );
-          })}
-        </Card>
+                  </header>
+                  {row.secret ? (
+                    <Alert>{labels["content.secret"]}</Alert>
+                  ) : (
+                    <>
+                      <Field label={id} htmlFor={`setting-${id}`}>
+                        <Textarea
+                          id={`setting-${id}`}
+                          rows={5}
+                          dir="ltr"
+                          value={current}
+                          readOnly={!canWrite}
+                          className="settings-raw-editor"
+                          onChange={(event) =>
+                            setDraft((state) => ({
+                              ...state,
+                              [id]: event.target.value,
+                            }))
+                          }
+                        />
+                        <ImageGallery
+                          labels={labels}
+                          value={current}
+                          disabled={!canWrite}
+                          onChange={(next) =>
+                            setDraft((state) => ({ ...state, [id]: next }))
+                          }
+                        />
+                      </Field>
+                      {canWrite && (
+                        <div className="settings-raw-actions">
+                          <Button
+                            variant={rowDirty ? "primary" : "default"}
+                            size="sm"
+                            loading={busy === `raw:${id}`}
+                            disabled={busy !== null && busy !== `raw:${id}`}
+                            onClick={() => void saveRaw(row, current, id)}
+                          >
+                            {labels["content.save"]}
+                          </Button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                  <Note>
+                    {labels["content.updated_at"]}: {row.updatedAt.slice(0, 10)}{" "}
+                    · {labels["content.version"]} {row.version}
+                  </Note>
+                </div>
+              );
+            })}
+          </div>
+        </SettingsSection>
       )}
 
-      {notice && <Alert tone={notice.tone}>{notice.text}</Alert>}
-    </>
+      {notice && (
+        <div
+          className="settings-notice"
+          id={noticeId}
+          role="status"
+          aria-live="polite"
+        >
+          <Alert tone={notice.tone}>{notice.text}</Alert>
+        </div>
+      )}
+    </div>
   );
 }

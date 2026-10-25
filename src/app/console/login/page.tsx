@@ -17,9 +17,9 @@ export default async function ConsoleLoginPage() {
   return (
     <main className="console-center">
       <section className="console-login">
-        <p className="ui-lede">{message('brand.subtitle', prefs.locale)}</p>
+        <p className="console-lede">{message('brand.subtitle', prefs.locale)}</p>
         <h1 className="console-heading">{message('login.heading', prefs.locale)}</h1>
-        <p className="ui-lede">{message('login.intro', prefs.locale)}</p>
+        <p className="console-lede">{message('login.intro', prefs.locale)}</p>
         <LoginForm labels={labels} />
       </section>
     </main>

@@ -33,9 +33,9 @@
  */
 import { useEffect, useRef, useState, type ClipboardEvent } from 'react';
 
-import { Button } from '@/components/ui/Button';
-import { Alert, Note } from '@/components/ui/Status';
-import { Input } from '@/components/ui/Field';
+import { Button } from '@/components/console/kit';
+import { Alert, Note } from '@/components/console/kit';
+import { Input } from '@/components/console/kit';
 import { cleanPaste } from '@/lib/console/paste-filter';
 import { isAllowedHref } from '@/lib/content/rich-policy';
 import { mediaMessageKey, uploadPicture } from '@/lib/console/upload';
@@ -178,8 +178,8 @@ export function RichEditor({ labels, value, onChange, disabled, inputId, title, 
   };
 
   return (
-    <div className="ui-rich" dir={rtl ? 'rtl' : 'ltr'}>
-      <div className="ui-rich-toolbar" role="toolbar" aria-label={labels['rich.toolbar']}>
+    <div className="console-rich" dir={rtl ? 'rtl' : 'ltr'}>
+      <div className="console-rich-toolbar" role="toolbar" aria-label={labels['rich.toolbar']}>
         {TOOLS.map((tool) => (
           <Button
             key={tool.key}
@@ -197,7 +197,7 @@ export function RichEditor({ labels, value, onChange, disabled, inputId, title, 
       </div>
 
       {linkOpen ? (
-        <div className="ui-rich-link">
+        <div className="console-rich-link">
           {/* An address is typed nowhere else in this console; a link is the one place a person
               has to, because the site's own pages are not a file anybody uploads. */}
           <Input
@@ -224,7 +224,7 @@ export function RichEditor({ labels, value, onChange, disabled, inputId, title, 
       ) : null}
 
       <div
-        className="ui-rich-surface"
+        className="console-rich-surface"
         id={inputId}
         role="textbox"
         aria-multiline="true"
@@ -240,7 +240,7 @@ export function RichEditor({ labels, value, onChange, disabled, inputId, title, 
 
       <input
         ref={file}
-        className="ui-rich-file"
+        className="console-rich-file"
         type="file"
         accept="image/png,image/jpeg,image/webp,image/gif"
         aria-label={labels['rich.photo']}

@@ -9,6 +9,7 @@ import { consoleView } from '@/lib/console/server';
 // would flatten every thumbnail) and a reset this work surface does not share.
 import '../../styles/tokens.css';
 import '../../components/ui/ui.css';
+import './console-kit.css';
 import './console.css';
 
 /** Every console page depends on who is asking. */

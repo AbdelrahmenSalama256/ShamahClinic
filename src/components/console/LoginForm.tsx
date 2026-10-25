@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Field, Input } from '@/components/ui/Field';
-import { Alert } from '@/components/ui/Status';
+import { Button } from '@/components/console/kit';
+import { Field, Input } from '@/components/console/kit';
+import { Alert } from '@/components/console/kit';
 import type { MessageKey } from '@/lib/console/messages';
 
 /** The login handler's error codes, mapped to the message that explains them. */
@@ -48,7 +48,7 @@ export function LoginForm({ labels }: Readonly<{ labels: Record<MessageKey, stri
   }
 
   return (
-    <form className="ui-card console-panel" onSubmit={submit}>
+    <form className="console-card console-panel" onSubmit={submit}>
       <Field label={labels['login.email']} htmlFor="email">
         <Input id="email" name="email" type="email" autoComplete="username" required />
       </Field>

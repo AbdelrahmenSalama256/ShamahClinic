@@ -16,10 +16,10 @@
  * not a list of both; ticking a single language is what turns the dimension on.
  */
 import { Fragment, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
-import { Alert, Badge, Empty, Note, type Tone } from '@/components/ui/Status';
-import { Card, RowAction, RowTitle } from '@/components/ui/Surface';
+import { Button } from '@/components/console/kit';
+import { Checkbox, Field, Input, Textarea } from '@/components/console/kit';
+import { Alert, Badge, Empty, Note, type Tone } from '@/components/console/kit';
+import { Card, RowAction, RowTitle } from '@/components/console/kit';
 import type { MessageKey } from '@/lib/console/messages';
 import type { ConsoleLocale } from '@/lib/console/prefs';
 import type { Action, Resource } from '@/lib/auth/permissions';
@@ -218,7 +218,7 @@ export function RolesScreen({
 
   return (
     <div className="console-roles">
-      <p className="ui-lede">{labels['roles.intro']}</p>
+      <p className="console-lede">{labels['roles.intro']}</p>
 
       <div className="console-list-bar">
         {canWrite && (
@@ -237,7 +237,7 @@ export function RolesScreen({
             <Empty>{labels['roles.empty']}</Empty>
           ) : (
             <Card flat flush className="console-table-wrap">
-              <table className="ui-table">
+              <table className="console-table">
                 <thead>
                   <tr>
                     <th>{labels['roles.name']}</th>
@@ -329,7 +329,7 @@ export function RolesScreen({
                 <Note tone="ok">{labels['roles.full_access']}</Note>
               ) : (
                 <Card flat flush className="console-table-wrap">
-                  <table className="ui-table console-role-table">
+                  <table className="console-table console-role-table">
                     <thead>
                       <tr>
                         <th scope="col">{labels['roles.permissions']}</th>

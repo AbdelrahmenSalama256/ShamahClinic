@@ -12,9 +12,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ConsoleEditor } from './ConsoleEditor';
-import { Button } from '@/components/ui/Button';
-import { Note } from '@/components/ui/Status';
-import { Tabs } from '@/components/ui/Tabs';
+import { Button } from '@/components/console/kit';
+import { Note } from '@/components/console/kit';
+import { Tabs } from '@/components/console/kit-tabs';
 import type { ContentDetailData } from '@/lib/console/content-screen';
 import type { ContentLocale } from '@/lib/content/kinds';
 import { writeScopeQuery } from '@/lib/content/list-view';

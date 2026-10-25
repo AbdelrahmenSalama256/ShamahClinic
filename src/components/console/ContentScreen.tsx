@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { ContentListScreen } from '@/components/console/ContentListScreen';
-import { Empty } from '@/components/ui/Status';
+import { Empty } from '@/components/console/kit';
 import { contentScreenData, type ContentScreenProps } from '@/lib/console/content-screen';
 import { contentDetailPath } from '@/lib/console/paths';
 import { message } from '@/lib/console/messages';

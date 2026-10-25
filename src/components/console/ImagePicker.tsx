@@ -24,8 +24,8 @@
  * swapped for an upload.
  */
 import { useRef, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Alert, Empty, Note, Skeleton } from '@/components/ui/Status';
+import { Button } from '@/components/console/kit';
+import { Alert, Empty, Note, Skeleton } from '@/components/console/kit';
 import { consoleRead } from './client-api';
 import { formatBytes } from '@/lib/console/compress';
 import { looksLikeImage } from '@/lib/console/image-field';
@@ -97,15 +97,15 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
   }
 
   return (
-    <div className="ui-picker">
-      <div className="ui-picker-frame" data-empty={!hasPicture} data-ratio={ratio}>
+    <div className="console-picker">
+      <div className="console-picker-frame" data-empty={!hasPicture} data-ratio={ratio}>
         {/* The input is the control the row's `<label>` names, stretched invisibly over the
             frame: a click anywhere on the picture opens the file dialog, and the focus ring
             stays the global one because the element that takes it still draws. */}
         <input
           id={inputId}
           ref={file}
-          className="ui-picker-input"
+          className="console-picker-input"
           type="file"
           accept="image/png,image/jpeg,image/webp,image/gif"
           disabled={disabled || busy}
@@ -117,11 +117,11 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
           // eslint-disable-next-line @next/next/no-img-element
           <img src={value} alt="" loading="lazy" onError={() => setBroken(true)} />
         ) : (
-          <span className="ui-picker-empty">{broken ? labels['media.broken'] : labels['media.empty']}</span>
+          <span className="console-picker-empty">{broken ? labels['media.broken'] : labels['media.empty']}</span>
         )}
       </div>
 
-      <div className="ui-picker-actions">
+      <div className="console-picker-actions">
         {/* The label is the field's own, and the control it points at is the file input a
             button opens: an upload is a control, so it gets a visible name. */}
         <Button type="button" size="sm" disabled={disabled || busy} loading={busy} onClick={() => file.current?.click()}>
@@ -160,17 +160,17 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
 
       {/* A disclosure, not a dialog: the console's chrome has to work with script off, and a
           second modal on this screen would fight the one the row's unsaved-changes gate owns. */}
-      <details className="ui-picker-library" onToggle={(event) => (event.target as HTMLDetailsElement).open && void openLibrary()}>
+      <details className="console-picker-library" onToggle={(event) => (event.target as HTMLDetailsElement).open && void openLibrary()}>
         <summary>{labels['media.library']}</summary>
         {opening ? <Skeleton rows={2} label={labels['media.library']} /> : null}
         {items && items.length === 0 ? <Empty>{labels['media.library_empty']}</Empty> : null}
         {items && items.length > 0 ? (
-          <ul className="ui-picker-grid">
+          <ul className="console-picker-grid">
             {items.map((item) => (
               <li key={item.id}>
                 <button
                   type="button"
-                  className="ui-picker-tile"
+                  className="console-picker-tile"
                   data-active={item.src === value}
                   disabled={disabled}
                   onClick={() => {
@@ -181,7 +181,7 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={item.src} alt="" loading="lazy" width={120} height={90} />
-                  <span className="ui-picker-tile-meta">
+                  <span className="console-picker-tile-meta">
                     <bdi>{item.filename}</bdi>
                     <Note>
                       {item.width}×{item.height} · {formatBytes(item.bytes)}

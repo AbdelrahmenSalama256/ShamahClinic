@@ -1,5 +1,5 @@
 import { LeadsScreen } from '@/components/console/LeadsScreen';
-import { Empty } from '@/components/ui/Status';
+import { Empty } from '@/components/console/kit';
 import { can } from '@/lib/auth/permissions';
 import { catalogFor, message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';

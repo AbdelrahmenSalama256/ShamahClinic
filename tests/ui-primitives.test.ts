@@ -19,6 +19,11 @@ const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8')
 const tokens = readFileSync(join(process.cwd(), 'src/styles/tokens.css'), 'utf8');
 const buttonSource = readFileSync(join(process.cwd(), 'src/components/ui/Button.tsx'), 'utf8');
 const consoleCss = readFileSync(join(process.cwd(), 'src/app/console/console.css'), 'utf8');
+// Slice 0 of the console redesign split the two surfaces' control layers: the console now
+// paints its own kit from its own `--c-*` tokens and imports neither `ui.css` nor the site
+// palette. The cases below keep the site's kit honest and prove the console's twin exists.
+const consoleKitCss = readFileSync(join(process.cwd(), 'src/app/console/console-kit.css'), 'utf8');
+const kitSource = readFileSync(join(process.cwd(), 'src/components/console/kit.tsx'), 'utf8');
 
 /** Declarations, not prose: the header comments quote the hexes they measured, and a
  *  test that read them as colour decisions would fail for the wrong reason. */
@@ -26,6 +31,7 @@ const code = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, '');
 
 const ui = code(uiCss);
 const consoleCode = code(consoleCss);
+const consoleKit = code(consoleKitCss);
 
 function rule(source: string, selector: string): string {
   const start = source.indexOf(`\n${selector} {`);
@@ -43,59 +49,6 @@ function blocksOf(source: string): ReadonlyArray<{ selector: string; body: strin
   }
   return out;
 }
-
-/** What a surface stylesheet is allowed to say about a control-layer class: where it goes,
- *  not what it looks like. `padding`, `border`, `background`, `color`, `font*`,
- *  `min-*-size` and `--radius-*` are deliberately absent — those are the numbers a 44px tap
- *  floor, a measured contrast pair and one capsule radius live in, and a call site that
- *  re-paints them is how one screen's floor quietly becomes another's 36px. */
-const PLACEMENT_PROPERTIES = new Set([
-  'display',
-  'flex',
-  'flex-direction',
-  'flex-wrap',
-  'flex-basis',
-  'flex-grow',
-  'flex-shrink',
-  'gap',
-  'row-gap',
-  'column-gap',
-  'grid',
-  'grid-template-columns',
-  'grid-template-rows',
-  'grid-column',
-  'grid-row',
-  'place-items',
-  'align-items',
-  'align-self',
-  'justify-content',
-  'margin',
-  'margin-block',
-  'margin-block-start',
-  'margin-block-end',
-  'margin-inline',
-  'margin-inline-start',
-  'margin-inline-end',
-  'order',
-  'position',
-  'inset',
-  'inset-block',
-  'inset-block-start',
-  'inset-block-end',
-  'inset-inline',
-  'inset-inline-start',
-  'width',
-  'height',
-  'min-width',
-  'min-height',
-  'max-width',
-  'max-height',
-  'overflow',
-  'overflow-x',
-  'overflow-y',
-  'scrollbar-width',
-  'box-sizing',
-]);
 
 describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
   it('reaches every document without anyone remembering to import it', () => {
@@ -410,31 +363,22 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
     expect(fieldSource).not.toMatch(/className=\{`/);
   });
 
-  it('leaves no second definition of a field anywhere else', () => {
-    expect(consoleCode).not.toMatch(/\.console-field/);
-    // The console sheet may not reach past the primitive for an element it now owns —
-    // with one exception, and it is a narrow one. A `Note` is a span so that the pager's
-    // "of 4" can live inside a row, which means a caption standing alone on a page only
-    // becomes a line of its own if the surface says so. Space is the surface's business and
-    // paint is the primitive's (19.3c), so a `.ui-*` selector in `console.css` may only say
-    // where the control goes: enough to place a caption or group a card row, never enough
-    // to re-decide what a caption looks like on one screen and not the others. The set is
-    // the one 19.3d writes down, so a surface hook cleared here cannot be refused there.
-    for (const block of blocksOf(consoleCode)) {
-      expect(block.selector, `console.css styles a bare element: ${block.selector}`).not.toMatch(
-        /(^|[\s,>+~(])(input|textarea|select)(?![\w-])/,
-      );
-      if (!block.selector.includes('.ui-')) continue;
-      for (const property of [...block.body.matchAll(/([a-z-]+)\s*:/g)].map((match) => match[1]!)) {
-        expect(PLACEMENT_PROPERTIES, `${block.selector} may not set ${property}`).toContain(property);
-      }
+  it('leaves the console its own field, painted by the console kit', () => {
+    // Slice 0 reversed the sharing: the console is not a second consumer of `ui.css` any
+    // more. Its kit paints the same family from its own `--c-*` tokens, and the surface
+    // sheet may place a field but never draw one.
+    for (const selector of ['.console-field', '.console-control', '.console-check', '.console-field-error']) {
+      expect(consoleKit, `${selector} is painted by the kit`).toContain(`\n${selector}`);
     }
-    for (const name of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
+    expect(consoleCode, 'the console surface does not re-paint a field').not.toMatch(/\.console-control\b/);
+    expect(consoleCode, 'no site class survives in the console sheet').not.toMatch(/\.ui-/);
+    for (const name of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace', 'LeadsScreen', 'UsersScreen', 'RolesScreen']) {
       const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
-      // `console-search` and `console-cell-check` survive as the console's own layout —
-      // how wide the filter box is, how wide a checkbox column is. The sheet that decided
-      // what a field looked like is the one that must not come back.
-      expect(source, `${name} still paints a field`).not.toMatch(/console-field/);
+      expect(source, `${name} still imports the site control layer`).not.toMatch(/@\/components\/ui/);
+      expect(source, `${name} still writes a raw control`).not.toMatch(/<(input|textarea|select)\s/);
+      // The `console-field` wrapper is layout a flag row may still need; the control's
+      // paint is what no call site may name.
+      expect(source, `${name} still paints a field`).not.toMatch(/className="console-(control|check)"/);
     }
   });
 });
@@ -561,23 +505,26 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
     }
   });
 
-  it('leaves the console no second definition of a status', () => {
-    for (const gone of ['.console-alert', '.console-note', '.console-meta', '.console-account-label', '.console-palette-empty',
-      '.console-row-skeleton', '.console-chip[', '.console-count[', '.console-chip {']) {
-      expect(consoleCode, `${gone} is not a rule any more`).not.toContain(gone);
+  it('leaves the console its own status shapes, painted by the console kit', () => {
+    // Slice 0 gave the console a twin of the status family, painted from its own tokens.
+    for (const selector of ['.console-badge', '.console-alert', '.console-note', '.console-empty', '.console-skeleton', '.console-mark']) {
+      expect(consoleKit, `${selector} is painted by the kit`).toContain(`\n${selector}`);
     }
-    // The two hooks that survive do it by placement, and only by placement: `Badge` carries no
-    // margin of its own, and the count is the thing a row pushes around — `auto` in the bulk bar
-    // where it leads, zeroed in the pager where the controls take the far edge instead. Measured
-    // in the built app at 360: pager count `margin-inline-start: 0`, controls `auto`.
+    // The surface owns where a count sits, never a second pill: no fill, border or padding
+    // of its own. `auto` in the bulk bar where it leads, zeroed in the pager where the
+    // controls take the far edge instead. Measured in the built app at 360: pager count
+    // `margin-inline-start: 0`, controls `auto`.
     expect(rule(consoleCode, '.console-count')).toMatch(/margin-inline-start: auto;/);
     expect(rule(consoleCode, '.console-pager .console-count')).toMatch(/margin-inline-start: 0;/);
     expect(rule(consoleCode, '.console-bulk .console-count')).toMatch(/margin-inline-end: auto;/);
-    expect(rule(consoleCode, '.console-count')).not.toMatch(/color|font-size/);
-    expect(rule(consoleCode, '.console-account-roles')).toMatch(/gap: var\(--ui-gap-tight\);/);
+    expect(rule(consoleCode, '.console-count')).not.toMatch(/background|border|padding/);
+    expect(rule(consoleCode, '.console-account-roles')).toMatch(/gap: var\(--c-gap-tight\);/);
     // Nothing still writes the class the primitive replaced — `console.css` is only half of
     // a deletion, and the pages outside the shared components were the eager writers.
-    const dead = ['console-alert', 'console-note', 'console-meta', 'console-account-label', 'console-palette-empty', 'console-row-skeleton'];
+    const dead = ['console-meta', 'console-account-label', 'console-palette-empty', 'console-row-skeleton'];
+    for (const name of dead) {
+      expect(consoleCode, `${name} is not a rule any more`).not.toContain(name);
+    }
     for (const path of [
       ...['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ConsoleShell', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) => `src/components/console/${name}.tsx`),
       'src/app/console/(workspace)/page.tsx',
@@ -645,42 +592,22 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
   const navSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'), 'utf8');
   const siteConfig = readFileSync(join(process.cwd(), 'src/config/site.ts'), 'utf8');
 
-  /** Names the console sheet used for things the control layer now owns. A leading dot and
-   *  a "no word character or hyphen after" test keep `.console-cards` and
-   *  `.console-table-wrap` — both still real — out of the way of `console-card` and
-   *  `console-table`. */
-  const retired = [
-    'console-lede',
-    'console-card',
-    'console-card-body',
-    'console-row',
-    'console-row-title',
-    'console-row-key',
-    'console-table',
-    'console-sort',
-    'console-chips',
-    'console-chip-button',
-    'console-chip-x',
-    'console-view-chip',
-    'console-views',
-  ];
-
-  it('leaves the console no second shell, table, chip or row', () => {
-    for (const name of retired) {
-      const gone = new RegExp(`\\.console-${name}(?![\\w-])`);
-      expect(consoleCode, `.console-${name} is not a rule any more`).not.toMatch(gone);
-      expect(`${listSource}\n${listScreenSource}\n${detailSource}\n${navSource}`, `nothing still writes console-${name}`).not.toMatch(
-        new RegExp(`console-${name}(?![\\w-])`),
-      );
+  it('leaves the console its own shells, painted by the console kit', () => {
+    // Slice 0 gave the console a twin of the surface family. A leading dot and the
+    // "no word character or hyphen after" test keep `.console-cards` and
+    // `.console-table-wrap` — both still real — out of the way of `console-card` and
+    // `console-table`.
+    for (const name of ['lede', 'card', 'table', 'table-sort', 'row-action', 'row-link', 'row-title', 'row-key', 'chip', 'chip-row', 'chip-tag', 'chip-x', 'tabs']) {
+      expect(consoleKit, `.console-${name} is painted by the kit`).toMatch(new RegExp(`\\.console-${name}(?![\\w-])`));
     }
-    // The panel and the tabs survive, and only as placement: what a panel is that a card is
-    // not is a measure, and what a tab row is that a chip row is not is the space under it.
-    expect(rule(consoleCode, '.console-panel')).toMatch(/max-width: var\(--console-panel-w\);/);
+    // The panel and the tabs survive on the surface, and only as placement: what a panel
+    // is that a card is not is a measure, and what a tab row is that a chip row is not is
+    // the space under it.
+    expect(rule(consoleCode, '.console-panel')).toMatch(/max-width: var\(--c-panel-w\);/);
     expect(rule(consoleCode, '.console-panel')).not.toMatch(/background|border|box-shadow|padding|border-radius/);
-    expect(rule(consoleCode, '.console-tabs')).toMatch(/margin-block-end: var\(--ui-stack\);/);
+    expect(rule(consoleCode, '.console-tabs')).toMatch(/margin-block-end: var\(--c-stack\);/);
     expect(rule(consoleCode, '.console-tabs')).not.toMatch(/gap|display|background|color/);
-    expect(rule(consoleCode, '.console-table-wrap')).toMatch(/max-block-size: var\(--console-list-h\);/);
-    expect(rule(consoleCode, '.console-table-wrap')).not.toMatch(/background|border|border-radius/);
+    expect(rule(consoleCode, '.console-table-wrap')).toMatch(/max-block-size: var\(--c-list-h\);/);
     // The three nav names styled by nothing were still in the markup, which is how a class
     // outlives the rule that needed it.
     for (const name of ['console-nav-tree', 'console-nav-flat', 'console-nav-branch']) {
@@ -689,39 +616,23 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     }
   });
 
-  it('lets a surface move a primitive and never re-paint it', () => {
-    // The rule `ui.css`'s header states and `console.css` has leaned on since the tabs: an
-    // override may say where a control goes. Everything that says what it looks like —
-    // padding, a border, a fill, a colour, a font, a size floor — is the primitive's,
-    // because those are the numbers the tap floor and the measured contrast pairs live in.
-    const overrides = [...blocksOf(consoleCode), ...blocksOf(globals)].filter((block) => block.selector.includes('.ui-'));
-    expect(overrides.length, 'the console still has placement hooks on the control layer').toBeGreaterThan(0);
-    for (const block of overrides) {
-      for (const property of [...block.body.matchAll(/([a-z-]+)\s*:/g)].map((match) => match[1]!)) {
-        expect(PLACEMENT_PROPERTIES, `${block.selector} may not set ${property}`).toContain(property);
-      }
+  it('gives the console its own kit instead of overriding the site one', () => {
+    // The reversal slice 0 asks for: `console.css` names no site class and no site token,
+    // so the public control layer is not a surface the console can re-paint at all. The
+    // site sheet, in turn, names no console class — the two stylesheets never share a page.
+    expect(consoleCode).not.toMatch(/\.ui-/);
+    expect(consoleCode).not.toMatch(/--ui-/);
+    expect(globals).not.toMatch(/\.console-[a-z]/);
+    expect(globals).not.toMatch(/\[data-surface=["']console["']\]/);
+    // An element selector is allowed only inside the console's own scoped reset (slice 0
+    // requires one) — never as the public sheet's bare `img` rule would have it, which is
+    // how a thumbnail gets flattened by a stylesheet that has no business on this surface.
+    for (const block of blocksOf(consoleCode)) {
+      if (!/(^|[\s,>+~(])(input|textarea|select|img)(?![\w-])/.test(block.selector)) continue;
+      expect(block.selector, `${block.selector} is a bare element outside the console scope`).toMatch(
+        /\[data-surface=["']console["']\]|\.console-[a-z]/,
+      );
     }
-    // And the hooks that are left are the ones this row expected, no more: each is a
-    // standalone `Note` that needs the line a span refuses, or a card row's arrangement.
-    expect(overrides.map((block) => block.selector)).toEqual([
-      '.console-palette-list > .ui-note',
-      '.console-panel > .ui-note, .console-content > .ui-note',
-      // BK-240: the create card's one sentence gives up the stack margin the note
-      // carries everywhere else, and the card's state chip is pushed to the far edge.
-      '.console-create .ui-lede, .console-create .ui-note',
-      '.console-cards .ui-card',
-      '.console-cards .console-card-link > .ui-badge',
-      '.console-lead-note-list > .ui-note',
-      // BK-16a: the account and role screens own the vertical rhythm under their lede,
-      // and the fields inside their forms give up the stack margin the field carries
-      // elsewhere. Placement only, same as the settings row below.
-      '.console-users > .ui-lede, .console-roles > .ui-lede',
-      '.console-user-form .ui-field, .console-role-form .ui-field, .console-role-grid .ui-field',
-      // BK-15a: a page row already spaces its children, so the field inside it gives up
-      // the stack margin it carries everywhere else. Placement only — the border, label
-      // and control inside stay the primitive's.
-      '.settings-page-controls .ui-field',
-    ]);
   });
 
   it('raises one card, and lets the call site pick the tag it deserves', () => {
@@ -744,12 +655,16 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     expect(listSource).toMatch(/<Card flat flush className="console-table-wrap">/);
     // A call site that already owns an element puts the class on it instead of nesting a
     // second box — the login posts from a `form`, and a form inside a card is two objects.
-    expect(readFileSync(join(process.cwd(), 'src/components/console/LoginForm.tsx'), 'utf8')).toContain('className="ui-card console-panel"');
-    // One padding on all four sides: the tile's `calc(--ui-pad + 0.05rem)` was an eighth of a
-    // rem no comment owned, and the card-mode row hard-pinned `0.7rem`, which is what
-    // `--ui-pad` already says when density is dense. Comfortable got the dense card.
+    expect(readFileSync(join(process.cwd(), 'src/components/console/LoginForm.tsx'), 'utf8')).toContain('className="console-card console-panel"');
+    // The console's twin shell carries the same attribute shape from the console kit.
+    expect(kitSource).toMatch(/className=\{clsx\('console-card', className\)\}/);
+    expect(kitSource).toMatch(/data-flat=\{flat \|\| undefined\}/);
+    expect(kitSource).toMatch(/data-flush=\{flush \|\| undefined\}/);
+    expect(kitSource).toMatch(/data-active=\{active \|\| undefined\}/);
+    // One padding on all four sides, from the console's own scale: the site's `--ui-pad`
+    // has no business in this sheet.
     expect(consoleCode).not.toMatch(/calc\(var\(--ui-pad\)/);
-    expect(rule(consoleCode, '.console-cards .ui-card')).toMatch(/gap: var\(--sp-2\);/);
+    expect(rule(consoleCode, '.console-cards .console-card')).toMatch(/gap: var\(--c-sp-2\);/);
   });
 
   it('tints the row under the cursor and still puts the open row first', () => {
@@ -779,8 +694,15 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     expect(rule(ui, '.ui-table thead th')).toMatch(/z-index: 1;/);
     expect(rule(ui, '.ui-table')).toMatch(/border-collapse: separate;/);
     expect(rule(ui, '.ui-table-sort')).toMatch(/min-block-size: var\(--tap\);/);
-    expect(listSource).toMatch(/className="ui-table console-table"/);
-    expect(listSource).toMatch(/className="ui-table-sort"/);
+    // The console's twin table carries the same states from the console kit, and the list
+    // names only the console classes.
+    expect(rule(consoleKit, '.console-table tbody tr:hover')).toMatch(/background:/);
+    expect(rule(consoleKit, '.console-table tbody tr[data-active]')).toMatch(/background:/);
+    expect(rule(consoleKit, '.console-table thead th')).toMatch(/z-index: 1;/);
+    expect(rule(consoleKit, '.console-table-sort')).toMatch(/min-block-size: var\(--c-tap\);/);
+    expect(listSource).toMatch(/className="console-table"/);
+    expect(listSource).toMatch(/className="console-table-sort"/);
+    expect(listSource).not.toMatch(/\bui-table\b/);
   });
 
   it('gives a row one action, in the table and in the card', () => {
@@ -795,10 +717,16 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     // carries one action and one title.
     expect(rule(ui, '.ui-row-link')).toMatch(/min-block-size: var\(--tap\);/);
     expect(rule(ui, '.ui-row-link')).toMatch(/text-decoration: none;/);
-    expect(listSource).toMatch(/<Link className="ui-row-link console-row-link" href=\{detailHref\(row\)\}>/);
-    expect(listSource).toMatch(/<Link className="ui-row-link console-card-link" href=\{detailHref\(row\)\}>/);
+    // The console's twin lives in the console kit, and the list names only its own class.
+    expect(rule(consoleKit, '.console-row-action')).toMatch(/inline-size: 100%;/);
+    expect(rule(consoleKit, '.console-row-link')).toMatch(/min-block-size: var\(--c-tap\);/);
+    expect(rule(consoleKit, '.console-row-link')).toMatch(/text-decoration: none;/);
+    expect(kitSource).toMatch(/className=\{clsx\('console-row-action', className\)\}/);
+    expect(listSource).toMatch(/<Link className="console-row-link" href=\{detailHref\(row\)\}>/);
+    expect(listSource).toMatch(/<Link className="console-row-link console-card-link" href=\{detailHref\(row\)\}>/);
     // The key is a `code`: it is literal text a person may have to type into another screen.
     expect(surfaceSource).toMatch(/<code className=\{clsx\('ui-row-key', className\)\}/);
+    expect(kitSource).toMatch(/<code className=\{clsx\('console-row-key', className\)\}/);
   });
 
   it('has no capsule written by hand in either sheet', () => {

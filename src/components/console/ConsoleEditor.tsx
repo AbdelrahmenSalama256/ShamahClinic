@@ -41,10 +41,10 @@ import { fieldOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/conso
 import { contentStateKey, contentStateTone, displayForm, fieldsFromForm, formOf, isPendingIn, sameForm, storedValue, type Form } from '@/lib/console/editor-form';
 import { previewDocument, previewModel, seoReadout } from '@/lib/console/preview';
 import { writeScopeQuery } from '@/lib/content/list-view';
-import { Button, ButtonLink } from '@/components/ui/Button';
-import { Checkbox, Field, Input, Textarea } from '@/components/ui/Field';
-import { Card } from '@/components/ui/Surface';
-import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/ui/Status';
+import { Button, ButtonLink } from '@/components/console/kit';
+import { Checkbox, Field, Input, Textarea } from '@/components/console/kit';
+import { Card } from '@/components/console/kit';
+import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/console/kit';
 import { ImageGallery } from './ImageGallery';
 import { ImagePicker } from './ImagePicker';
 import { RichEditor } from './RichEditor';
@@ -400,7 +400,7 @@ export function ConsoleEditor({
         )}
 
         {row && (
-          <div className="ui-fields">
+          <div className="console-fields">
             {Object.entries(row.fields).map(([name, field]) => (
               <FieldRow
                 key={name}
@@ -456,7 +456,7 @@ export function ConsoleEditor({
 
         {pendingNav && (
           <Card className="console-panel console-nav-confirm" role="alertdialog" aria-label={labels['content.unsaved.title']}>
-            <p className="ui-lede">{labels['content.unsaved.body']}</p>
+            <p className="console-lede">{labels['content.unsaved.body']}</p>
             <div className="console-controls">
               <Button variant="primary" loading={busy} onClick={() => void continueAfterSave()}>
                 {labels['content.unsaved.save']}
@@ -568,7 +568,7 @@ function FieldRow({
 
   if (field.kind === 'flag') {
     return (
-      <div className="ui-field">
+      <div className="console-field">
         {/* The box and its words are one target: `Checkbox` renders the label around the
             input, which is what gives a flag the 44px row the list's checkboxes already had
             and this one did not. */}
@@ -596,7 +596,7 @@ function FieldRow({
   const labelNode = (
     <>
       {label}
-      {field.kind === 'bi' ? <span className="ui-label-note">{labels[`content.locale.${locale}` as MessageKey]}</span> : null}
+      {field.kind === 'bi' ? <span className="console-label-note">{labels[`content.locale.${locale}` as MessageKey]}</span> : null}
       {pending ? <Badge tone="warn">{labels['content.state.pending']}</Badge> : null}
     </>
   );

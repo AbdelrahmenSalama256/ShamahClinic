@@ -5,7 +5,7 @@
  * This file is self-contained. Every custom property it reads is declared in the
  * token block below under the `--c-` prefix; it imports no site stylesheet and reads
  * no site token (`--bg-*`, `--text-*`, `--hairline*`, `--tap`, `--sp-*`, `--z-*`,
- * `--ui-*`). The two surfaces share a design language, not a stylesheet.
+ * the shared control library). The two surfaces share a design language, not a stylesheet.
  *
  * Two attributes set the whole look, both written by the server from the prefs cookie
  * (src/lib/console/prefs.ts), so there is no script and no flash:
@@ -61,6 +61,7 @@
   --c-accent: #85640f;
   --c-success: #0a6636;
   --c-danger: #b3261e;
+  --c-on-fill: #fffaf0;
   --c-line: rgba(33, 26, 22, 0.1);
   --c-line-strong: rgba(33, 26, 22, 0.16);
   --c-focus: #85640f;
@@ -130,6 +131,7 @@
   --c-dur-fast: 140ms;
   --c-dur-base: 160ms;
   --c-dur-slow: 240ms;
+  --c-dur-shimmer: 1100ms;
   --c-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --c-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --c-ease-soft: cubic-bezier(0.25, 0.8, 0.3, 1);
@@ -151,6 +153,7 @@
   --c-accent: #e1c15b;
   --c-success: #3ddc84;
   --c-danger: #f2a0a0;
+  --c-on-fill: #211a16;
   --c-line: rgba(245, 238, 230, 0.12);
   --c-line-strong: rgba(245, 238, 230, 0.2);
   --c-focus: #e1c15b;
@@ -205,153 +208,169 @@
 /* The reset lives in a layer so every class a component writes outranks it: a
  * primitive may restyle a button without having to out-specify an element rule. */
 @layer console-reset {
-[data-surface="console"],
-[data-surface="console"] *,
-[data-surface="console"] *::before,
-[data-surface="console"] *::after {
-  box-sizing: border-box;
-}
-
-[data-surface="console"] :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
-  margin: 0;
-}
-
-[data-surface="console"] :where(h1, h2, h3, h4, h5, h6) {
-  font-weight: 650;
-  line-height: 1.2;
-  letter-spacing: -0.015em;
-}
-
-[data-surface="console"] h1 { font-size: var(--c-font-title); }
-[data-surface="console"] h2 { font-size: 1.25rem; }
-[data-surface="console"] h3 { font-size: 1.1rem; }
-[data-surface="console"] h4 { font-size: 1rem; }
-[data-surface="console"] h5 { font-size: var(--c-font-small); }
-[data-surface="console"] h6 { font-size: var(--c-font-micro); }
-
-[data-surface="console"] :where(p, li, dd, dt) {
-  line-height: var(--c-line-height);
-}
-
-[data-surface="console"] :where(ul, ol) {
-  padding-inline-start: 1.25rem;
-}
-
-[data-surface="console"] :where(a) {
-  color: var(--c-accent);
-  text-decoration: none;
-}
-
-[data-surface="console"] :where(button) {
-  margin: 0;
-  border: 0;
-  padding: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-[data-surface="console"] :where(input, select, textarea) {
-  margin: 0;
-  border: 1px solid var(--c-line-strong);
-  border-radius: var(--c-r-sm);
-  background: var(--c-surface);
-  color: var(--c-text);
-  font: inherit;
-  min-block-size: var(--c-tap-field);
-  padding-block: 0.35rem;
-  padding-inline: 0.7rem;
-}
-
-[data-surface="console"] :where(textarea) {
-  min-block-size: 6rem;
-  padding-block: 0.6rem;
-  resize: vertical;
-}
-
-[data-surface="console"] :where(input[type="checkbox"], input[type="radio"]) {
-  inline-size: 1rem;
-  block-size: 1rem;
-  min-block-size: 0;
-  padding: 0;
-  accent-color: var(--c-accent);
-}
-
-[data-surface="console"] :where(input[type="file"]) {
-  min-block-size: 0;
-  padding: 0.35rem;
-}
-
-[data-surface="console"] :where(select) {
-  padding-inline-end: 1.75rem;
-}
-
-[data-surface="console"] :where(input, select, textarea)::placeholder {
-  color: var(--c-text-3);
-}
-
-[data-surface="console"] :where(table) {
-  border-collapse: collapse;
-  inline-size: 100%;
-}
-
-[data-surface="console"] :where(th, td) {
-  text-align: start;
-}
-
-[data-surface="console"] :where(code, kbd, samp, pre) {
-  font-family: var(--c-font-mono);
-}
-
-[data-surface="console"] :where(hr) {
-  border: 0;
-  border-block-start: 1px solid var(--c-line);
-}
-
-[data-surface="console"] :where(img, svg, video) {
-  display: block;
-  max-inline-size: 100%;
-}
-
-[data-surface="console"] :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-  outline: 2px solid var(--c-focus);
-  outline-offset: 2px;
-}
-
-[data-surface="console"] ::selection {
-  background: var(--c-tint-strong);
-  color: var(--c-text);
-}
-
-/* The site's scrollbar stays gold-on-cream; the console's is quiet. */
-[data-surface="console"] ::-webkit-scrollbar {
-  inline-size: 6px;
-  block-size: 6px;
-}
-
-[data-surface="console"] ::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-[data-surface="console"] ::-webkit-scrollbar-thumb {
-  border-radius: var(--c-r-pill);
-  background: var(--c-line-strong);
-}
-
-[data-surface="console"] ::-webkit-scrollbar-thumb:hover {
-  background: var(--c-text-3);
-}
-
-@media (prefers-reduced-motion: reduce) {
+  [data-surface="console"],
   [data-surface="console"] *,
   [data-surface="console"] *::before,
   [data-surface="console"] *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+    box-sizing: border-box;
   }
-}
+
+  [data-surface="console"]
+    :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
+    margin: 0;
+  }
+
+  [data-surface="console"] :where(h1, h2, h3, h4, h5, h6) {
+    font-weight: 650;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+
+  [data-surface="console"] h1 {
+    font-size: var(--c-font-title);
+  }
+  [data-surface="console"] h2 {
+    font-size: 1.25rem;
+  }
+  [data-surface="console"] h3 {
+    font-size: 1.1rem;
+  }
+  [data-surface="console"] h4 {
+    font-size: 1rem;
+  }
+  [data-surface="console"] h5 {
+    font-size: var(--c-font-small);
+  }
+  [data-surface="console"] h6 {
+    font-size: var(--c-font-micro);
+  }
+
+  [data-surface="console"] :where(p, li, dd, dt) {
+    line-height: var(--c-line-height);
+  }
+
+  [data-surface="console"] :where(ul, ol) {
+    padding-inline-start: 1.25rem;
+  }
+
+  [data-surface="console"] :where(a) {
+    color: var(--c-accent);
+    text-decoration: none;
+  }
+
+  [data-surface="console"] :where(button) {
+    margin: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  [data-surface="console"] :where(input, select, textarea) {
+    margin: 0;
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--c-r-sm);
+    background: var(--c-surface);
+    color: var(--c-text);
+    font: inherit;
+    min-block-size: var(--c-tap-field);
+    padding-block: 0.35rem;
+    padding-inline: 0.7rem;
+  }
+
+  [data-surface="console"] :where(textarea) {
+    min-block-size: 6rem;
+    padding-block: 0.6rem;
+    resize: vertical;
+  }
+
+  [data-surface="console"] :where(input[type="checkbox"], input[type="radio"]) {
+    inline-size: 1rem;
+    block-size: 1rem;
+    min-block-size: 0;
+    accent-color: var(--c-accent);
+  }
+
+  [data-surface="console"] :where(input[type="file"]) {
+    min-block-size: 0;
+    padding: 0.35rem;
+  }
+
+  [data-surface="console"] :where(select) {
+    padding-inline-end: 1.75rem;
+  }
+
+  [data-surface="console"] :where(input, select, textarea)::placeholder {
+    color: var(--c-text-3);
+  }
+
+  [data-surface="console"] :where(table) {
+    border-collapse: collapse;
+    inline-size: 100%;
+  }
+
+  [data-surface="console"] :where(th, td) {
+    text-align: start;
+  }
+
+  [data-surface="console"] :where(code, kbd, samp, pre) {
+    font-family: var(--c-font-mono);
+  }
+
+  [data-surface="console"] :where(hr) {
+    border: 0;
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  [data-surface="console"] :where(img, svg, video) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    object-fit: cover;
+  }
+
+  [data-surface="console"]
+    :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+
+  [data-surface="console"] ::selection {
+    background: var(--c-tint-strong);
+    color: var(--c-text);
+  }
+
+  /* The site's scrollbar stays gold-on-cream; the console's is quiet. */
+  [data-surface="console"] ::-webkit-scrollbar {
+    inline-size: 6px;
+    block-size: 6px;
+  }
+
+  [data-surface="console"] ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  [data-surface="console"] ::-webkit-scrollbar-thumb {
+    border-radius: var(--c-r-pill);
+    background: var(--c-line-strong);
+  }
+
+  [data-surface="console"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--c-text-3);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-surface="console"] *,
+    [data-surface="console"] *::before,
+    [data-surface="console"] *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
 /* --- the frame ------------------------------------------------------------- */
@@ -635,7 +654,6 @@
   flex-direction: column;
   gap: 0.1rem;
   margin: 0;
-  padding: 0;
   list-style: none;
 }
 
@@ -700,7 +718,6 @@ details[open] > .console-nav-head .console-nav-caret {
   inline-size: min(38rem, 92vw);
   max-block-size: none;
   margin: 10vh auto auto;
-  padding: 0;
   color: var(--c-text);
   background: var(--c-surface);
   border: 0;
@@ -791,7 +808,7 @@ details[open] > .console-nav-head .console-nav-caret {
   overflow-wrap: anywhere;
 }
 
-.console-palette-list > .ui-note {
+.console-palette-list > .console-note {
   display: block;
   margin-block: 0.9rem 0.25rem;
 }
@@ -870,8 +887,8 @@ details[open] > .console-nav-head .console-nav-caret {
   width: min(25rem, 100%);
 }
 
-.console-panel > .ui-note,
-.console-content > .ui-note {
+.console-panel > .console-note,
+.console-content > .console-note {
   display: block;
   margin-block-start: var(--c-stack);
 }
@@ -1071,8 +1088,8 @@ span.console-thumb[data-empty] {
   max-inline-size: 42rem;
 }
 
-.console-create .ui-lede,
-.console-create .ui-note {
+.console-create .console-lede,
+.console-create .console-note {
   margin: 0;
 }
 
@@ -1095,7 +1112,7 @@ span.console-thumb[data-empty] {
   scrollbar-width: thin;
 }
 
-.console-cards .ui-card {
+.console-cards .console-card {
   display: flex;
   align-items: center;
   gap: var(--c-sp-2);
@@ -1103,10 +1120,11 @@ span.console-thumb[data-empty] {
 
 .console-cards .console-card-link {
   flex: 1;
-  min-width: 0;
+  /* min-width: 0; */
+  display: block;
 }
 
-.console-cards .console-card-link > .ui-badge {
+.console-cards .console-card-link > .console-badge {
   margin-inline-start: auto;
 }
 
@@ -1245,7 +1263,6 @@ span.console-thumb[data-empty] {
   flex-wrap: wrap;
   gap: 0.6rem;
   margin: 0;
-  padding: 0;
   list-style: none;
 }
 
@@ -1398,7 +1415,7 @@ span.console-thumb[data-empty] {
   --c-lead-c: var(--c-lead-lost);
 }
 
-.console-leads > .ui-lede {
+.console-leads > .console-lede {
   margin-block-end: 0;
 }
 
@@ -1722,7 +1739,6 @@ span.console-thumb[data-empty] {
   display: grid;
   gap: 0.5rem;
   margin: 0;
-  padding: 0;
   list-style: none;
 }
 
@@ -1828,7 +1844,6 @@ span.console-thumb[data-empty] {
 
 .console-lead-timeline {
   margin: 0;
-  padding: 0;
   list-style: none;
 }
 
@@ -1956,7 +1971,6 @@ span.console-thumb[data-empty] {
     inset: 0;
     z-index: var(--c-z-scrim);
     margin: 0;
-    padding: 0;
     border: 0;
     background: var(--c-backdrop);
     -webkit-backdrop-filter: blur(2px);
@@ -2022,7 +2036,6 @@ span.console-thumb[data-empty] {
 .settings-section {
   max-width: none; /* Breaks out of --c-panel-w */
   width: 100%;
-  padding: 0;
   overflow: hidden;
 }
 
@@ -2044,8 +2057,12 @@ span.console-thumb[data-empty] {
   margin: 0;
   padding: var(--c-pad);
   align-items: start;
+  grid-gap: 15px;
 }
-
+.settings-banner-head {
+  margin-bottom: 10px;
+  margin-top: 15px;
+}
 /* Fix the individual row layout */
 .settings-page {
   display: flex;

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { ContentDetail } from './ContentDetail';
-import { Empty } from '@/components/ui/Status';
+import { Empty } from '@/components/console/kit';
 import { contentDetailData, type ContentScreenProps } from '@/lib/console/content-screen';
 import { message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';

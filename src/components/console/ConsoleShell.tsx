@@ -4,7 +4,7 @@ import type { ConsolePrefs } from '@/lib/console/prefs';
 import { navStrip, navTree, palettePlaces } from '@/lib/console/screens';
 import { ConsoleControls } from './ConsoleControls';
 import { ConsoleFrame } from './ConsoleFrame';
-import { Badge, Note } from '@/components/ui/Status';
+import { Badge, Note } from '@/components/console/kit';
 
 /**
  * The console's frame: brand, the signed-in account, and the screens this role may

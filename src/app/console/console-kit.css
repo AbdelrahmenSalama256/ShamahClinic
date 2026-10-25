@@ -1,0 +1,915 @@
+/*
+ * The console kit: one definition per control, painted only from `--c-*` tokens.
+ *
+ * This is the console's own copy of the primitives. The public site has a control layer
+ * of its own; the two share a design language, not a stylesheet, because a console field
+ * sits in a dense form and a public field sits in a page. Every colour, radius, floor and
+ * duration below is declared in `console.css` on `[data-surface="console"]`.
+ *
+ * The rules are unlayered on purpose: the scoped reset lives in `@layer console-reset`,
+ * so anything a component writes outranks it, and the touch floor cannot be undone by an
+ * element rule.
+ *
+ * Logical properties throughout — no `left`, `right`, `margin-left` — so Arabic needs no
+ * override. The one number every control honours is `--c-tap` (a control) or
+ * `--c-tap-field` (a field, the only floor density may lower).
+ */
+
+/* --- button ---------------------------------------------------------------- */
+.console-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--c-sp-2);
+  min-block-size: var(--c-tap);
+  padding: 0 var(--c-sp-4);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--c-r-md);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--c-font-size);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--c-dur-fast) var(--c-ease-soft),
+    color var(--c-dur-fast) var(--c-ease-soft),
+    border-color var(--c-dur-fast) var(--c-ease-soft),
+    box-shadow var(--c-dur-base) var(--c-ease-soft),
+    transform var(--c-dur-fast) var(--c-ease-soft);
+}
+
+.console-btn:hover:not(:disabled) {
+  background: var(--c-bg-alt);
+  box-shadow: var(--c-ring);
+  transform: translateY(-1px);
+}
+
+.console-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  box-shadow: none;
+}
+
+.console-btn[data-variant='primary'] {
+  border-color: color-mix(in srgb, var(--c-accent) 70%, var(--c-text));
+  background: var(--c-accent);
+  color: var(--c-on-fill);
+  font-weight: 600;
+}
+
+.console-btn[data-variant='primary']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--c-accent) 86%, var(--c-text));
+  box-shadow: 0 8px 20px -12px var(--c-accent);
+}
+
+.console-btn[data-variant='ghost'] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--c-text-2);
+  padding-inline: var(--c-sp-2);
+}
+
+.console-btn[data-variant='ghost']:hover:not(:disabled) {
+  background: var(--c-hover);
+  box-shadow: none;
+  color: var(--c-text);
+}
+
+.console-btn[data-variant='danger'] {
+  border-color: transparent;
+  background: var(--c-danger);
+  color: var(--c-on-fill);
+  font-weight: 600;
+}
+
+.console-btn[data-variant='danger']:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--c-danger) 86%, var(--c-text));
+  box-shadow: var(--c-lift);
+}
+
+/* The pressed toggle: a filter that is on, the tab that is showing. */
+.console-btn[data-active] {
+  border-color: var(--c-accent);
+  background: var(--c-tint);
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.console-btn[data-size='sm'] {
+  padding-inline: var(--c-sp-3);
+  font-size: var(--c-font-small);
+}
+
+.console-btn[data-size='icon'] {
+  min-inline-size: var(--c-tap);
+  padding-inline: var(--c-sp-1);
+  gap: 0;
+}
+
+.console-btn[data-block] {
+  display: flex;
+  inline-size: 100%;
+}
+
+.console-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* A button in flight is disabled — one click, one request — but the cursor says why. */
+.console-btn[data-loading] {
+  cursor: progress;
+  opacity: 1;
+}
+
+.console-btn svg {
+  flex-shrink: 0;
+}
+
+.console-btn-spin {
+  flex-shrink: 0;
+  inline-size: 1em;
+  block-size: 1em;
+  border: 2px solid currentColor;
+  border-block-start-color: transparent;
+  border-radius: var(--c-r-pill);
+  animation: console-spin 700ms linear infinite;
+}
+
+@keyframes console-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-btn:hover:not(:disabled),
+  .console-btn:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* --- field ----------------------------------------------------------------- */
+.console-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap-tight);
+  margin-block-end: var(--c-stack);
+}
+
+/* The stack keeps its rhythm from the field's own margin, so a bare form and the editor
+   measure the same. */
+.console-fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.console-field > label {
+  color: var(--c-text-2);
+  font-size: var(--c-font-small);
+}
+
+.console-field[data-invalid] > label {
+  color: var(--c-danger);
+}
+
+.console-label-note {
+  margin-inline-start: var(--c-sp-1);
+  color: var(--c-text-3);
+  font-size: var(--c-font-small);
+}
+
+.console-control {
+  min-block-size: var(--c-tap-field);
+  padding: var(--c-sp-2) var(--c-sp-3);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--c-r-md);
+  background: var(--c-surface-soft);
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--c-font-size);
+  transition:
+    border-color var(--c-dur-fast) var(--c-ease-soft),
+    opacity var(--c-dur-fast) var(--c-ease-soft);
+}
+
+/* `:where()` is load-bearing: written as two plain rules, the hover selector would
+   outrank the invalid one below and a red field would turn gold under a cursor. */
+.console-control:where(:hover:not(:disabled), :focus) {
+  border-color: var(--c-accent);
+}
+
+textarea.console-control {
+  min-block-size: 6rem;
+  inline-size: 100%;
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+
+/* The native arrow is drawn on the reading side in both directions, so no `[dir]` rule. */
+select.console-control {
+  padding-inline-end: var(--c-sp-2);
+}
+
+.console-control[data-bar] {
+  min-block-size: var(--c-tap);
+  padding: var(--c-sp-1) var(--c-sp-2);
+}
+
+/* A search field filters as it is typed, so the browser's own clear glyph is a second way
+   to do what is already done — and on a narrow bar it overlaps the text. */
+.console-control[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.console-control:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Read-only is not disabled: the words are still there to be read and copied. */
+.console-control[readonly] {
+  opacity: 0.7;
+}
+
+.console-control[aria-invalid='true'] {
+  border-color: var(--c-danger);
+}
+
+.console-field-error {
+  color: var(--c-danger);
+  font-size: var(--c-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* --- checkbox -------------------------------------------------------------- */
+.console-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--c-sp-2);
+  min-inline-size: var(--c-tap);
+  min-block-size: var(--c-tap);
+  color: var(--c-text);
+  font-size: var(--c-font-size);
+  cursor: pointer;
+}
+
+.console-check input {
+  flex-shrink: 0;
+  inline-size: var(--c-sp-5);
+  block-size: var(--c-sp-5);
+  margin: 0;
+  accent-color: var(--c-accent);
+}
+
+.console-check[data-disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* --- tone ------------------------------------------------------------------ */
+/* One answer to "how much does this matter", read by badge, alert and note alike.
+   `--c-tone-*` has no fallback here; the neutral default lives in each consumer's own
+   `var(--c-tone-fg, …)` line, which is what lets a badge and an alert disagree about
+   what "no tone" looks like without a selector to win. */
+.console-badge[data-tone='ok'],
+.console-alert[data-tone='ok'],
+.console-note[data-tone='ok'] {
+  --c-tone-fg: var(--c-success);
+  --c-tone-bg: color-mix(in srgb, var(--c-success) 11%, var(--c-surface));
+  --c-tone-border: color-mix(in srgb, var(--c-success) 36%, var(--c-line));
+}
+
+.console-badge[data-tone='warn'],
+.console-alert[data-tone='warn'],
+.console-note[data-tone='warn'] {
+  --c-tone-fg: var(--c-accent);
+  --c-tone-bg: color-mix(in srgb, var(--c-accent) 11%, var(--c-surface));
+  --c-tone-border: color-mix(in srgb, var(--c-accent) 38%, var(--c-line));
+}
+
+.console-badge[data-tone='danger'],
+.console-alert[data-tone='danger'],
+.console-note[data-tone='danger'] {
+  --c-tone-fg: var(--c-danger);
+  --c-tone-bg: color-mix(in srgb, var(--c-danger) 11%, var(--c-surface));
+  --c-tone-border: color-mix(in srgb, var(--c-danger) 36%, var(--c-line));
+}
+
+/* --- badge ----------------------------------------------------------------- */
+.console-badge {
+  display: inline-block;
+  padding: var(--c-sp-1) var(--c-sp-3);
+  border: 1px solid var(--c-tone-border, var(--c-line));
+  border-radius: var(--c-r-pill);
+  background: var(--c-tone-bg, var(--c-bg-alt));
+  color: var(--c-tone-fg, var(--c-text-2));
+  font-size: var(--c-font-small);
+  line-height: 1.3;
+  /* The property inherits, and a table cell declares `anywhere` so a long slug stays
+     inside it. A state word must keep its own width, so the badge says so. */
+  overflow-wrap: normal;
+}
+
+/* --- alert ----------------------------------------------------------------- */
+.console-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-sp-2) var(--c-sp-3);
+  margin-block: var(--c-sp-3) 0;
+  padding: var(--c-sp-3) var(--c-sp-4);
+  border: 1px solid var(--c-tone-border, var(--c-line));
+  border-radius: var(--c-r-md);
+  background: var(--c-tone-bg, var(--c-bg-alt));
+  color: var(--c-tone-fg, var(--c-text));
+  font-size: var(--c-font-size);
+  overflow-wrap: anywhere;
+}
+
+/* --- note ------------------------------------------------------------------ */
+.console-note {
+  margin: 0;
+  color: var(--c-tone-fg, var(--c-text-2));
+  font-size: var(--c-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* --- empty ----------------------------------------------------------------- */
+.console-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--c-sp-2);
+  padding: var(--c-sp-8) var(--c-sp-4);
+  border: 1px dashed var(--c-line-strong);
+  border-radius: var(--c-r-lg);
+  color: var(--c-text-2);
+  font-size: var(--c-font-size);
+  text-align: center;
+}
+
+/* --- skeleton -------------------------------------------------------------- */
+.console-skeletons {
+  display: grid;
+  gap: var(--c-gap-tight);
+}
+
+.console-skeleton {
+  min-block-size: var(--c-tap);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-md);
+  background: var(--c-bg-alt);
+  animation: console-skeleton var(--c-dur-shimmer) var(--c-ease-in-out) infinite;
+}
+
+/* A breath, not a sweep: opacity is the same animation in both readings, costs no paint,
+   and the reset's reduced-motion block zeroes it while leaving the well at full strength. */
+@keyframes console-skeleton {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* --- value mark ------------------------------------------------------------ */
+.console-mark {
+  color: var(--c-text-2);
+  font-size: var(--c-font-size);
+  line-height: 1;
+}
+
+.console-mark[data-state='yes'] {
+  color: var(--c-success);
+}
+
+/* An absent value is not a false one, so it is the quietest of the three. */
+.console-mark[data-state='none'] {
+  color: var(--c-text-3);
+}
+
+/* --- card ------------------------------------------------------------------ */
+.console-card {
+  padding: var(--c-pad);
+  border: 0;
+  border-radius: var(--c-r-lg);
+  background: var(--c-surface);
+  box-shadow: var(--c-ring), var(--c-lift);
+}
+
+.console-card[data-flat] {
+  box-shadow: var(--c-ring);
+}
+
+.console-card[data-flush] {
+  padding: 0;
+}
+
+.console-card[data-active] {
+  background: var(--c-surface-soft);
+  box-shadow: 0 0 0 1.5px var(--c-accent), var(--c-lift);
+}
+
+/* --- lede ------------------------------------------------------------------ */
+.console-lede {
+  margin-block: 0 var(--c-stack);
+  color: var(--c-text-2);
+  font-size: var(--c-font-size);
+}
+
+/* --- table ----------------------------------------------------------------- */
+.console-table {
+  inline-size: 100%;
+  /* Separate, not collapsed: a collapsed table drops the border off a sticky head. */
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--c-font-size);
+}
+
+.console-table th,
+.console-table td {
+  padding: var(--c-sp-2) var(--c-sp-3);
+  text-align: start;
+  vertical-align: baseline;
+  border-block-end: 1px solid var(--c-line);
+  overflow-wrap: anywhere;
+}
+
+.console-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font-size: var(--c-font-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.console-table tbody tr:hover {
+  background: var(--c-hover);
+}
+
+/* Later than `:hover` on purpose: same weight, so source order is the tie-break and
+   "open in the editor" beats "under the cursor". */
+.console-table tbody tr[data-active] {
+  background: var(--c-active);
+}
+
+.console-table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+/* The most-clicked control on a list gets the tap floor, not the text height. */
+.console-table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--c-sp-1);
+  min-block-size: var(--c-tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--c-font-small);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--c-dur-fast) var(--c-ease-soft);
+}
+
+.console-table-sort:hover,
+.console-table-sort[data-active] {
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+/* --- row ------------------------------------------------------------------- */
+.console-row-action {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--c-text);
+  font: inherit;
+  font-size: var(--c-font-size);
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.console-row-action:hover .console-row-title,
+.console-row-link:hover .console-row-title {
+  text-decoration: underline;
+  text-underline-offset: var(--c-sp-1);
+}
+
+/* A row whose opening leaves the page. The anchor gives back the browser's blue ink and
+   underline; the row keeps its size whichever element it is. */
+.console-row-link {
+  display: flex;
+  align-items: center;
+  gap: var(--c-sp-3);
+  min-block-size: var(--c-tap);
+  color: inherit;
+  text-decoration: none;
+}
+
+.console-row-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.console-row-key {
+  color: var(--c-text-2);
+  font-size: var(--c-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* --- chip ------------------------------------------------------------------ */
+.console-chip {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--c-tap);
+  padding: var(--c-sp-1) var(--c-sp-4);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--c-r-pill);
+  background: var(--c-surface);
+  color: var(--c-text-2);
+  font: inherit;
+  font-size: var(--c-font-small);
+  overflow-wrap: normal;
+  cursor: pointer;
+  transition:
+    background-color var(--c-dur-fast) var(--c-ease-soft),
+    color var(--c-dur-fast) var(--c-ease-soft),
+    border-color var(--c-dur-fast) var(--c-ease-soft);
+}
+
+.console-chip:hover:not(:disabled) {
+  background: var(--c-tint);
+  color: var(--c-text);
+}
+
+.console-chip[data-active] {
+  border-color: var(--c-accent);
+  background: var(--c-tint-strong);
+  color: var(--c-text);
+  font-weight: 600;
+}
+
+.console-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.console-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-gap-tight);
+}
+
+/* Two separately tappable halves: the capsule draws the border and the floor is the
+   tappable height, so the tag is `content-box`. */
+.console-chip-tag {
+  display: inline-flex;
+  box-sizing: content-box;
+  align-items: stretch;
+  min-block-size: var(--c-tap);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--c-r-pill);
+  background: var(--c-surface);
+}
+
+.console-chip-tag .console-chip {
+  min-block-size: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.console-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--c-tap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--c-r-pill);
+  background: transparent;
+  color: var(--c-text-2);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--c-dur-fast) var(--c-ease-soft);
+}
+
+.console-chip-x:hover {
+  color: var(--c-danger);
+}
+
+.console-chip-x:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- tabs ------------------------------------------------------------------ */
+.console-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--c-gap-tight);
+}
+
+/* --- image picker ---------------------------------------------------------- */
+.console-picker {
+  display: grid;
+  gap: var(--c-gap-tight);
+}
+
+.console-picker-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-lg);
+  background: var(--c-surface-soft);
+  transition:
+    border-color var(--c-dur-fast) var(--c-ease-soft),
+    box-shadow var(--c-dur-base) var(--c-ease-soft);
+}
+
+.console-picker-frame[data-empty='true'] {
+  border-style: dashed;
+}
+
+.console-picker-frame:where(:hover, :focus-within) {
+  border-color: var(--c-accent);
+}
+
+.console-picker-frame[data-ratio='wide'] {
+  aspect-ratio: 16 / 9;
+}
+
+.console-picker-frame[data-ratio='square'] {
+  aspect-ratio: 1 / 1;
+}
+
+.console-picker-frame[data-ratio='tall'] {
+  aspect-ratio: 3 / 4;
+}
+
+.console-picker-frame img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.console-picker-empty {
+  padding: var(--c-sp-4);
+  color: var(--c-text-3);
+  font-size: var(--c-font-small);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* The file input is stretched invisibly over the frame instead of hidden: it still draws,
+   so the focus ring can land on it, and a click anywhere on the frame opens the dialog. */
+.console-picker-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: transparent;
+  font-size: var(--c-font-size);
+  cursor: pointer;
+}
+
+.console-picker-input::file-selector-button {
+  display: none;
+}
+
+.console-picker-input:disabled {
+  cursor: default;
+}
+
+.console-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--c-gap-tight);
+}
+
+.console-picker-library {
+  display: grid;
+  gap: var(--c-gap-tight);
+  border-block-start: 1px solid var(--c-line);
+  padding-block-start: var(--c-sp-2);
+}
+
+.console-picker-library > summary {
+  min-block-size: var(--c-tap);
+  padding-block: var(--c-sp-2);
+  color: var(--c-text-2);
+  font-size: var(--c-font-size);
+  cursor: pointer;
+}
+
+.console-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--c-gap-tight);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.console-picker-grid > li {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.console-picker-tile {
+  display: grid;
+  gap: var(--c-gap-tight);
+  min-inline-size: 0;
+  padding: var(--c-sp-2);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-md);
+  background: var(--c-surface);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--c-dur-fast) var(--c-ease-soft),
+    border-color var(--c-dur-fast) var(--c-ease-soft);
+}
+
+.console-picker-tile:where(:hover, :focus-visible) {
+  border-color: var(--c-accent);
+}
+
+.console-picker-tile[data-active='true'] {
+  border-color: var(--c-accent);
+  background: var(--c-tint);
+}
+
+.console-picker-tile:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.console-picker-tile img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--c-r-sm);
+}
+
+.console-picker-tile-meta {
+  display: grid;
+  gap: var(--c-gap-tight);
+  font-size: var(--c-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* --- image gallery --------------------------------------------------------- */
+.console-gallery {
+  display: grid;
+  gap: var(--c-gap-tight);
+}
+
+.console-gallery-item {
+  display: grid;
+  gap: var(--c-gap-tight);
+  min-inline-size: 0;
+}
+
+.console-gallery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-gap-tight);
+}
+
+/* --- body editor ----------------------------------------------------------- */
+.console-rich {
+  display: grid;
+  gap: var(--c-gap-tight);
+}
+
+.console-rich-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-sp-1);
+}
+
+.console-rich-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-gap-tight);
+}
+
+/* A document, not a box of text: an empty body still reads as somewhere to write, and a
+   long one grows instead of hiding its own tail behind a scroll. */
+.console-rich-surface {
+  min-block-size: 12rem;
+  padding: var(--c-pad);
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--c-r-md);
+  background: var(--c-surface);
+  color: var(--c-text);
+  font-size: var(--c-font-size);
+  line-height: var(--c-line-height);
+}
+
+.console-rich-surface:empty::before {
+  content: attr(data-placeholder);
+  color: var(--c-text-3);
+}
+
+.console-rich-surface[data-disabled='true'] {
+  background: var(--c-surface-soft);
+  color: var(--c-text-3);
+  cursor: not-allowed;
+}
+
+.console-rich-surface > :first-child {
+  margin-block-start: 0;
+}
+
+.console-rich-surface > :last-child {
+  margin-block-end: 0;
+}
+
+.console-rich-surface p,
+.console-rich-surface ul,
+.console-rich-surface ol,
+.console-rich-surface blockquote,
+.console-rich-surface figure,
+.console-rich-surface table {
+  margin-block: var(--c-sp-2);
+}
+
+.console-rich-surface h2,
+.console-rich-surface h3,
+.console-rich-surface h4 {
+  margin-block: var(--c-sp-4) var(--c-sp-2);
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.console-rich-surface ul,
+.console-rich-surface ol {
+  padding-inline-start: var(--c-sp-5);
+}
+
+.console-rich-surface blockquote {
+  margin-inline: 0;
+  padding-inline-start: var(--c-sp-3);
+  border-inline-start: 2px solid var(--c-line-strong);
+  color: var(--c-text-2);
+}
+
+.console-rich-surface a {
+  color: var(--c-text);
+  text-decoration: underline;
+  text-underline-offset: var(--c-sp-1);
+}
+
+.console-rich-surface img {
+  max-inline-size: 100%;
+  border-radius: var(--c-r-sm);
+}
+
+.console-rich-surface th,
+.console-rich-surface td {
+  padding: var(--c-sp-1);
+  border: 1px solid var(--c-line);
+  text-align: start;
+}
+
+.console-rich-file {
+  display: none;
+}
+
+/* --- screen-reader only ---------------------------------------------------- */
+.console-sr-only {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

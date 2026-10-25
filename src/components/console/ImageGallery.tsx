@@ -25,8 +25,8 @@
  * takes an element out of a list, which are different questions.
  */
 import { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Alert } from '@/components/ui/Status';
+import { Button } from '@/components/console/kit';
+import { Alert } from '@/components/console/kit';
 import { appendSlot, imageSlots, removeSlot, writeSlot, type ImageSlot } from '@/lib/console/image-field';
 import { mediaMessageKey, uploadPicture } from '@/lib/console/upload';
 import type { MessageKey } from '@/lib/console/messages';
@@ -98,16 +98,16 @@ export function ImageGallery({ labels, value, onChange, disabled, alt, ratio = '
   });
 
   return (
-    <div className="ui-gallery">
-      <ul className="ui-picker-grid">
+    <div className="console-gallery">
+      <ul className="console-picker-grid">
         {cells.map((cell) =>
           cell.kind === 'add' ? (
             // The add tile is a frame like every other tile, dashed and worded, so the one
             // gesture the person has learned — click the box, choose the file — adds too.
-            <li key={`add-${listKey(cell.slot)}`} className="ui-gallery-item">
-              <div className="ui-picker-frame" data-empty="true" data-ratio={ratio}>
+            <li key={`add-${listKey(cell.slot)}`} className="console-gallery-item">
+              <div className="console-picker-frame" data-empty="true" data-ratio={ratio}>
                 <input
-                  className="ui-picker-input"
+                  className="console-picker-input"
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/gif"
                   aria-label={labels['media.add_another']}
@@ -118,16 +118,16 @@ export function ImageGallery({ labels, value, onChange, disabled, alt, ratio = '
                     void choose(cell.slot, 'append', picked);
                   }}
                 />
-                <span className="ui-picker-empty">{labels['media.add_another']}</span>
+                <span className="console-picker-empty">{labels['media.add_another']}</span>
               </div>
             </li>
           ) : (
-            <li key={cell.slot.key} className="ui-gallery-item">
+            <li key={cell.slot.key} className="console-gallery-item">
               {/* One file input per tile: an upload that could land anywhere in the document
                   would be a guess, and a gallery is exactly where the address has to be right. */}
-              <div className="ui-picker-frame" data-ratio={ratio}>
+              <div className="console-picker-frame" data-ratio={ratio}>
                 <input
-                  className="ui-picker-input"
+                  className="console-picker-input"
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/gif"
                   aria-label={labels['media.replace']}
@@ -147,12 +147,12 @@ export function ImageGallery({ labels, value, onChange, disabled, alt, ratio = '
                     onError={() => setBroken((current) => ({ ...current, [cell.slot.key]: true }))}
                   />
                 ) : (
-                  <span className="ui-picker-empty">{broken[cell.slot.key] ? labels['media.broken'] : labels['media.empty']}</span>
+                  <span className="console-picker-empty">{broken[cell.slot.key] ? labels['media.broken'] : labels['media.empty']}</span>
                 )}
               </div>
 
               {cell.slot.list ? (
-                <div className="ui-gallery-actions">
+                <div className="console-gallery-actions">
                   <Button size="sm" variant="ghost" disabled={disabled || busyKey !== null} onClick={() => write(removeSlot(root, cell.slot))}>
                     {labels['media.remove_one']}
                   </Button>

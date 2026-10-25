@@ -33,7 +33,9 @@ const read = (...parts: string[]): string => readFileSync(join(process.cwd(), ..
 const pickerSource = read('src', 'components', 'console', 'ImagePicker.tsx');
 const gallerySource = read('src', 'components', 'console', 'ImageGallery.tsx');
 const editorSource = read('src', 'components', 'console', 'ConsoleEditor.tsx');
-const ui = read('src', 'components', 'ui', 'ui.css');
+// Slice 0 moved the console's primitives out of the shared site sheet; the picker is
+// painted by the console kit now.
+const kit = read('src', 'app', 'console', 'console-kit.css');
 
 /** The first declaration block for a selector, exactly as `ui-primitives.test.ts` reads one. */
 function rule(source: string, selector: string): string {
@@ -152,30 +154,30 @@ describe('one control, everywhere a picture is set (BK-14a.2)', () => {
   });
 });
 
-describe('the picker is painted once, in the control layer (BK-14a.2)', () => {
-  const classes = [...new Set([...`${pickerSource}${gallerySource}`.matchAll(/className="((?:ui-picker|ui-gallery)[\w-]*)"/g)].map((match) => match[1] as string))];
+describe('the picker is painted once, by the console kit (BK-14a.2)', () => {
+  const classes = [...new Set([...`${pickerSource}${gallerySource}`.matchAll(/className="((?:console-picker|console-gallery)[\w-]*)"/g)].map((match) => match[1] as string))];
 
   it('styles every part the two components draw', () => {
     expect(classes.length).toBeGreaterThan(6);
     for (const name of classes) {
-      expect(ui, `.ui-${name.replace('ui-', '')} has a rule`).toContain(`\n.${name} {`);
+      expect(kit, `.${name} has a rule`).toContain(`\n.${name} {`);
     }
   });
 
   it('keeps the file input a real control: invisible, not removed', () => {
-    const hidden = rule(ui, '.ui-picker-input');
+    const hidden = rule(kit, '.console-picker-input');
     expect(hidden).toMatch(/position: absolute;/);
     expect(hidden).toMatch(/inset: 0;/);
     expect(hidden).not.toMatch(/display: none|visibility: hidden/);
-    // The ring stays the single one in `globals.css`; this sheet still declares no outline.
-    expect(ui).not.toMatch(/outline:/);
+    // The ring stays the single scoped one in `console.css`; this sheet declares no outline.
+    expect(kit).not.toMatch(/outline:/);
   });
 
   it('gives the frame the shape of the slot it fills', () => {
-    expect(rule(ui, ".ui-picker-frame[data-ratio='wide']")).toMatch(/aspect-ratio: 16 \/ 9;/);
-    expect(rule(ui, ".ui-picker-frame[data-ratio='square']")).toMatch(/aspect-ratio: 1 \/ 1;/);
-    expect(rule(ui, ".ui-picker-frame[data-ratio='tall']")).toMatch(/aspect-ratio: 3 \/ 4;/);
-    expect(rule(ui, ".ui-picker-frame[data-empty='true']")).toMatch(/border-style: dashed;/);
+    expect(rule(kit, ".console-picker-frame[data-ratio='wide']")).toMatch(/aspect-ratio: 16 \/ 9;/);
+    expect(rule(kit, ".console-picker-frame[data-ratio='square']")).toMatch(/aspect-ratio: 1 \/ 1;/);
+    expect(rule(kit, ".console-picker-frame[data-ratio='tall']")).toMatch(/aspect-ratio: 3 \/ 4;/);
+    expect(rule(kit, ".console-picker-frame[data-empty='true']")).toMatch(/border-style: dashed;/);
   });
 });
 
@@ -197,7 +199,7 @@ describe('what React really paints (BK-14a.2)', () => {
     // The frame is the thing a person clicks, and the control it contains is the one the
     // row's `<label htmlFor>` names — a click on the picture has to be the click that opens
     // the dialog, which is the whole complaint this row answers.
-    const input = markup.match(/<div class="ui-picker-frame"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
+    const input = markup.match(/<div class="console-picker-frame"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
     expect(input).toMatch(/<input[^>]*id="field-image"[^>]*type="file"/);
     expect(input).toMatch(/accept="image\/png,image\/jpeg,image\/webp,image\/gif"/);
     expect(markup).toContain('<img src="/uploads/202610/abc.webp"');
@@ -209,7 +211,7 @@ describe('what React really paints (BK-14a.2)', () => {
 
   it('shows an empty frame that still opens the dialog', () => {
     const markup = html(createElement(ImagePicker, { labels, value: '', onChange: () => undefined, disabled: false, inputId: 'field-image' }));
-    expect(markup).toMatch(/<div class="ui-picker-frame" data-empty="true" data-ratio="wide">/);
+    expect(markup).toMatch(/<div class="console-picker-frame" data-empty="true" data-ratio="wide">/);
     expect(markup).toMatch(/<input[^>]*type="file"/);
     expect(markup).toContain('No photo yet');
     expect(markup).toContain('Upload a photo');
@@ -222,8 +224,8 @@ describe('what React really paints (BK-14a.2)', () => {
     const markup = html(createElement(ImageGallery, { labels, value: document, onChange: () => undefined, disabled: false }));
     expect(markup.match(/type="file"/g)?.length).toBe(5);
     expect(markup.match(/<img src="\/wp\//g)?.length).toBe(3);
-    expect(markup.match(/ui-picker-frame/g)?.length).toBe(5);
-    expect(markup.match(/<span class="ui-picker-empty">Add another photo<\/span>/g)?.length).toBe(2);
+    expect(markup.match(/console-picker-frame/g)?.length).toBe(5);
+    expect(markup.match(/<span class="console-picker-empty">Add another photo<\/span>/g)?.length).toBe(2);
     expect(markup.match(/aria-label="Add another photo"/g)?.length).toBe(2);
     expect(markup.match(/Remove this photo/g)?.length).toBe(3);
     // An element of a list is spliced; a key of an object is not this control's to delete.
