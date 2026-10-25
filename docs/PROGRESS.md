@@ -865,6 +865,65 @@ last two into the database so the team never needs a developer for a word.
 - [ ] 14.5 Section control: enable, disable, reorder, duplicate, per locale, with the site honouring the order.
 - [ ] 14.6 The remaining component strings, then a gate that fails the build when a user-visible string in
       `src/components/**` has no registry entry (an explicit allowlist for non-user-facing text).
+- [x] 14a.1 Media upload: bytes in, address out — `fff2e4c`
+      The owner's complaint was specific and repeated: "any image added by uploading not path or link, and the cms
+      compressing it for website performance". Every image control in this app started as a text box holding a path,
+      and a path box is how a broken image ships — a typo, a file the host never had, or an address that points
+      somewhere the site then fetches on a client's behalf. This row is the server half; the picker that replaces the
+      boxes is 14a.2.
+      **No migration, no new grant.** The `media` table (002_content.sql) and the `media` resource in the role catalog
+      already existed and were unused by the console: Owner/Admin `*`, Editor and Marketer `create`+`update`, SEO
+      `read`, Viewer none.
+      **One enforcement path, unchanged.** The bytes travel as base64 inside the JSON body `guard()` already parses,
+      so session → CSRF → `can('media.create')` → zod all answer *before* a single decoded byte is looked at. Teaching
+      `guard()` multipart was the alternative and it is the one thing worth avoiding here: two ways to be admitted is
+      two ways to be admitted wrongly. Routes are thin delegates, so `tests/roles.test.ts`'s write-scan needed
+      `@/lib/media/api` in its `TRUSTED` map — that map asserts the delegate itself reaches `guard()`, so an
+      allowlist cannot hide an unguarded handler.
+      `POST /api/console/media` (upload) · `GET /api/console/media?limit=` (newest first, for the picker) ·
+      `PATCH /api/console/media/<id>` (alt text in both languages).
+      **A browser is not the authority on what it uploaded.** `src/lib/media/image-info.ts` reads PNG IHDR, the JPEG
+      SOF chain, WebP's `VP8 `/`VP8L`/`VP8X` chunks and GIF's header off the bytes, and that is what `mime`, `ext`,
+      `width` and `height` are taken from — `photo.jpg` sent as a PNG is stored as a PNG. SVG is refused on purpose:
+      it is markup, and `next.config` allows SVG only for the committed brand wordmark. PHP or HTML opening with `<`
+      answers `not_an_image_unsupported_format`; random bytes answer `unknown_format`.
+      **Naming comes from the content hash**, never from what the browser called the file:
+      `/uploads/<yyyymm>/<sha256[0..12]>.<ext>`. Two uploads of one photo are one file and one row, so re-saving a
+      banner cannot accumulate `banner-2.webp` beside it. The `displayName` keeps the person's words for the library
+      list, after stripping everything that is not a letter, number, dot, dash or space, with the extension replaced
+      by the one the bytes prove.
+      **The file is written before the row** — a row pointing at a missing picture is a broken frame on the public
+      site, an orphan file is invisible. That ordering is also the recovery path: a re-upload whose sha matches an
+      existing row restores the bytes at *that row's* address and updates nothing else, which is what a cPanel deploy
+      that shipped the database but not `public/uploads/` needs. Content never has to be re-pointed.
+      **`MEDIA_ROOT`** (new in `.env.example`) moves the bytes outside the tree a deploy rebuilds; the stored address
+      stays `/uploads/…` either way, so the variable changes where files live and not what the site references.
+      Default is `public/`. Tests point it at a temp folder, and the suite's `purge()` deletes the files its rows
+      named — a media test that leaves `public/uploads/202610/` behind is a test that writes into the repo.
+      **Compression is the browser's job, re-checked here.** `src/lib/console/compress.ts` resizes to a 1600 px long
+      edge and re-encodes to WebP q0.82 on a canvas (JPEG when the engine cannot encode WebP, GIF and small files
+      passed through), so `sharp` is not a dependency and `npm run build` stays offline-clean. `MAX_UPLOAD_BYTES`
+      (8 MiB) is the ceiling for a hand-made request; the zod schema caps the encoded string at the same size so an
+      oversized body is refused at parse, not after decoding.
+      **Tests.** `tests/media.test.ts` (18): synthetic PNG/JPEG/WebP (lossy, lossless, extended) and GIF builders;
+      the format table plus the rejection reasons; `fitWithin`/`canPassThrough`; the store (month folder + hash name,
+      a lying filename, `../../etc/passwd` reduced to `passwd.webp`, dedupe to one row and one file, restore a missing
+      file at the stored address, 400/413); and the rails a route has to hold — 401, `csrf_failed`, 403
+      `media.create` *before* the body is read, 200 + the `audit_log` row, 400 `invalid_base64`, 400 on markup, the
+      list read and the alt write, and no row that points at a file that is not on disk.
+      Gates for this slice: lint clean · `tests/media.test.ts` **18/18** · `tests/roles.test.ts` **61/61** · whole-program
+      `tsc` reports no error in any file this row added.
+      **Blocked, and not by this row:** the repo-wide gates cannot be green while another session holds uncommitted
+      edits in the same worktree. `npm run typecheck` and `npm run build` fail on
+      `src/components/console/LeadsScreen.tsx` (references `leads.back` and `leads.section.context`, which
+      `src/lib/console/messages.ts` does not define), and 5 tests in `tests/console.test.ts` +
+      `tests/ui-primitives.test.ts` fail on content missing from a rewritten `src/app/console/console.css` (HEAD holds
+      1639 lines, the working copy 2315, and `[data-locked='true']` is gone). Neither file is staged or touched by
+      this row. `npm run build` and `npm run prove:no-wp` are **not yet run for 14a.1**; re-run both once that
+      session lands. The `prefer-const` in `scripts/db/repair-plain.ts` was mine from `ac61770` and is fixed here.
+      **Not in this slice:** the picker itself (14a.2), deleting or replacing a stored file (media is append-only
+      until a row proves what usage means), and the public site's existing `/wp` mirrors — those stay the frozen
+      backup and are not written to.
 
 ## BK-15 — SEO center: the specialist's feature set, all local
 New tables: `seo_meta` (per entity per locale), `seo_templates`, `redirects`, `not_found_hits`, `crawl_issues`,
