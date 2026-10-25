@@ -47,8 +47,12 @@ export interface Rule<I = unknown> {
   action: Action;
   /** Parsed only after permission is granted. */
   schema?: ZodType<I>;
-  /** Where the payload comes from. Reads take it from the URL; the default is the body. */
-  inputFrom?: (req: Request) => unknown;
+  /**
+   * Where the payload comes from. Reads take it from the URL; the default is the JSON body.
+   * A `multipart/form-data` upload is read here, after permission is granted, so an
+   * unauthenticated caller cannot make the server buffer a file.
+   */
+  inputFrom?: (req: Request) => unknown | Promise<unknown>;
   /** From the URL, never the body. A function lets a route derive it from the path. */
   target?: Target | ((req: Request) => Target);
   /** Only for the routes that change the caller's own password or session. */
@@ -115,7 +119,8 @@ export async function guard<I, R>(
 
   let input: I = undefined as I;
   if (rule.schema) {
-    const parsed = rule.schema.safeParse(rule.inputFrom ? rule.inputFrom(req) : await readBody(req));
+    const raw = rule.inputFrom ? await rule.inputFrom(req) : await readBody(req);
+    const parsed = rule.schema.safeParse(raw);
     if (!parsed.success) {
       return jsonError(400, 'invalid_input', { issues: parsed.error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })) }, trace);
     }

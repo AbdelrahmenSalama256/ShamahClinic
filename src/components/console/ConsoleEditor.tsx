@@ -50,7 +50,7 @@ import { ImageGallery } from './ImageGallery';
 import { ImagePicker } from './ImagePicker';
 import { RichEditor } from './RichEditor';
 import { SeoPanel } from './SeoPanel';
-import { imageSlots, isImageField, looksLikeImage } from '@/lib/console/image-field';
+import { imageSlots, isImageField, isImageGalleryField, looksLikeImage } from '@/lib/console/image-field';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { EntitySeo } from '@/lib/console/seo-center';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
@@ -594,6 +594,25 @@ function FieldRow({
     );
   }
 
+  // An offer's `images` is pictures and nothing else: a text area over it would be a place
+  // to type an address by hand, which is the thing the picker exists to stop. The gallery
+  // owns the whole field, and an empty one still offers its add tile.
+  if (isImageGalleryField(name, field)) {
+    return (
+      <Field htmlFor={id} errors={errors} label={labelNode} note={<Note>{labels['media.drop']}</Note>}>
+        <ImageGallery
+          labels={labels}
+          value={text}
+          disabled={disabled}
+          alt={{ ar: '', en: '' }}
+          inputId={id}
+          onChange={onChange}
+          empty={flatGallery(text) ? { path: [], srcKey: 'src' } : null}
+        />
+      </Field>
+    );
+  }
+
   // #246. A `html` column is the only content the site prints as markup, and the only place a
   // person used to read `<p class="wp-block-paragraph">` while trying to fix a sentence. They get
   // a page instead. The row keeps the same `id`, which now names the surface they type in.
@@ -646,6 +665,25 @@ function FieldRow({
 
 /** The pictures the live form would put on the site, in document order, for the strip. */
 const MAX_PREVIEWS = 6;
+
+/**
+ * A gallery field that holds no pictures and whose document *is* the list.
+ *
+ * `{}` is what a NULL column reads as, and `[]` is what an empty gallery reads as; both can
+ * take their first element. A populated object (`{ ar: [...] }`) cannot — its lists are
+ * deeper, and `imageSlots()` has already found them when there are any.
+ */
+function flatGallery(value: string): boolean {
+  const text = value.trim();
+  if (text === '') return true;
+  try {
+    const parsed: unknown = JSON.parse(text);
+    if (Array.isArray(parsed)) return true;
+    return parsed !== null && typeof parsed === 'object' && Object.keys(parsed as Record<string, unknown>).length === 0;
+  } catch {
+    return false;
+  }
+}
 
 function imagesOfForm(row: ContentRow, form: Form): string[] {
   const out: string[] = [];

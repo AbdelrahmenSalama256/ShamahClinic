@@ -86,6 +86,23 @@ export async function consoleCall<T = unknown>(path: string, method: 'POST' | 'P
   return callResult<T>(res.status, await payloadOf(res));
 }
 
+/**
+ * A file upload: `multipart/form-data`, like the route reads it.
+ *
+ * The `Content-Type` header is deliberately absent — the browser has to add its own
+ * boundary, and setting the header by hand would produce a body the server cannot split.
+ * The CSRF header is still sent, because this is an unsafe method like any other write.
+ */
+export async function consoleUpload<T = unknown>(path: string, form: FormData): Promise<CallResult<T>> {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { [CSRF_HEADER]: csrfToken() },
+    body: form,
+    credentials: 'same-origin',
+  });
+  return callResult<T>(res.status, await payloadOf(res));
+}
+
 /** A read: no CSRF header, because a GET writes nothing. */
 export async function consoleRead<T>(path: string): Promise<CallResult<T>> {
   const res = await fetch(path, { method: 'GET', credentials: 'same-origin' });

@@ -47,6 +47,16 @@ export function isImageField(name: string, field: FieldShape): boolean {
   return IMAGE_NAME.test(name);
 }
 
+/**
+ * A JSON field whose whole document is pictures — an offer's `images`, a banner strip.
+ *
+ * These render as a gallery and **nothing else**: the document has no text a person needs
+ * to type, and a box that accepts an address by hand is the thing uploads replaced.
+ */
+export function isImageGalleryField(name: string, field: FieldShape): boolean {
+  return field.kind === 'json' && IMAGE_NAME.test(name);
+}
+
 /** A string that reads as an image address — a `data:` image or a file with a picture extension. */
 export function looksLikeImage(value: unknown): value is string {
   if (typeof value !== 'string') return false;
@@ -166,8 +176,14 @@ function replaceAt(node: unknown, path: readonly (string | number)[], next: unkn
 export function appendSlot<T>(root: T, slot: ImageSlot, src: string): T {
   if (!slot.list) return root;
   const current = readAt(root, slot.list.path);
-  if (!Array.isArray(current)) return root;
   const element = slot.list.srcKey === '' ? src : { [slot.list.srcKey]: src };
+  // A gallery field whose column is NULL is read as `{}` by the console; the list is the
+  // document itself, so the first picture replaces that empty object with a one-element
+  // array. Only a list this module was explicitly told about reaches this branch.
+  if (slot.list.path.length === 0) {
+    return (Array.isArray(current) ? [...current, element] : [element]) as T;
+  }
+  if (!Array.isArray(current)) return root;
   return replaceAt(root, slot.list.path, [...current, element]) as T;
 }
 

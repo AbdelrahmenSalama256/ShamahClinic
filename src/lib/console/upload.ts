@@ -2,12 +2,13 @@
  * One file in, one address out — the call every picture control in the console makes.
  *
  * The browser does the shrinking (`compress.ts`), this does the sending and the translating:
- * what came back from the server is an error *code*, and what a person needs is a sentence
- * about their own file. Keeping that mapping in one pure function is the difference between
- * "upload failed" on nine screens and "this file is bigger than 8 MB, choose a smaller one".
+ * the file leaves as one `multipart/form-data` part, and what came back from the server is
+ * an error *code*, while what a person needs is a sentence about their own file. Keeping
+ * that mapping in one pure function is the difference between "upload failed" on nine
+ * screens and "this file is bigger than 8 MB, choose a smaller one".
  */
-import { consoleCall } from '@/components/console/client-api';
-import { compressImage, toBase64 } from './compress';
+import { consoleUpload } from '@/components/console/client-api';
+import { compressImage } from './compress';
 import type { MessageKey } from './messages';
 
 export interface UploadedPicture {
@@ -39,19 +40,14 @@ export async function uploadPicture(file: File, alt: { ar: string; en: string } 
     return { ok: false, code: 'read_failed' };
   }
 
-  let data: string;
-  try {
-    data = await toBase64(compressed.blob);
-  } catch {
-    return { ok: false, code: 'read_failed' };
-  }
+  const form = new FormData();
+  // The display name stays the one the person chose; the server decides the stored format
+  // from the bytes and renames the extension to match, so a `.heic` display name is fine.
+  form.set('file', new File([compressed.blob], file.name, { type: compressed.mime }));
+  form.set('altAr', alt.ar);
+  form.set('altEn', alt.en);
 
-  const res = await consoleCall<UploadResponse>('/api/console/media', 'POST', {
-    filename: file.name,
-    data,
-    alt: { ar: alt.ar, en: alt.en },
-  });
-
+  const res = await consoleUpload<UploadResponse>('/api/console/media', form);
   if (res.error) return { ok: false, code: res.error };
   const src = res.data?.media?.src;
   if (typeof src !== 'string' || src === '') return { ok: false, code: 'no_address' };
@@ -84,11 +80,12 @@ function num(value: number, fallback: number): number {
  */
 export function mediaMessageKey(code: string): MessageKey {
   if (code === 'too_large') return 'media.error.too_large';
+  if (code === 'not_an_image_too_large_dimensions') return 'media.error.dimensions';
   if (code.startsWith('not_an_image')) return 'media.error.not_an_image';
   if (code === 'read_failed' || code === 'no_address') return 'media.error.read';
   if (code === 'forbidden') return 'media.error.forbidden';
   if (code === 'unauthenticated') return 'media.error.signed_out';
   if (code === 'csrf_failed') return 'media.error.expired';
-  if (code === 'write_failed') return 'media.error.writable';
+  if (code === 'write_failed' || code === 'storage_unavailable') return 'media.error.writable';
   return 'media.error.failed';
 }

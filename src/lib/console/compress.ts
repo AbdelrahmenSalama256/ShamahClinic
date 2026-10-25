@@ -3,14 +3,15 @@
  *
  * A phone photo is 4000×3000 and eight megabytes; the slot it fills on the site is at most
  * 1600 pixels across. Resizing in the browser means the upload that reaches the server is
- * already the size the site will serve — no server-side image library, no `sharp` binary to
- * install on a cPanel host, and no original left on disk that nobody asked for.
+ * already the size the site will serve, and a phone on a slow connection does not push bytes
+ * the server would immediately throw away.
  *
  * WebP is the output: it keeps transparency and is what `next/image` would have served
  * anyway. Safari versions that cannot encode WebP get JPEG.
  *
- * GIF is passed through untouched. A GIF is usually small, and re-encoding its first frame
- * would quietly delete the animation.
+ * A format the server does not accept — GIF, HEIC — is decoded and re-encoded like an
+ * oversized photo, rather than passed through and refused at the end of the upload. A
+ * static GIF becomes its first frame in WebP, which is what the site can actually show.
  */
 
 export interface CompressionPlan {
@@ -29,6 +30,9 @@ export const DEFAULT_PLAN: CompressionPlan = { maxEdge: 1600, quality: 0.82 };
 /** Below this the bytes are already cheap, and re-encoding only loses detail. */
 export const PASSTHROUGH_BYTES = 250 * 1024;
 
+/** The formats the server stores. Anything else (GIF, HEIC) is decoded and re-encoded. */
+const PASSTHROUGH_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/avif']);
+
 export function fitWithin(width: number, height: number, maxEdge: number): ResizedDimensions {
   if (width <= 0 || height <= 0) return { width: 0, height: 0 };
   const longest = Math.max(width, height);
@@ -42,9 +46,9 @@ export function needsResizing(width: number, height: number, plan: CompressionPl
   return Math.max(width, height) > plan.maxEdge;
 }
 
-/** A picture worth sending as it arrived: a GIF, or something already small and in shape. */
+/** A picture worth sending as it arrived: already small, in shape, and in a format we store. */
 export function canPassThrough(bytes: number, width: number, height: number, mime: string, plan: CompressionPlan = DEFAULT_PLAN): boolean {
-  if (mime === 'image/gif') return true;
+  if (!PASSTHROUGH_MIME.has(mime)) return false;
   return bytes <= PASSTHROUGH_BYTES && !needsResizing(width, height, plan);
 }
 
@@ -125,23 +129,6 @@ function encodeCanvas(canvas: HTMLCanvasElement, mime: string, quality: number):
       else reject(new Error('encode_failed'));
     }, mime, quality);
   });
-}
-
-/** The base64 body the media API takes. `FileReader` keeps this working without Buffer. */
-export async function toBase64(blob: Blob): Promise<string> {
-  const buffer = await blob.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-  let chunk = '';
-  const out: string[] = [];
-  for (let i = 0; i < bytes.length; i += 1) {
-    chunk += String.fromCharCode(bytes[i]);
-    if (chunk.length >= 8192) {
-      out.push(chunk);
-      chunk = '';
-    }
-  }
-  out.push(chunk);
-  return btoa(out.join(''));
 }
 
 export function formatBytes(bytes: number): string {

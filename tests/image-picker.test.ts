@@ -47,7 +47,8 @@ function rule(source: string, selector: string): string {
 describe('a code becomes a sentence about your own file (BK-14a.2)', () => {
   const cases: [string, MessageKey][] = [
     ['too_large', 'media.error.too_large'],
-    ['not_an_image_svg', 'media.error.not_an_image'],
+    ['not_an_image_too_large_dimensions', 'media.error.dimensions'],
+    ['not_an_image_unsupported_format', 'media.error.not_an_image'],
     ['not_an_image_signature', 'media.error.not_an_image'],
     ['read_failed', 'media.error.read'],
     ['no_address', 'media.error.read'],
@@ -55,6 +56,7 @@ describe('a code becomes a sentence about your own file (BK-14a.2)', () => {
     ['unauthenticated', 'media.error.signed_out'],
     ['csrf_failed', 'media.error.expired'],
     ['write_failed', 'media.error.writable'],
+    ['storage_unavailable', 'media.error.writable'],
     ['stale_row', 'media.error.failed'],
     ['http_500', 'media.error.failed'],
   ];
@@ -121,7 +123,7 @@ describe('one control, everywhere a picture is set (BK-14a.2)', () => {
     for (const drifted of ['IMAGE_EXT', 'IMAGE_PATH', 'IMAGE_NAME', 'collectImages', 'function looksLikeImage', 'const looksLikeImage']) {
       expect(editorSource, `${drifted} is not the editor s own rule any more`).not.toContain(drifted);
     }
-    expect(editorSource).toMatch(/import \{ imageSlots, isImageField, looksLikeImage \} from '@\/lib\/console\/image-field'/);
+    expect(editorSource).toMatch(/import \{ imageSlots, isImageField, isImageGalleryField, looksLikeImage \} from '@\/lib\/console\/image-field'/);
     // Both the picker and the preview strip ask the same function.
     expect(editorSource).toMatch(/isImageField\(name, field\)/);
     expect((editorSource.match(/looksLikeImage\(text\)/g) ?? []).length).toBeGreaterThan(0);
@@ -150,7 +152,10 @@ describe('one control, everywhere a picture is set (BK-14a.2)', () => {
   });
 
   it('renders no gallery for a document it cannot write back', () => {
-    expect(gallerySource).toMatch(/if \(root === undefined \|\| slots\.length === 0\) return null/);
+    // Half-typed JSON has no document to write into; an empty document without a declared
+    // list has nothing to append to. Both paint nothing rather than a button that guesses.
+    expect(gallerySource).toMatch(/if \(root === undefined\) return null;/);
+    expect(gallerySource).toMatch(/if \(slots\.length === 0 && !emptySlot\) return null;/);
   });
 });
 
@@ -201,7 +206,7 @@ describe('what React really paints (BK-14a.2)', () => {
     // the dialog, which is the whole complaint this row answers.
     const input = markup.match(/<div class="console-picker-frame"[^>]*>([\s\S]*?)<\/div>/)?.[1] ?? '';
     expect(input).toMatch(/<input[^>]*id="field-image"[^>]*type="file"/);
-    expect(input).toMatch(/accept="image\/png,image\/jpeg,image\/webp,image\/gif"/);
+    expect(input).toMatch(/accept="image\/png,image\/jpeg,image\/webp,image\/avif"/);
     expect(markup).toContain('<img src="/uploads/202610/abc.webp"');
     expect(markup).not.toMatch(/<input[^>]*type="text"/);
     expect(markup).not.toMatch(/value="\/uploads\/202610\/abc\.webp"/);

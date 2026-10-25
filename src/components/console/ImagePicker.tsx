@@ -31,7 +31,6 @@ import { formatBytes } from '@/lib/console/compress';
 import { looksLikeImage } from '@/lib/console/image-field';
 import { mediaMessageKey, uploadPicture } from '@/lib/console/upload';
 import type { MessageKey } from '@/lib/console/messages';
-
 interface MediaItem {
   id: string;
   src: string;
@@ -62,6 +61,7 @@ export interface ImagePickerProps {
 export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, ratio = 'wide' }: ImagePickerProps) {
   const file = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
+  const [drag, setDrag] = useState(false);
   const [error, setError] = useState<MessageKey | null>(null);
   const [result, setResult] = useState<{ from: number; to: number; width: number; height: number } | null>(null);
   const [broken, setBroken] = useState(false);
@@ -71,7 +71,7 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
   const hasPicture = value.trim() !== '' && looksLikeImage(value);
 
   async function choose(selected: File | undefined): Promise<void> {
-    if (!selected) return;
+    if (!selected || disabled || busy) return;
     setBusy(true);
     setError(null);
     const outcome = await uploadPicture(selected, alt ?? { ar: '', en: '' });
@@ -87,6 +87,13 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
     if (file.current) file.current.value = '';
   }
 
+  /** A photo dropped on the frame is the same gesture as one chosen from the dialog. */
+  function dropped(event: React.DragEvent<HTMLDivElement>): void {
+    event.preventDefault();
+    setDrag(false);
+    void choose(event.dataTransfer.files?.[0]);
+  }
+
   async function openLibrary(): Promise<void> {
     if (items || opening) return;
     setOpening(true);
@@ -98,7 +105,21 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
 
   return (
     <div className="console-picker">
-      <div className="console-picker-frame" data-empty={!hasPicture} data-ratio={ratio}>
+      <div
+        className="console-picker-frame"
+        data-empty={!hasPicture}
+        data-ratio={ratio}
+        data-dragging={drag || undefined}
+        onDragOver={(event) => {
+          if (disabled || busy) return;
+          event.preventDefault();
+          setDrag(true);
+        }}
+        onDragLeave={(event) => {
+          if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) setDrag(false);
+        }}
+        onDrop={dropped}
+      >
         {/* The input is the control the row's `<label>` names, stretched invisibly over the
             frame: a click anywhere on the picture opens the file dialog, and the focus ring
             stays the global one because the element that takes it still draws. */}
@@ -107,9 +128,13 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
           ref={file}
           className="console-picker-input"
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif"
+          accept="image/png,image/jpeg,image/webp,image/avif"
           disabled={disabled || busy}
-          onChange={(event) => void choose(event.target.files?.[0])}
+          onChange={(event) => {
+            const picked = event.target.files?.[0];
+            event.target.value = '';
+            void choose(picked);
+          }}
         />
         {hasPicture && !broken ? (
           // The address may be a `/wp` path from the import or a `/uploads` one from this
@@ -119,6 +144,14 @@ export function ImagePicker({ labels, value, onChange, disabled, inputId, alt, r
         ) : (
           <span className="console-picker-empty">{broken ? labels['media.broken'] : labels['media.empty']}</span>
         )}
+        {drag ? (
+          <span
+            className="console-picker-empty"
+            style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', background: 'var(--c-surface-soft)', opacity: 0.94 }}
+          >
+            {labels['media.drop']}
+          </span>
+        ) : null}
       </div>
 
       <div className="console-picker-actions">

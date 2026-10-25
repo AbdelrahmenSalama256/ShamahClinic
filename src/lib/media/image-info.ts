@@ -21,19 +21,36 @@ export interface ImageInfo {
 }
 
 /** Why a buffer was not accepted, as a code the console can translate. */
-export type ImageRejection = 'empty' | 'too_small' | 'unknown_format' | 'unsupported_format' | 'corrupt';
+export type ImageRejection =
+  | 'empty'
+  | 'too_small'
+  | 'unknown_format'
+  | 'unsupported_format'
+  | 'too_large_dimensions'
+  | 'corrupt';
 
 export type ImageInspection = { ok: true; info: ImageInfo } | { ok: false; reason: ImageRejection };
+
+/** A camera or a design export above this is refused rather than decoded into memory. */
+export const MAX_IMAGE_EDGE = 8_000;
+
+/**
+ * The formats a photograph can arrive as. GIF is absent on purpose: an animated GIF
+ * cannot be re-encoded to WebP without silently dropping every frame but the first, and
+ * a static GIF is a PNG with a worse palette. SVG is absent for the reason in the header.
+ */
+export const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'] as const;
 
 export function inspectImage(bytes: Uint8Array): ImageInspection {
   if (bytes.length === 0) return { ok: false, reason: 'empty' };
   // Fewer bytes than a header block is not an image however it starts.
   if (bytes.length < 24) return { ok: false, reason: 'too_small' };
 
-  const info = png(bytes) ?? jpeg(bytes) ?? webp(bytes) ?? gif(bytes);
+  const info = png(bytes) ?? jpeg(bytes) ?? webp(bytes) ?? avif(bytes);
   if (!info) return { ok: false, reason: looksLikeText(bytes) ? 'unsupported_format' : 'unknown_format' };
-  if (info.width < 1 || info.height < 1 || info.width > 20_000 || info.height > 20_000) {
-    return { ok: false, reason: 'corrupt' };
+  if (info.width < 1 || info.height < 1) return { ok: false, reason: 'corrupt' };
+  if (info.width > MAX_IMAGE_EDGE || info.height > MAX_IMAGE_EDGE) {
+    return { ok: false, reason: 'too_large_dimensions' };
   }
   return { ok: true, info };
 }
@@ -130,7 +147,20 @@ function webp(bytes: Uint8Array): ImageInfo | null {
   return null;
 }
 
-function gif(bytes: Uint8Array): ImageInfo | null {
-  if (!ascii(bytes, 0, 'GIF8') || (bytes[4] !== 0x37 && bytes[4] !== 0x39) || bytes[5] !== 0x61) return null;
-  return { mime: 'image/gif', ext: 'gif', width: le16(bytes, 6), height: le16(bytes, 8) };
+/**
+ * AVIF is an ISO BMFF container: brands in `ftyp`, and the size in an `ispe` box whose
+ * payload is version/flags then width and height. Searching for the box is enough here —
+ * the caller re-encodes with sharp, which does the full structural validation.
+ */
+function avif(bytes: Uint8Array): ImageInfo | null {
+  if (!ascii(bytes, 4, 'ftyp')) return null;
+  const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
+  if (brand !== 'avif' && brand !== 'avis') return null;
+  for (let at = 0; at + 16 <= bytes.length; at += 1) {
+    if (!ascii(bytes, at, 'ispe')) continue;
+    const width = be32(bytes, at + 8);
+    const height = be32(bytes, at + 12);
+    if (width > 0 && height > 0) return { mime: 'image/avif', ext: 'avif', width, height };
+  }
+  return null;
 }

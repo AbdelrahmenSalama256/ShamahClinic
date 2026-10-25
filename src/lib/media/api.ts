@@ -1,12 +1,15 @@
 /**
- * The media API: a picture goes in as bytes, a URL comes out.
+ * The media API: a file goes in as a multipart upload, a URL comes out.
  *
  * `POST /api/console/media` is the only way an image enters the site. Nothing in the
  * console asks a person to type a path — a typed path is a broken image waiting to happen
  * and, if it pointed somewhere else, a request the site would make on a client's behalf.
- * The browser has already resized and compressed the file (see `src/lib/console/compress.ts`);
- * this handler re-checks the bytes it was sent, because the browser is not the authority on
- * what it uploaded.
+ * The browser shrinks the photo before sending it (see `src/lib/console/compress.ts`); this
+ * handler re-checks the bytes because the browser is not the authority on what it uploaded,
+ * and `putUpload` re-encodes them so no metadata the camera embedded survives.
+ *
+ * The file is read **after** `guard()` has authenticated, checked the CSRF header and
+ * confirmed `media.create`: an anonymous caller cannot make the server buffer an 8 MB body.
  *
  * `GET /api/console/media` answers two things the picker needs: the newest pictures, and
  * whether a URL the content already holds belongs to a stored file (so it can show a name).
@@ -14,30 +17,50 @@
 import { z } from 'zod';
 import { guard, jsonError, type GuardResult } from '../auth/guard';
 import { db } from '../db';
-import { MAX_UPLOAD_BYTES, putUpload, setAlt, type StoredMedia } from './store';
+import { putUpload, setAlt, thumbOf, type StoredMedia } from './store';
 
 type Body = Record<string, unknown>;
 
-/** base64 grows the payload by a third; the decoded ceiling is what the store enforces. */
-const MAX_ENCODED_CHARS = Math.ceil((MAX_UPLOAD_BYTES * 4) / 3) + 4;
-
 const uploadSchema = z.object({
   filename: z.string().trim().min(1).max(255),
-  data: z.string().min(16).max(MAX_ENCODED_CHARS),
-  alt: z
-    .object({ ar: z.string().trim().max(500).default(''), en: z.string().trim().max(500).default('') })
-    .strict()
-    .default({ ar: '', en: '' }),
+  /** The bytes as the browser sent them; the format is decided in `putUpload`, not here. */
+  bytes: z.instanceof(Uint8Array),
+  altAr: z.string().trim().max(500).default(''),
+  altEn: z.string().trim().max(500).default(''),
 });
 
 const altSchema = z.object({
   alt: z.object({ ar: z.string().trim().max(500).default(''), en: z.string().trim().max(500).default('') }).strict(),
 });
 
-/** A strict alphabet: `Buffer.from(…, 'base64')` throws away characters it does not understand. */
-const BASE64 = /^[A-Za-z0-9+/\r\n]+=*$/;
-
 const listSchema = z.object({ limit: z.number().int().min(1).max(100) });
+
+/**
+ * The form as the schema above describes it.
+ *
+ * A request that is not multipart (or is cut off mid-file) throws here and is answered as
+ * `invalid_input` by the schema, which is the same answer any other malformed body gets.
+ */
+async function multipart(req: Request): Promise<unknown> {
+  try {
+    const form = await req.formData();
+    const file = form.get('file');
+    if (!(file instanceof File)) return {};
+    return {
+      filename: file.name || 'image',
+      bytes: new Uint8Array(await file.arrayBuffer()),
+      altAr: field(form, 'altAr'),
+      altEn: field(form, 'altEn'),
+    };
+  } catch {
+    return {};
+  }
+}
+
+function field(form: FormData, name: string): string {
+  const value = form.get(name);
+  return typeof value === 'string' ? value : '';
+}
 
 /** `GET/POST /api/console/media`, `PATCH /api/console/media/<id>` */
 export async function mediaHandler(req: Request): Promise<Response> {
@@ -50,17 +73,13 @@ export async function mediaHandler(req: Request): Promise<Response> {
 
   return guard<z.output<typeof uploadSchema>, Body>(
     req,
-    { resource: 'media', action: 'create', schema: uploadSchema },
+    { resource: 'media', action: 'create', schema: uploadSchema, inputFrom: multipart },
     async (ctx): Promise<GuardResult<Body>> => {
-      if (!BASE64.test(ctx.input.data)) {
-        return { status: 400, data: { error: 'invalid_base64' } };
-      }
-      const bytes = new Uint8Array(Buffer.from(ctx.input.data.replace(/[\r\n]/g, ''), 'base64'));
       const stored = await putUpload({
-        bytes,
+        bytes: ctx.input.bytes,
         filename: ctx.input.filename,
-        altAr: ctx.input.alt.ar,
-        altEn: ctx.input.alt.en,
+        altAr: ctx.input.altAr,
+        altEn: ctx.input.altEn,
         actorId: ctx.auth.user.id,
       });
       if (!stored.ok) return { status: stored.status, data: { error: stored.code, ...(stored.issues ? { issues: stored.issues } : {}) } };
@@ -122,10 +141,13 @@ function readonly(row: {
   size_bytes: number | string;
   alt_ar: string;
   alt_en: string;
-}): Omit<StoredMedia, 'sha256' | 'reused'> & { alt: { ar: string; en: string } } {
+}): Omit<StoredMedia, 'sha256' | 'reused' | 'originalBytes'> & { alt: { ar: string; en: string } } {
+  // The row keeps the size of the stored file, not of the upload it came from, so there is
+  // no original-byte figure to report here.
   return {
     id: row.id,
     src: row.path,
+    thumb: thumbOf(row.path),
     filename: row.filename,
     mime: row.mime,
     width: row.width,

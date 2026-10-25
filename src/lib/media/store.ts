@@ -1,40 +1,55 @@
 /**
- * Where an uploaded picture goes: bytes → disk → `media` row → the URL the site uses.
+ * Bytes → the image the site serves → a `media` row → the address a picture field holds.
  *
- * Two properties the rest of the console depends on:
+ * Everything an uploaded photograph passes through happens here, once, so no caller can
+ * skip a step:
  *
- *   1. The file name is derived from the content hash, never from what the browser called
- *      it. Two uploads of the same photo are one file on disk and one row, so an editor
- *      who re-sends a banner cannot accumulate `banner-2.webp`, `banner-3.webp` beside it.
- *   2. The extension and MIME come from the bytes (`inspectImage`), so a file named
- *      `photo.jpg` that is really a PNG is stored as a PNG, and a file that is really
- *      markup is never written at all.
+ *   1. The size is capped and the bytes are identified from their **magic bytes**, not from
+ *      the name or the browser's `Content-Type`. JPEG, PNG, WebP and AVIF only.
+ *   2. sharp decodes the file — which is the real structural check — applies the EXIF
+ *      orientation and re-encodes it. Re-encoding is what strips EXIF: camera model, GPS
+ *      coordinates and the thumbnail a phone embeds all leave the file here.
+ *   3. Two sizes are written, 2000 px and 640 px on the long edge, as WebP.
+ *   4. The file name is a content hash plus a random id, so it cannot be guessed, cannot
+ *      collide, and says nothing about the person who uploaded it.
+ *   5. Only then is the `media` row written, so a failed write cannot leave content
+ *      pointing at a missing picture.
  *
- * The file is written before the row: a row pointing at a missing picture renders a broken
- * image site-wide, while an orphan file on disk is invisible and is what a re-upload of the
- * same bytes reclaims.
+ * `sha256` is of the **original** bytes, which is what makes a re-upload of the same photo
+ * one row instead of `banner-2.webp` beside `banner.webp`.
  */
 import { randomUUID, createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { basename, join, resolve } from 'node:path';
+import { basename, join } from 'node:path';
+import sharp from 'sharp';
 import { db } from '../db';
 import type { StoreResult } from '../content/store';
-import { inspectImage, type ImageInfo } from './image-info';
+import { MAX_IMAGE_EDGE, inspectImage, type ImageInfo } from './image-info';
+import { mediaDriver, mediaRoot, writeMediaObject } from './storage';
 
-/** The console resizes before it sends, so this only has to catch a resized-too-large or a hand-made request. */
+/** The browser shrinks before it sends, so this catches a hand-made request rather than a phone photo. */
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+
+/** The long edge of the file the site actually serves. */
+export const MAIN_EDGE = 2_000;
+/** The long edge of the card/thumbnail file. */
+export const THUMB_EDGE = 640;
 
 export interface StoredMedia {
   id: string;
-  /** Root-relative URL the content column stores, e.g. `/uploads/202610/3f2a1c9d0b74.webp`. */
+  /** The address content stores: `/uploads/…` on a local driver, an absolute Blob URL otherwise. */
   src: string;
+  /** The 640 px companion, derived from `src`, for lists and cards. */
+  thumb: string;
   filename: string;
   mime: string;
   width: number;
   height: number;
   bytes: number;
+  /** Size of the file the person chose, before the server re-encoded it. */
+  originalBytes: number;
   sha256: string;
-  /** The bytes were already on disk under this name; nothing new was stored. */
+  /** The bytes were already stored; nothing new was written. */
   reused: boolean;
 }
 
@@ -45,17 +60,6 @@ export interface UploadInput {
   altAr?: string;
   altEn?: string;
   actorId?: string;
-}
-
-/**
- * Where pictures are written. Defaults to the app's `public/`, which is what the site
- * serves; `MEDIA_ROOT` moves it onto a path a deploy does not wipe, which is what a cPanel
- * host needs when `public_html` is replaced on each push. Tests point it at a temporary
- * folder so a unit run cannot leave files in the repo.
- */
-export function mediaRoot(): string {
-  const configured = (process.env.MEDIA_ROOT ?? '').trim();
-  return configured ? resolve(configured) : join(process.cwd(), 'public');
 }
 
 export interface UploadOptions {
@@ -81,8 +85,56 @@ function displayName(filename: string, info: ImageInfo): string {
   return `${head}.${info.ext}`.slice(0, 255);
 }
 
+/** The 640 px address beside a main one, derived rather than stored twice. */
+export function thumbOf(src: string): string {
+  return src.replace(/\.webp$/, `-${THUMB_EDGE}.webp`);
+}
+
+interface Encoded {
+  main: Buffer;
+  thumb: Buffer;
+  width: number;
+  height: number;
+}
+
+/**
+ * Decode, orient, strip metadata, and write both sizes.
+ *
+ * sharp is also the authority on the format: `inspectImage` refused the obvious fakes
+ * before this runs, but a file can start like a PNG and still be truncated. `failOn:
+ * 'error'` turns that into a refusal instead of a half-decoded image.
+ */
+async function encode(bytes: Uint8Array): Promise<Encoded | null> {
+  try {
+    const source = sharp(Buffer.from(bytes), { failOn: 'error', limitInputPixels: MAX_IMAGE_EDGE * MAX_IMAGE_EDGE });
+    const meta = await source.metadata();
+    // The format was decided from the magic bytes before this ran; sharp only has to prove
+    // the file decodes. It reports AVIF as `heif`, which is why its own label is not the gate.
+    if (!meta.width || !meta.height || meta.width > MAX_IMAGE_EDGE || meta.height > MAX_IMAGE_EDGE) return null;
+
+    // `.rotate()` without an angle reads the EXIF orientation; no `withMetadata()` is
+    // called, so the output carries none of the source's EXIF (GPS included).
+    const main = await source
+      .clone()
+      .rotate()
+      .resize({ width: MAIN_EDGE, height: MAIN_EDGE, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 82, effort: 4 })
+      .toBuffer({ resolveWithObject: true });
+
+    const thumb = await source
+      .clone()
+      .rotate()
+      .resize({ width: THUMB_EDGE, height: THUMB_EDGE, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 72, effort: 4 })
+      .toBuffer();
+
+    return { main: main.data, thumb, width: main.info.width, height: main.info.height };
+  } catch {
+    return null;
+  }
+}
+
 export async function putUpload(input: UploadInput, options: UploadOptions = {}): Promise<StoreResult<StoredMedia>> {
-  const root = options.root ?? mediaRoot();
   if (input.bytes.length > MAX_UPLOAD_BYTES) {
     return { ok: false, status: 413, code: 'too_large', issues: [{ path: 'data', message: `${input.bytes.length} bytes exceeds the ${MAX_UPLOAD_BYTES}-byte limit` }] };
   }
@@ -90,9 +142,8 @@ export async function putUpload(input: UploadInput, options: UploadOptions = {})
   if (!seen.ok) {
     return { ok: false, status: 400, code: `not_an_image_${seen.reason}`, issues: [{ path: 'data', message: seen.reason }] };
   }
-  const info = seen.info;
-  const sha256 = createHash('sha256').update(input.bytes).digest('hex');
 
+  const sha256 = createHash('sha256').update(input.bytes).digest('hex');
   const existing = await db
     .selectFrom('media')
     .select(['id', 'path', 'filename', 'mime', 'width', 'height', 'size_bytes'])
@@ -102,36 +153,59 @@ export async function putUpload(input: UploadInput, options: UploadOptions = {})
     .executeTakeFirst();
 
   // Those bytes are already in the library: keep that row and its address, so a re-upload
-  // updates nothing. If the file itself is gone — a fresh deploy that shipped the database
-  // but not `public/uploads/` — the bytes in hand restore it at the address content already
-  // points to, which is the only address the site can be asked for.
-  if (existing && existing.path.startsWith('/uploads/')) {
-    await writeAt(root, existing.path, input.bytes);
+  // updates nothing. If the local file itself is gone — a fresh deploy that shipped the
+  // database but not `public/uploads/` — the bytes in hand restore it at the address
+  // content already points to, which is the only address the site can be asked for.
+  if (existing) {
+    if (existing.path.startsWith('/uploads/') && mediaDriver() === 'local') {
+      const restored = await encode(input.bytes);
+      if (restored) {
+        try {
+          await restoreLocal(existing.path, restored, options.root);
+        } catch {
+          /* the file may already be there; the row is still the answer */
+        }
+      }
+    }
     await db.updateTable('media').set({ updated_by: input.actorId ?? null }).where('id', '=', existing.id).execute();
     return {
       ok: true,
       value: {
         id: existing.id,
         src: existing.path,
+        thumb: thumbOf(existing.path),
         filename: existing.filename,
         mime: existing.mime,
         width: existing.width,
         height: existing.height,
         bytes: Number(existing.size_bytes),
+        originalBytes: input.bytes.length,
         sha256,
         reused: true,
       },
     };
   }
 
-  const src = `/uploads/${monthSegment(options.now ?? new Date())}/${sha256.slice(0, 12)}.${info.ext}`;
+  const encoded = await encode(input.bytes);
+  if (!encoded) {
+    return { ok: false, status: 400, code: 'not_an_image_corrupt', issues: [{ path: 'data', message: 'corrupt' }] };
+  }
+
+  const stem = `${sha256.slice(0, 12)}-${randomUUID().slice(0, 8)}`;
+  const key = `uploads/${monthSegment(options.now ?? new Date())}/${stem}.webp`;
+
+  let src: string;
   try {
-    await writeAt(root, src, input.bytes);
+    src = (await writeMediaObject(key, encoded.main, 'image/webp', { root: options.root })).src;
+    await writeMediaObject(thumbKey(key), encoded.thumb, 'image/webp', { root: options.root });
   } catch {
+    if (mediaDriver() === 'blob') {
+      return { ok: false, status: 502, code: 'storage_unavailable', issues: [{ path: 'data', message: 'the picture store refused the file' }] };
+    }
     return { ok: false, status: 500, code: 'write_failed', issues: [{ path: 'data', message: 'the uploads folder is not writable' }] };
   }
 
-  const filename = displayName(input.filename, info);
+  const filename = displayName(input.filename, { mime: 'image/webp', ext: 'webp', width: encoded.width, height: encoded.height });
   const id = randomUUID();
   await db
     .insertInto('media')
@@ -139,10 +213,10 @@ export async function putUpload(input: UploadInput, options: UploadOptions = {})
       id,
       path: src,
       filename,
-      mime: info.mime,
-      width: info.width,
-      height: info.height,
-      size_bytes: input.bytes.length,
+      mime: 'image/webp',
+      width: encoded.width,
+      height: encoded.height,
+      size_bytes: encoded.main.length,
       sha256,
       alt_ar: input.altAr ?? '',
       alt_en: input.altEn ?? '',
@@ -153,7 +227,40 @@ export async function putUpload(input: UploadInput, options: UploadOptions = {})
     })
     .execute();
 
-  return { ok: true, value: { id, src, filename, mime: info.mime, width: info.width, height: info.height, bytes: input.bytes.length, sha256, reused: false } };
+  return {
+    ok: true,
+    value: {
+      id,
+      src,
+      thumb: thumbOf(src),
+      filename,
+      mime: 'image/webp',
+      width: encoded.width,
+      height: encoded.height,
+      bytes: encoded.main.length,
+      originalBytes: input.bytes.length,
+      sha256,
+      reused: false,
+    },
+  };
+}
+
+function thumbKey(key: string): string {
+  return key.replace(/\.webp$/, `-${THUMB_EDGE}.webp`);
+}
+
+/** Only the local driver has a file to restore; Blob already keeps its own copies. */
+async function restoreLocal(src: string, encoded: Encoded, root: string | undefined): Promise<void> {
+  const base = root ?? mediaRoot();
+  for (const [target, bytes] of [
+    [src, encoded.main],
+    [thumbOf(src), encoded.thumb],
+  ] as const) {
+    const absolute = join(base, target);
+    if (!absolute.startsWith(join(base))) throw new Error('path_escape');
+    await mkdir(join(absolute, '..'), { recursive: true });
+    await writeFile(absolute, bytes);
+  }
 }
 
 /** The alt text an editor typed after the fact, for a picture already in the library. */
@@ -165,20 +272,4 @@ export async function setAlt(id: string, altAr: string, altEn: string, actorId: 
     .where('deleted_at', 'is', null)
     .executeTakeFirst();
   return Number(updated.numUpdatedRows) > 0;
-}
-
-/** A root-relative address never escapes the folder it is resolved against. */
-function resolveUnder(root: string, src: string): string {
-  const absolute = join(root, src);
-  if (absolute !== join(root) && !absolute.startsWith(join(root) + '/') && !absolute.startsWith(join(root) + '\\')) {
-    throw new Error('path_escape');
-  }
-  return absolute;
-}
-
-async function writeAt(root: string, src: string, bytes: Uint8Array): Promise<void> {
-  const absolute = resolveUnder(root, src);
-  await mkdir(join(absolute, '..'), { recursive: true });
-  // `flag: 'w'` on an existing file rewrites it with the same bytes; that is the restore case.
-  await writeFile(absolute, bytes);
 }
