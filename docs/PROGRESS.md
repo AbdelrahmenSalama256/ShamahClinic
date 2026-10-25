@@ -2073,6 +2073,42 @@ owner's word.
       is a DELETE, and the entity/slug assertions above. Gates: typecheck clean, lint clean, `console.test.ts`
       62/62, `typography.test.ts` 11/11 (two new CSS declarations had to name `var(--c-font)`), full run 22 files /
       553 tests passed. No dev address was given, so no browser measurement was made.
+- [x] S4 One search-appearance table, the same panel on every entity — `53e0c61`
+      **Structure, stated before building as asked:** `/console/seo` is a single screen, split into one table per
+      section the site actually serves — Pages, Articles, Offers, Services, Branches — with four columns (address,
+      result title, result description, status) and language tabs at the top. Every row is editable in place; a
+      search box and a status filter (all / OK / too long / missing) narrow the same list, and the status cell is
+      the one-word verdict from the shared limits. Each entity page carries the same fields in a panel below the
+      form, so the table is a second view of the same records, not a separate editor.
+      **One record per address and language.** `seo_entries` was already keyed by `entity_type='path'`,
+      `entity_id=public path`, `locale`; `src/lib/content/seo.ts` now owns the store (`readSeoOverride`,
+      `readSeoOverrides`, `saveSeoOverride`, `isSeoPath`) and saves immediately — no draft state — with an empty
+      title+description deleting the row so the site falls back to its authored words. `seoPathOf()` maps content
+      kind/key/list to a public path and returns `null` for the rows that are not their own address (results, FAQ,
+      specialists, navigation, and pages the builder does not route).
+      **The screen shows what Google receives.** The eleven `generateMetadata` literals moved into
+      `src/lib/content/seo-defaults.ts` (`SITE_SEO`, keyed by the path `buildPageMetadata()` takes); every site
+      page spreads its entry, so changing a default changes both the site and the screen. `buildPageMetadata()`
+      now calls `readSeoOverride(path, lang)` and lets a saved row win over the authored pair, with no cache in
+      between. The row's placeholder is therefore the exact sentence the page would emit. `seo-limits.ts` keeps
+      title 60 / description 160 counted in code points (Arabic and emoji included), so the browser judges a field
+      as it is typed without importing the DB read path.
+      **One guarded write for both surfaces.** `POST /api/console/seo` delegates to `src/lib/content/seo-api.ts`,
+      where `guard()` checks `seo.update` before the body is parsed and zod rejects a path that is not a site
+      address (`//evil.example`, `..`, >191 chars). `SeoFields` renders either three table cells or the panel, and
+      both save through `consoleCall`.
+      **Catalog changes.** The SEO role gained `read` on `seo` beside its writes — without it `visibleScreens()`
+      hid the role's own screen. `/branches`, `/doctors` and `/contact` gained `revalidate = 300` so an override
+      reaches them on the same schedule as the other routes. Nothing changed in the public props, API routes or DB
+      schema (the table predates this slice).
+      **Guards.** `tests/seo.test.ts` (7) pins code-point counting, the path validator, the kind→path map, the
+      defaults catalog, and asserts `seo.ts` merges the override ahead of the authored pair. `tests/content.test.ts`
+      (DB, fixtures `/bk6-…` purged before and after) proves trim/save/read per language, clear→delete, the batch
+      keyed read, guard-before-validation (Viewer 403 on `{}`, Owner 400 on a bad path), the center's rows and
+      per-role `writable`, and `entitySeoOf` giving `/about` a path while a list item gets `null`. `console.test.ts`
+      and `roles.test.ts` moved to the new screen/grant and name `seo-api` as a trusted write delegate.
+      No dev address was given, so no browser measurement was made. Gates: typecheck clean, lint clean, touched
+      suites 7 files / 269 passed, full run 23 files / 566 passed.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
