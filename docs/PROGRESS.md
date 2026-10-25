@@ -2133,6 +2133,40 @@ owner's word.
       `not.toMatch(/data-density/)` in place of the old dense slice. No dev address was given, so no browser
       measurement was made. Gates: typecheck clean, lint clean, touched suites 4 files / 125 passed, full run
       23 files / 566 passed.
+- [x] M Uploads as files on durable storage, and one picker at every slot — `e0dae71`, `597dc57`
+      **What the brief called a defect.** 14a.2 shipped a picker, but a list item still showed a text
+      box, because a list item keeps no named fields at all: its whole form is one JSON `data`
+      document. `isImageField(name, field)` had no name to test there, so the only thing that field
+      could paint was a textarea. The gallery existed but bailed on a document with no slots, so a new
+      offer — whose `images` is a flat `[{src}]` array, or `{}` in the imported rows — showed nothing
+      to click. This slice teaches the editor the shape instead of guessing at a name:
+      `isImageGalleryField()` puts the gallery on any JSON field whose *name* is an image name, and
+      `ImageGallery` accepts an `empty` root slot so the first picture in a new document has a frame
+      to land in (`appendSlot` turns `{}` into `[{src}]`). Typed per-entity forms — so `data` stops
+      being a textarea at all — remain slice F; in this slice no picture is set by typing.
+      **Server.** `POST /api/console/media` is multipart only. `inputFrom` may now be async, and the
+      route reads the form *after* `guard()` has authenticated, checked CSRF and confirmed
+      `media.create` — an anonymous caller cannot make the server buffer 8 MB. The bytes decide the
+      format (JPEG/PNG/WebP/AVIF by magic numbers; SVG, GIF and HEIC refused), dimensions are capped
+      at 8000px, sharp rotates by EXIF orientation, re-encodes to a 2000px WebP main and a 640px
+      companion, and the EXIF block is gone. The name is a sha256 prefix plus a random suffix under
+      `uploads/YYYYMM/`; identical bytes dedupe to one row and one file.
+      **Storage.** `storage.ts` chooses Vercel Blob when `BLOB_READ_WRITE_TOKEN` is present and the
+      local folder otherwise, with `MEDIA_DRIVER=local` forcing the folder for tests and self-hosting.
+      `.env.example` names the variables and carries no values. `next.config.ts` allows
+      `**.public.blob.vercel-storage.com/uploads/**`, so a Blob URL is a picture the site can optimise
+      rather than a host it refuses.
+      **Picker.** `ImagePicker` takes a dropped file as well as a chosen one, accepts the four formats,
+      and writes only `outcome.value.src`. The gallery gives every slot its own input, an add tile per
+      list and a remove button per element; a document it cannot parse paints nothing. A file the
+      browser cannot decode resolves `{ ok: false, code: 'read_failed' }` instead of throwing, proved
+      by running the send path in a DOM-less suite.
+      **Not verified on a screen.** No dev address or password was supplied, so nothing here was
+      clicked in a browser; the multipart route is proved by tests against the real MariaDB and a local
+      media root. The Blob driver is not exercised end to end — no token was provided — and the public
+      site is a separate build that still reads its own data, so an upload is not yet visible on
+      https://shamah-clinic.vercel.app; connecting the two is slices D and S. Gates: typecheck clean,
+      lint clean, touched suites 3 files / 65 passed, full run 23 files / 570 passed.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
