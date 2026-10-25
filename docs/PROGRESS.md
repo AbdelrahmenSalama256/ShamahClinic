@@ -842,7 +842,8 @@ Every screen below lands on this, so it comes first: a bad shell would be copied
       WordPress origin) — the last run after the repair, which is what proves the site renders the same with clean
       columns.
       **Not in this slice:** the body still opens as source in a textarea — the WYSIWYG that replaces it is #246;
-      an image is still a typed path, and click-to-edit with a local upload and compression is #245/14a; and a
+      an image is still a typed path, and click-to-edit with a local upload and compression is #245/14a *(the path
+      box is gone as of 14a.2 — `0f6be31`; the textarea in the first clause is still true)*; and a
       `source` page body is *displayed* as markup on purpose, because that document is what the homepage reads.
 
 **BK-13 is closed** (13.1–13.7). The console has one shell, one list primitive, one editor primitive and one
@@ -924,6 +925,75 @@ last two into the database so the team never needs a developer for a word.
       **Not in this slice:** the picker itself (14a.2), deleting or replacing a stored file (media is append-only
       until a row proves what usage means), and the public site's existing `/wp` mirrors — those stay the frozen
       backup and are not written to.
+- [x] 14a.2 The picker: one control, at every place a picture is set — `0f6be31`
+      14a.1 answered "what does the server do with bytes". This answers the owner's sentence: *"any image added by
+      uploading not path or link, and the cms compressing it for website performance"* — a promise about **every
+      screen**, which means the slice that fails is the one nobody thought to wire.
+      **Four pieces, one definition each.** `src/components/console/ImagePicker.tsx` (a frame, a file input, a
+      library drawer), `src/components/console/ImageGallery.tsx` (the same control tiled over a JSON document),
+      `src/lib/console/upload.ts` (`uploadPicture(file, alt)` → compress → base64 → `consoleCall('POST',
+      '/api/console/media')`, plus the pure `mediaMessageKey(code)` that turns a server code into a sentence), and
+      the already-landed `isImageField()`. The editor's own `IMAGE_NAME` / `IMAGE_PATH` / `IMAGE_EXT` /
+      `looksLikeImage` / `collectImages` are **deleted**, not kept beside them: two definitions of "this is a
+      picture" is how a field reads as a photo in the picker and stays a plain box in the preview strip.
+      **The address never comes from the file, and never from a keyboard.** The only value the picker writes is
+      `outcome.value.src` — the string the server handed back — and there is no text input in the component to
+      write anything else. `accept="image/png,image/jpeg,image/webp,image/gif"` matches what
+      `src/lib/media/image-info.ts` proves from bytes, so the browser cannot offer a file the store will refuse.
+      A file the browser cannot read resolves `{ ok: false, code: 'read_failed' }` and shows a sentence; this is
+      why the suite runs without a DOM and still proves it. The input is cleared after every pick, so choosing the
+      same file twice is one upload, not none.
+      **The replaced box keeps its identity.** `if (isImageField(name, field))` renders the picker inside the same
+      `<Field htmlFor={id}>`, and `id` now belongs to the file input stretched invisibly over the frame (`position:
+      absolute; inset: 0`, deliberately *not* `display: none` — a hidden input is a keyboard-dead control and a
+      `<label>` naming nothing). The banner label stopped saying "Image path" in both languages, and the AR/EN hint
+      copy that told a person to type `/images/hero.jpg` is gone; the test asserts the old wording stays gone.
+      **A JSON field keeps its textarea.** The shape belongs to the document and a person editing `data` has to see
+      it, so the gallery is composed *under* the box, not instead of it. It renders one tile per `imageSlots()` hit
+      and writes back with `writeSlot` / `appendSlot` / `removeSlot`, so an "add another" tile can only append a
+      sibling of the tile it was pressed on, and `removeSlot` splices only an element of an array — a `{ src }` key
+      on a plain object is the document's contract with the reader and is left to the single-picture picker.
+      Malformed or empty JSON renders nothing at all (`if (root === undefined || slots.length === 0) return null`),
+      because a half-typed document is the field's own complaint, not the gallery's.
+      **Compression stays the browser's job, and says so.** The `Note` under a frame reads `media.compress_hint`
+      before anything is chosen, then the real numbers after: `formatBytes(before) · W×H → formatBytes(after)` for
+      the 1600 px / WebP q0.82 pass in `src/lib/console/compress.ts`. A pass-through (GIF, ≤ 250 KB) says so
+      instead of inventing a saving.
+      **`ui.css`, not `console.css`.** ~195 lines of `.ui-picker*` / `.ui-gallery*` appended after the select rules,
+      which is both a deliberate choice (this is a primitive now, and the settings screen wants it too) and the only
+      way to add it in this worktree — see the blocked paragraph. The sheet's own invariants hold: unlayered, no
+      `outline:`, logical properties, `aspect-ratio: 16 / 9`-style literals, all colours through `var(--*)`.
+      **Tests.** `tests/image-picker.test.ts` (27) is mostly about drift and coverage, which is what a promise like
+      this dies of: every `labels['media.*']` the components read exists in the catalog *in both languages*; a code
+      becomes a sentence about your own file (11 cases, AR ≠ EN); the editor wires the control rather than
+      re-inventing it; the five names it used to own (`IMAGE_NAME`, `IMAGE_PATH`, `IMAGE_EXT`, `looksLikeImage`,
+      `collectImages`) are absent from the editor's source; every class the components put
+      on a node has a rule in `ui.css`; and — new for this repo — four real `renderToStaticMarkup` renders prove
+      what the DOM actually says: a filled frame emits `<input id="field-image" … type="file">` and no `type="text"`,
+      an empty one emits `data-empty="true"` and "No photo yet", and an offer document with `{ ar: [{src}], en:
+      [{src}] }` emits 5 file inputs, 3 `<img>`, 3 "Remove this photo" and 2 "Add another photo" — with the
+      malformed-documents cases rendering the empty string.
+      **What the row could not see:** no browser. A second `next dev` in this worktree would share `.next/` with the
+      server the other session is running on `:3000`, so the picker is proven by rendered markup and by source
+      assertions, **not by pixels** — the drag of a real file, the WebP re-encode in a live canvas, and the library
+      drawer's scroll are unverified visually and should be walked once the tree is single-authored.
+      Gates for this slice: whole-program `tsc` **0 errors** · `eslint` **0 errors** · `tests/image-picker.test.ts`
+      **27/27** · with `image-field` 16, `media` 18 and `roles` 61 the four media suites are **122/122** · **no file
+      this row added or edited is among the failures below**.
+      **Still blocked by the shared worktree, and unchanged by this row:** the full run is `Test Files 3 failed |
+      17 passed (20)` — 12 failures, every one in `console.test.ts` (4), `ui-primitives.test.ts` (7) and
+      `typography.test.ts` (1), and every one reading `src/app/console/console.css` or `src/app/globals.css`, which
+      this row does not touch. The newest names `.settings-section-head .ui-lede` and the one font-family failure
+      traces to `font-family: var(--font-mono, …)` at `console.css:908`/`1017`. `npm run build` and
+      `npm run prove:no-wp` are **still not run for 14a**. `src/lib/console/messages.ts` carries this row's 19
+      `media.*` keys and the reworded banner copy; it also carries 5 keys the other session's screens needed
+      (`settings.unsaved`, `settings.read_only`, `settings.banners.default`, `settings.banners.reset`,
+      `leads.section.context`) — additive, AR and EN in parity, and harmless to land before those screens do.
+      **Deferred to 14a.3, on purpose:** the Settings banner card and the raw-JSON settings gallery are already
+      wired on disk, and the `ImagePicker`/`ImageGallery` calls need no further work — but `SettingsWorkspace.tsx` is
+      mid-rewrite in this worktree (≈500 → ≈850 lines, reformatted under me while its assertions were being
+      written), so committing it would attribute somebody else's unfinished screen to this row. `14a.3` = that
+      screen's picker + the two source assertions over it.
 
 ## BK-15 — SEO center: the specialist's feature set, all local
 New tables: `seo_meta` (per entity per locale), `seo_templates`, `redirects`, `not_found_hits`, `crawl_issues`,
