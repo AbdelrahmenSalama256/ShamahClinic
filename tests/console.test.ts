@@ -926,3 +926,43 @@ describe('every screen reaches the primitives through one door (BK-13.5)', () =>
     expect(list).not.toMatch(/pushState|useRouter/);
   });
 });
+
+describe('the settings screen is catalog words, not literals (S1)', () => {
+  const source = readFileSync(join(process.cwd(), 'src/components/console/SettingsWorkspace.tsx'), 'utf8');
+  const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
+
+  it('names every word it shows through the catalog', () => {
+    for (const key of ['settings.unsaved', 'settings.read_only', 'settings.banners.default', 'settings.banners.reset'] as const) {
+      expect(message(key, 'ar'), key).toBeTruthy();
+      expect(message(key, 'en'), key).toBeTruthy();
+      expect(message(key, 'ar'), `${key} is translated`).not.toBe(message(key, 'en'));
+    }
+    // These two were constants in English; the badge and the reset button were bare text.
+    expect(source).not.toContain('Unsaved changes');
+    expect(source).not.toContain('Read only');
+    expect(source).toMatch(/labels\["settings\.unsaved"\]/);
+    expect(source).toMatch(/labels\["settings\.read_only"\]/);
+    expect(source).toMatch(/labels\["settings\.banners\.default"\]/);
+    expect(source).toMatch(/labels\["settings\.banners\.reset"\]/);
+  });
+
+  it('writes no bare text into the screen', () => {
+    // A JSX text child is the shape a literal takes; every word here is a catalog value
+    // or a data value the server fetched.
+    expect(source).not.toMatch(/>\s*[A-Za-z][^<>{}]*</);
+  });
+
+  it('paints every settings class the screen writes', () => {
+    // S0 took the owner's settings rules as the source of truth, and the rewrite names
+    // more classes than it styles. A class with no rule is a card with no tone.
+    const classes = new Set(
+      [...source.matchAll(/className="([^"]*)"/g)]
+        .flatMap((match) => match[1]!.split(/\s+/))
+        .filter((name) => name.startsWith('settings-')),
+    );
+    expect(classes.size).toBeGreaterThan(20);
+    for (const name of classes) {
+      expect(css, `${name} is styled`).toMatch(new RegExp(`\.${name}(?![a-z0-9-])`));
+    }
+  });
+});

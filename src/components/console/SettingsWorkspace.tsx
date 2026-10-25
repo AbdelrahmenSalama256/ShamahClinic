@@ -403,9 +403,8 @@ export function SettingsWorkspace({
     return !(row.group === PAGE_SETTING_GROUP && pageKeys.has(row.key));
   });
 
-  // Note: replace these with the real keys when you add them to messages.ts
-  const dirtyLabel = "Unsaved changes";
-  const readOnlyLabel = "Read only";
+  const dirtyLabel = labels["settings.unsaved"];
+  const readOnlyLabel = labels["settings.read_only"];
 
   return (
     <div className="settings-workspace">
@@ -548,7 +547,7 @@ export function SettingsWorkspace({
                         {labels["settings.banners.custom"]}
                       </Badge>
                     ) : (
-                      <Badge>Default</Badge>
+                      <Badge>{labels["settings.banners.default"]}</Badge>
                     )}
                     {rowDirty && (
                       <span className="settings-dirty">
@@ -640,7 +639,7 @@ export function SettingsWorkspace({
                         }
                         disabled={busy !== null}
                       >
-                        Reset
+                        {labels["settings.banners.reset"]}
                       </Button>
                     )}
                     <Button

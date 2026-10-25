@@ -2119,3 +2119,246 @@ span.console-thumb[data-empty] {
     grid-template-columns: 1fr;
   }
 }
+
+/* --- Settings: the section frame, the rows, the escape hatch -------------- */
+/* Each section is one card in three bands: a soft head (index, title, the unsaved
+   flag), a body that owns the grid, and a tonal foot holding that section's save.
+   The card pads none of them itself; the bands do, so the grids above do not sit in
+   two gutters. Colours, radii and motion all come from the `--c-*` block. */
+.settings-section {
+  padding: 0;
+}
+
+.settings-section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-sp-2);
+  padding: var(--c-pad) var(--c-pad) 0;
+}
+
+.settings-section-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-sp-2) var(--c-sp-3);
+  min-inline-size: 0;
+}
+
+.settings-section-title .console-subheading {
+  margin: 0;
+}
+
+.settings-section-index {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 2rem;
+  block-size: 2rem;
+  border-radius: var(--c-r-pill);
+  background: var(--c-tint);
+  color: var(--c-accent);
+  font-family: var(--c-font-mono);
+  font-size: var(--c-font-micro);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.settings-section-head .console-lede {
+  margin: 0;
+}
+
+.settings-section-body {
+  min-inline-size: 0;
+  padding: var(--c-pad);
+}
+
+/* The owner's grids pad themselves; inside a padded body that is a second gutter. */
+.settings-section-body > .settings-pages,
+.settings-section-body > .settings-banner-grid,
+.settings-section-body > .settings-field-grid {
+  margin: 0;
+  padding: 0;
+}
+
+.settings-section-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--c-gap);
+  padding: var(--c-pad);
+  background: var(--c-surface-soft);
+}
+
+.settings-section-foot > .console-note {
+  margin-inline-end: auto;
+}
+
+/* The unsaved flag is the same object in a section head, a banner overlay and a raw
+   row, so it is written once. */
+.settings-dirty {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--c-sp-2);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--c-r-pill);
+  background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
+  color: var(--c-accent);
+  font-size: var(--c-font-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.settings-dirty-dot {
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* A row that differs from what is saved lifts out of its neighbours by its ring, not
+   by a second border: the page row already owns a 1px line. */
+.settings-page,
+.settings-banner,
+.settings-raw {
+  min-inline-size: 0;
+  transition: box-shadow var(--c-dur-base) var(--c-ease-soft);
+}
+
+.settings-page[data-dirty],
+.settings-banner[data-dirty],
+.settings-raw[data-dirty] {
+  box-shadow: 0 0 0 1.5px var(--c-accent);
+}
+
+.settings-page-actions,
+.settings-banner-actions,
+.settings-raw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--c-gap-tight);
+}
+
+/* --- banner card ----------------------------------------------------------- */
+.settings-banner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap-tight);
+  padding: var(--c-gap);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-md);
+  background: var(--c-surface-soft);
+}
+
+.settings-banner-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--c-r-sm);
+  background: var(--c-bg-alt);
+  aspect-ratio: 16 / 9;
+}
+
+.settings-banner-photo {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.settings-banner-meta {
+  position: absolute;
+  inset-block-end: var(--c-sp-2);
+  inset-inline: var(--c-sp-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c-sp-2);
+}
+
+.settings-banner-meta .settings-dirty {
+  background: color-mix(in srgb, var(--c-accent) 18%, var(--c-surface));
+  box-shadow: var(--c-ring);
+}
+
+.settings-banner-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--c-sp-2);
+}
+
+/* --- advanced rows --------------------------------------------------------- */
+.settings-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap);
+}
+
+.settings-raw {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap-tight);
+  padding: var(--c-gap);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-md);
+  background: var(--c-surface-soft);
+}
+
+.settings-raw-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c-sp-2);
+}
+
+.settings-raw-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-sp-2);
+  margin: 0;
+  font-size: var(--c-font-small);
+}
+
+.settings-raw-key {
+  color: var(--c-text-2);
+  font-family: var(--c-font-mono);
+  font-size: var(--c-font-small);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.settings-raw-editor {
+  font-family: var(--c-font-mono);
+  font-size: var(--c-font-small);
+  line-height: 1.45;
+  tab-size: 2;
+  text-align: start;
+}
+
+/* --- notice --------------------------------------------------------------- */
+.settings-notice {
+  position: sticky;
+  inset-block-end: var(--c-pad);
+  z-index: var(--c-z-sticky);
+}
+
+.settings-notice .console-alert {
+  box-shadow: var(--c-ring), var(--c-lift);
+}
+
+@media (max-width: 640px) {
+  .settings-section-head,
+  .settings-section-body,
+  .settings-section-foot {
+    padding-inline: var(--c-gap);
+  }
+
+  /* A phone thumb reaches the section's own save without aiming. */
+  .settings-section-foot > .console-btn {
+    inline-size: 100%;
+  }
+}
