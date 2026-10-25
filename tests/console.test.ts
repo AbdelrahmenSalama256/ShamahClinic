@@ -259,7 +259,7 @@ describe('prefs resolution', () => {
 
 describe('the sidebar registry', () => {
   it('has a page file for every screen, and no page file outside it', () => {
-    const registered = [...CONSOLE_SCREENS.map((screen) => screen.path), '/console/login', '/console/[kind]/[id]'].sort();
+    const registered = [...CONSOLE_SCREENS.map((screen) => screen.path), '/console/login', '/console/[kind]', '/console/[kind]/[id]'].sort();
     expect(pagePaths(consoleDir, '/console').sort()).toEqual(registered);
   });
 
@@ -521,7 +521,7 @@ describe('the navigation reads off the grants (BK-13.2)', () => {
     const leaves = navTree(grants, 'ar').flatMap((group) => group.branches.flatMap((branch) => branch.leaves));
     expect(leaves).toHaveLength(3 * 2 + LIST_KEYS.length);
     for (const leaf of leaves) {
-      expect(leaf.path).toMatch(/^\/console\/(articles|offers|pages)\?locale=(ar|en)$|^\/console\/lists\?list=[a-z_]+$/);
+      expect(leaf.path).toMatch(/^\/console\/(articles|offers|pages)\?locale=(ar|en)$|^\/console\/(nav|branches|specialists|treatments|services|faq|results)$/);
     }
     // The phone bar holds the screens, never the tree: a 640 px strip has no room for it.
     const strip = navStrip(grants, 'ar');
@@ -532,11 +532,11 @@ describe('the navigation reads off the grants (BK-13.2)', () => {
   it('lists both screens and entities for the palette, in the console language', () => {
     const places = palettePlaces(grantsFor('Editor'), 'ar');
     expect(places.map((place) => place.path)).toContain('/console/articles?locale=ar');
-    expect(places.map((place) => place.path)).toContain('/console/lists?list=branches');
+    expect(places.map((place) => place.path)).toContain('/console/branches');
     expect(places.every((place) => place.label.length > 0 && place.group.length > 0)).toBe(true);
     // A place the role cannot write is in the list, marked, not missing — the palette is
     // also how someone finds the screen they can only read.
-    expect(places.find((place) => place.path === '/console/lists?list=nav')?.writable).toBe(false);
+    expect(places.find((place) => place.path === '/console/nav')?.writable).toBe(false);
   });
 
   it('labels every group and palette string in both languages', () => {
@@ -770,7 +770,7 @@ describe('one row on its own page (BK-13.4, 240)', () => {
     // back, because the editor now lives on a page the viewport does not describe.
     expect(css).not.toMatch(/@media[^{]*\{\s*\.console-work/);
     expect(listScreen).not.toMatch(/ContentWorkspace|setSelectedId/);
-    expect(listScreen).toMatch(/router\.push\(`\$\{contentDetailPath\(kind, created\.id\)\}/);
+    expect(listScreen).toMatch(/router\.push\(`\$\{contentDetailPath\(kind, created\.id, named \? scopeValue : null\)\}/);
     // The server renders the row before the editor mounts, so the first paint is the row
     // the URL names — not an empty pane that fetches it.
     expect(detail).toMatch(/initialRow=\{row\}/);
@@ -895,9 +895,9 @@ describe('every screen reaches the primitives through one door (BK-13.5)', () =>
   const list = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
 
   it('draws a content screen from the workspace, never from a primitive', () => {
-    // Every registered screen, the login screen, and the row page the four content
-    // screens share (240) — all three are real pages, so all three are in the sweep.
-    expect(pages.length, 'the sweep covers every registered screen').toBe(CONSOLE_SCREENS.length + 2);
+    // Every registered screen, the login screen, the section page and the row page the
+    // screens share (240, S2) — all four are real pages, so all four are in the sweep.
+    expect(pages.length, 'the sweep covers every registered screen').toBe(CONSOLE_SCREENS.length + 3);
     // A screen that imported ConsoleList would hold a second copy of the terms the address
     // bar already names, and the two answer different questions after one reload. Matched on
     // the import, not the word: `ConsoleListsPage` is a screen that is drawn correctly.
@@ -912,8 +912,11 @@ describe('every screen reaches the primitives through one door (BK-13.5)', () =>
 
   it('hands the whole query string over instead of naming terms', () => {
     // A page that picked out `?sort` and `?filter` for itself falls behind the list the
-    // moment the list gains a term — the drift this row was written to close.
+    // moment the list gains a term — the drift this row was written to close. The old
+    // aggregate list is the one exception: it is a redirect that moves every term to the
+    // section the path now names, and it parses nothing but `list` itself.
     for (const { path, source } of pages) {
+      if (path.endsWith(join('lists', 'page.tsx'))) continue;
       expect(source, path).not.toMatch(/parseListView|parseListScope|URLSearchParams/);
     }
   });
@@ -964,5 +967,33 @@ describe('the settings screen is catalog words, not literals (S1)', () => {
     for (const name of classes) {
       expect(css, `${name} is styled`).toMatch(new RegExp(`\.${name}(?![a-z0-9-])`));
     }
+  });
+});
+
+describe('every named list is its own section (S2)', () => {
+  const listsPage = readFileSync(join(consoleDir, '(workspace)/lists/page.tsx'), 'utf8');
+  const sectionPage = readFileSync(join(consoleDir, '(workspace)/[kind]/page.tsx'), 'utf8');
+  const detailPage = readFileSync(join(consoleDir, '(workspace)/[kind]/[id]/page.tsx'), 'utf8');
+  const listScreen = readFileSync(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'), 'utf8');
+
+  it('turns the old aggregate list into a redirect that keeps the view', () => {
+    // The page is not a screen any more; it answers with the section that replaced it and
+    // leaves the query (trash, filter, page) for the section to read.
+    expect(listsPage).not.toMatch(/ContentScreen/);
+    expect(listsPage).toMatch(/redirect\(/);
+    expect(listsPage).toMatch(/knownListKeys/);
+    expect(listsPage).toMatch(/key !== 'list'/);
+  });
+
+  it('renders one list per section and offers no list tabs', () => {
+    expect(sectionPage).toMatch(/knownListKeys/);
+    expect(sectionPage).toMatch(/listKey=\{kind\}/);
+    expect(listScreen).toMatch(/const tabs = named\s*\? \[\]/);
+  });
+
+  it('sends the old per-item address to the item’s own section', () => {
+    expect(detailPage).toMatch(/segment === 'lists'/);
+    expect(detailPage).toMatch(/listKeyOfItem/);
+    expect(detailPage).toMatch(/contentDetailPath\('list_item', id, listKey\)/);
   });
 });

@@ -1305,6 +1305,13 @@ describe('contentScreenData hands the workspace only the buttons the API honours
     // The catalog gives a page create, update and publish — never delete.
     expect(pages?.abilities.remove).toEqual([]);
   });
+
+  it('pins one list to the section that names it', async () => {
+    // `/console/results` reads results and nothing else; the old list tabs are gone.
+    const data = await contentScreenData('list_item', { grants: actors.Editor.grants, locale: 'ar', listKey: 'results' });
+    expect(data?.listKey).toBe('results');
+    expect(data?.scopes).toEqual(['results']);
+  });
 });
 
 describe('one function spells the scope every write names (BK-13.5)', () => {

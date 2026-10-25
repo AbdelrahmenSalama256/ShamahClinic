@@ -22,6 +22,7 @@ import { getRow, knownListKeys, listKeyOfItem, type ContentRow } from '../conten
 import { filtersFor, parseListView, parseListScope, sortsFor, type ListFilter, type ListView, type ListSort } from '../content/list-view';
 import { listSummaries, type ListPage } from '../content/summary';
 import { catalogFor, type MessageKey } from './messages';
+import { listSectionPath } from './paths';
 import type { ConsoleLocale } from './prefs';
 
 /** The dimension a request names: a locale code, or a `lists.list_key`. */
@@ -40,7 +41,7 @@ export interface ContentScreenData {
   scopeKind: 'locales' | 'lists';
   /** the identity column, so the create form can label it and the site can link it */
   keyColumn: string;
-  /** every scope the screen can show — reads are unscoped, so this is all of them */
+  /** every scope the screen can show: both languages, or the one list the section names */
   scopes: ContentScope[];
   abilities: ContentAbilities;
   /** the caller may read the resource at all, but not one scope of it */
@@ -69,6 +70,8 @@ export interface ContentScreenData {
 export interface ContentScreenProps {
   kind: ContentKind;
   titleKey: MessageKey;
+  /** A list-backed screen is one list's own section now, named by this key. */
+  listKey?: string;
   /** Next hands `searchParams` over as flat-or-array strings; the view parses them. */
   search?: Record<string, string | string[] | undefined>;
 }
@@ -123,7 +126,7 @@ function abilitiesFor(kind: ContentKind, grants: readonly Grant[]): ContentAbili
 /** Rows for one content screen, or `null` when the role cannot read the resource. */
 export async function contentScreenData(
   kind: ContentKind,
-  input: { grants: readonly Grant[]; locale: ConsoleLocale; search?: ContentScreenProps['search'] },
+  input: { grants: readonly Grant[]; locale: ConsoleLocale; search?: ContentScreenProps['search']; listKey?: string | null },
 ): Promise<ContentScreenData | null> {
   const spec = kindSpec(kind);
   if (!can(input.grants, spec.resource, 'read', {})) return null;
@@ -135,10 +138,13 @@ export async function contentScreenData(
 
   const abilities = abilitiesFor(kind, input.grants);
   const lists = spec.scope === 'lists' ? (await knownListKeys()).map((key) => ({ key, label: LIST_LABELS[key as ListKey]?.[input.locale] ?? key })) : [];
-  // A `?list=` nobody has registered is not a scope a screen can show, so the tab falls
-  // back to the first list rather than drawing an empty one the URL cannot explain.
+  // A section route pins its list; `?list=` is only the old spelling. An unknown `?list=`
+  // falls back to the first list rather than drawing an empty one the URL cannot explain.
   const asked = scope.listKey ?? '';
-  const listKey = spec.scope === 'lists' ? (lists.some((list) => list.key === asked) ? asked : lists[0]?.key ?? null) : null;
+  const listKey =
+    spec.scope === 'lists'
+      ? input.listKey || (lists.some((list) => list.key === asked) ? asked : lists[0]?.key ?? null)
+      : null;
 
   // A list screen reads one list at a time; a bilingual row carries both locales, so its
   // tabs are views over the same rows and the locale only decides which title sorts.
@@ -148,7 +154,7 @@ export async function contentScreenData(
     kind,
     scopeKind: spec.scope,
     keyColumn: spec.keyColumn,
-    scopes: spec.scope === 'lists' ? lists.map((list) => list.key) : [...CONTENT_LOCALES],
+    scopes: spec.scope === 'lists' ? (listKey ? [listKey] : []) : [...CONTENT_LOCALES],
     abilities,
     writable: abilities.update.length > 0,
     page,
@@ -198,7 +204,7 @@ export type ContentDetailResult =
 export async function contentDetailData(
   kind: ContentKind,
   id: string,
-  input: { grants: readonly Grant[]; locale: ConsoleLocale; search?: ContentScreenProps['search'] },
+  input: { grants: readonly Grant[]; locale: ConsoleLocale; search?: ContentScreenProps['search']; listKey?: string | null },
 ): Promise<ContentDetailResult> {
   const spec = kindSpec(kind);
   if (!can(input.grants, spec.resource, 'read', {})) return { ok: false, reason: 'forbidden' };
@@ -209,7 +215,11 @@ export async function contentDetailData(
   const params = paramsOf(input.search);
   const activeLocale = localeAskedFor(params.get('locale'), input.locale);
   const listKey = spec.scope === 'lists' ? await listKeyOfItem(id) : null;
-  if (spec.scope === 'lists' && !listKey) return { ok: false, reason: 'not_found' };
+  // The section names the list, so an item opened under another section's address is a
+  // miss rather than a row shown under the wrong heading.
+  if (spec.scope === 'lists' && (!listKey || (input.listKey && listKey !== input.listKey))) {
+    return { ok: false, reason: 'not_found' };
+  }
 
   const abilities = abilitiesFor(kind, input.grants);
   const titleField = spec.bi.find((field) => field.name === 'title' || field.name === 'name');
@@ -228,7 +238,7 @@ export async function contentDetailData(
       title,
       backHref:
         spec.scope === 'lists'
-          ? `/console/lists?list=${encodeURIComponent(listKey ?? '')}`
+          ? listSectionPath(listKey ?? '')
           : `/console/${kind}s?locale=${activeLocale}`,
       labels: catalogFor(input.locale),
     },

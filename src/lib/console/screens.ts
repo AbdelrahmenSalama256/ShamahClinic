@@ -22,6 +22,7 @@ import { LIST_KEYS } from '../auth/roles';
 import { CONTENT_LOCALES, type ContentLocale } from '../content/kinds';
 import { LIST_LABELS, type ListKey } from '../content/lists';
 import { message, type MessageKey } from './messages';
+import { listSectionPath } from './paths';
 import type { ConsoleLocale } from './prefs';
 
 export type NavGroupKey = 'workspace' | 'content' | 'site' | 'account';
@@ -123,7 +124,8 @@ function leavesOf(screen: ConsoleScreen, grants: readonly Grant[], locale: Conso
   return LIST_KEYS.map((listKey: ListKey) => ({
     key: listKey,
     label: LIST_LABELS[listKey]?.[locale] ?? listKey,
-    path: leafPath(screen, 'list', listKey),
+    // Each list is its own section now: `/console/results`, not `/console/lists?list=`.
+    path: listSectionPath(listKey),
     writable: writable({ lists: listKey }),
   }));
 }

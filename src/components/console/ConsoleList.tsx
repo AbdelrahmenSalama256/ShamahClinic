@@ -178,7 +178,9 @@ export function ConsoleList({
 
   /** The scope a write names, and the query a detail link carries. */
   const scopeQuery = writeScopeQuery({ listKey: kind === 'list_item' ? scope.listKey : null, locale });
-  const detailHref = (row: ListSummary): string => `${contentDetailPath(kind, row.id)}${scopeQuery}`;
+  // A list item's section already names its list, so its detail URL carries no scope term.
+  const detailHref = (row: ListSummary): string =>
+    `${contentDetailPath(kind, row.id, kind === 'list_item' ? scope.listKey : null)}${kind === 'list_item' ? '' : scopeQuery}`;
 
   const load = useCallback(
     async (line: string): Promise<void> => {
@@ -305,9 +307,10 @@ export function ConsoleList({
     const params = new URLSearchParams(query.replace(/^\?/, ''));
     setView(parseListView(params, kind));
     setTerm((params.get('q') ?? '').trim());
-    const list = (params.get('list') ?? '').trim();
+    // The list is the section's identity now, not a term a saved view may move: opening a
+    // saved branch filter while reading results must not quietly switch the section.
     onScopeChange({
-      listKey: kind === 'list_item' ? list || scope.listKey : scope.listKey,
+      listKey: scope.listKey,
       locale: params.get('locale') || scope.locale,
       trash: params.get('trash') === '1',
       focusKey: null,

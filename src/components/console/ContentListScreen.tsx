@@ -71,8 +71,9 @@ export function ContentListScreen({ data }: Readonly<{ data: ContentScreenData }
     }
     setTitle('');
     setCreating(false);
-    // A new row is empty, and its own screen is where the two language tabs live.
-    router.push(`${contentDetailPath(kind, created.id)}${scopeQuery}`);
+    // A new row is empty, and its own screen is where the two language tabs live. A list
+    // item's section already names its list, so the detail URL needs no scope term.
+    router.push(`${contentDetailPath(kind, created.id, named ? scopeValue : null)}${named ? '' : scopeQuery}`);
   }
 
   function switchScope(patch: Partial<ListScope>): void {
@@ -80,12 +81,14 @@ export function ContentListScreen({ data }: Readonly<{ data: ContentScreenData }
     setNotice(null);
   }
 
-  const tabs = data.scopes.map((candidate) => ({
-    id: String(candidate),
-    label: named
-      ? (data.lists.find((list) => list.key === candidate)?.label ?? String(candidate))
-      : labels[`content.locale.${candidate}` as MessageKey],
-  }));
+  // A list section is one list: its name is in the heading and its rows are already
+  // narrowed, so the old list tabs would be a control with nothing to switch to.
+  const tabs = named
+    ? []
+    : data.scopes.map((candidate) => ({
+        id: String(candidate),
+        label: labels[`content.locale.${candidate}` as MessageKey],
+      }));
 
   return (
     <div className="console-work" data-kind={kind}>
@@ -103,15 +106,16 @@ export function ContentListScreen({ data }: Readonly<{ data: ContentScreenData }
           </div>
         </div>
 
-        {/* The two language tabs (or the lists) sit above the rows, where the scope
-            they change is visible at a glance. The editor has the same two tabs, so
-            switching language never means hunting for a dropdown. */}
+        {/* The two language tabs sit above the rows, where the scope they change is
+            visible at a glance. The editor has the same two tabs, so switching language
+            never means hunting for a dropdown. A list section has no tabs: one URL, one
+            list. */}
         {tabs.length > 0 && (
           <Tabs
             items={tabs}
             value={String(scopeValue)}
-            onChange={(id) => switchScope(named ? { listKey: id } : { locale: id as ContentLocale })}
-            label={labels[named ? 'content.list.pick' : 'content.language']}
+            onChange={(id) => switchScope({ locale: id as ContentLocale })}
+            label={labels['content.language']}
             idBase={`scope-${kind}`}
             className="console-tabs"
           />

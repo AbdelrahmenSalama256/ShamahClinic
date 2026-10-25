@@ -5,7 +5,8 @@ import { contentScreenData, type ContentScreenProps } from '@/lib/console/conten
 import { contentDetailPath } from '@/lib/console/paths';
 import { message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';
-import { idForRowKey } from '@/lib/content/store';
+import { LIST_LABELS } from '@/lib/content/lists';
+import { idForRowKey, listKeyOfItem } from '@/lib/content/store';
 
 /**
  * The server half of a content list: who is asking, which page of rows they may read,
@@ -20,7 +21,7 @@ import { idForRowKey } from '@/lib/content/store';
  * them) are resolved to an id and redirected. A `?key=` nobody can resolve is not an
  * error: the list simply shows, because the row may have been deleted since.
  */
-export async function ContentScreen({ kind, titleKey, search }: Readonly<ContentScreenProps>) {
+export async function ContentScreen({ kind, titleKey, listKey: pinned, search }: Readonly<ContentScreenProps>) {
   const { auth, prefs } = await consoleView();
   if (!auth) return null; // the workspace layout has already redirected
 
@@ -28,19 +29,29 @@ export async function ContentScreen({ kind, titleKey, search }: Readonly<Content
   const key = (Array.isArray(asked) ? asked[0] : asked)?.trim();
   if (key) {
     const list = search?.list;
-    const listKey = Array.isArray(list) ? list[0] : list;
-    const id = await idForRowKey(kind, key, listKey);
-    if (id) redirect(`${contentDetailPath(kind, id)}${listKey && kind === 'list_item' ? `?list=${encodeURIComponent(listKey)}` : ''}`);
+    const fromQuery = Array.isArray(list) ? list[0] : list;
+    const scope = pinned ?? fromQuery;
+    const id = await idForRowKey(kind, key, scope);
+    if (id && kind === 'list_item') {
+      const owner = pinned ?? (await listKeyOfItem(id));
+      if (owner) redirect(contentDetailPath(kind, id, owner));
+    } else if (id) {
+      redirect(contentDetailPath(kind, id));
+    }
   }
 
-  const data = await contentScreenData(kind, { grants: auth.user.grants, locale: prefs.locale, search });
+  const data = await contentScreenData(kind, { grants: auth.user.grants, locale: prefs.locale, search, listKey: pinned });
   // With the grant missing, this screen has nothing else to say, so the sentence gets the
   // shape built for a pane that is entirely absence.
   if (!data) return <Empty>{message('content.no_permission', prefs.locale)}</Empty>;
 
+  // A list section names its list in the heading, because the URL no longer carries a tab.
+  const listLabel = (LIST_LABELS as Record<string, { ar: string; en: string } | undefined>)[pinned ?? ''];
+  const heading = listLabel ? listLabel[prefs.locale] : message(titleKey, prefs.locale);
+
   return (
     <>
-      <h1 className="console-heading">{message(titleKey, prefs.locale)}</h1>
+      <h1 className="console-heading">{heading}</h1>
       <ContentListScreen data={data} />
     </>
   );
