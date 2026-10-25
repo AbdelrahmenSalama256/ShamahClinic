@@ -42,12 +42,9 @@ export function ConsoleShell({
     <ConsoleControls
       prefs={prefs}
       labels={{
-        viewSite: message('shell.view_site', prefs.locale),
         toLight: message('shell.theme.light', prefs.locale),
         toDark: message('shell.theme.dark', prefs.locale),
         switchLocale: message('shell.locale.switch', prefs.locale),
-        toComfortable: message('shell.density.comfortable', prefs.locale),
-        toDense: message('shell.density.dense', prefs.locale),
       }}
     />
   );
@@ -64,6 +61,11 @@ export function ConsoleShell({
           <Badge key={role}>{role}</Badge>
         ))}
       </span>
+      {/* The site link moved out of the header when the header became three tools. It
+          lives with the account because it leaves the console, like signing out. */}
+      <a className="console-account-site" href="/" target="_blank" rel="noreferrer">
+        {message('shell.view_site', prefs.locale)}
+      </a>
     </div>
   );
 

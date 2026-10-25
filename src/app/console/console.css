@@ -7,13 +7,10 @@
  * no site token (`--bg-*`, `--text-*`, `--hairline*`, `--tap`, `--sp-*`, `--z-*`,
  * the shared control library). The two surfaces share a design language, not a stylesheet.
  *
- * Two attributes set the whole look, both written by the server from the prefs cookie
+ * One attribute sets the whole look, written by the server from the prefs cookie
  * (src/lib/console/prefs.ts), so there is no script and no flash:
- *   data-theme='light'|'dark'            the console's own palette, below
- *   data-density='comfortable'|'dense'   the tokens near the top of this file
- * Density changes spacing, type size and how many rows fit above the fold. It never
- * changes `--c-tap`: a dense layout is about fewer pixels per row of *content*,
- * not about smaller things to hit.
+ *   data-theme='light'|'dark'   the console's own palette, below
+ * There is one comfortable rhythm; no density switch exists to vary it.
  *
  * Three breakpoints, spelled out in px because a media query cannot read a custom
  * property — they are also named in the row that introduced them (docs/PROGRESS.md, 13.1):
@@ -100,7 +97,7 @@
   --c-list-h: 36rem;
   --c-off: translateX(-100%);
 
-  /* Targets. Density never lowers `--c-tap`. */
+  /* Targets. `--c-tap` is the floor for everything a finger hits. */
   --c-tap: 2.75rem;
   --c-tap-field: 2.75rem;
 
@@ -165,24 +162,6 @@
 
 [data-surface="console"][dir="rtl"] {
   --c-off: translateX(100%);
-}
-
-[data-surface="console"][data-density="dense"] {
-  --c-tap-field: 2.4rem;
-  --c-gap: 0.55rem;
-  --c-stack: 0.8rem;
-  --c-pad: 0.8rem;
-  --c-font-size: 0.8375rem;
-  --c-font-small: 0.75rem;
-  --c-page-pad: 1rem;
-  --c-side-w: 14rem;
-  --c-topbar-h: 3.25rem;
-  --c-content-w: 94rem;
-  --c-list-h: 48rem;
-  --c-r-xs: 0.25rem;
-  --c-r-sm: 0.4rem;
-  --c-r-md: 0.6rem;
-  --c-r-lg: 0.85rem;
 }
 
 /* --- base ----------------------------------------------------------------- */
@@ -394,9 +373,9 @@
 
 .console-header {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.85rem;
+  gap: var(--c-gap);
   padding: 0 var(--c-page-pad);
   min-height: var(--c-topbar-h);
 }
@@ -414,6 +393,9 @@
   font-size: 1.02rem;
   font-weight: 650;
   letter-spacing: -0.015em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .console-brand span {
@@ -422,8 +404,25 @@
   color: var(--c-text-3);
 }
 
-.console-header .console-controls {
-  display: none;
+/* The three utilities are one shape: a square the size of a finger, one border, one
+   radius, one stroke weight. The glyph is the whole label, so each carries an
+   `aria-label` for the screen reader and a `title` for a pointer that hovers. */
+.console-tool {
+  inline-size: var(--c-tap);
+  min-inline-size: var(--c-tap);
+  block-size: var(--c-tap);
+  padding: 0;
+  border-radius: var(--c-r-pill);
+}
+
+.console-tool svg {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .console-toggle {
@@ -446,9 +445,17 @@
     box-shadow var(--c-dur-base) var(--c-ease-soft);
 }
 
-.console-toggle span {
-  font-size: 1rem;
-  line-height: 1;
+.console-toggle-mark {
+  display: inline-flex;
+}
+
+.console-toggle-mark svg {
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
 }
 
 .console-toggle:hover {
@@ -884,8 +891,22 @@ details[open] > .console-nav-head .console-nav-caret {
 
 .console-controls {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  align-items: center;
   gap: var(--c-gap-tight);
+}
+
+.console-account-site {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--c-tap);
+  color: var(--c-accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.console-account-site:hover {
+  text-decoration: underline;
 }
 
 .console-account {
@@ -1474,9 +1495,6 @@ span.console-thumb[data-empty] {
   .console-frame {
     grid-template-columns: var(--c-side-w) minmax(0, 1fr);
   }
-  .console-header .console-controls {
-    display: flex;
-  }
   /* In the column the sidebar sits on the page itself, no card, no edge. */
   .console-side {
     grid-column: 1;
@@ -1498,7 +1516,6 @@ span.console-thumb[data-empty] {
   }
   .console-toggle,
   .console-side-head,
-  .console-side .console-controls,
   .console-nav-strip,
   .console-scrim {
     display: none;
@@ -1516,6 +1533,22 @@ span.console-thumb[data-empty] {
 @media (max-width: 639.98px) {
   .console-nav-strip {
     display: flex;
+  }
+  /* The header keeps its brand and the three tools. The drawer toggle becomes a square
+     glyph so the row still fits a 360px phone; the strip below carries the same links. */
+  .console-header {
+    gap: var(--c-sp-2);
+    padding-inline: var(--c-sp-3);
+  }
+  .console-toggle {
+    inline-size: var(--c-tap);
+    min-inline-size: var(--c-tap);
+    justify-content: center;
+    padding: 0;
+    font-size: 0;
+  }
+  .console-brand strong {
+    font-size: 0.95rem;
   }
   .console-brand span {
     display: none;

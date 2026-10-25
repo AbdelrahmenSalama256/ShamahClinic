@@ -261,17 +261,16 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
     expect(ui).toMatch(/\.ui-control\[type='search']::-\w+-search-cancel-button\s*\{\s*-webkit-appearance: none;/);
   });
 
-  it('holds the tap floor, and lets density lower only the field', () => {
+  it('holds the tap floor on bars and fields', () => {
     expect(rule(ui, '.ui-control')).toMatch(/min-height: var\(--tap-field\);/);
-    // A bar control shares its row with buttons, so it takes the floor density never
-    // touches — the two are different numbers under `[data-density='dense']`.
+    // A bar control shares its row with buttons, so it takes the tap floor by name.
     expect(rule(ui, '.ui-control[data-bar]')).toMatch(/min-height: var\(--tap\);/);
     expect(tokens).toMatch(/--tap-field: 2\.75rem;/);
-    // The console owns its own field floor (slice 0); density may lower it, never a tap.
+    // The console owns its own floor (slice 0) and has one rhythm: the field token is
+    // the same number as the tap, with no density block left to lower it.
     expect(consoleCode).toMatch(/\n\s*--c-tap: 2\.75rem;/);
-    expect(consoleCode).toMatch(/\[data-density="dense"\] \{\s*--c-tap-field: /);
-    const dense = consoleCode.slice(consoleCode.indexOf('[data-density="dense"]'));
-    expect(dense.slice(0, dense.indexOf('}'))).not.toContain('--c-tap:');
+    expect(consoleCode).toMatch(/\n\s*--c-tap-field: 2\.75rem;/);
+    expect(consoleCode).not.toMatch(/data-density/);
   });
 
   it('gives the checkbox its floor on the label, which is the thing you hit', () => {

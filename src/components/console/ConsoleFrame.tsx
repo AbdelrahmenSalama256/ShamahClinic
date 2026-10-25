@@ -111,7 +111,11 @@ export function ConsoleFrame({
               dismissHash();
             }}
           >
-            <span aria-hidden="true">≡</span>
+            <span className="console-toggle-mark" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M4 7h16M4 12h16M4 17h16" />
+              </svg>
+            </span>
             {labels.screens}
           </a>
           {brand}
@@ -137,7 +141,6 @@ export function ConsoleFrame({
           </a>
         </div>
         <ConsoleNav items={items} labels={navLabels} />
-        {controls}
         {account}
       </aside>
 

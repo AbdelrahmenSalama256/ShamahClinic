@@ -3,28 +3,25 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { consoleCall } from './client-api';
-import { Button, ButtonLink } from '@/components/console/kit';
+import { Button } from '@/components/console/kit';
 import type { ConsolePrefs } from '@/lib/console/prefs';
 
 interface Labels {
-  viewSite: string;
   toLight: string;
   toDark: string;
   switchLocale: string;
-  toComfortable: string;
-  toDense: string;
 }
 
 /**
- * Theme, language and density are saved by a Route Handler, not in localStorage: the
- * next render — this one, after `refresh()` — comes back with the other `dir`, the
- * other colours and the other spacing from the server, so there is no flash and no
- * second source of truth.
+ * The two preferences in the header: light/dark and language. They are saved by a Route
+ * Handler, not in localStorage: the next render — this one, after `refresh()` — comes
+ * back with the other `dir` and the other colours from the server, so there is no flash
+ * and no second source of truth.
  *
- * `ConsoleFrame` renders this twice: once in the header (shown at ≥1024px) and once
- * inside the drawer (shown below it). CSS hides the other copy with `display:none`,
- * which takes it out of both the accessibility tree and the tab order, so a phone
- * never tabs through two copies of the same control.
+ * The search trigger lives in `ConsolePalette`, next to the dialog it opens; both use
+ * `.console-tool`, so the header draws three controls of one size, radius and stroke.
+ * `ConsoleFrame` renders this once, in the header, at every width: a phone keeps the same
+ * two preferences one tap away instead of hiding them inside the drawer.
  */
 export function ConsoleControls({ prefs, labels }: Readonly<{ prefs: ConsolePrefs; labels: Labels }>) {
   const router = useRouter();
@@ -37,19 +34,41 @@ export function ConsoleControls({ prefs, labels }: Readonly<{ prefs: ConsolePref
     setBusy(false);
   }
 
+  const dark = prefs.theme === 'dark';
+
   return (
     <span className="console-controls">
-      <ButtonLink href="/" target="_blank" rel="noreferrer">
-        {labels.viewSite}
-      </ButtonLink>
-      <Button disabled={busy} onClick={() => save({ ...prefs, theme: prefs.theme === 'dark' ? 'light' : 'dark' })}>
-        {prefs.theme === 'dark' ? labels.toLight : labels.toDark}
+      <Button
+        size="icon"
+        className="console-tool"
+        disabled={busy}
+        aria-label={dark ? labels.toLight : labels.toDark}
+        title={dark ? labels.toLight : labels.toDark}
+        onClick={() => save({ ...prefs, theme: dark ? 'light' : 'dark' })}
+      >
+        {dark ? (
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z" />
+          </svg>
+        )}
       </Button>
-      <Button disabled={busy} onClick={() => save({ ...prefs, density: prefs.density === 'dense' ? 'comfortable' : 'dense' })}>
-        {prefs.density === 'dense' ? labels.toComfortable : labels.toDense}
-      </Button>
-      <Button disabled={busy} onClick={() => save({ ...prefs, locale: prefs.locale === 'ar' ? 'en' : 'ar' })}>
-        {labels.switchLocale}
+      <Button
+        size="icon"
+        className="console-tool"
+        disabled={busy}
+        aria-label={labels.switchLocale}
+        title={labels.switchLocale}
+        onClick={() => save({ ...prefs, locale: prefs.locale === 'ar' ? 'en' : 'ar' })}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+        </svg>
       </Button>
     </span>
   );

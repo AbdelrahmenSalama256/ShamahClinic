@@ -99,7 +99,7 @@ export function ButtonLink({ variant = 'default', size, active, block, leading, 
 /* --- field ----------------------------------------------------------------- */
 
 interface ControlShape {
-  /** Shares a row with buttons, so it holds `--c-tap` — the floor density does not lower. */
+  /** Shares a row with buttons, so it holds `--c-tap`, the same floor they hold. */
   bar?: boolean;
   className?: string;
 }

@@ -39,7 +39,6 @@ export default async function ConsoleRootLayout({ children }: Readonly<{ childre
       lang={prefs.locale}
       dir={dirOf(prefs.locale)}
       data-theme={prefs.theme}
-      data-density={prefs.density}
       data-surface="console"
       className={`${tajawal.variable}`}
     >

@@ -111,8 +111,18 @@ export function ConsolePalette({ entries, labels }: Readonly<{ entries: PaletteP
 
   return (
     <>
-      <Button ref={trigger} onClick={() => setOpen(true)}>
-        {labels.open}
+      <Button
+        ref={trigger}
+        size="icon"
+        className="console-tool"
+        aria-label={labels.open}
+        title={labels.open}
+        onClick={() => setOpen(true)}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </svg>
       </Button>
       <dialog
         ref={dialog}

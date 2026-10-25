@@ -179,16 +179,13 @@
   /* --------------------------------------------
      Control geometry (`src/components/ui/ui.css`, BK-19.3). These eight are the numbers a
      primitive reads, so they are the numbers both surfaces agree on: the public site's
-     defaults live here, and the console re-declares the ones it draws smaller on
-     `[data-surface='console']` and again under `[data-density='dense']`. They used to be
-     `--console-*` names, which is why a control built for one surface could not be read by
-     the other.
+     defaults live here, and the console re-declares the ones it draws with its own
+     `--c-*` names. They used to be `--console-*` names, which is why a control built for
+     one surface could not be read by the other.
 
-     `--tap` is the floor for anything a finger hits and density does not lower it: a dense
-     layout means fewer pixels per row of *content*, not smaller things to press.
-     `--tap-field` is the same number in comfortable mode and the one dense mode is allowed
-     to lower, because a text field's target is the box the visitor aims at, not a control
-     they can miss and hit twice.
+     `--tap` is the floor for anything a finger hits. `--tap-field` is the same number
+     because a text field's target is the box the visitor aims at, not a control they can
+     miss and hit twice.
      -------------------------------------------- */
   --tap: 2.75rem;
   --tap-field: 2.75rem;

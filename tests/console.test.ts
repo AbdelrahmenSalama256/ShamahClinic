@@ -199,45 +199,37 @@ describe('the console never joins the language rewrite', () => {
 describe('prefs resolution', () => {
   it('follows account, then cookie, then Accept-Language, then the site default', () => {
     expect(resolvePrefs({})).toEqual(DEFAULT_PREFS);
-    expect(resolvePrefs({ acceptLanguage: 'en-US,en;q=0.9' })).toEqual({ locale: 'en', theme: 'light', density: 'comfortable' });
-    expect(resolvePrefs({ cookie: 'en.dark', acceptLanguage: 'ar' })).toEqual({ locale: 'en', theme: 'dark', density: 'comfortable' });
+    expect(resolvePrefs({ acceptLanguage: 'en-US,en;q=0.9' })).toEqual({ locale: 'en', theme: 'light' });
+    expect(resolvePrefs({ cookie: 'en.dark', acceptLanguage: 'ar' })).toEqual({ locale: 'en', theme: 'dark' });
     // The account wins: switching the console language must stick after signing in elsewhere.
     expect(resolvePrefs({ account: { locale: 'ar', theme: 'light' }, cookie: 'en.dark' })).toEqual({
       locale: 'ar',
       theme: 'light',
-      density: 'comfortable',
     });
     // A stored value the catalog no longer knows about falls through instead of crashing.
     expect(resolvePrefs({ account: { locale: 'fr', theme: 'neon' }, cookie: 'en.dark' })).toEqual({
       locale: 'en',
       theme: 'dark',
-      density: 'comfortable',
     });
   });
 
-  it('takes density from the device, never from the account', () => {
-    // `users` has no density column on purpose: a laptop and a phone on one account
-    // want different rows per screen, so the cookie is the only store it has.
+  it('reads a cookie written while the console still had a density, ignoring the third term', () => {
     expect(resolvePrefs({ account: { locale: 'ar', theme: 'light' }, cookie: 'ar.light.dense' })).toEqual({
       locale: 'ar',
       theme: 'light',
-      density: 'dense',
     });
-    expect(resolvePrefs({ cookie: 'en.dark.comfy' })).toEqual({ locale: 'en', theme: 'dark', density: 'comfortable' });
+    expect(resolvePrefs({ cookie: 'en.dark.comfy' })).toEqual({ locale: 'en', theme: 'dark' });
   });
 
   it('round-trips the cookie and refuses anything it does not recognise', () => {
     for (const locale of SITE_LOCALES) {
       for (const theme of ['light', 'dark'] as const) {
-        for (const density of ['comfortable', 'dense'] as const) {
-          expect(decodePrefs(encodePrefs({ locale, theme, density }))).toEqual({ locale, theme, density });
-        }
+        expect(decodePrefs(encodePrefs({ locale, theme }))).toEqual({ locale, theme });
       }
     }
     expect(decodePrefs('')).toEqual({});
     expect(decodePrefs('de.bright')).toEqual({});
     expect(decodePrefs('en')).toEqual({ locale: 'en' });
-    // A cookie written before density existed still decodes; the missing term defaults.
     expect(decodePrefs('ar.dark')).toEqual({ locale: 'ar', theme: 'dark' });
     expect(decodePrefs('ar.dark.huge')).toEqual({ locale: 'ar', theme: 'dark' });
     expect(decodePrefs(';;drop-table;;')).toEqual({});
@@ -348,20 +340,16 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect(frame).toContain('variant="strip"');
   });
 
-  it('holds the 44px tap floor at both densities', () => {
+  it('holds the 44px tap floor', () => {
     // The console owns its own floor: `--c-tap` is declared once in console.css and every
-    // control the console paints reads it. Density is allowed to lower a *field*, never a
-    // tap — the floor is about what a finger can miss, and a denser layout does not make
-    // it smaller.
+    // control the console paints reads it.
     expect(css).toMatch(/\n\s*--c-tap: 2\.75rem;/);
     expect(css).toMatch(/\n\s*--c-tap-field: 2\.75rem;/);
     expect(css).not.toMatch(/--console-tap/);
     expect((css.match(/min-(?:height|block-size): var\(--c-tap\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
-    const dense = css.slice(css.indexOf('[data-density="dense"]'));
-    expect(dense.slice(0, dense.indexOf('}'))).not.toContain('--c-tap:');
+    expect(css).not.toMatch(/data-density/);
 
-    // Every control the list still paints itself takes `--c-tap` by name, and never the
-    // field token dense lowers.
+    // Every control the list still paints itself takes `--c-tap` by name.
     for (const selector of ['.console-cards-head', '.console-editor-bar']) {
       const start = css.indexOf(`\n${selector} {`);
       expect(start, `${selector} is styled`).toBeGreaterThan(-1);
@@ -456,9 +444,33 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect(compared).toBeGreaterThan(30);
   });
 
-  it('decides density on the server, from the prefs', () => {
-    expect(readFileSync(join(consoleDir, 'layout.tsx'), 'utf8')).toMatch(/data-density=\{prefs\.density\}/);
-    for (const key of ['shell.screens', 'shell.close', 'shell.density.dense', 'shell.density.comfortable'] as MessageKey[]) {
+  it('draws the header as three tools, with no density switch (S5)', () => {
+    // One comfortable rhythm: the root carries `data-theme` and no `data-density`, and
+    // no catalog key survives for a layout choice that no longer exists.
+    expect(readFileSync(join(consoleDir, 'layout.tsx'), 'utf8')).not.toMatch(/data-density/);
+    expect(readFileSync(join(process.cwd(), 'src/lib/console/messages.ts'), 'utf8')).not.toMatch(/shell\.density/);
+    // The one place the word survives is the note that an old cookie's third term is
+    // ignored; no type, field or resolver may remain.
+    expect(readFileSync(join(process.cwd(), 'src/lib/console/prefs.ts'), 'utf8')).not.toMatch(/ConsoleDensity|densityOf|density\s*[:?]/);
+
+    const controls = readFileSync(join(process.cwd(), 'src/components/console/ConsoleControls.tsx'), 'utf8');
+    const palette = readFileSync(join(process.cwd(), 'src/components/console/ConsolePalette.tsx'), 'utf8');
+    // Two preference buttons here plus the palette's trigger: search, theme, language.
+    // The view-site link is not a fourth tool; it lives with the account in the drawer.
+    expect((controls.match(/<Button\b/g) ?? []).length).toBe(2);
+    expect(controls).toMatch(/className="console-tool"/);
+    expect(palette).toMatch(/className="console-tool"/);
+    expect(css).toMatch(/\.console-account-site\s*\{/);
+
+    // One shape for all three: a `--c-tap` square, one radius, one stroke weight.
+    const tool = css.slice(css.indexOf('\n.console-tool {'));
+    const rule = tool.slice(0, tool.indexOf('}'));
+    expect(rule).toMatch(/inline-size: var\(--c-tap\)/);
+    expect(rule).toMatch(/block-size: var\(--c-tap\)/);
+    expect(rule).toMatch(/border-radius: var\(--c-r-pill\)/);
+    expect(css).toMatch(/\.console-tool svg\s*\{[^}]*stroke-width: 1\.75;/);
+
+    for (const key of ['shell.screens', 'shell.close', 'shell.view_site', 'shell.theme.light', 'shell.theme.dark', 'shell.locale.switch'] as MessageKey[]) {
       for (const locale of SITE_LOCALES) {
         expect(message(key, locale).length, `${key} ${locale}`).toBeGreaterThan(0);
       }
@@ -672,21 +684,21 @@ describe('the prefs route', () => {
     expect(await auditCount('self.update', ownerEmail)).toBe(0);
   });
 
-  it('saves the two account choices and the device density, echoes them, and sets the cookie', async () => {
+  it('saves both account choices, echoes them, and sets the cookie', async () => {
     const { token, csrf } = await login(ownerEmail);
     const res = await updatePrefsHandler(
       request('/prefs', {
         method: 'PATCH',
         cookie: `shamah_session=${token}`,
         headers: { 'x-csrf-token': csrf },
-        body: JSON.stringify({ locale: 'en', theme: 'dark', density: 'dense' }),
+        body: JSON.stringify({ locale: 'en', theme: 'dark' }),
       }),
     );
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ prefs: { locale: 'en', theme: 'dark', density: 'dense' } });
+    expect(await res.json()).toEqual({ prefs: { locale: 'en', theme: 'dark' } });
 
     const prefs = cookieValue(setCookies(res), 'shamah_console_prefs');
-    expect(prefs).toBe('en.dark.dense');
+    expect(prefs).toBe('en.dark');
     expect(setCookies(res).find((line) => line.startsWith('shamah_console_prefs='))).toMatch(/Path=\//);
 
     const stored = await db.selectFrom('users').select(['locale', 'theme']).where('email_lc', '=', ownerEmail).executeTakeFirstOrThrow();
@@ -699,7 +711,7 @@ describe('the prefs route', () => {
         method: 'PATCH',
         cookie: `shamah_session=${viewer.token}`,
         headers: { 'x-csrf-token': viewer.csrf },
-        body: JSON.stringify({ locale: 'ar', theme: 'light', density: 'comfortable' }),
+        body: JSON.stringify({ locale: 'ar', theme: 'light' }),
       }),
     );
     expect(theirs.status).toBe(200);
@@ -715,13 +727,13 @@ describe('the prefs route', () => {
         method: 'PATCH',
         cookie: `shamah_session=${token}`,
         headers: { 'x-csrf-token': csrf },
-        body: JSON.stringify({ locale: 'en', theme: 'light' }),
+        body: JSON.stringify({ locale: 'en' }),
       }),
     );
     expect(res.status).toBe(400);
     const body = (await res.json()) as { error: string; issues?: { path: string }[] };
     expect(body.error).toBe('invalid_input');
-    expect(body.issues?.map((issue) => issue.path)).toContain('density');
+    expect(body.issues?.map((issue) => issue.path)).toContain('theme');
     expect(setCookies(res).join()).not.toContain('shamah_console_prefs=');
   });
 });
