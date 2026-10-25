@@ -1976,6 +1976,32 @@ owner's word.
       and is imported after the kit so the owner's tuning still wins. The four suites that asserted the old shared
       classes (`console`, `ui-primitives`, `image-picker`, `rich-editor`) were moved to the console spellings rather
       than deleting their coverage. Gates: typecheck clean, lint clean, 21 files / 534 tests passed.
+- [x] S0.4 Load only the console sheets, and fence the isolation — `aa8b2be`
+      `src/app/console/layout.tsx` now imports `./console-kit.css` and `./console.css` and nothing else: the site
+      token layer, `ui.css` and the `siteTheme` inline style are gone from the console document. The one thing that
+      still crosses is the font: `tajawal.variable` writes `--font-tajawal` on the root and `--c-font` names it first
+      in its stack, so the console keeps the loaded family while owning the token. Dark is keyed on the console's own
+      `[data-surface="console"][data-theme="dark"]`, never on an `html[data-theme]` rule.
+      **Two leftovers the guard found, both fixed here.** `console-kit.css` still carried two copies of an old custom
+      toggle-switch block, which read site tokens (`--tap`, `--bg-card`, `--text-gold`, `--focus-ring`,
+      `--ui-font-small`) and hid the native checkbox while rendering no track or thumb — a flag field would have
+      painted nothing. Both blocks are gone; `.console-check` now styles the native box from `--c-*`, exactly as the
+      kit's markup (a label around the input and its words) expects. The owner's appended
+      `a, button, div { transition: 0.3s all ease; }` had landed at the top of the kit sheet and been copied into
+      `globals.css`; it is removed from both — a site-wide transition on three element names is the opposite of the
+      console's scoped reset.
+      **`tests/console-isolation.test.ts` is the fence**, one test per sentence of the brief: every `var()` the two
+      console sheets read resolves to a `--c-*` token they declare (the font variable is the single documented
+      exception) and none is a name from `tokens.css`; no site stylesheet selects `[data-surface="console"]` or
+      `.console-*`; the console root's import graph is exactly the two console sheets and the site root's graph is
+      exactly `globals.css` + `ui.css` + `tokens.css`, with no CSS imported behind either root's back; and no console
+      component writes a `ui-*` class. The load-path assertions in `console.test.ts` and `ui-primitives.test.ts` were
+      moved to the new reality.
+      **Computed styles from `globals.css`:** none reach the console, by construction — the two documents share no
+      stylesheet, so there is no cascade to inspect. The check was static: import graphs walked from both roots,
+      selector sweeps over all three site sheets, and a scan for inline `style=` (only a `flexGrow` number). No dev
+      address was given, so no browser measurement was made. Gates: typecheck clean, lint clean, 22 files / 542
+      tests passed (the new file adds 8).
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
