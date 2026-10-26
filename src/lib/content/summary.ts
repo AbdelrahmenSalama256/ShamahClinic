@@ -531,6 +531,30 @@ export async function listChoices(listKey: string, locale: ContentLocale): Promi
   });
 }
 
+/**
+ * The journal's articles as one-value choices, for a result story that has to name one.
+ *
+ * A result card *is* an article on the site, so the console cannot ask for an identifier —
+ * the WordPress post id is what the imported rows carry, and a row added in the console has
+ * no number at all. The slug is the one value that names the same story in both cases, and
+ * the title is the only thing a business owner can recognise.
+ */
+export async function articleChoices(locale: ContentLocale): Promise<ListChoice[]> {
+  const found = await sql<{ slug: string; title_ar: string | null; title_en: string | null }>`
+    SELECT ${sql.ref('slug')} AS slug, ${sql.ref('title_ar')} AS title_ar, ${sql.ref('title_en')} AS title_en
+    FROM ${sql.ref('articles')}
+    WHERE ${sql.ref('deleted_at')} IS NULL
+    ORDER BY ${sql.ref('published_at')} DESC, ${sql.ref('slug')} ASC
+  `.execute(db);
+  return found.rows.map((row) => {
+    const slug = asText(row.slug);
+    const ar = readStored('plain', row.title_ar);
+    const en = readStored('plain', row.title_en);
+    const title = locale === 'ar' ? ar || en : en || ar;
+    return { key: slug, label: title || slug };
+  });
+}
+
 function parseDoc(value: unknown): Record<string, unknown> | null {
   if (typeof value !== 'object' || value === null) {
     if (typeof value !== 'string') return null;

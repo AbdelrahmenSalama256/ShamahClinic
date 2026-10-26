@@ -18,6 +18,11 @@
  * compares against the form that was *posted* — because MariaDB returns `12` for what
  * someone typed as `12.0`, and a baseline re-read from the row would leave autosave writing
  * the same draft every two seconds.
+ *
+ * **A row that will never reach the site admits it.** `resultNotices()` names what the
+ * server cannot refuse: a result story that opens no article, half a before/after pair. The
+ * schema requires neither, so an owner who saved either would be looking at a screen that
+ * said "saved" about a page that changed nothing.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -25,7 +30,8 @@ import { describe, expect, it } from 'vitest';
 import { LIST_KEYS } from '../src/lib/auth/roles';
 import { CONTENT_KINDS, CONTENT_LOCALES, kindSpec, parseWrites, type ContentKind, type ContentLocale } from '../src/lib/content/kinds';
 import { localizedPath, pageSlug, publicPathOf } from '../src/lib/content/paths';
-import { fieldsFromForm, formOf, sameForm, contentStateKey, isPendingIn } from '../src/lib/console/editor-form';
+import { fieldsFromForm, formOf, sameForm, contentStateKey, isPendingIn, resultNotices } from '../src/lib/console/editor-form';
+import { imagesOfForm } from '../src/components/console/ConsoleEditor';
 import { catalogFor, type MessageKey } from '../src/lib/console/messages';
 import { fieldOf, groupIssues, issueText, liveIssues, type FieldIssue, type TrackedIssue } from '../src/lib/console/issues';
 import { previewDocument, previewModel, seoReadout } from '../src/lib/console/preview';
@@ -319,6 +325,39 @@ describe('the typed form of a list row', () => {
   });
 });
 
+describe('a result row says what will not reach the site', () => {
+  it('names the row that opens no article', () => {
+    // `/results` paints a card that opens a journal article, so a row that picks none is a
+    // row no visitor can ever see — and the save itself is legal, so nothing else reports it.
+    expect(resultNotices({}, 'laser-for-acne-scars')).toEqual(['content.result.unattached']);
+    expect(resultNotices({ story: 'laser-for-acne-scars' }, 'a-new-result')).toEqual([]);
+  });
+
+  it('counts a row imported by article id as attached', () => {
+    // The site found the 57 imported rows through the WordPress number in their key long
+    // before this picker existed; calling them unfinished would point at what is not broken.
+    expect(resultNotices({ story: '' }, '1182')).toEqual([]);
+  });
+
+  it('flags half a before/after pair and says nothing about none of it', () => {
+    expect(resultNotices({ story: 's', before: '/uploads/a.webp' }, 'r1')).toEqual(['content.result.pair']);
+    // Spaces in a box are no picture, so that row is still missing its second half.
+    expect(resultNotices({ story: 's', before: '/uploads/a.webp', after: '   ' }, 'r1')).toEqual(['content.result.pair']);
+    expect(resultNotices({ story: 's', before: '/uploads/a.webp', after: '/uploads/b.webp' }, 'r1')).toEqual([]);
+    expect(resultNotices({ story: 's' }, 'r1')).toEqual([]);
+  });
+
+  it('shows both halves of the pair in the media strip', () => {
+    const row = rowOfKind('list_item');
+    row.listKey = 'results';
+    row.fields.data = field({ kind: 'json', draftJson: {} });
+    expect(imagesOfForm(row, { before: '/uploads/202610/a.webp', after: '/uploads/202610/b.webp' })).toEqual([
+      '/uploads/202610/a.webp',
+      '/uploads/202610/b.webp',
+    ]);
+  });
+});
+
 describe('the preview pane', () => {
   it('shows the words being typed, not the last saved copy', () => {
     const model = previewModel('article', { title: 'لحاملات', excerpt: 'نص', content: '<p>فقرة</p>', image: '', imageAlt: false }, 'ar');
@@ -448,6 +487,9 @@ describe('the catalog carries every key in both languages', () => {
     'content.issue.unknown',
     'content.issue.required',
     'content.issue.long',
+    'content.list.story.empty',
+    'content.result.unattached',
+    'content.result.pair',
   ];
 
   for (const key of editorKeys) {

@@ -20,7 +20,7 @@ import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale } from 
 import { LIST_LABELS, type ListKey } from '../content/lists';
 import { getRow, knownListKeys, listKeyOfItem, type ContentRow } from '../content/store';
 import { filtersFor, parseListView, parseListScope, sortsFor, type ListFilter, type ListView, type ListSort } from '../content/list-view';
-import { listChoices, linkedArticleTitle, listSummaries, type ListChoice, type ListPage } from '../content/summary';
+import { articleChoices, listChoices, linkedArticleTitle, listSummaries, type ListChoice, type ListPage } from '../content/summary';
 import { listDocTitle, listSchemaOf } from '../content/list-schema';
 import { catalogFor, type MessageKey } from './messages';
 import { listSectionPath } from './paths';
@@ -253,6 +253,8 @@ export async function contentDetailData(
   const referenceOptions: Record<string, ListChoice[]> = {};
   for (const field of schema?.fields ?? []) {
     if (field.type === 'refs') referenceOptions[field.stem] = await listChoices(field.source, activeLocale);
+    // A result story is not a list item, so its choices come from the journal itself.
+    if (field.type === 'story') referenceOptions[field.stem] = await articleChoices(activeLocale);
   }
 
   return {

@@ -46,6 +46,7 @@ import {
   formOf,
   isPendingIn,
   listSchemaOfRow,
+  resultNotices,
   sameForm,
   storedValue,
   type Form,
@@ -394,6 +395,13 @@ export function ConsoleEditor({
 
         {issues.other.length > 0 && <Alert tone="danger">{issues.other.join(' · ')}</Alert>}
 
+        {/* A result row is the one list item that is really something else — a journal article
+            — and two of its states look fine while changing nothing on the site. Said out loud
+            here, because a page that silently drops what an owner typed is the defect. */}
+        {row && listSchema?.key === 'results' && !row.trashed ? (
+          <ResultAdvice form={shown} rowKey={row.key} labels={labels} />
+        ) : null}
+
         {/* The picture is part of the item, not a detail of the list: whatever URL the
             image field (or a list item's `data`) holds is shown here as the person types
             it, so a broken path is visible before it reaches the site. */}
@@ -708,6 +716,30 @@ function FieldRow({
   );
 }
 
+/**
+ * What a result row leaves undone, printed above the fields that look filled.
+ *
+ * `resultNotices()` knows which states mean the row will not reach the site; this says so in
+ * the language the rest of the editor speaks. The server accepts both — the schema requires
+ * neither field, because the imported rows would then refuse to save — so nothing else in the
+ * product tells an owner that a saved result is an invisible one.
+ */
+function ResultAdvice({
+  form,
+  rowKey,
+  labels,
+}: Readonly<{ form: Form; rowKey: string; labels: Record<MessageKey, string> }>) {
+  return (
+    <>
+      {resultNotices(form, rowKey).map((key) => (
+        <Alert key={key} tone="warn">
+          {labels[key]}
+        </Alert>
+      ))}
+    </>
+  );
+}
+
 /** The pictures the live form would put on the site, in document order, for the strip. */
 const MAX_PREVIEWS = 6;
 
@@ -730,7 +762,7 @@ function flatGallery(value: string): boolean {
   }
 }
 
-function imagesOfForm(row: ContentRow, form: Form): string[] {
+export function imagesOfForm(row: ContentRow, form: Form): string[] {
   const out: string[] = [];
   const add = (src: string): void => {
     if (!out.includes(src)) out.push(src);
@@ -739,8 +771,14 @@ function imagesOfForm(row: ContentRow, form: Form): string[] {
   // A typed list's picture is in the document the form builds, not in a `data` string.
   const schema = listSchemaOfRow(row);
   if (schema) {
-    const picture = listDocImage(schema, listDocFromForm(schema, form).doc);
-    if (picture) add(picture);
+    const built = listDocFromForm(schema, form);
+    // Every picture field, not the first one that has a value: a result story carries a
+    // before *and* an after, and a strip showing one hides the half that is missing.
+    for (const field of schema.fields) {
+      if (field.type !== 'image') continue;
+      const picture = listDocImage(schema, built.doc, field.stem);
+      if (picture) add(picture);
+    }
   }
 
   for (const [name, field] of Object.entries(row.fields)) {

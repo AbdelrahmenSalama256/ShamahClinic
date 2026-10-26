@@ -19,6 +19,11 @@
  *   - **a key the form does not describe is shown, and its value is nowhere editable.** The
  *     server refuses unknown fields; the screen has to say so without handing over a box to
  *     type them into.
+ *
+ * Slice R adds one field type to that contract, because a result story is the one list item
+ * that is really something else: it *is* a journal article. `story` names it, and the suite
+ * checks the two ways that can go wrong — a picker that asks for an id nobody can read, and a
+ * before/after pair that is one typed path each.
  */
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -27,10 +32,15 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { catalogFor } from '../src/lib/console/messages';
-import { ListDocFields } from '../src/components/console/ListDocFields';
+import { ListDocFields, type ReferenceChoice } from '../src/components/console/ListDocFields';
 import {
   UNKNOWN_FORM_KEY,
+  emptyListDocForm,
+  listDocAlt,
   listDocForm,
+  listDocFromForm,
+  listDocImage,
+  listDocIntro,
   listSchemaOf,
   listSchemas,
   schemaStems,
@@ -43,7 +53,12 @@ const labels = catalogFor('ar');
 const read = (...parts: string[]): string => readFileSync(join(process.cwd(), ...parts), 'utf8');
 const editorSource = read('src', 'components', 'console', 'ConsoleEditor.tsx');
 
-function renderForm(schema: ListSchema, form: Form, extra?: Record<string, unknown>): string {
+function renderForm(
+  schema: ListSchema,
+  form: Form,
+  extra?: Record<string, unknown>,
+  options?: Record<string, ReferenceChoice[]>,
+): string {
   const withUnknown: Form = { ...form };
   if (extra && Object.keys(extra).length > 0) withUnknown[UNKNOWN_FORM_KEY] = JSON.stringify(extra);
   return renderToStaticMarkup(
@@ -51,7 +66,7 @@ function renderForm(schema: ListSchema, form: Form, extra?: Record<string, unkno
       schema,
       form: withUnknown,
       errors: {},
-      referenceOptions: {},
+      referenceOptions: options ?? {},
       locale: 'ar',
       disabled: false,
       labels,
@@ -77,7 +92,7 @@ const countOf = (markup: string, id: string): number => (markup.match(new RegExp
 function sampleDoc(schema: ListSchema): Record<string, unknown> {
   const doc: Record<string, unknown> = {};
   for (const field of schema.fields) {
-    if (field.type === 'refs') continue;
+    if (field.type === 'refs' || field.type === 'story') continue;
     if (field.type === 'list') {
       doc[`${field.stem}_ar`] = ['ب'];
       doc[`${field.stem}_en`] = ['b'];
@@ -111,7 +126,7 @@ function sampleDoc(schema: ListSchema): Record<string, unknown> {
       doc[field.stem] = '/b';
       continue;
     }
-    if (field.mono) {
+    if (field.type === 'text' && field.mono) {
       doc[field.stem] = '+20 100';
       continue;
     }
@@ -129,6 +144,12 @@ describe('what the typed list form really paints (BK-20 F)', () => {
         const id = `list-field-${field.stem}`;
         if (field.type === 'refs') {
           expect(markup, `${schema.key}.${field.stem} offers choices`).toContain(labels['content.list.refs.empty']);
+          continue;
+        }
+        if (field.type === 'story') {
+          // With no article to pick the control cannot be drawn; what must exist is the
+          // sentence that says what is missing and where to write one.
+          expect(markup, `${schema.key}.${field.stem} says there is nothing to pick`).toContain(labels['content.list.story.empty']);
           continue;
         }
         if (field.type === 'children') {
@@ -231,6 +252,80 @@ describe('what the typed list form really paints (BK-20 F)', () => {
     expect(markup).not.toContain('a value typed by hand');
     expect(markup).not.toContain('&quot;');
     expect(markup).not.toMatch(/<textarea/);
+  });
+
+  it('paints the result case: an article to open and two pictures to upload', () => {
+    const results = listSchemaOf('results')!;
+    const doc = {
+      story: 'fractional-laser-face',
+      title_ar: 'بعد أربع جلسات',
+      title_en: 'After four sessions',
+      service: ['peeling'],
+      before: '/uploads/202610/before.webp',
+      after: '/uploads/202610/after.webp',
+      alt_ar: 'بشرة قبل الليزر وبعد أربع جلسات',
+      alt_en: 'Skin before laser and after four sessions',
+      caption_ar: 'الليزر الجزئي للوجه',
+      caption_en: 'Fractional laser for the face',
+      note_ar: 'ثلاث جلسات على مدى شهرين.',
+      note_en: 'Three sessions over two months.',
+      phrases: ['result'],
+    };
+    const choices: Record<string, ReferenceChoice[]> = {
+      story: [{ key: 'fractional-laser-face', label: 'الليزر الجزئي للوجه' }],
+      service: [{ key: 'peeling', label: 'تقشير البشرة' }],
+    };
+    const markup = renderForm(results, listDocForm(results, doc), undefined, choices);
+
+    // The article is named by its title, and the value behind that name is the slug the
+    // site joins on — never a WordPress number a person would have to remember.
+    expect(tagFor(markup, 'list-field-story')).toContain('<select');
+    expect(markup).toContain('<option value="fractional-laser-face"');
+    expect(markup).toContain('الليزر الجزئي للوجه');
+    // A service is chosen the same way.
+    expect(markup).toContain('تقشير البشرة');
+
+    // Two upload slots, and the picture each holds is drawn from the address the server
+    // returned — there is no box in which a path can be typed.
+    expect(tagFor(markup, 'list-field-before')).toContain('type="file"');
+    expect(tagFor(markup, 'list-field-after')).toContain('type="file"');
+    expect(markup).toContain('<img src="/uploads/202610/before.webp"');
+    expect(markup).toContain('<img src="/uploads/202610/after.webp"');
+    expect(markup).not.toMatch(/value="\/uploads\//);
+
+    // The words that go with the pair: a line under it, a longer text for the enlarged
+    // view, and one description for a screen reader.
+    expect(tagFor(markup, 'list-field-caption-ar')).toContain('<input');
+    expect(tagFor(markup, 'list-field-note-ar')).toContain('<textarea');
+    expect(tagFor(markup, 'list-field-alt-ar')).not.toBe('');
+    expect(markup).not.toContain('&quot;');
+  });
+
+  it('writes the case back as the document the site reads', () => {
+    const results = listSchemaOf('results')!;
+    const doc = {
+      story: 'fractional-laser-face',
+      title_ar: 'بعد أربع جلسات',
+      before: '/uploads/202610/before.webp',
+      after: '/uploads/202610/after.webp',
+      caption_ar: 'الليزر الجزئي للوجه',
+      phrases: ['result'],
+    };
+    const parsed = listDocFromForm(results, listDocForm(results, doc));
+    expect(parsed.issues).toEqual([]);
+    expect(parsed.doc.story).toBe('fractional-laser-face');
+    expect(parsed.doc.before).toBe('/uploads/202610/before.webp');
+    expect(parsed.doc.after).toBe('/uploads/202610/after.webp');
+    expect(parsed.doc.phrases).toEqual(['result']);
+    // The card shows what the session produced, not whichever picture field the schema
+    // happens to list first — and the caption is the line under it.
+    expect(listDocImage(results, parsed.doc, 'after')).toBe('/uploads/202610/after.webp');
+    expect(listDocImage(results, parsed.doc, 'before')).toBe('/uploads/202610/before.webp');
+    expect(listDocIntro(results, parsed.doc, 'ar')).toBe('الليزر الجزئي للوجه');
+    expect(listDocAlt(results, parsed.doc)).toEqual({ ar: '', en: '' });
+    // A row that names no article is still a valid document: the imported rows attach by
+    // their WordPress id, and the editor says out loud that such a row shows nothing.
+    expect(listDocFromForm(results, emptyListDocForm(results)).issues).toEqual([]);
   });
 
   it('leaves no door to the document open in the editor either', () => {

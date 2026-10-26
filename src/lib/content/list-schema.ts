@@ -65,6 +65,15 @@ export type ListField =
   | (FieldBase & { type: 'select'; options: readonly { value: string; label: Bi }[] })
   | (FieldBase & { type: 'href'; required?: boolean })
   | (FieldBase & { type: 'refs'; source: string })
+  /**
+   * One article of the journal, named by its slug.
+   *
+   * A result story *is* an article — the card on `/results` opens it — so the row has to say
+   * which one. `refs` cannot stand in: it points at another *list*, is chosen as a set of
+   * checkboxes, and a result belongs to exactly one article. The stored value is the slug,
+   * because an article's slug is what a person can recognise and its WordPress id is not.
+   */
+  | (FieldBase & { type: 'story'; required?: boolean })
   | (FieldBase & { type: 'children'; row: readonly ChildField[] });
 
 export interface ListSchema {
@@ -197,11 +206,82 @@ const RESULTS: ListSchema = {
   title: 'title',
   fields: [
     {
+      type: 'story',
+      stem: 'story',
+      label: { ar: 'المقال الذي يحكي هذه النتيجة', en: 'The article this result tells' },
+      hint: {
+        ar: 'اختاري مقالًا من المدونة. البطاقة في صفحة النتائج تفتح هذا المقال.',
+        en: 'Pick a blog article. The card on the results page opens that article.',
+      },
+    },
+    {
       type: 'text',
       stem: 'title',
       label: { ar: 'عنوان النتيجة', en: 'Result title' },
-      hint: { ar: 'الاسم الذي يظهر بهذا العنصر في اللوحة. اتركيه فارغًا ليُستخدم عنوان المقال المرتبط.', en: 'The name this item has in the console. Leave it empty to use the linked article title.' },
+      hint: {
+        ar: 'العنوان فوق الصورتين في صفحة النتائج. اتركيه فارغًا ليظهر عنوان المقال.',
+        en: 'The headline above the pictures on the results page. Leave it empty to use the article title.',
+      },
       max: 300,
+    },
+    {
+      type: 'refs',
+      stem: 'service',
+      source: 'services',
+      label: { ar: 'الخدمة التي أدّت إلى هذه النتيجة', en: 'The service behind this result' },
+      hint: {
+        ar: 'تظهر باسمها مع الصورتين، والنقرة عليها تفتح صفحة الخدمة.',
+        en: 'Shown by name with the pictures; it opens that service page.',
+      },
+    },
+    {
+      type: 'image',
+      stem: 'before',
+      label: { ar: 'صورة قبل الجلسة', en: 'Picture before the session' },
+      hint: {
+        ar: 'تُرفع من جهازك، لا تُكتب كرابط. تظهر على حدة بجانب صورة بعد.',
+        en: 'Uploaded from your device, never typed as a link. Shown beside the after picture.',
+      },
+    },
+    {
+      type: 'image',
+      stem: 'after',
+      label: { ar: 'صورة بعد الجلسة', en: 'Picture after the session' },
+      hint: {
+        ar: 'الصورتان تظهران معًا: ما لم ترفعي الاثنتين تبقى البطاقة صورتها من المقال.',
+        en: 'The two show together: until both are uploaded the card keeps the article photo.',
+      },
+    },
+    {
+      type: 'text',
+      stem: 'alt',
+      label: { ar: 'وصف الصورتين', en: 'Description of the two pictures' },
+      hint: {
+        ar: 'جملة تقرأها قارئات الشاشة لمن لا يرى الصورتين.',
+        en: 'Read aloud to people who cannot see the pictures.',
+      },
+      max: 300,
+    },
+    {
+      type: 'text',
+      stem: 'caption',
+      label: { ar: 'سطر تحت الصورتين', en: 'Line under the pictures' },
+      hint: {
+        ar: 'مثال: بعد أربع جلسات. سطر واحد يظهر تحت الصورتين وفي العرض المكبّر.',
+        en: 'For example: after four sessions. One line, under the pictures and in the enlarged view.',
+      },
+      max: 300,
+    },
+    {
+      type: 'text',
+      stem: 'note',
+      label: { ar: 'النص الذي يظهر عند تكبير الصورتين', en: 'Text shown when the pictures are enlarged' },
+      hint: {
+        ar: 'فقرات قصيرة تشرح ما تراه في الصورتين والمدة بينهما. لا تظهر في الصفحة العادية.',
+        en: 'A few short paragraphs on what the pictures show and the time between them. Only in the enlarged view.',
+      },
+      multiline: true,
+      max: 2000,
     },
     {
       type: 'strings',
@@ -492,12 +572,13 @@ export function parseListDoc(schema: ListSchema, input: unknown): ParsedListDoc 
       continue;
     }
 
-    if (field.type === 'image' || field.type === 'href' || field.type === 'select') {
+    if (field.type === 'image' || field.type === 'href' || field.type === 'select' || field.type === 'story') {
       const raw = source[field.stem];
       if (raw !== undefined && typeof raw !== 'string') issues.push({ path: field.stem, message: 'expected text' });
       const value = typeof raw === 'string' ? raw.trim() : '';
-      if (field.type === 'image' && field.required && !value) issues.push({ path: field.stem, message: 'required' });
-      if (field.type === 'href' && field.required && !value) issues.push({ path: field.stem, message: 'required' });
+      if ((field.type === 'image' || field.type === 'href' || field.type === 'story') && field.required && !value) {
+        issues.push({ path: field.stem, message: 'required' });
+      }
       if (field.type === 'select' && value && !field.options.some((option) => option.value === value)) {
         issues.push({ path: field.stem, message: 'unknown option' });
       }
@@ -531,7 +612,7 @@ export function listDocTitle(schema: ListSchema, doc: Record<string, unknown>, l
 
 /** The one-line teaser a card shows under the title, in document order. */
 export function listDocIntro(schema: ListSchema, doc: Record<string, unknown>, locale: ContentLocale): string {
-  const preferred = ['intro', 'description', 'answer', 'area', 'landmark', 'credentials'];
+  const preferred = ['intro', 'description', 'answer', 'area', 'landmark', 'credentials', 'caption'];
   for (const stem of preferred) {
     const field = schema.fields.find((candidate) => candidate.stem === stem && candidate.type === 'text');
     if (!field || field.type !== 'text') continue;
@@ -542,10 +623,17 @@ export function listDocIntro(schema: ListSchema, doc: Record<string, unknown>, l
   return '';
 }
 
-/** The first picture a document carries, wherever the schema keeps it. */
-export function listDocImage(schema: ListSchema, doc: Record<string, unknown>): string | null {
+/**
+ * The picture a document carries, wherever the schema keeps it.
+ *
+ * `stem` names one field when the caller knows which picture it wants: a result story has a
+ * before *and* an after, and the card that invites the click shows what the session produced.
+ * Without it the first picture field with a value answers, which is what every other list wants.
+ */
+export function listDocImage(schema: ListSchema, doc: Record<string, unknown>, stem?: string): string | null {
   for (const field of schema.fields) {
     if (field.type !== 'image') continue;
+    if (stem !== undefined && field.stem !== stem) continue;
     const source = doc[field.stem];
     if (typeof source === 'string' && source.trim()) return source.trim();
   }
@@ -747,7 +835,9 @@ export function listDocMeta(schema: ListSchema, doc: Record<string, unknown>, lo
     if (field.type === 'text' && field.stem !== schema.title) {
       const read = readBi(doc, field.stem, field.html ? 'source' : 'plain');
       const value = read.value[locale] || read.value[locale === 'ar' ? 'en' : 'ar'];
-      if (value && !['intro', 'description', 'body', 'answer', 'area', 'landmark', 'credentials'].includes(field.stem)) {
+      // A field the card already shows as its teaser, its picture description or its long
+      // text must not also print as a strip of labels — the preview is one card, not a dump.
+      if (value && !['intro', 'description', 'body', 'answer', 'area', 'landmark', 'credentials', 'caption', 'note'].includes(field.stem)) {
         out.push({ label: labelOf(field), value });
       }
     }

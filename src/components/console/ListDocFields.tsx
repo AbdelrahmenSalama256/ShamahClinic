@@ -526,6 +526,35 @@ function SchemaField({
     );
   }
 
+  if (field.type === 'story') {
+    // One article, chosen by name. A result story *is* a journal article on the site, so the
+    // row that names none can never appear — the picker is the difference between a result the
+    // owner added and one that silently did nothing.
+    const value = textOf(form, field.stem);
+    if (referenceOptions.length === 0) {
+      return (
+        <div className="console-doc-field" data-invalid={errors.length > 0 || undefined}>
+          <span className="console-doc-label">{label}</span>
+          {hint ? <Note>{hint}</Note> : null}
+          <Note>{labels['content.list.story.empty']}</Note>
+          {errorsNode}
+        </div>
+      );
+    }
+    return (
+      <Field htmlFor={id} errors={errors} label={label} note={hint ? <Note>{hint}</Note> : null}>
+        <Select id={id} value={value} disabled={disabled} onChange={(event) => onChange(field.stem, event.target.value)}>
+          <option value="">—</option>
+          {referenceOptions.map((choice) => (
+            <option key={choice.key} value={choice.key}>
+              {choice.label}
+            </option>
+          ))}
+        </Select>
+      </Field>
+    );
+  }
+
   if (field.type === 'number') {
     return (
       <Field htmlFor={id} errors={errors} label={label} note={hint ? <Note>{hint}</Note> : null}>
