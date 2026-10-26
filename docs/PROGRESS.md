@@ -2350,6 +2350,50 @@ owner's word.
       pair and the enlarged note when — and only when — both halves exist, keep the `ArticleCard`
       otherwise, and rewrite the disclaimer to say what is true after that.
 
+- [x] R2 The public results page draws the case, in the owner's order — `7a497b1`
+      **What was fixed.** `site.ts` joined a result row to its article at `Number(row.key)`, so a row
+      made through *Add new* — keyed by a uid, naming its article in `story` — matched nothing and the
+      save never reached a visitor. `resultStoryPointer()` in `list-docs.ts` now answers the row's claim
+      in the two ways a row can make it: the slug a person picked, or the WordPress post id the import
+      wrote, which the key still carries. `getResultStories()` resolves that pointer against both an
+      article slug index and a legacy-id index, so the 56 imported rows read exactly as they did and a
+      console row reads for the first time. The list is emitted in `position` order, the one the console
+      reorders, instead of the journal's date order the import had recorded and nobody used.
+      **The pair is decided in the data.** A row with one half answers `pair: null`, so no reader can
+      draw a single picture under two labels; the card then stays the `ArticleCard` it always was. The
+      typed `title` replaces the article's headline on both card shapes, an `alt` that was never written
+      reads out the headline instead of leaving a screen reader with nothing, the `service` uid resolves
+      through `getServiceCards()` to that service's live name and link, and two rows claiming one article
+      render it once — the list was never a second copy of the journal.
+      **The screen.** `ResultsClient` takes `ResultStoryView[]` now: a before/after card whose halves are
+      buttons, an enlarged view that walks only the stories carrying a pair (Escape, arrow keys in both
+      directions, the counter, the caption, the longer `note`), a service chip, an empty state that says
+      what to add, and a disclaimer that states the rule the code now enforces instead of apologising for
+      a stock photo the clinic does not have. `/results` maps the story through `storyView()`.
+      **Console titles.** A slug-keyed row no longer reads as its uid. `summary.ts` resolves each
+      unnamed row's pointer through a mixed `legacy_id`-or-`slug` query, and `content-screen.ts` asks
+      `linkedArticleTitle()` for the same pointer the editor heading was built to hide — a heading of
+      "1182" is the defect, not a name.
+      **Proved.** `tests/results-page.test.ts` (14) seeds four articles and six rows through the store
+      and asserts what the read path answers: the slug and the numeric key both resolve, the order is
+      the `position` order and not the uid order, a half pair is `null`, the hidden row, the row that
+      claims no article and the duplicate are not drawn, the imported row still carries its `phrases`,
+      and the console list titles each row by its article. The screen half renders `ResultsClient`
+      through `renderToStaticMarkup` with the router mocked: both halves and their shared alt appear for
+      a pair, neither appears without one, the `note` is absent from the list, the empty state and the
+      disclaimer read the same in Arabic and English, and the card links `/blogs/<slug>` and the service.
+      The enlarged view opens on a press, so what it is built from is asserted on the source — the
+      dialog walks the filtered `paired` list and draws `shown.pair` and `shown.note`.
+      **Gates.** Typecheck clean, lint clean (the `react-hooks/exhaustive-deps` warning on the key
+      handler is gone: `move` is a `useCallback` and the effect's dependency list is complete), touched
+      suites 200 passed, full run **612 passed, 4 failed** — the same four as R1, all asserting against
+      the owner's uncommitted `src/app/console/console.css` / `globals.css` edits. Those files,
+      `console-kit.css` and `public/uploads/` stayed uncommitted.
+      **Not verified on a screen.** No dev address or password was supplied, so no browser saw this
+      page: the pair's pixels at 360px, the enlarged view's arrows and focus trap, the Arabic RTL of the
+      new badges and the counter's Arabic-Indic digits are claims from markup, not from a viewport. They
+      belong to slice G. The live site still renders the old page until it is deployed.
+
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
