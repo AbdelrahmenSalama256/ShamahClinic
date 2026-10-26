@@ -40,7 +40,7 @@ import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue }
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
 import { SEO_SETTING_GROUP } from './settings-catalog';
-import { branchOfDoc, docBi, docBiAny, docStringPairs, docStr, faqOfDoc, navOfDoc, specialistOfDoc } from './list-docs';
+import { branchOfDoc, docBi, docBiAny, docStringPairs, docStrings, docStr, faqOfDoc, navOfDoc, resultStoryPointer, specialistOfDoc } from './list-docs';
 import { faqData, type FaqItem } from '../../data/faq';
 import { navItems, type NavItem } from '../../data/nav';
 import { specialistsData, type Specialist } from '../../data/specialists';
@@ -660,41 +660,122 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
 // --- result stories -----------------------------------------------------------
 
 /**
- * A result story is an article whose own text names an outcome, so its card comes
- * from `getAllArticles()` and only its **membership** has a rung: the `results` list
- * the console edits, or the phrase index the snapshot derived from post bodies.
+ * What the console typed onto one result row, beside the article it claims.
  *
- * The rows are keyed by the WordPress post id — the number `numericId` puts on the
- * card — because an article's slug can be renamed while its id cannot, and the list
- * is a statement about the post, not about its URL. `phrases` is the provenance the
- * phrase index carried: why a post was called a story. Nothing on the page renders it.
+ * `pair` is the comparison, and it is only a comparison when both halves were uploaded: a
+ * card that showed one picture labelled "after" would promise a before the owner never
+ * took. So the half pair is dropped here, in the data, rather than hidden in a stylesheet —
+ * every reader of this shape then draws either a real before/after or the article's own
+ * card, and never a half of either.
+ *
+ * A row the import wrote holds only the phrases that made it a story, so every field here is
+ * empty for it. Nothing is invented to fill a gap the dashboard did not publish.
  */
 export interface ResultStory {
   card: ArticleCard;
   phrases: string[];
+  /** the owner's headline, already fallen back to the article's own title. */
+  headline: Bi;
+  pair: { before: string; after: string } | null;
+  /** one description for both halves; the pair is one statement about one face. */
+  alt: Bi;
+  caption: Bi;
+  /** the longer text, shown only in the enlarged view. */
+  note: Bi;
+  /** the service the row names, by its live name and link. */
+  service: { name: Bi; href: Bi } | null;
 }
 
-async function resultStoryIndex(): Promise<Map<number, string[]>> {
+/** A row read off the list, before its article has been found. */
+interface ResultSelection {
+  pointer: string;
+  detail: Omit<ResultStory, 'card' | 'phrases'>;
+  phrases: string[];
+}
+
+function resultSelectionOf(row: PublicRow, services: Map<string, ServiceCard>): ResultSelection {
+  const doc = documentOf(row) ?? {};
+  const named = docStrings(doc, 'service');
+  const service = named.length > 0 ? services.get(named[0]) : undefined;
+  const before = docStr(doc, 'before');
+  const after = docStr(doc, 'after');
+  return {
+    pointer: resultStoryPointer(doc, row.key),
+    phrases: docStringPairs(doc, 'phrases').en,
+    detail: {
+      headline: docBi(doc, 'title'),
+      pair: before && after ? { before, after } : null,
+      alt: docBi(doc, 'alt'),
+      caption: docBi(doc, 'caption'),
+      note: docBi(doc, 'note'),
+      service: service ? { name: service.title, href: service.href } : null,
+    },
+  };
+}
+
+/**
+ * The rows that claim a story, in the order the console put them.
+ *
+ * Membership used to be a map keyed by the WordPress post id, which is exactly why a result
+ * added in the console could never appear: its row carries no number. A row now points at an
+ * article by whichever name it holds, and the list keeps the order its author set — the
+ * `position` column the import wrote and the old reader ignored.
+ *
+ * The snapshot rung answers with the same shape, minus the detail: the file named a post and
+ * typed nothing else.
+ */
+async function resultSelections(): Promise<ResultSelection[]> {
   return listRung(
     'results',
+    async () => {
+      const services = new Map((await getServiceCards()).map((card) => [card.slug, card]));
+      return (await publicRows('list_item', { listKey: 'results' }))
+        .filter((row) => flag(row, 'enabled'))
+        .map((row) => resultSelectionOf(row, services))
+        .filter((selection) => selection.pointer !== '');
+    },
     async () =>
-      new Map(
-        (await publicRows('list_item', { listKey: 'results' }))
-          .filter((row) => flag(row, 'enabled'))
-          .map((row) => {
-            const id = Number(row.key);
-            return [id, docStringPairs(documentOf(row) ?? {}, 'phrases').en] as [number, string[]];
-          })
-          // A row an editor typed by hand may name nothing; it cannot be a story.
-          .filter(([id]) => Number.isInteger(id)),
-      ),
-    async () => storyPhraseIndex(),
+      [...(await storyPhraseIndex()).entries()].map(([id, phrases]) => ({
+        pointer: String(id),
+        phrases,
+        detail: { headline: { ar: '', en: '' }, pair: null, alt: { ar: '', en: '' }, caption: { ar: '', en: '' }, note: { ar: '', en: '' }, service: null },
+      })),
   );
 }
 
+/**
+ * The page's stories: each row's article, found by the name the row carries.
+ *
+ * A post id resolves by id first because that is what it is; a slug only ever resolves by
+ * slug, so an id-shaped slug cannot steal another row's article. Two rows that claim one
+ * article render it once, in the earlier row's place — the list has always been a statement
+ * about the journal, never a second copy of it.
+ */
 export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory>> {
-  const [index, cards] = await Promise.all([resultStoryIndex(), getAllArticles()]);
-  const stories = cards.filter((card) => index.has(card.id)).map((card) => ({ card, phrases: index.get(card.id)! }));
+  const [selections, cards] = await Promise.all([resultSelections(), getAllArticles()]);
+  const bySlug = new Map(cards.map((card) => [card.slug, card]));
+  const byLegacyId = new Map(cards.map((card) => [String(card.id), card]));
+  const stories: ResultStory[] = [];
+  const claimed = new Set<string>();
+  for (const selection of selections) {
+    const numeric = /^\d+$/.test(selection.pointer);
+    const card = numeric
+      ? byLegacyId.get(selection.pointer) ?? bySlug.get(selection.pointer)
+      : bySlug.get(selection.pointer);
+    if (!card || claimed.has(card.slug)) continue;
+    claimed.add(card.slug);
+    const typed = selection.detail;
+    const headline = typed.headline.ar || typed.headline.en ? typed.headline : card.title;
+    stories.push({
+      card,
+      phrases: selection.phrases,
+      ...typed,
+      // A headline the owner never typed is the article's own, and a pair with no written
+      // description is read out as what it is a picture of.
+      headline,
+      alt: typed.alt.ar || typed.alt.en ? typed.alt : headline,
+    });
+  }
   return wp.paginate(stories, q.page, q.perPage);
 }
 

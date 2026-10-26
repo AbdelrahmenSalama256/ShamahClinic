@@ -23,6 +23,7 @@ import { likeOf } from '../db/like';
 import { readStored, type FieldFormat } from './format';
 import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 import { listDocTitle, listSchemaOf, type ListSchema as TypedList } from './list-schema';
+import { resultStoryPointer } from './list-docs';
 import { listIdForKey } from './store';
 import type { ListFilter, ListSort, ListView } from './list-view';
 
@@ -456,15 +457,21 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
     };
   });
 
-  // A result story has no name of its own on the site: it *is* the article whose WordPress
-  // post id its `uid` carries. When nobody typed a title, the linked article's title is the
-  // real name — printing the raw uid ("1182") in the list was the defect this fixes.
+  // A result story has no name of its own on the site: it *is* an article. When nobody typed
+  // a headline, that article's title is the real name — printing the raw uid ("1182") in the
+  // list was the defect this fixes. A row the console created names its article by slug, so
+  // the pointer, not the key, is what the lookup is asked for.
   if (query.listKey === 'results') {
+    const pointerOf = new Map(raw.map((row) => {
+      const key = asText(row.row_key);
+      return [key, resultStoryPointer(parseDoc(row.doc) ?? {}, key) || key] as [string, string];
+    }));
     const unnamed = rows.filter((row) => !row.titleAr || !row.titleEn);
     if (unnamed.length > 0) {
-      const linked = await articleTitles(unnamed.map((row) => row.key));
+      const wanted = unnamed.map((row) => pointerOf.get(row.key) ?? row.key);
+      const linked = await articleTitles(wanted);
       for (const row of unnamed) {
-        const title = linked.get(row.key);
+        const title = linked.get(pointerOf.get(row.key) ?? row.key);
         if (!title) continue;
         if (!row.titleAr) row.titleAr = title.ar;
         if (!row.titleEn) row.titleEn = title.en;
@@ -475,27 +482,40 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
   return { rows, total, page, pages, per: view.per, columns, hasImages };
 }
 
-/** The drafts' titles for the articles a WordPress post id names, keyed by that id. */
-async function articleTitles(legacyIds: readonly string[]): Promise<Map<string, Record<ContentLocale, string>>> {
-  const ids = [...new Set(legacyIds.filter(Boolean))];
-  if (ids.length === 0) return new Map();
-  const found = await sql<{ legacy_id: string; title_ar: string | null; title_en: string | null }>`
-    SELECT ${sql.ref('legacy_id')} AS legacy_id, ${sql.ref('title_ar')} AS title_ar, ${sql.ref('title_en')} AS title_en
+/**
+ * The articles a result pointer names, keyed by that pointer.
+ *
+ * One query answers both spellings because a slug is never all digits: the imported rows are
+ * keyed by the WordPress post id and the console's rows by the `story` field's slug.
+ */
+async function articleTitles(pointers: readonly string[]): Promise<Map<string, Record<ContentLocale, string>>> {
+  const keys = [...new Set(pointers.filter(Boolean))];
+  if (keys.length === 0) return new Map();
+  const wanted = new Set(keys);
+  const ids = keys.filter((key) => /^\d+$/.test(key));
+  const slugs = keys.filter((key) => !/^\d+$/.test(key));
+  const where: RawBuilder<SqlBool>[] = [];
+  if (ids.length > 0) where.push(sql<SqlBool>`${sql.ref('legacy_id')} IN (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})`);
+  if (slugs.length > 0) where.push(sql<SqlBool>`${sql.ref('slug')} IN (${sql.join(slugs.map((name) => sql`${name}`), sql`, `)})`);
+  const found = await sql<{ slug: string; legacy_id: string | null; title_ar: string | null; title_en: string | null }>`
+    SELECT ${sql.ref('slug')} AS slug, ${sql.ref('legacy_id')} AS legacy_id,
+      ${sql.ref('title_ar')} AS title_ar, ${sql.ref('title_en')} AS title_en
     FROM ${sql.ref('articles')}
-    WHERE ${sql.ref('legacy_id')} IN (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
-      AND ${sql.ref('deleted_at')} IS NULL
+    WHERE ${sql.ref('deleted_at')} IS NULL AND (${sql.join(where, sql` OR `)})
   `.execute(db);
-  return new Map(
-    found.rows.map((row) => [
-      asText(row.legacy_id),
-      { ar: readStored('plain', row.title_ar), en: readStored('plain', row.title_en) },
-    ]),
-  );
+  const titles = new Map<string, Record<ContentLocale, string>>();
+  for (const row of found.rows) {
+    const title = { ar: readStored('plain', row.title_ar), en: readStored('plain', row.title_en) };
+    const legacy = row.legacy_id === null || row.legacy_id === undefined ? '' : asText(row.legacy_id);
+    if (wanted.has(legacy)) titles.set(legacy, title);
+    if (wanted.has(asText(row.slug))) titles.set(asText(row.slug), title);
+  }
+  return titles;
 }
 
 /** The title of the article a result story points at, for a heading with no typed title. */
-export async function linkedArticleTitle(legacyId: string, locale: ContentLocale): Promise<string> {
-  const title = (await articleTitles([legacyId])).get(legacyId);
+export async function linkedArticleTitle(pointer: string, locale: ContentLocale): Promise<string> {
+  const title = (await articleTitles([pointer])).get(pointer);
   return title ? title[locale] || title[locale === 'ar' ? 'en' : 'ar'] : '';
 }
 

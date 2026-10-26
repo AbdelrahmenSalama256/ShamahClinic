@@ -4,9 +4,10 @@ import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ResultsClient } from "@/components/pages/ResultsClient";
-import { getResultStories } from "@/lib/content/site";
+import { getResultStories, type ResultStory } from "@/lib/content/site";
 import { getBanner } from "@/lib/content/banners";
-import { cardToUIArticle } from "@/lib/wp/ui";
+import { cardToUIArticle, toPhotoSlot } from "@/lib/wp/ui";
+import type { ResultStoryView } from "@/components/pages/ResultsClient";
 import { getLocalizedHref } from "@/lib/locale";
 import { SITE_URL } from "@/lib/site";
 import { routeLang } from "@/lib/route-lang";
@@ -23,6 +24,26 @@ const PER_PAGE = 9;
 function pageHref(page: number, lang: "ar" | "en"): string {
   const qs = page > 1 ? `?page=${page}` : "";
   return `${SITE_URL}${getLocalizedHref("/results", lang)}${qs}`;
+}
+
+/**
+ * The story as the client draws it.
+ *
+ * The headline replaces the article's own title on the card because the owner wrote it for
+ * this page, and both halves of a pair are made into slots together or not at all — the read
+ * path already dropped a half pair, so a card here either shows a comparison or shows the
+ * article.
+ */
+function storyView(story: ResultStory): ResultStoryView {
+  return {
+    article: { ...cardToUIArticle(story.card), title: story.headline },
+    pair: story.pair
+      ? { before: toPhotoSlot(story.pair.before, story.alt), after: toPhotoSlot(story.pair.after, story.alt) }
+      : null,
+    caption: story.caption,
+    note: story.note,
+    service: story.service ? { label: story.service.name, href: story.service.href } : null,
+  };
 }
 
 async function read(sp: Props["searchParams"]) {
@@ -72,7 +93,7 @@ export default async function ResultsPage({ searchParams }: Props) {
         ])}
       />
       <ResultsClient
-        stories={paged.items.map((story) => cardToUIArticle(story.card))}
+        stories={paged.items.map(storyView)}
         page={paged.page}
         total={paged.total}
         totalPages={paged.totalPages}

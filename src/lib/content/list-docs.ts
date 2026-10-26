@@ -111,6 +111,21 @@ export const docBiAny = biAny;
 export const docStrings = strings;
 export const docStringPairs = bothStrings;
 
+/**
+ * Which article a result row claims.
+ *
+ * Two ways to make the same statement, and both are live: the import keyed a row by the
+ * WordPress post id, which no editor can rename, while a row added in the console names the
+ * article by its slug through the `story` field. A numeric key answers with itself, anything
+ * else with nothing — a row that claims no article must not be drawn, and must not be drawn
+ * as a broken card either.
+ */
+export function resultStoryPointer(doc: Doc, rowKey: string): string {
+  const slug = str(doc, 'story');
+  if (slug) return slug;
+  return /^\d+$/.test(rowKey) ? rowKey : '';
+}
+
 // --- services ---------------------------------------------------------------
 
 export interface ServiceDoc extends Doc {

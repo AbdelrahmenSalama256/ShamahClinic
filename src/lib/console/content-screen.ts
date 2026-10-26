@@ -22,6 +22,7 @@ import { getRow, knownListKeys, listKeyOfItem, type ContentRow } from '../conten
 import { filtersFor, parseListView, parseListScope, sortsFor, type ListFilter, type ListView, type ListSort } from '../content/list-view';
 import { articleChoices, listChoices, linkedArticleTitle, listSummaries, type ListChoice, type ListPage } from '../content/summary';
 import { listDocTitle, listSchemaOf } from '../content/list-schema';
+import { resultStoryPointer } from '../content/list-docs';
 import { catalogFor, type MessageKey } from './messages';
 import { listSectionPath } from './paths';
 import type { ConsoleLocale } from './prefs';
@@ -235,13 +236,16 @@ export async function contentDetailData(
   const schema = listKey ? listSchemaOf(listKey) : null;
   let title = '';
   if (spec.table === 'list_items') {
-    const doc = row.fields.data?.draftJson;
-    if (schema) {
-      title = listDocTitle(schema, doc !== null && typeof doc === 'object' && !Array.isArray(doc) ? (doc as Record<string, unknown>) : {}, activeLocale);
+    const stored = row.fields.data?.draftJson;
+    const doc = stored !== null && typeof stored === 'object' && !Array.isArray(stored) ? (stored as Record<string, unknown>) : {};
+    if (schema) title = listDocTitle(schema, doc, activeLocale);
+    // An unnamed result story is the article its own row names — by slug when the console
+    // picked it, by the old post id when the import wrote it. A heading of "1182" is the
+    // defect, not a name.
+    if (!title && listKey === 'results') {
+      const pointer = resultStoryPointer(doc, row.key);
+      if (pointer) title = await linkedArticleTitle(pointer, activeLocale);
     }
-    // An unnamed result story is the article its uid points at; a heading of "1182" is
-    // the defect, not a name.
-    if (!title && listKey === 'results') title = await linkedArticleTitle(row.key, activeLocale);
   } else {
     const titleField = spec.bi.find((field) => field.name === 'title' || field.name === 'name');
     title = titleField ? row.fields[titleField.name]?.draft?.[activeLocale]?.trim() || row.key : row.key;
