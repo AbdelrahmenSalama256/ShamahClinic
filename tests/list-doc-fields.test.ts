@@ -20,10 +20,10 @@
  *     server refuses unknown fields; the screen has to say so without handing over a box to
  *     type them into.
  *
- * Slice R adds one field type to that contract, because a result story is the one list item
- * that is really something else: it *is* a journal article. `story` names it, and the suite
- * checks the two ways that can go wrong — a picker that asks for an id nobody can read, and a
- * before/after pair that is one typed path each.
+ * Slice R adds one field type to that contract, because a result may open with a journal
+ * article behind it: `story` names the one it opens, and may name none. The suite checks the
+ * two ways that can go wrong — a picker that asks for an id nobody can read, and a before/after
+ * pair that is one typed path each.
  */
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -278,10 +278,12 @@ describe('what the typed list form really paints (BK-20 F)', () => {
     const markup = renderForm(results, listDocForm(results, doc), undefined, choices);
 
     // The article is named by its title, and the value behind that name is the slug the
-    // site joins on — never a WordPress number a person would have to remember.
+    // site joins on — never a WordPress number a person would have to remember. It is also
+    // the one thing a result can do without, so the picker has to say what empty means.
     expect(tagFor(markup, 'list-field-story')).toContain('<select');
     expect(markup).toContain('<option value="fractional-laser-face"');
     expect(markup).toContain('الليزر الجزئي للوجه');
+    expect(markup).toContain(`<option value="">${labels['content.list.story.none']}</option>`);
     // A service is chosen the same way.
     expect(markup).toContain('تقشير البشرة');
 
@@ -323,8 +325,9 @@ describe('what the typed list form really paints (BK-20 F)', () => {
     expect(listDocImage(results, parsed.doc, 'before')).toBe('/uploads/202610/before.webp');
     expect(listDocIntro(results, parsed.doc, 'ar')).toBe('الليزر الجزئي للوجه');
     expect(listDocAlt(results, parsed.doc)).toEqual({ ar: '', en: '' });
-    // A row that names no article is still a valid document: the imported rows attach by
-    // their WordPress id, and the editor says out loud that such a row shows nothing.
+    // A row that names no article is a valid document, and stays saveable: the imported rows
+    // attach by their WordPress id, and a result the owner titled and photographed needs
+    // neither. What the editor does is say out loud which states the page cannot draw.
     expect(listDocFromForm(results, emptyListDocForm(results)).issues).toEqual([]);
   });
 

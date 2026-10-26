@@ -660,19 +660,25 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
 // --- result stories -----------------------------------------------------------
 
 /**
- * What the console typed onto one result row, beside the article it claims.
+ * What the console typed onto one result row, and the article it names — when it names one.
+ *
+ * A row may stand alone: an owner who writes a title and uploads the two pictures has made a
+ * result, and needs no journal article to have done so. `card` is then null, and `headline` is
+ * the row's own name. `key` is the row's identity either way, because the page cannot hang its
+ * enlarged view on an article that is not there.
  *
  * `pair` is the comparison, and it is only a comparison when both halves were uploaded: a
  * card that showed one picture labelled "after" would promise a before the owner never
  * took. So the half pair is dropped here, in the data, rather than hidden in a stylesheet —
- * every reader of this shape then draws either a real before/after or the article's own
- * card, and never a half of either.
+ * every reader of this shape then draws either a real before/after or what the row holds,
+ * and never a half of either.
  *
- * A row the import wrote holds only the phrases that made it a story, so every field here is
- * empty for it. Nothing is invented to fill a gap the dashboard did not publish.
+ * A row the import wrote holds only the phrases that made it a story, so every other field
+ * here is empty for it. Nothing is invented to fill a gap the dashboard did not publish.
  */
 export interface ResultStory {
-  card: ArticleCard;
+  key: string;
+  card: ArticleCard | null;
   phrases: string[];
   /** the owner's headline, already fallen back to the article's own title. */
   headline: Bi;
@@ -686,10 +692,13 @@ export interface ResultStory {
   service: { name: Bi; href: Bi } | null;
 }
 
-/** A row read off the list, before its article has been found. */
+/** Everything a row states before its article has been found. */
+type ResultDetail = Omit<ResultStory, 'card' | 'phrases' | 'key'>;
+
 interface ResultSelection {
+  key: string;
   pointer: string;
-  detail: Omit<ResultStory, 'card' | 'phrases'>;
+  detail: ResultDetail;
   phrases: string[];
 }
 
@@ -700,6 +709,7 @@ function resultSelectionOf(row: PublicRow, services: Map<string, ServiceCard>): 
   const before = docStr(doc, 'before');
   const after = docStr(doc, 'after');
   return {
+    key: row.key,
     pointer: resultStoryPointer(doc, row.key),
     phrases: docStringPairs(doc, 'phrases').en,
     detail: {
@@ -718,8 +728,9 @@ function resultSelectionOf(row: PublicRow, services: Map<string, ServiceCard>): 
  *
  * Membership used to be a map keyed by the WordPress post id, which is exactly why a result
  * added in the console could never appear: its row carries no number. A row now points at an
- * article by whichever name it holds, and the list keeps the order its author set — the
- * `position` column the import wrote and the old reader ignored.
+ * article by whichever name it holds — and holds no name at all when it stands alone — while
+ * the list keeps the order its author set: the `position` column the import wrote and the old
+ * reader ignored.
  *
  * The snapshot rung answers with the same shape, minus the detail: the file named a post and
  * typed nothing else.
@@ -731,11 +742,11 @@ async function resultSelections(): Promise<ResultSelection[]> {
       const services = new Map((await getServiceCards()).map((card) => [card.slug, card]));
       return (await publicRows('list_item', { listKey: 'results' }))
         .filter((row) => flag(row, 'enabled'))
-        .map((row) => resultSelectionOf(row, services))
-        .filter((selection) => selection.pointer !== '');
+        .map((row) => resultSelectionOf(row, services));
     },
     async () =>
       [...(await storyPhraseIndex()).entries()].map(([id, phrases]) => ({
+        key: String(id),
         pointer: String(id),
         phrases,
         detail: { headline: { ar: '', en: '' }, pair: null, alt: { ar: '', en: '' }, caption: { ar: '', en: '' }, note: { ar: '', en: '' }, service: null },
@@ -744,12 +755,17 @@ async function resultSelections(): Promise<ResultSelection[]> {
 }
 
 /**
- * The page's stories: each row's article, found by the name the row carries.
+ * The page's stories: each row drawn from what it states, plus its article when it names one.
  *
  * A post id resolves by id first because that is what it is; a slug only ever resolves by
- * slug, so an id-shaped slug cannot steal another row's article. Two rows that claim one
- * article render it once, in the earlier row's place — the list has always been a statement
- * about the journal, never a second copy of it.
+ * slug, so an id-shaped slug cannot steal another row's article. A row whose pointer names an
+ * article that is gone is still a story — its title and its pictures are the owner's own
+ * words, and losing a post must not delete a published result. Two rows that claim one
+ * article render it once, in the earlier row's place: the list has never been a second copy
+ * of the journal.
+ *
+ * A row with neither an article nor a headline is the one thing dropped: it has no name, and
+ * a card cannot say "here is a result" about nothing.
  */
 export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory>> {
   const [selections, cards] = await Promise.all([resultSelections(), getAllArticles()]);
@@ -759,14 +775,22 @@ export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory
   const claimed = new Set<string>();
   for (const selection of selections) {
     const numeric = /^\d+$/.test(selection.pointer);
-    const card = numeric
-      ? byLegacyId.get(selection.pointer) ?? bySlug.get(selection.pointer)
-      : bySlug.get(selection.pointer);
-    if (!card || claimed.has(card.slug)) continue;
-    claimed.add(card.slug);
+    const card =
+      selection.pointer === ''
+        ? null
+        : numeric
+          ? byLegacyId.get(selection.pointer) ?? bySlug.get(selection.pointer) ?? null
+          : bySlug.get(selection.pointer) ?? null;
     const typed = selection.detail;
-    const headline = typed.headline.ar || typed.headline.en ? typed.headline : card.title;
+    const named = typed.headline.ar !== '' || typed.headline.en !== '';
+    if (!card && !named) continue;
+    if (card) {
+      if (claimed.has(card.slug)) continue;
+      claimed.add(card.slug);
+    }
+    const headline = card && !named ? card.title : typed.headline;
     stories.push({
+      key: selection.key,
       card,
       phrases: selection.phrases,
       ...typed,

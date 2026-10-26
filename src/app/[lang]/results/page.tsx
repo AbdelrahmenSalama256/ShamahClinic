@@ -31,12 +31,14 @@ function pageHref(page: number, lang: "ar" | "en"): string {
  *
  * The headline replaces the article's own title on the card because the owner wrote it for
  * this page, and both halves of a pair are made into slots together or not at all — the read
- * path already dropped a half pair, so a card here either shows a comparison or shows the
- * article.
+ * path already dropped a half pair, so a card here either shows a comparison or shows what the
+ * row itself holds. A row with no article draws the same card with `article` left null.
  */
 function storyView(story: ResultStory): ResultStoryView {
   return {
-    article: { ...cardToUIArticle(story.card), title: story.headline },
+    key: story.key,
+    article: story.card ? { ...cardToUIArticle(story.card), title: story.headline } : null,
+    headline: story.headline,
     pair: story.pair
       ? { before: toPhotoSlot(story.pair.before, story.alt), after: toPhotoSlot(story.pair.after, story.alt) }
       : null,

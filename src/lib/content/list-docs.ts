@@ -117,8 +117,8 @@ export const docStringPairs = bothStrings;
  * Two ways to make the same statement, and both are live: the import keyed a row by the
  * WordPress post id, which no editor can rename, while a row added in the console names the
  * article by its slug through the `story` field. A numeric key answers with itself, anything
- * else with nothing — a row that claims no article must not be drawn, and must not be drawn
- * as a broken card either.
+ * else with nothing — and nothing is a real answer, because a result the owner titled and
+ * photographed needs no article to be one.
  */
 export function resultStoryPointer(doc: Doc, rowKey: string): string {
   const slug = str(doc, 'story');

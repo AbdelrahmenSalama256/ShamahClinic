@@ -180,10 +180,11 @@ describe('the imported rows answer the site', () => {
     const stories = await everyStory();
     const cards = new Map((await getAllArticles()).map((card) => [card.id, card]));
     const expected = [...index.keys()].filter((id) => cards.has(id));
-    expect(stories.map((story) => story.card.id).sort((a, b) => a - b)).toEqual(expected.sort((a, b) => a - b));
+    // Every row here is one the import wrote, so its key *is* the WordPress post id.
+    expect(stories.map((story) => Number(story.key)).sort((a, b) => a - b)).toEqual(expected.sort((a, b) => a - b));
     // The phrases come back through a JSON column, so they are compared by what they
     // say rather than by the identity the snapshot's array had in memory.
-    const fromDatabase = new Map(stories.map((story) => [story.card.id, story.phrases]));
+    const fromDatabase = new Map(stories.map((story) => [Number(story.key), story.phrases]));
     for (const id of expected) expect(fromDatabase.get(id)).toEqual(index.get(id));
   });
 
@@ -197,17 +198,17 @@ describe('the imported rows answer the site', () => {
       .selectFrom('list_items')
       .select(['id', 'enabled'])
       .where('list_id', '=', listId)
-      .where('uid', '=', String(victim.card.id))
+      .where('uid', '=', victim.key)
       .executeTakeFirst();
-    if (!row) throw new Error(`${victim.card.id} imported no list row`);
+    if (!row) throw new Error(`${victim.key} imported no list row`);
 
     try {
       await db.updateTable('list_items').set({ enabled: 0 }).where('id', '=', row.id).execute();
       const hidden = await everyStory();
-      expect(hidden.some((story) => story.card.id === victim.card.id)).toBe(false);
+      expect(hidden.some((story) => story.key === victim.key)).toBe(false);
       expect((await getResultStories({ page: 1, perPage: 30 })).total).toBe(total - 1);
       // The file still names it, so a snapshot answer would have kept showing it.
-      expect(snapshotResultStories().some((entry) => entry.id === victim.card.id)).toBe(true);
+      expect(snapshotResultStories().some((entry) => String(entry.id) === victim.key)).toBe(true);
     } finally {
       await db.updateTable('list_items').set({ enabled: row.enabled }).where('id', '=', row.id).execute();
     }

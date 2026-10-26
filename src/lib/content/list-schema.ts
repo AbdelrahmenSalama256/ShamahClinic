@@ -206,33 +206,14 @@ const RESULTS: ListSchema = {
   title: 'title',
   fields: [
     {
-      type: 'story',
-      stem: 'story',
-      label: { ar: 'المقال الذي يحكي هذه النتيجة', en: 'The article this result tells' },
-      hint: {
-        ar: 'اختاري مقالًا من المدونة. البطاقة في صفحة النتائج تفتح هذا المقال.',
-        en: 'Pick a blog article. The card on the results page opens that article.',
-      },
-    },
-    {
       type: 'text',
       stem: 'title',
       label: { ar: 'عنوان النتيجة', en: 'Result title' },
       hint: {
-        ar: 'العنوان فوق الصورتين في صفحة النتائج. اتركيه فارغًا ليظهر عنوان المقال.',
-        en: 'The headline above the pictures on the results page. Leave it empty to use the article title.',
+        ar: 'العنوان فوق الصورتين. مع مقال يمكن تركه فارغًا ليظهر عنوان المقال، ومن دونه لا تظهر النتيجة بلا عنوان.',
+        en: 'The headline above the pictures. Beside a related article you may leave it empty to use the article title; on its own the result needs one.',
       },
       max: 300,
-    },
-    {
-      type: 'refs',
-      stem: 'service',
-      source: 'services',
-      label: { ar: 'الخدمة التي أدّت إلى هذه النتيجة', en: 'The service behind this result' },
-      hint: {
-        ar: 'تظهر باسمها مع الصورتين، والنقرة عليها تفتح صفحة الخدمة.',
-        en: 'Shown by name with the pictures; it opens that service page.',
-      },
     },
     {
       type: 'image',
@@ -248,8 +229,8 @@ const RESULTS: ListSchema = {
       stem: 'after',
       label: { ar: 'صورة بعد الجلسة', en: 'Picture after the session' },
       hint: {
-        ar: 'الصورتان تظهران معًا: ما لم ترفعي الاثنتين تبقى البطاقة صورتها من المقال.',
-        en: 'The two show together: until both are uploaded the card keeps the article photo.',
+        ar: 'الصورتان تظهران معًا: ما لم ترفعي الاثنتين لا تظهر مقارنة.',
+        en: 'The two show together: unless both are uploaded, no comparison shows.',
       },
     },
     {
@@ -271,6 +252,25 @@ const RESULTS: ListSchema = {
         en: 'For example: after four sessions. One line, under the pictures and in the enlarged view.',
       },
       max: 300,
+    },
+    {
+      type: 'refs',
+      stem: 'service',
+      source: 'services',
+      label: { ar: 'الخدمة التي أدّت إلى هذه النتيجة', en: 'The service behind this result' },
+      hint: {
+        ar: 'تظهر باسمها مع الصورتين، والنقرة عليها تفتح صفحة الخدمة.',
+        en: 'Shown by name with the pictures; it opens that service page.',
+      },
+    },
+    {
+      type: 'story',
+      stem: 'story',
+      label: { ar: 'مقال ذو صلة (اختياري)', en: 'Related article (optional)' },
+      hint: {
+        ar: 'اختاري مقالًا تفتح منه البطاقة، أو اتركيه فارغًا: النتيجة تكفي وحدها بعنوانها وصورتَيها.',
+        en: 'Pick the article the card opens, or leave it empty — the title and the two pictures are a result on their own.',
+      },
     },
     {
       type: 'text',

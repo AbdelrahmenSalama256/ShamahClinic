@@ -1,22 +1,21 @@
 /**
- * #262 / slice R2 — the results page draws the case the console typed.
+ * #263 / slice R3 — a result is a result with or without an article.
  *
- * R1 gave a result row its fields; this proves they reach a visitor. Three claims, because
- * the row and the article it names are joined in the data, and the screen only draws what
- * survives that join:
+ * R2 joined a row to the journal and drew what survived. This slice drops the requirement, on
+ * the owner's point 1: *"A new result must not need a blog article."* Four claims, checked
+ * where each decision is actually made:
  *
- *   - **a row names its article by slug** — the defect this slice fixes. The read path used
- *     to key the join on `Number(row.key)`, so a console row, whose key is a random uid,
- *     matched nothing and the story never appeared. The 56 imported rows are keyed by the
- *     WordPress post id, and both spellings still resolve.
+ *   - **a row that names no article is drawn** — title, both pictures, service, caption. That
+ *     is the whole form the console offers, and the page shows it.
+ *   - **a row names its article by slug** — the join R2 fixed stays fixed. The 56 imported rows
+ *     are keyed by the WordPress post id, and both spellings still resolve.
  *   - **the order is the one the owner set** — `position`, not the article's date. A list an
  *     owner can reorder but that renders in another order is a control that does nothing.
  *   - **half a comparison is not one** — a row with a "before" and no "after" answers with
- *     `pair: null`, so no reader can draw one picture under two labels, and the card stays
- *     the written article it is.
+ *     `pair: null`, so no reader can draw one picture under two labels.
  *
- * The hidden row, the row that claims an article nobody has, and a second row claiming the
- * same article are all dropped: the list was never a second copy of the journal.
+ * What is still dropped: the hidden row, the row with neither an article nor a title (it has
+ * no name to draw), and a second row claiming an article another row already took.
  *
  * The screen half renders `ResultsClient` for real. What a static render cannot show — the
  * enlarged view, which opens on a click — is asserted two ways: the note is provably absent
@@ -148,6 +147,7 @@ async function everyStory(): Promise<ResultStory[]> {
 }
 
 const typedHeadline = { ar: 'عنوان كتبته العيادة', en: 'A headline the clinic typed' };
+const standaloneHeadline = { ar: 'نتيجة بلا مقال', en: 'A result with no article behind it' };
 const pairAlt = { ar: 'وصف الصورتين', en: 'The description of the two pictures' };
 const noteText = { ar: 'نص التكبير', en: 'The text only the enlarged view shows' };
 
@@ -184,9 +184,19 @@ beforeAll(async () => {
   // phrases that made the article a result story. It has typed no title, so its name in the
   // console has to come from the article it claims.
   await seedItem('results', legacyKey, { phrases: ['بعد أربع جلسات', 'after four sessions'] }, { position: 2 });
-  await seedItem('results', key('hidden'), { story: key('c') }, { position: 3, enabled: false });
-  await seedItem('results', key('orphan'), { story: key('missing-article') }, { position: 4 });
-  await seedItem('results', key('dupe'), { story: key('a') }, { position: 5 });
+  // The owner's point 1 in one row: it names no article at all, and holds everything else.
+  await seedItem('results', key('standalone'), {
+    title: standaloneHeadline,
+    service: [key('svc')],
+    before: '/uploads/before-alone.jpg',
+    after: '/uploads/after-alone.jpg',
+    alt: pairAlt,
+    caption: { ar: 'بعد جلستين', en: 'After two sessions' },
+    note: noteText,
+  }, { position: 3 });
+  await seedItem('results', key('hidden'), { story: key('c') }, { position: 4, enabled: false });
+  await seedItem('results', key('orphan'), { story: key('missing-article') }, { position: 5 });
+  await seedItem('results', key('dupe'), { story: key('a') }, { position: 6 });
 });
 
 afterAll(async () => {
@@ -194,22 +204,37 @@ afterAll(async () => {
   await destroyDb();
 });
 
+/** What a reader would call the card: the article it opens, or the row's own name. */
+const named = (story: ResultStory): string => story.card?.slug ?? story.key;
+
 describe('a result row reaches the page', () => {
+  it('draws a result that names no article, from its title and its two pictures', async () => {
+    const alone = (await everyStory()).find((story) => story.key === key('standalone'));
+    expect(alone).toBeDefined();
+    expect(alone?.card).toBeNull();
+    expect(alone?.headline).toEqual(standaloneHeadline);
+    expect(alone?.pair).toEqual({ before: '/uploads/before-alone.jpg', after: '/uploads/after-alone.jpg' });
+    expect(alone?.caption.en).toBe('After two sessions');
+    expect(alone?.service?.name.en).toBe('Laser hair removal');
+    // The story it never had: no phrases, because nothing was imported into it.
+    expect(alone?.phrases).toEqual([]);
+  });
+
   it('joins by the slug it names, and by the post id when that is all it has', async () => {
     const stories = await everyStory();
-    expect(stories.map((story) => story.card.slug)).toEqual([key('b'), key('a'), key('d')]);
+    expect(stories.map(named)).toEqual([key('b'), key('a'), key('d'), key('standalone')]);
   });
 
   it('keeps the order the console set, which is not the order the rows were written', async () => {
     const paged = await getResultStories({ page: 1, perPage: 30 });
-    // uid order would read 91182 before the two `results-…` keys; date order is a tie the
-    // list would then settle by uid. Either way it is not the order the owner picked.
-    expect(paged.items.map((story) => story.card.slug)).toEqual([key('b'), key('a'), key('d')]);
-    expect(paged.total).toBe(3);
+    // uid order would read the legacy number before the `results-…` keys, and date order is a
+    // tie the list would then settle by uid. Either way it is not the order the owner picked.
+    expect(paged.items.map(named)).toEqual([key('b'), key('a'), key('d'), key('standalone')]);
+    expect(paged.total).toBe(4);
   });
 
   it('draws the case a row typed: both halves, the headline, the alt, the caption, the note', async () => {
-    const full = (await everyStory()).find((story) => story.card.slug === key('a'));
+    const full = (await everyStory()).find((story) => story.key === key('full'));
     expect(full).toBeDefined();
     expect(full?.headline).toEqual(typedHeadline);
     expect(full?.pair).toEqual({ before: '/uploads/before-a.jpg', after: '/uploads/after-a.jpg' });
@@ -220,14 +245,14 @@ describe('a result row reaches the page', () => {
   });
 
   it('leaves the headline and the description as the article wrote them when the row typed none', async () => {
-    const half = (await everyStory()).find((story) => story.card.slug === key('b'));
+    const half = (await everyStory()).find((story) => story.key === key('half'));
     expect(half?.headline).toEqual({ ar: 'مقال الثانية', en: 'Article B' });
     // An alt that was never written still has to say what the two pictures are of.
     expect(half?.alt).toEqual(half?.headline);
     expect(half?.service).toBeNull();
 
     // The row the import wrote says nothing but its phrases, and is still a real card.
-    const imported = (await everyStory()).find((story) => story.card.slug === key('d'));
+    const imported = (await everyStory()).find((story) => story.key === legacyKey);
     expect(imported?.headline).toEqual({ ar: 'مقال الرابعة', en: 'Article D' });
     expect(imported?.pair).toBeNull();
     // The phrases the import found travel with the row, in whichever language they were written.
@@ -240,16 +265,39 @@ describe('a result row reaches the page', () => {
     expect(full.pair).not.toBeNull();
   });
 
-  it('never draws one article twice, nor a row that claims nothing', async () => {
+  it('never draws one article twice, nor a row that has no name', async () => {
     const stories = await everyStory();
-    expect(stories.map((story) => story.card.slug)).not.toContain(key('c'));
-    expect(new Set(stories.map((story) => story.card.slug)).size).toBe(stories.length);
+    expect(stories.map(named)).not.toContain(key('c'));
+    // Its pointer answers with nothing and it typed no headline: there is no card to title.
+    expect(stories.map((story) => story.key)).not.toContain(key('orphan'));
+    expect(new Set(stories.map(named)).size).toBe(stories.length);
+  });
+
+  it('keeps a titled row whose article is gone', async () => {
+    // Deleting a post must not delete a result the owner wrote and photographed: the pointer
+    // resolves to nothing, and the row's own headline is what the card is drawn from.
+    await seedItem('results', key('gone'), {
+      story: key('an-article-nobody-wrote'),
+      title: { ar: 'بقيت', en: 'Still here' },
+      before: '/uploads/before-gone.jpg',
+      after: '/uploads/after-gone.jpg',
+    }, { position: 7 });
+    try {
+      const gone = (await everyStory()).find((story) => story.key === key('gone'));
+      expect(gone?.card).toBeNull();
+      expect(gone?.headline).toEqual({ ar: 'بقيت', en: 'Still here' });
+      // No article to describe the pair, so the headline says what the pictures are of.
+      expect(gone?.alt).toEqual({ ar: 'بقيت', en: 'Still here' });
+      expect(gone?.pair).toEqual({ before: '/uploads/before-gone.jpg', after: '/uploads/after-gone.jpg' });
+    } finally {
+      await db.deleteFrom('list_items').where('uid', '=', key('gone')).execute();
+    }
   });
 });
 
-// --- the console names the row by the same article ----------------------------
+// --- the console names the row by what it holds -------------------------------
 
-describe('the console titles a result row by its article', () => {
+describe('the console titles a result row by its article, or by what it typed', () => {
   it('reads the linked article when the row typed no headline of its own', async () => {
     const page = await listSummaries('list_item', { view: defaultViewFor('list_item'), listKey: 'results', trash: false, locale: 'en' });
     const byKey = new Map(page.rows.map((row) => [row.key, row]));
@@ -259,6 +307,8 @@ describe('the console titles a result row by its article', () => {
     expect(byKey.get(key('half'))?.titleEn).toBe('Article B');
     // A row that did type a headline keeps it.
     expect(byKey.get(key('full'))?.titleEn).toBe('A headline the clinic typed');
+    // And a row that named no article is titled by what the owner typed, not by its uid.
+    expect(byKey.get(key('standalone'))?.titleEn).toBe('A result with no article behind it');
     expect(page.rows.some((row) => /^\d+$/.test(row.titleEn))).toBe(false);
   });
 
@@ -287,9 +337,16 @@ function article(slug: string, title: Record<ContentLocale, string>): Article {
   };
 }
 
-function view(slug: string, pair: { before: string; after: string } | null): ResultStoryView {
+/**
+ * A story as the page receives it. `standalone` is the row that names no article: the same
+ * fields, with nothing behind them but what the owner wrote.
+ */
+function view(slug: string, pair: { before: string; after: string } | null, standalone = false): ResultStoryView {
+  const headline = standalone ? standaloneHeadline : { ar: 'عنوان', en: `Headline of ${slug}` };
   return {
-    article: article(slug, { ar: 'عنوان', en: `Headline of ${slug}` }),
+    key: slug,
+    article: standalone ? null : article(slug, headline),
+    headline,
     pair: pair
       ? {
           before: { src: pair.before, alt: pairAlt, width: 1200, height: 800, focal: '50% 50%' },
@@ -360,6 +417,27 @@ describe('the results screen draws what the row says', () => {
     const html = render([view('one-pair', { before: '/uploads/before-a.jpg', after: '/uploads/after-a.jpg' })]);
     expect(html).toContain('/services');
     expect(html).toContain('/blogs/one-pair');
+  });
+
+  it('draws a result with no article as a card of its own, and links it to nothing', () => {
+    // The owner's point 1, on the screen: a title, two pictures and a service are a result.
+    const html = render([view('standalone-one', { before: '/uploads/before-alone.jpg', after: '/uploads/after-alone.jpg' }, true)]);
+    expect(html).toContain('A result with no article behind it');
+    expect(html).toContain('url=%2Fuploads%2Fbefore-alone.jpg');
+    expect(html).toContain('url=%2Fuploads%2Fafter-alone.jpg');
+    expect(html).toContain('>Before<');
+    expect(html).toContain('After four sessions');
+    expect(html).toContain('/services');
+    // Nothing was invented to fill the article that is not there: no dead link, no promise.
+    expect(html).not.toContain('/blogs/');
+    expect(html).not.toContain('Open the article');
+  });
+
+  it('says so in Arabic when a standalone result has no pictures either', () => {
+    const html = render([view('standalone-two', null, true)], 'ar');
+    expect(html).toContain('نتيجة بلا مقال');
+    expect(html).not.toContain('/blogs/');
+    expect(html).not.toContain('aria-label="تكبير');
   });
 
   it('is read by a screen reader in Arabic, with the same two halves', () => {

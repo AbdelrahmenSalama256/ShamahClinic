@@ -527,9 +527,9 @@ function SchemaField({
   }
 
   if (field.type === 'story') {
-    // One article, chosen by name. A result story *is* a journal article on the site, so the
-    // row that names none can never appear — the picker is the difference between a result the
-    // owner added and one that silently did nothing.
+    // One article, chosen by name, and choosing none is a complete answer: a result the owner
+    // titled and photographed is a story whether or not the journal has one for it. The picker
+    // is here for the article that adds a fuller text behind the card.
     const value = textOf(form, field.stem);
     if (referenceOptions.length === 0) {
       return (
@@ -544,7 +544,7 @@ function SchemaField({
     return (
       <Field htmlFor={id} errors={errors} label={label} note={hint ? <Note>{hint}</Note> : null}>
         <Select id={id} value={value} disabled={disabled} onChange={(event) => onChange(field.stem, event.target.value)}>
-          <option value="">—</option>
+          <option value="">{labels['content.list.story.none']}</option>
           {referenceOptions.map((choice) => (
             <option key={choice.key} value={choice.key}>
               {choice.label}

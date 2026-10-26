@@ -20,9 +20,10 @@
  * the same draft every two seconds.
  *
  * **A row that will never reach the site admits it.** `resultNotices()` names what the
- * server cannot refuse: a result story that opens no article, half a before/after pair. The
- * schema requires neither, so an owner who saved either would be looking at a screen that
- * said "saved" about a page that changed nothing.
+ * server cannot refuse: a result with neither an article nor a title to draw, half a
+ * before/after pair, a standalone row left with no picture at all. The schema requires none of
+ * these, so an owner who saved any of them would be looking at a screen that said "saved"
+ * about a page that changed nothing.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -326,11 +327,14 @@ describe('the typed form of a list row', () => {
 });
 
 describe('a result row says what will not reach the site', () => {
-  it('names the row that opens no article', () => {
-    // `/results` paints a card that opens a journal article, so a row that picks none is a
-    // row no visitor can ever see — and the save itself is legal, so nothing else reports it.
-    expect(resultNotices({}, 'laser-for-acne-scars')).toEqual(['content.result.unattached']);
+  it('names the row that has neither an article nor a title', () => {
+    // `/results` draws a row that owns a name: the article it opens, or the headline written
+    // for it. A row with neither has nothing to draw — and the save itself is legal, so
+    // nothing else reports it.
+    expect(resultNotices({}, 'laser-for-acne-scars')).toEqual(['content.result.nameless', 'content.result.picture']);
+    expect(resultNotices({ title_ar: '   ' }, 'a-new-result')).toEqual(['content.result.nameless', 'content.result.picture']);
     expect(resultNotices({ story: 'laser-for-acne-scars' }, 'a-new-result')).toEqual([]);
+    expect(resultNotices({ title_en: 'After four sessions' }, 'a-new-result')).toEqual(['content.result.picture']);
   });
 
   it('counts a row imported by article id as attached', () => {
@@ -345,6 +349,15 @@ describe('a result row says what will not reach the site', () => {
     expect(resultNotices({ story: 's', before: '/uploads/a.webp', after: '   ' }, 'r1')).toEqual(['content.result.pair']);
     expect(resultNotices({ story: 's', before: '/uploads/a.webp', after: '/uploads/b.webp' }, 'r1')).toEqual([]);
     expect(resultNotices({ story: 's' }, 'r1')).toEqual([]);
+  });
+
+  it('lets a standalone case be complete: a title, both halves, no article', () => {
+    expect(resultNotices({ title_ar: 'بعد أربع جلسات', title_en: 'After four sessions', before: '/uploads/a.webp', after: '/uploads/b.webp' }, 'a-new-result')).toEqual([]);
+    // The same row with one half missing has no picture left to draw, so both sentences say true.
+    expect(resultNotices({ title_ar: 'بعد أربع جلسات', before: '/uploads/a.webp' }, 'a-new-result')).toEqual([
+      'content.result.pair',
+      'content.result.picture',
+    ]);
   });
 
   it('shows both halves of the pair in the media strip', () => {
@@ -488,8 +501,10 @@ describe('the catalog carries every key in both languages', () => {
     'content.issue.required',
     'content.issue.long',
     'content.list.story.empty',
-    'content.result.unattached',
+    'content.list.story.none',
+    'content.result.nameless',
     'content.result.pair',
+    'content.result.picture',
   ];
 
   for (const key of editorKeys) {

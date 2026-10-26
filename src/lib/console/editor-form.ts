@@ -161,20 +161,24 @@ export function displayForm(row: ContentRow, form: Form): Form {
 /**
  * What a result row states that none of its fields complains about.
  *
- * A results row is not the story: the page shows a card that opens a journal article, so a row
- * naming no article is a row no visitor can ever reach. Half a before/after pair is a card that
- * cannot show the comparison it was typed for. Neither is illegal — the schema requires neither
- * field, because the 57 rows imported from WordPress would otherwise refuse to save — so the
- * editor says it where the server stays silent.
+ * A result now stands on its own: a title and two pictures are a story, and an article is an
+ * optional link out of the card. So the two states the server cannot refuse and the page cannot
+ * show are a row with neither a title nor an article — no name to draw — and a row with no
+ * picture to draw at all. Half a before/after pair is a card that cannot make the comparison it
+ * was typed for. The schema requires none of these, because the 57 rows imported from WordPress
+ * would otherwise refuse to save, so the editor says it where the server stays silent.
  */
 export function resultNotices(form: Form, rowKey: string): MessageKey[] {
   const out: MessageKey[] = [];
   const story = String(form.story ?? '').trim();
+  const titled = [form.title_ar, form.title_en].some((value) => String(value ?? '').trim() !== '');
+  const filled = ['before', 'after'].map((stem) => String(form[stem] ?? '').trim() !== '');
   // A row imported from WordPress is keyed by its article's old id, and the site has always
   // found that article through the number. Such a row is attached before the picker exists.
-  if (story === '' && !/^\d+$/.test(rowKey)) out.push('content.result.unattached');
-  const filled = ['before', 'after'].map((stem) => String(form[stem] ?? '').trim() !== '');
+  const attached = story !== '' || /^\d+$/.test(rowKey);
+  if (!attached && !titled) out.push('content.result.nameless');
   if (filled[0] !== filled[1]) out.push('content.result.pair');
+  if (!attached && !(filled[0] && filled[1])) out.push('content.result.picture');
   return out;
 }
 
