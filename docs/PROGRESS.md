@@ -2286,6 +2286,69 @@ owner's word.
       photo has no per-language alt text until slice O; `SettingsWorkspace.encoded()` still pretty-prints
       a non-scalar setting value as JSON — no such row exists today, and removing the fallback is part
       of slice S.
+- [x] R1 Results case model and typed form — one article, two pictures, one story — `b632911`
+      **What was wrong.** The owner's point 5 asks for *"Before/After upload slots, title, related
+      service, caption, longer zoomed text … Add result, reorder, visible on/off, preview; import
+      existing results"*. RESULTS was the slice F schema with two fields — `title` and `phrases` — so
+      six of those seven had nowhere to be typed. Worse, a result added from the console is invisible
+      today: `src/lib/content/site.ts:685` joins each row to its article at `Number(row.key)`, while a
+      row made through *Add new* is keyed by its slug — the save answers "saved", the badge says
+      published, and `/results` never changes.
+      **Audited before building, and the audit changed the plan.** Three findings, reported because
+      they decide what *"matching the site's zoomed view"* can honestly mean. (a) `/results` renders
+      `ArticleCard`s and says in its own copy, at `src/components/pages/ResultsClient.tsx:60`, that the
+      clinic has published no before/after imagery; the before/after + zoom UI is
+      `src/components/cards/ResultCaseCard.tsx` fed by `src/data/results.ts` (4 cases), and no page
+      imports either — dead code whose own header calls its pairs *"illustrative stock"* rather than
+      client results. (b) The frozen snapshot holds **zero** before/after pairs for its 56 result
+      posts, re-measured against `data/wp/` for this row: all 56 story ids match a post in
+      `posts.ar.json`, 43 of those carry a featured image and 13 carry none, no post body contains an
+      `<img>`, and `media.json` is 23 named attachments with nothing tying any two of them together as
+      a pair — so every imported row lands with both slots empty, and R2 will not dress stock
+      photography as patient results. (c) The rows as they
+      are: 57, of which 56 are keyed by the old article id and hold only `phrases` (the 57th, `nnn`,
+      holds a `name_en` no schema has ever known), not one holds a title, `lists.item_schema` is `{}`
+      — the code schema drives the form, not the database — and `position` carries 56 distinct values
+      the import wrote and `getResultStories()` ignores.
+      **The model.** `list-schema.ts` gains an eleventh field type, `story`: one journal article,
+      stored as its slug, because a slug is what a person recognises and a WordPress id is not. `refs`
+      could not stand in — it points at another list and paints checkboxes for what takes exactly one
+      value. RESULTS is nine fields now: story, title, related service (`refs` into services),
+      `before`, `after`, one `alt` shared by the pair, caption, the enlarged-view `note`, and the
+      `phrases` the site already reads. Neither `story` nor the picture pair is schema-`required`, on
+      purpose: requiring either would make all 56 imported rows refuse to save, which is a worse
+      screen than the one being fixed.
+      **The choices come from the journal.** `articleChoices()` in `summary.ts` reads live articles
+      newest-first, and `content-screen.ts` fills `referenceOptions` for a `story` field the way it
+      already does for `refs`, so the picker shows article titles in the tab's language.
+      `ListDocFields` paints one `Select` — with a plain note when the journal is empty — and
+      `parseListDoc()` reads `story` as the trimmed string it is.
+      **What the screen says when a row will not reach the site.** `resultNotices()` in
+      `editor-form.ts` answers two sentences and `ConsoleEditor` prints them above the fields: a row
+      naming no article and carrying no numeric key is a row the page cannot show, and one picture of
+      a pair is a card that cannot make the comparison it was typed for. A row imported by article id
+      is *not* called unfinished, because its story does resolve today. The media strip walked only the
+      first picture field; it now iterates every `image` field, so both halves preview and a missing
+      half is seen rather than assumed.
+      **Proved on markup, not on a green suite.** `tests/list-doc-fields.test.ts` (10) renders the
+      real form: every results field gets a control, the story `Select` carries an article slug and
+      its title, both slots are `type="file"` pickers showing their thumbnails, no box accepts a typed
+      path, and the round trip still writes the document the `phrases` reader accepts.
+      `tests/editor.test.ts` (73) covers `resultNotices()`, the two-image strip and the three new
+      catalog keys in both languages.
+      **Gates.** Typecheck clean, lint clean, full run 25 files — **598 passed, 4 failed**. The four
+      failures are not this slice: `console-isolation`, `console`, `typography` and `ui-primitives` all
+      assert against `src/app/console/console.css`, which carries the owner's in-progress edit —
+      `git show HEAD:src/app/console/console.css` contains none of the `--pager-border`,
+      `font-family: inherit` and `animation: none` lines those tests reject, the working copy contains
+      all four. That file, `console-kit.css`, `globals.css` and `public/uploads/` were left uncommitted
+      exactly as in slice F.
+      **Not verified on a screen, and what R2 owes.** No dev address or password was supplied, so the
+      results editor was never clicked; its Arabic wording, 360px and dark mode are slice G's claims.
+      R2 must resolve `story` by slug with the numeric-key fallback for the 56 imported rows (the
+      editor heading and `content-screen.ts:244` included), order the page by `position`, render the
+      pair and the enlarged note when — and only when — both halves exist, keep the `ArticleCard`
+      otherwise, and rewrite the disclaimer to say what is true after that.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
