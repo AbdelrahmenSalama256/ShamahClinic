@@ -42,6 +42,7 @@ function row(patch: Partial<ContentRow> & { kind: ContentKind }): ContentRow {
   return {
     id: 'r1',
     key: 'k1',
+    listKey: null,
     status: 'draft',
     version: 1,
     trashed: false,
@@ -266,6 +267,58 @@ describe('the form the fields draw', () => {
   });
 });
 
+describe('the typed form of a list row', () => {
+  /** A list row as the console receives one: its whole content is the `data` document. */
+  function itemRow(listKey: string, doc: Record<string, unknown>): ContentRow {
+    const row = rowOfKind('list_item');
+    row.listKey = listKey;
+    row.fields.data = field({ kind: 'json', draftJson: doc });
+    return row;
+  }
+
+  it('draws one box for a value the site keeps once', () => {
+    const row = itemRow('branches', { name_ar: 'فرع المعادي', name_en: 'Maadi branch', phone: '+20 100' });
+    const form = formOf(row, 'ar');
+    // A phone number is not translated, and the site reads it under one key. Two boxes
+    // would be two numbers to keep in step, so the form has one and posts that key back.
+    expect(form.phone).toBe('+20 100');
+    expect(form.phone_ar).toBeUndefined();
+    expect(form.phone_en).toBeUndefined();
+    expect(fieldsFromForm(row, { ...form, phone: '+20 111' }).fields.data).toMatchObject({ phone: '+20 111' });
+  });
+
+  it('reads what an older row stored in another shape, and posts it in this one', () => {
+    const row = itemRow('branches', { name: { ar: 'فرع التجمع', en: 'New Cairo branch' }, phone_ar: '+20 100', phone_en: '+20 100' });
+    const form = formOf(row, 'ar');
+    expect(form.name_ar).toBe('فرع التجمع');
+    // A pair left by an earlier save is folded into the one value the field has, rather
+    // than dropped: what a person typed yesterday is still in the box today.
+    expect(form.phone).toBe('+20 100');
+    const posted = fieldsFromForm(row, form);
+    expect(posted.issues).toEqual([]);
+    expect(posted.fields.data).toMatchObject({ name_ar: 'فرع التجمع', name_en: 'New Cairo branch', phone: '+20 100' });
+  });
+
+  it('sends the whole document, so an emptied box stays empty', () => {
+    const row = itemRow('faq', { question_ar: 'س؟', question_en: 'Q?', answer_ar: '', answer_en: '', category: '' });
+    const posted = fieldsFromForm(row, formOf(row, 'ar'));
+    expect(posted.issues).toEqual([]);
+    // Every field the list's form names is in what goes up, so the saved document *is* the
+    // form: a box cleared on purpose reads back cleared, and a key the form never showed
+    // cannot survive quietly under the fields a person did edit.
+    expect(posted.fields.data).toEqual({ question_ar: 'س؟', question_en: 'Q?', answer_ar: '', answer_en: '', category: '' });
+  });
+
+  it('gives a service the one link its card is built from', () => {
+    const row = itemRow('services', { name_ar: 'تقشير', name_en: 'Peeling' });
+    const form = formOf(row, 'en');
+    expect(form.href).toBe('');
+    const posted = fieldsFromForm(row, { ...form, href: '/peeling' });
+    expect(posted.issues).toEqual([]);
+    expect(posted.fields.data).toMatchObject({ href: '/peeling' });
+  });
+});
+
 describe('the preview pane', () => {
   it('shows the words being typed, not the last saved copy', () => {
     const model = previewModel('article', { title: 'لحاملات', excerpt: 'نص', content: '<p>فقرة</p>', image: '', imageAlt: false }, 'ar');
@@ -277,23 +330,39 @@ describe('the preview pane', () => {
     expect(model.fields.map((f) => f.name)).toEqual(['imageAlt']);
   });
 
-  it('reads a list document for its title and teaser', () => {
-    const doc = JSON.stringify({ question: { ar: 'سؤال؟', en: 'Q?' }, answer: { ar: 'جواب', en: 'A' } });
-    const model = previewModel('list_item', { data: doc, position: '3', enabled: true }, 'en');
+  it('previews a list item as the card its own list draws', () => {
+    // The pane reads the typed form the editor writes, never a box of JSON: the answer
+    // a person types is the teaser, and the question is what the card is titled by.
+    const model = previewModel('list_item', { question_ar: 'سؤال؟', question_en: 'Q?', answer_ar: 'جواب', answer_en: 'A' }, 'en', 'faq');
     expect(model.title).toBe('Q?');
     expect(model.intro).toBe('A');
-    expect(model.bodyAs).toBe('text');
-    expect(model.fields).toEqual([
-      { name: 'position', value: '3' },
-      { name: 'enabled', value: true },
-    ]);
+    expect(model.body).toBe('');
+    // The list's own strip, not the form's leftovers: a category left unset says nothing.
+    expect(model.fields).toEqual([]);
   });
 
-  it('shows a half-typed document as the text it is', () => {
-    const model = previewModel('list_item', { data: '{"name": ' }, 'ar');
-    expect(model.title).toBe('');
-    expect(model.body).toBe('{"name":');
-    expect(model.bodyAs).toBe('text');
+  it('previews a service with its picture and its points', () => {
+    const model = previewModel('list_item', { name_ar: 'ليزر', intro_ar: 'تنعيم', 'benefits_ar.0': 'نتيجة فورية', image: '/u/laser.jpg', featured: true }, 'ar', 'services');
+    expect(model.title).toBe('ليزر');
+    expect(model.intro).toBe('تنعيم');
+    expect(model.image).toBe('/u/laser.jpg');
+    expect(model.bullets).toEqual(['نتيجة فورية']);
+    expect(model.fields).toContainEqual({ name: 'خدمة مميزة', value: true });
+  });
+
+  it('leaves the pane empty for a document it has no form for', () => {
+    // The old pane printed a half-typed JSON document as its body. The form is keyed per
+    // field now, so there is no such text to echo — and a list the console has no schema
+    // for previews as nothing rather than as the bytes behind it.
+    expect(previewModel('list_item', { data: '{"name": ' }, 'ar')).toEqual({
+      title: '',
+      intro: '',
+      body: '',
+      bodyAs: 'text',
+      image: null,
+      bullets: [],
+      fields: [],
+    });
   });
 
   it('escapes everything the pane prints itself, and nothing the author wrote', () => {

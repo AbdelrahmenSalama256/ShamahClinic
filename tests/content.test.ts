@@ -510,7 +510,12 @@ describe('the content API keeps the guard order', () => {
       write(actors.Editor, 'PATCH', { fields: { data: { name: { ar: 'د. سارة', en: 'Dr Sara' }, phone: '+20 100' }, position: 4 } }),
     );
     expect(saved.status).toBe(200);
-    expect(saved.row.fields.data.draftJson).toEqual({ name: { ar: 'د. سارة', en: 'Dr Sara' }, phone: '+20 100' });
+    // The list's own form writes the document: a nested pair is stored as the flat pair the
+    // site reads, and every field the branches form names is present. The phone is one value
+    // for the whole site, so it keeps the single key the site and the importer use.
+    expect(saved.row.fields.data.draftJson).toEqual(expect.objectContaining({ name_ar: 'د. سارة', name_en: 'Dr Sara', phone: '+20 100' }));
+    expect(saved.row.fields.data.draftJson).not.toHaveProperty('name');
+    expect(saved.row.fields.data.draftJson).not.toHaveProperty('phone_ar');
     expect(saved.row.fields.data.pubJson).toBeNull();
     expect(saved.row.fields.data.pending).toBe(true);
     expect(saved.row.status).toBe('draft');
@@ -545,6 +550,24 @@ describe('the content API keeps the guard order', () => {
     expect(dupe.error).toBe('key_taken');
     // The same uid in a different list is a different row.
     expect((await call('/content/list_item?list=faq', write(actors.Editor, 'POST', { key: `${ar}-dr-sara` }))).status).toBe(200);
+  });
+
+  it('refuses a document key the list’s own form does not name', async () => {
+    // The typed contract is what lets the console drop its JSON textarea: a key nobody
+    // declared cannot be smuggled in by a paste, and the answer names the key so the
+    // editor can offer to remove it. Nothing is written, so nothing is lost either.
+    const row = await call('/content/list_item?list=branches', write(actors.Editor, 'POST', { key: `${ar}-odd-keys` }));
+    expect(row.status).toBe(200);
+    const refused = await call(
+      `/content/list_item/${row.row.id}?list=branches`,
+      write(actors.Editor, 'PATCH', { fields: { data: { name_ar: 'فرع', script: '<script>no()</script>', tags: ['a'] } } }),
+    );
+    expect(refused.status).toBe(400);
+    expect(refused.error).toBe('invalid_input');
+    const paths = (refused.issues ?? []).map((issue: { path: string; message: string }) => issue.path);
+    expect(paths).toContain('script');
+    expect(paths).toContain('tags');
+    expect((await call(`/content/list_item/${row.row.id}?list=branches`, read(actors.Editor))).row.fields.data.draftJson).toEqual({});
   });
 
   it('405s a method the routes do not implement and 404s a kind that does not exist', async () => {
@@ -834,7 +857,7 @@ describe('a list page filters, searches, orders and pages in the database', () =
       `/content/list_item/${branchId}?list=branches`,
       write(actors.Editor, 'PATCH', { fields: { data: { name_ar: 'فرع المعادي', name_en: 'Maadi branch', phone: '+20 100' } } }),
     );
-    // A second row whose document holds a city beside its name: the list has to title a
+    // A second row whose document holds an area beside its name: the list has to title a
     // row by the key that names it, not by whichever one the sample happened to meet
     // first. See `rankOf` in summary.ts.
     const named = await call('/content/list_item?list=branches', write(actors.Editor, 'POST', { key: st('named') }));
@@ -842,7 +865,7 @@ describe('a list page filters, searches, orders and pages in the database', () =
     await call(
       `/content/list_item/${namedId}?list=branches`,
       write(actors.Editor, 'PATCH', {
-        fields: { data: { city_ar: 'مدينة نصر', city_en: 'Nasr City', name_ar: 'فرع التجمع', name_en: 'New Cairo branch', phone: '+20 111' } },
+        fields: { data: { area_ar: 'مدينة نصر', area_en: 'Nasr City', name_ar: 'فرع التجمع', name_en: 'New Cairo branch', phone: '+20 111' } },
       }),
     );
   });
@@ -959,28 +982,30 @@ describe('a list page filters, searches, orders and pages in the database', () =
     const res = await call(listUrl('list_item', { list: 'branches' }), read(actors.Editor));
     expect(res.body.listKey).toBe('branches');
     // `name_ar`/`name_en` name the row, so they are labels, not columns: what is left is
-    // the keys the table can print beside the title.
+    // the keys the table can print beside the title. A branch's phone is one value for the
+    // whole site, so it is stored under the one key the site reads, `phone`, and printed as
+    // one cell — not as a translated pair a person would have to keep in step.
     expect(res.page.columns).not.toContain('name_ar');
     expect(res.page.columns).not.toContain('name_en');
-    expect(res.page.columns).toEqual(expect.arrayContaining(['phone', 'city_ar', 'city_en']));
+    expect(res.page.columns).toEqual(expect.arrayContaining(['phone', 'area_ar', 'area_en']));
     expect(res.page.rows.find((row) => row.id === branchId)).toMatchObject({
       key: st('branch'),
       titleAr: 'فرع المعادي',
       titleEn: 'Maadi branch',
       cells: { phone: '+20 100' },
     });
-    // The row that carries a city beside its name is still titled by its name: `city_ar`
+    // The row that carries an area beside its name is still titled by its name: `area_ar`
     // ranks with the other `*_ar` keys, so a label chosen by count alone would title the
-    // list with a city and bury the branch's name in a column.
+    // list with an area and bury the branch's name in a column.
     expect(res.page.rows.find((row) => row.id === namedId)).toMatchObject({
       key: st('named'),
       titleAr: 'فرع التجمع',
       titleEn: 'New Cairo branch',
-      cells: { city_ar: 'مدينة نصر', phone: '+20 111' },
+      cells: { area_ar: 'مدينة نصر', phone: '+20 111' },
     });
-    // An item whose names are nested under `name` gives the list no title at all, and the
-    // console shows the identity instead of inventing one.
-    expect(res.page.rows.find((row) => row.key === `${ar}-dr-sara`)?.titleAr).toBe('');
+    // An item saved in another describe through the same typed form is titled the same way:
+    // the list never falls back to a row's internal identity when its own document names it.
+    expect(res.page.rows.find((row) => row.key === `${ar}-dr-sara`)?.titleAr).toBe('د. سارة مالك');
 
     const byName = await call(listUrl('list_item', { list: 'branches', q: 'المعادي' }), read(actors.Editor));
     expect(byName.page.rows.map((row) => row.id)).toEqual([branchId]);

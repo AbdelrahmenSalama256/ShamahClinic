@@ -22,6 +22,7 @@ import { db } from '../db';
 import { likeOf } from '../db/like';
 import { readStored, type FieldFormat } from './format';
 import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
+import { listDocTitle, listSchemaOf, type ListSchema as TypedList } from './list-schema';
 import { listIdForKey } from './store';
 import type { ListFilter, ListSort, ListView } from './list-view';
 
@@ -73,7 +74,7 @@ const SAMPLE_LIMIT = 200;
 const CELL_KEYS = 8;
 
 /** The keys a list's items carry, and which of them names an item in each language. */
-export interface ListSchema {
+export interface SampledList {
   columns: string[];
   labelKeys: Partial<Record<ContentLocale, string>>;
   /** a sampled item holds something that reads as an image */
@@ -196,7 +197,7 @@ function scalarValue(value: unknown): string | number | boolean | null {
  * A key joins the columns when any sampled item holds a scalar under it; the label per
  * language is the key that carries the most text, name/title/question/label first.
  */
-export async function sampleListSchema(listKey: string): Promise<ListSchema> {
+export async function sampleListSchema(listKey: string): Promise<SampledList> {
   const listId = await listIdForKey(listKey);
   if (!listId) return { columns: [], labelKeys: {}, hasImages: false };
 
@@ -283,7 +284,7 @@ function from(table: KindSpec['table']): Shape {
 }
 
 /** The row's own title in each language, for a list item read out of its JSON document. */
-function labelsOf(doc: Record<string, unknown>, schema: ListSchema): Record<ContentLocale, string> {
+function labelsOf(doc: Record<string, unknown>, schema: SampledList): Record<ContentLocale, string> {
   const out: Record<ContentLocale, string> = { ar: '', en: '' };
   for (const locale of CONTENT_LOCALES) {
     const key = schema.labelKeys[locale];
@@ -291,6 +292,12 @@ function labelsOf(doc: Record<string, unknown>, schema: ListSchema): Record<Cont
     out[locale] = typeof value === 'string' ? value.trim() : value === null ? '' : String(value);
   }
   return out;
+}
+
+/** A list item's name in each language: the typed form's title first, the sampled key after. */
+function docTitles(typed: TypedList | null, sampled: SampledList, doc: Record<string, unknown>): Record<ContentLocale, string> {
+  if (!typed) return labelsOf(doc, sampled);
+  return { ar: listDocTitle(typed, doc, 'ar'), en: listDocTitle(typed, doc, 'en') };
 }
 
 function cellsOf(spec: KindSpec, row: Record<string, unknown>, columns: string[]): Record<string, string | number | boolean | null> {
@@ -319,11 +326,16 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
   const needle = view.q ? likeOf(view.q) : null;
 
   const titled = spec.table !== 'list_items' ? titleField(spec) : undefined;
-  const schema = spec.table === 'list_items' ? await sampleListSchema(query.listKey ?? '') : null;
-  const columns = spec.table === 'list_items' ? (schema?.columns ?? []) : documentColumns(spec);
+  // Two schemas answer two different questions. The typed one (./list-schema.ts) names
+  // the row the way the editor does, and the sampled one lists whatever extra keys a
+  // list's documents happen to carry — an imported list the console has no form for
+  // still needs a title and a few columns. The typed one wins when both exist.
+  const typed = spec.table === 'list_items' ? listSchemaOf(query.listKey ?? '') : null;
+  const sampled = spec.table === 'list_items' ? await sampleListSchema(query.listKey ?? '') : null;
+  const columns = spec.table === 'list_items' ? (sampled?.columns ?? []) : documentColumns(spec);
   const imageText = spec.text.find((field) => field.name === 'image');
   const imageJson = spec.json.find((field) => field.name === 'images');
-  const hasImages = spec.table === 'list_items' ? (schema?.hasImages ?? false) : Boolean(imageText || imageJson);
+  const hasImages = spec.table === 'list_items' ? (sampled?.hasImages ?? false) : Boolean(imageText || imageJson);
 
   let listId: string | null = null;
   if (spec.table === 'list_items') {
@@ -351,7 +363,7 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
   }
 
   if (needle && spec.table === 'list_items') {
-    const paths = [...new Set([...(schema?.columns ?? []), ...Object.values(schema?.labelKeys ?? {})])].filter(Boolean) as string[];
+    const paths = [...new Set([...(sampled?.columns ?? []), ...Object.values(sampled?.labelKeys ?? {})])].filter(Boolean) as string[];
     const parts: RawBuilder<SqlBool>[] = [sql<SqlBool>`${sql.ref(spec.keyColumn)} LIKE ${needle}`];
     for (const path of paths) {
       parts.push(sql<SqlBool>`JSON_UNQUOTE(JSON_EXTRACT(${sql.ref('draft')}, ${jsonPathOf(path)})) LIKE ${needle}`);
@@ -370,7 +382,7 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
     if (sort === 'updated') return sql.ref('updated_at');
     if (sort === 'published') return sql.ref('published_at');
     if (spec.table === 'list_items') {
-      const key = schema?.labelKeys[query.locale] ?? schema?.labelKeys.ar ?? schema?.labelKeys.en;
+      const key = sampled?.labelKeys[query.locale] ?? sampled?.labelKeys.ar ?? sampled?.labelKeys.en;
       return key ? sql`JSON_UNQUOTE(JSON_EXTRACT(${sql.ref('draft')}, ${jsonPathOf(key)}))` : sql.ref(spec.keyColumn);
     }
     return sql.ref(titled ? titled.draft[query.locale] : spec.keyColumn);
@@ -424,7 +436,7 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
     // The title column is read through its format, so the list shows the same sentence
     // the editor will load: an imported `<p>` in front of a headline is noise twice over.
     const titles = doc
-      ? labelsOf(doc, schema as ListSchema)
+      ? docTitles(typed, sampled as SampledList, doc)
       : { ar: readStored(titleFormat, row.title_ar), en: readStored(titleFormat, row.title_en) };
     return {
       id: asText(row.id),
@@ -444,7 +456,79 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
     };
   });
 
+  // A result story has no name of its own on the site: it *is* the article whose WordPress
+  // post id its `uid` carries. When nobody typed a title, the linked article's title is the
+  // real name — printing the raw uid ("1182") in the list was the defect this fixes.
+  if (query.listKey === 'results') {
+    const unnamed = rows.filter((row) => !row.titleAr || !row.titleEn);
+    if (unnamed.length > 0) {
+      const linked = await articleTitles(unnamed.map((row) => row.key));
+      for (const row of unnamed) {
+        const title = linked.get(row.key);
+        if (!title) continue;
+        if (!row.titleAr) row.titleAr = title.ar;
+        if (!row.titleEn) row.titleEn = title.en;
+      }
+    }
+  }
+
   return { rows, total, page, pages, per: view.per, columns, hasImages };
+}
+
+/** The drafts' titles for the articles a WordPress post id names, keyed by that id. */
+async function articleTitles(legacyIds: readonly string[]): Promise<Map<string, Record<ContentLocale, string>>> {
+  const ids = [...new Set(legacyIds.filter(Boolean))];
+  if (ids.length === 0) return new Map();
+  const found = await sql<{ legacy_id: string; title_ar: string | null; title_en: string | null }>`
+    SELECT ${sql.ref('legacy_id')} AS legacy_id, ${sql.ref('title_ar')} AS title_ar, ${sql.ref('title_en')} AS title_en
+    FROM ${sql.ref('articles')}
+    WHERE ${sql.ref('legacy_id')} IN (${sql.join(ids.map((id) => sql`${id}`), sql`, `)})
+      AND ${sql.ref('deleted_at')} IS NULL
+  `.execute(db);
+  return new Map(
+    found.rows.map((row) => [
+      asText(row.legacy_id),
+      { ar: readStored('plain', row.title_ar), en: readStored('plain', row.title_en) },
+    ]),
+  );
+}
+
+/** The title of the article a result story points at, for a heading with no typed title. */
+export async function linkedArticleTitle(legacyId: string, locale: ContentLocale): Promise<string> {
+  const title = (await articleTitles([legacyId])).get(legacyId);
+  return title ? title[locale] || title[locale === 'ar' ? 'en' : 'ar'] : '';
+}
+
+/** One row a `refs` field may point at: the item key the site stores, and its name. */
+export interface ListChoice {
+  key: string;
+  label: string;
+}
+
+/**
+ * A list's items as selectable names, in document order.
+ *
+ * The editor's `refs` control used to ask for raw keys — a person had to know that the
+ * New Cairo clinic is `new-cairo`. Here every item arrives with the title the list screen
+ * shows, and the key rides along so the site still reads the same document shape.
+ */
+export async function listChoices(listKey: string, locale: ContentLocale): Promise<ListChoice[]> {
+  const listId = await listIdForKey(listKey);
+  if (!listId) return [];
+  const typed = listSchemaOf(listKey);
+  const sampled = typed ? null : await sampleListSchema(listKey);
+  const found = await sql<{ uid: string; draft: unknown }>`
+    SELECT ${sql.ref('uid')} AS uid, ${sql.ref('draft')} AS draft
+    FROM ${sql.ref('list_items')}
+    WHERE ${sql.ref('list_id')} = ${listId} AND ${sql.ref('deleted_at')} IS NULL
+    ORDER BY ${sql.ref('position')} ASC, ${sql.ref('uid')} ASC
+  `.execute(db);
+  return found.rows.map((row) => {
+    const doc = parseDoc(row.draft) ?? {};
+    const key = asText(row.uid);
+    const label = typed ? listDocTitle(typed, doc, locale) : sampled ? labelsOf(doc, sampled)[locale] : '';
+    return { key, label: label || key };
+  });
 }
 
 function parseDoc(value: unknown): Record<string, unknown> | null {

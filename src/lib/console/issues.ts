@@ -24,6 +24,8 @@ const KEYS: Record<string, MessageKey> = {
   'expected a number': 'content.issue.number',
   'expected true or false': 'content.issue.flag',
   'expected an object or an array': 'content.issue.json',
+  'expected a list': 'content.issue.list',
+  'unknown option': 'content.issue.option',
   'not valid JSON': 'content.issue.invalid_json',
   'unknown field': 'content.issue.unknown',
   required: 'content.issue.required',
@@ -52,6 +54,23 @@ export interface IssueMap {
 export type TrackedIssue = FieldIssue & { was: string };
 
 /**
+ * The value a field name stands for in the form.
+ *
+ * A bilingual row has one box per field; a list document spreads one field across
+ * `name_ar`, `name_en`, `benefits_ar.0` and so on. A message about `benefits.0` therefore
+ * has to notice a change in either language row, so the fingerprint is every form entry
+ * the root owns, in a stable order.
+ */
+export function formValueOf(form: Record<string, unknown>, root: string): string {
+  if (root in form) return String(form[root] ?? '');
+  return Object.keys(form)
+    .filter((key) => key.startsWith(`${root}_`) || key.startsWith(`${root}.`))
+    .sort()
+    .map((key) => `${key}=${String(form[key] ?? '')}`)
+    .join('\u0001');
+}
+
+/**
  * Drop the server's messages that no longer describe the screen.
  *
  * The server refuses a value, the person corrects it, and the red sentence left standing
@@ -61,7 +80,7 @@ export type TrackedIssue = FieldIssue & { was: string };
  * attempt answers.
  */
 export function liveIssues(issues: TrackedIssue[], form: Record<string, unknown>): FieldIssue[] {
-  return issues.filter((issue) => String(form[fieldOf(issue.path)] ?? '') === issue.was);
+  return issues.filter((issue) => formValueOf(form, fieldOf(issue.path)) === issue.was);
 }
 
 /**

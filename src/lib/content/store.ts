@@ -14,6 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { db } from '../db';
 import { readStored, type FieldFormat } from './format';
 import { sanitizeRichHtml } from './rich';
+import { htmlStems, listSchemaOf, parseListDoc } from './list-schema';
 import { CONTENT_LOCALES, kindSpec, parseWrites, type ContentKind, type ContentLocale, type KindSpec, type ParseResult } from './kinds';
 
 type AnyRow = Record<string, unknown>;
@@ -46,6 +47,8 @@ export interface ContentRow {
   id: string;
   kind: ContentKind;
   key: string;
+  /** the list a `list_item` belongs to; null for the bilingual kinds */
+  listKey: string | null;
   status: string;
   version: number;
   trashed: boolean;
@@ -78,7 +81,7 @@ function asText(value: unknown): string {
   return value === null || value === undefined ? '' : String(value);
 }
 
-function mapRow(spec: KindSpec, row: AnyRow): ContentRow {
+function mapRow(spec: KindSpec, row: AnyRow, listKey: string | null = null): ContentRow {
   const fields: Record<string, FieldView> = {};
   const pendingLocales: ContentLocale[] = [];
 
@@ -166,6 +169,7 @@ function mapRow(spec: KindSpec, row: AnyRow): ContentRow {
     id: String(row.id),
     kind: spec.kind,
     key: asText(row[spec.keyColumn]),
+    listKey,
     status: asText(row.status),
     version: Number(row.version ?? 1),
     trashed: row.deleted_at !== null && row.deleted_at !== undefined,
@@ -219,8 +223,17 @@ export async function idForRowKey(kind: ContentKind, key: string, listKey?: stri
 
 export async function getRow(kind: ContentKind, id: string): Promise<ContentRow | null> {
   const spec = kindSpec(kind);
-  const row = await (db.selectFrom(spec.table).selectAll().where('id', '=', id) as unknown as QueryShape).executeTakeFirst();
-  return row ? mapRow(spec, row as AnyRow) : null;
+  const found = await (db.selectFrom(spec.table).selectAll().where('id', '=', id) as unknown as QueryShape).executeTakeFirst();
+  if (!found) return null;
+  const row = found as AnyRow;
+  // Which list a row belongs to is part of what the console needs: it selects the typed
+  // form for the document, and without it the editor would have to render the raw JSON.
+  let listKey: string | null = null;
+  if (spec.table === 'list_items' && row.list_id) {
+    const list = await db.selectFrom('lists').select(['list_key']).where('id', '=', String(row.list_id)).executeTakeFirst();
+    listKey = list?.list_key ?? null;
+  }
+  return mapRow(spec, row, listKey);
 }
 
 export async function createRow(
@@ -274,8 +287,32 @@ export async function createRow(
  * this row already say that?" check — so a re-run of the import recognises the rows its
  * first pass wrote instead of rewriting all 96 of them on every run.
  */
-export function planWrites(spec: KindSpec, fields: Record<string, unknown>, locale: ContentLocale): ParseResult {
-  const parsed = parseWrites(spec, { key: '', fields }, locale);
+export function planWrites(
+  spec: KindSpec,
+  fields: Record<string, unknown>,
+  locale: ContentLocale,
+  /** the list a `list_item` belongs to; it selects the typed schema the document must obey */
+  listKey?: string | null,
+): ParseResult {
+  let written = fields;
+  if (spec.table === 'list_items' && 'data' in fields) {
+    const schema = listSchemaOf(listKey ?? '');
+    if (!schema) return { columns: {}, issues: [{ path: 'list', message: 'unknown field' }], htmlColumns: [] };
+    const doc = parseListDoc(schema, fields.data);
+    if (doc.issues.length > 0) return { columns: {}, issues: doc.issues, htmlColumns: [] };
+    // The one body a service can carry is authored markup, so it is filtered before it is
+    // stored — the same allowlist the public render path uses. Every other list field is
+    // plain text and was already cleaned by `parseListDoc()`.
+    for (const stem of htmlStems(schema)) {
+      for (const language of CONTENT_LOCALES) {
+        const column = `${stem}_${language}`;
+        const value = doc.doc[column];
+        if (typeof value === 'string') doc.doc[column] = sanitizeRichHtml(value);
+      }
+    }
+    written = { ...fields, data: doc.doc };
+  }
+  const parsed = parseWrites(spec, { key: '', fields: written }, locale);
   // A body is the only thing the site prints as markup, so the allowlist runs here: the
   // database ends up holding prose, never a `<script>` or an `onerror=` that a future
   // renderer, a dump or a restore could turn into an attack. `./rich.ts` is the same
@@ -303,7 +340,7 @@ export async function saveDraft(
   if (!current) return { ok: false, status: 404, code: 'not_found' };
   if (current.trashed) return { ok: false, status: 409, code: 'in_trash' };
 
-  const parsed = planWrites(spec, input.fields, input.locale);
+  const parsed = planWrites(spec, input.fields, input.locale, current.listKey);
   if (parsed.issues.length > 0) return { ok: false, status: 400, code: 'invalid_input', issues: parsed.issues };
 
   const patch: Record<string, unknown> = { ...parsed.columns, updated_by: input.actorId, version: current.version + 1 };

@@ -40,7 +40,7 @@ import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue }
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
 import { SEO_SETTING_GROUP } from './settings-catalog';
-import { branchOfDoc, faqOfDoc, navOfDoc, specialistOfDoc } from './list-docs';
+import { branchOfDoc, docBi, docBiAny, docStringPairs, docStr, faqOfDoc, navOfDoc, specialistOfDoc } from './list-docs';
 import { faqData, type FaqItem } from '../../data/faq';
 import { navItems, type NavItem } from '../../data/nav';
 import { specialistsData, type Specialist } from '../../data/specialists';
@@ -509,36 +509,6 @@ function documentOf(row: PublicRow): Record<string, unknown> | null {
   return value.value as Record<string, unknown>;
 }
 
-function docText(doc: Record<string, unknown>, name: string): string {
-  const value = doc[name];
-  return typeof value === 'string' ? value.trim() : '';
-}
-
-/** A document's bilingual field: `{ ar, en }`, or one string read as both languages. */
-function docBi(doc: Record<string, unknown>, name: string): Bi {
-  const value = doc[name];
-  if (typeof value === 'string') return { ar: value, en: value };
-  if (!value || typeof value !== 'object') return { ar: '', en: '' };
-  const both = value as Record<string, unknown>;
-  const ar = typeof both.ar === 'string' ? both.ar : '';
-  const en = typeof both.en === 'string' ? both.en : '';
-  return { ar: ar || en, en: en || ar };
-}
-
-function docStrings(doc: Record<string, unknown>, name: string): { ar: string[]; en: string[] } {
-  const keep = (list: unknown): string[] => (Array.isArray(list) ? list.filter((item): item is string => typeof item === 'string') : []);
-  const value = doc[name];
-  if (Array.isArray(value)) {
-    const one = keep(value);
-    return { ar: one, en: one };
-  }
-  if (value && typeof value === 'object') {
-    const both = value as Record<string, unknown>;
-    return { ar: keep(both.ar), en: keep(both.en) };
-  }
-  return { ar: [], en: [] };
-}
-
 // branches
 
 /**
@@ -648,20 +618,30 @@ export async function getNavList(): Promise<NavItem[]> {
  * A service card. WordPress has no route per service — its cards are sections of
  * one page — so a row with no link of its own points the reader at `/services`,
  * which is where the fallback's cards point too.
+ *
+ * The name is read as `name` first and `title` second, in either shape a document holds
+ * a value in. The service form writes `name_ar`, a row seeded before that form existed
+ * carries a nested `title`, and a reader that understood only one of the two showed no
+ * services at all.
+ *
+ * The link is one value, written once by the owner, and split into the two locales here
+ * by the site's own rule — the same rule that makes the canonical URL — so a card cannot
+ * be published at one address and linked from another.
  */
 function serviceCardOf(row: PublicRow, index: number): ServiceCard | null {
   const doc = documentOf(row);
   if (!doc) return null;
-  const title = docBi(doc, 'title');
+  const title = docBiAny(doc, ['name', 'title']);
   if (!title.ar && !title.en) return null;
   const href = docBi(doc, 'href');
+  const link = href.ar || href.en;
   return {
     id: numericId(row, index),
     slug: row.key,
     title,
     intro: docBi(doc, 'intro'),
-    image: docText(doc, 'image') || null,
-    href: href.ar || href.en ? href : hrefPair('services'),
+    image: docStr(doc, 'image') || null,
+    href: link ? { ar: getLocalizedHref(link, 'ar'), en: getLocalizedHref(link, 'en') } : hrefPair('services'),
   };
 }
 
@@ -703,7 +683,7 @@ async function resultStoryIndex(): Promise<Map<number, string[]>> {
           .filter((row) => flag(row, 'enabled'))
           .map((row) => {
             const id = Number(row.key);
-            return [id, docStrings(documentOf(row) ?? {}, 'phrases').en] as [number, string[]];
+            return [id, docStringPairs(documentOf(row) ?? {}, 'phrases').en] as [number, string[]];
           })
           // A row an editor typed by hand may name nothing; it cannot be a story.
           .filter(([id]) => Number.isInteger(id)),

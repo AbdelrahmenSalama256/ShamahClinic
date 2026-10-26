@@ -111,6 +111,17 @@ async function seedItem(
   return unwrap(await publishRow('list_item', { id: created.id, locales: ['en'], actor }), `publish ${listKey}/${uid}`).row;
 }
 
+/**
+ * Rewrite a row's stored documents the way the database holds them, with the console's
+ * schema out of the way. A row older than the typed forms is in a shape the form would
+ * refuse, and the site's readers still have to answer from it; this is how a test puts
+ * one there, not a way to write content.
+ */
+async function storeDocs(uid: string, doc: Record<string, unknown>): Promise<void> {
+  const json = JSON.stringify(doc);
+  await db.updateTable('list_items').set({ draft: json, published: json }).where('uid', '=', uid).execute();
+}
+
 async function ensureList(listKey: string): Promise<void> {
   const existing = await db.selectFrom('lists').select('id').where('list_key', '=', listKey).executeTakeFirst();
   if (existing) return;
@@ -492,10 +503,12 @@ describe('the list kinds', () => {
       },
       { position: 1 },
     );
-    // Two rows the reader must not turn into a card: one the console disabled, one
-    // an editor saved before writing a name into it.
+    // Two rows the reader must not turn into a card: one the console disabled, and one
+    // whose document holds no name. The typed form refuses that save now, so the second
+    // arrives the way a row older than the form still sits in the database.
     await seedItem('branches', key('hidden'), { name: 'فرع مخفي' }, { enabled: false });
-    await seedItem('branches', key('nameless'), { phone: '01000000002' });
+    await seedItem('branches', key('nameless'), { name: 'فرع بلا اسم', phone: '01000000002' });
+    await storeDocs(key('nameless'), { phone: '01000000002' });
 
     const list = await getBranchList();
     expect(list.map((branch) => branch.id)).toEqual([key('nasr'), key('maadi')]);
@@ -520,11 +533,12 @@ describe('the list kinds', () => {
 
   it('gives a service the link the site has, or the one its author wrote', async () => {
     await seedItem('services', key('laser'), {
-      title: { ar: 'إزالة الشعر بالليزر', en: 'Laser hair removal' },
+      name: { ar: 'إزالة الشعر بالليزر', en: 'Laser hair removal' },
       intro: { ar: 'جلسات للإزيل الدائم', en: 'Sessions for permanent reduction' },
       image: '/images/service-laser.jpg',
     });
-    await seedItem('services', key('own-link'), { title: 'تقشير', href: { ar: '/peeling', en: '/en/peeling' } });
+    // One box for the link, because the site splits it into the two languages itself.
+    await seedItem('services', key('own-link'), { name: 'تقشير', href: '/peeling' });
 
     const cards = await getServiceCards();
     expect(cards.map((card) => card.slug)).toEqual([key('laser'), key('own-link')]);
@@ -535,6 +549,20 @@ describe('the list kinds', () => {
     expect(cards[1].href).toEqual({ ar: '/peeling', en: '/en/peeling' });
     // And, like every other card, it is numbered apart from a WordPress post.
     expect(cards.map((card) => card.id)).toEqual([-1, -2]);
+
+    // The same two rows, now carrying the keys a row older than the typed form uses:
+    // a nested `title` instead of `name_ar`, a paired `href` instead of one path. A reader
+    // that understood only the new shape would blank the services page, so both answer.
+    await storeDocs(key('laser'), {
+      title: { ar: 'إزالة الشعر بالليزر', en: 'Laser hair removal' },
+      intro: { ar: 'جلسات للإزيل الدائم', en: 'Sessions for permanent reduction' },
+      image: '/images/service-laser.jpg',
+    });
+    await storeDocs(key('own-link'), { title: 'تقشير', href: { ar: '/peeling', en: '/en/peeling' } });
+    const older = await getServiceCards();
+    expect(older.map((card) => card.title)).toEqual(cards.map((card) => card.title));
+    expect(older.map((card) => card.image)).toEqual(cards.map((card) => card.image));
+    expect(older.map((card) => card.href)).toEqual(cards.map((card) => card.href));
   });
 
   it('chooses the rung per list, not per kind', async () => {

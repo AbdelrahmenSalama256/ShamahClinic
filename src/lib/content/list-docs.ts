@@ -99,6 +99,18 @@ const num = (doc: Doc, key: string): number | null => {
   return null;
 };
 
+/**
+ * The same readers, for a site reader outside this module. `site.ts` builds a service
+ * card and a result index straight from a document, and it must ask the same question
+ * the same way: a reader that only understood one shape is how a console save silently
+ * blanks a page.
+ */
+export const docStr = str;
+export const docBi = bi;
+export const docBiAny = biAny;
+export const docStrings = strings;
+export const docStringPairs = bothStrings;
+
 // --- services ---------------------------------------------------------------
 
 export interface ServiceDoc extends Doc {
@@ -126,6 +138,8 @@ export interface ServiceDoc extends Doc {
   alt_en: string;
   body_ar: string;
   body_en: string;
+  /** the card's own link, when its author wrote one; empty means the services page */
+  href: string;
 }
 
 export function serviceDocOf(treatment: Treatment): ServiceDoc {
@@ -154,6 +168,11 @@ export function serviceDocOf(treatment: Treatment): ServiceDoc {
     alt_en: treatment.image.alt.en,
     body_ar: treatment.body?.ar ?? '',
     body_en: treatment.body?.en ?? '',
+    // Written even when empty, because the console's schema treats both as fields of the
+    // service: a re-import must produce the same document a save of the row produces.
+    featured: Boolean(treatment.featured),
+    category: treatment.category ?? '',
+    href: '',
   };
 }
 

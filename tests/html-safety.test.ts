@@ -260,6 +260,7 @@ describe('the editor shows the words the column will hold', () => {
       id: 'r',
       kind: 'article',
       key: 'k',
+      listKey: null,
       status: 'draft',
       version: 1,
       trashed: false,

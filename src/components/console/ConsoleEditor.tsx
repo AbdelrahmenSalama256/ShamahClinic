@@ -37,8 +37,21 @@
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { consoleCall, consoleRead } from './client-api';
-import { fieldOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/console/issues';
-import { contentStateKey, contentStateTone, displayForm, fieldsFromForm, formOf, isPendingIn, sameForm, storedValue, type Form } from '@/lib/console/editor-form';
+import { fieldOf, formValueOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/console/issues';
+import {
+  contentStateKey,
+  contentStateTone,
+  displayForm,
+  fieldsFromForm,
+  formOf,
+  isPendingIn,
+  listSchemaOfRow,
+  sameForm,
+  storedValue,
+  type Form,
+} from '@/lib/console/editor-form';
+import { listDocFromForm, listDocImage, schemaStems } from '@/lib/content/list-schema';
+import { ListDocFields, type ReferenceChoice } from './ListDocFields';
 import { previewDocument, previewModel } from '@/lib/console/preview';
 import { localizedPath } from '@/lib/content/paths';
 import { writeScopeQuery } from '@/lib/content/list-view';
@@ -80,6 +93,8 @@ export interface ConsoleEditorProps {
   publishable: ContentScope[];
   /** the row's search result and what this role may write there */
   seo: EntitySeo & { writable: boolean };
+  /** the names a `refs` field may point at, resolved on the server */
+  referenceOptions: Record<string, ReferenceChoice[]>;
   /** the workspace wants to go somewhere, and this pane has to let go of the form first */
   pendingNav: boolean;
   onRequestNav: (run: () => void) => void;
@@ -106,6 +121,7 @@ export function ConsoleEditor({
   abilities,
   publishable,
   seo,
+  referenceOptions,
   pendingNav,
   onRequestNav,
   onPendingResolve,
@@ -176,6 +192,8 @@ export function ConsoleEditor({
   }, [api, initialRow, rowId, nonce]);
 
   const parsed = useMemo(() => (row ? fieldsFromForm(row, form) : { fields: {}, issues: [] }), [row, form]);
+  /** The typed form a list item gets; `null` for a bilingual kind or an older list. */
+  const listSchema = row ? listSchemaOfRow(row) : null;
   // What the pane shows on the right is the cleaned document, not the raw keystrokes:
   // an imported `<p>` in a plain box must not become a visible tag in the preview or a
   // `<p>` counted into the SEO description's length.
@@ -184,8 +202,15 @@ export function ConsoleEditor({
   // A server message is dropped as soon as the value it was written for is gone: corrected
   // text under a red box reads as a bug in the box, not as advice.
   const issues = useMemo(
-    () => groupIssues(labels, [...parsed.issues, ...liveIssues(serverIssues, form)], Object.keys(row?.fields ?? {})),
-    [form, labels, parsed, row, serverIssues],
+    () =>
+      groupIssues(
+        labels,
+        [...parsed.issues, ...liveIssues(serverIssues, form)],
+        // A list document's messages are named by the schema's stems (`name`, `benefits`),
+        // not by the row's single `data` field, so the message lands under its own box.
+        listSchema ? schemaStems(listSchema) : Object.keys(row?.fields ?? {}),
+      ),
+    [form, labels, listSchema, parsed, row, serverIssues],
   );
   // Only the browser's own complaints grey the buttons: a server message is often about
   // something the client cannot recompute — a taken slug, a moved version — and needs a retry.
@@ -217,7 +242,7 @@ export function ConsoleEditor({
     const result = await consoleCall<{ row?: ContentRow }>(`${api}/${row.id}${query}`, 'PATCH', { fields: parsed.fields, version: row.version });
     setBusy(false);
     if (result.error) {
-      setServerIssues(result.issues.map((issue) => ({ ...issue, was: String(posted[fieldOf(issue.path)] ?? '') })));
+      setServerIssues(result.issues.map((issue) => ({ ...issue, was: formValueOf(posted, fieldOf(issue.path)) })));
       if (result.error === 'stale_row') setAutosaveStopped(true);
       if (mode === 'auto') setNotice(result.error === 'stale_row' ? { tone: 'danger', key: 'content.autosave_stopped' } : null);
       else tell(result, 'content.saved');
@@ -245,9 +270,9 @@ export function ConsoleEditor({
   }, [autosaveStopped, busy, canEditRow, dirty, invalid, pendingNav, save]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setPreviewSrc(previewDocument(previewModel(kind, shown, locale), locale)), PREVIEW_MS);
+    const timer = setTimeout(() => setPreviewSrc(previewDocument(previewModel(kind, shown, locale, row?.listKey ?? null), locale)), PREVIEW_MS);
     return () => clearTimeout(timer);
-  }, [kind, locale, shown]);
+  }, [kind, locale, row?.listKey, shown]);
 
   async function publish(): Promise<void> {
     if (!row) return;
@@ -327,7 +352,7 @@ export function ConsoleEditor({
 
   if (!rowId) return <Empty>{labels['content.pick_row']}</Empty>;
 
-  const model = previewModel(kind, shown, locale);
+  const model = previewModel(kind, shown, locale, row?.listKey ?? null);
   const media = row ? imagesOfForm(row, shown) : [];
   const state = row ? contentStateKey(row) : null;
   const previewPath = seo.path === null ? null : localizedPath(seo.path, locale);
@@ -390,19 +415,35 @@ export function ConsoleEditor({
 
         {row && (
           <div className="console-fields">
-            {Object.entries(row.fields).map(([name, field]) => (
-              <FieldRow
-                key={name}
-                name={name}
-                field={field}
+            {listSchema ? (
+              <ListDocFields
+                schema={listSchema}
+                form={form}
+                errors={issues.byField}
+                referenceOptions={referenceOptions}
                 locale={locale}
-                value={form[name]}
-                errors={issues.byField[name] ?? []}
                 disabled={!canEditRow}
                 labels={labels}
-                onChange={(next) => setForm((current) => ({ ...current, [name]: next }))}
+                onChange={(key, value) => setForm((current) => ({ ...current, [key]: value }))}
               />
-            ))}
+            ) : row.kind === 'list_item' ? (
+              <Alert>{labels['content.list.no_form']}</Alert>
+            ) : null}
+            {Object.entries(row.fields)
+              .filter(([, field]) => !(row.kind === 'list_item' && field.kind === 'json'))
+              .map(([name, field]) => (
+                <FieldRow
+                  key={name}
+                  name={name}
+                  field={field}
+                  locale={locale}
+                  value={form[name]}
+                  errors={issues.byField[name] ?? []}
+                  disabled={!canEditRow}
+                  labels={labels}
+                  onChange={(next) => setForm((current) => ({ ...current, [name]: next }))}
+                />
+              ))}
           </div>
         )}
 
@@ -613,6 +654,13 @@ function FieldRow({
     );
   }
 
+  // A document with no form is not an invitation to type JSON. Nothing reaches this line
+  // today — every JSON column is a gallery or a list the console knows — but a new one has
+  // to fail as a sentence on the screen, not as a textarea waiting for a paste.
+  if (field.kind === 'json') {
+    return <Alert>{labels['content.list.no_form']}</Alert>;
+  }
+
   // #246. A `html` column is the only content the site prints as markup, and the only place a
   // person used to read `<p class="wp-block-paragraph">` while trying to fix a sentence. They get
   // a page instead. The row keeps the same `id`, which now names the surface they type in.
@@ -656,9 +704,6 @@ function FieldRow({
           onBlur={leaveField}
         />
       )}
-      {/* A JSON field keeps its text area — the shape is the document's and a person editing
-          `data` has to be able to see it — but every address inside it also gets a tile. */}
-      {field.kind === 'json' ? <ImageGallery labels={labels} value={text} disabled={disabled} onChange={onChange} /> : null}
     </Field>
   );
 }
@@ -691,9 +736,17 @@ function imagesOfForm(row: ContentRow, form: Form): string[] {
     if (!out.includes(src)) out.push(src);
   };
 
+  // A typed list's picture is in the document the form builds, not in a `data` string.
+  const schema = listSchemaOfRow(row);
+  if (schema) {
+    const picture = listDocImage(schema, listDocFromForm(schema, form).doc);
+    if (picture) add(picture);
+  }
+
   for (const [name, field] of Object.entries(row.fields)) {
     const value = form[name];
     if (field.kind === 'json') {
+      if (schema) continue;
       // `data` is a list item's whole document and `images` an offer's gallery: the walk
       // finds an address wherever an image-shaped key holds one, so neither needs a name.
       try {

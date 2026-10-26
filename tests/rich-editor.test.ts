@@ -178,7 +178,10 @@ describe('the row that holds markup stops being a text box', () => {
   it('keeps the imported page document as source, on purpose', () => {
     // `format: 'source'` is the homepage's hero document; a WYSIWYG over it would rewrite the
     // shape the site reads. It stays a textarea, and the editor's own note says why.
-    expect(editorSource).toMatch(/field\.kind === 'json' \? <ImageGallery/);
+    // A JSON column never reaches that textarea: the gallery claims the picture fields, and a
+    // document with no form is said on the screen instead of offered as text to paste into.
+    expect(editorSource).toMatch(/if \(isImageGalleryField\(name, field\)\)/);
+    expect(editorSource).toMatch(/if \(field\.kind === 'json'\) \{\s*return <Alert>/);
     expect(read('src', 'lib', 'content', 'format.ts')).toMatch(/'plain' \| 'html' \| 'source'/);
   });
 

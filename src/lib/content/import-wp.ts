@@ -33,7 +33,7 @@ import { mirrorSrc } from '../wp/mirror';
 import { readSnapshot, snapshotMedia, snapshotMeta, snapshotResultStories } from '../wp/snapshot';
 import { bestImageSrc } from '../wp/sanitize';
 import type { WCStoreProduct, WPTerm } from '../wp/types';
-import { kindSpec, parseWrites, type ColumnWrites, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
+import { kindSpec, type ColumnWrites, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 import { publishRow } from './publish';
 import { createRow, getRow, listIdForKey, planWrites, saveDraft, type ContentRow } from './store';
 
@@ -308,17 +308,28 @@ function draftMatches(row: ContentRow, spec: KindSpec, columns: ColumnWrites, na
   if (bi) return (field.draft?.[locale] ?? '') === asWritten(columns[bi.draft[locale]]);
   const text = spec.text.find((candidate) => candidate.name === name);
   if (text) return asWritten(field.value) === asWritten(columns[text.column]);
-  if (field.kind === 'json') return JSON.stringify(field.draftJson ?? null) === JSON.stringify(value ?? null);
+  if (field.kind === 'json') {
+    // Compared against the planned column, not the raw value: `planWrites()` canonicalises
+    // a list document (flat keys, every schema field present), so a row it wrote and the
+    // same source document are equal only when both went through it.
+    const json = spec.json.find((candidate) => candidate.name === name);
+    return json ? asWritten(columns[json.draft]) === JSON.stringify(field.draftJson ?? null) : false;
+  }
   if (field.kind === 'number') return (field.value ?? null) === (value === null || value === undefined ? null : Number(value));
   if (field.kind === 'flag') return field.value === Boolean(value);
   return false;
 }
 
-function needsWrite(row: ContentRow, spec: KindSpec, fields: Partial<Record<ContentLocale, Record<string, unknown>>>): boolean {
+function needsWrite(
+  row: ContentRow,
+  spec: KindSpec,
+  fields: Partial<Record<ContentLocale, Record<string, unknown>>>,
+  listKey?: string | null,
+): boolean {
   for (const locale of ['ar', 'en'] as const) {
     const values = fields[locale];
     if (!values) continue;
-    const planned = planWrites(spec, values, locale);
+    const planned = planWrites(spec, values, locale, listKey);
     if (!Object.entries(values).every(([name, value]) => draftMatches(row, spec, planned.columns, name, value, locale))) return true;
   }
   return false;
@@ -403,7 +414,7 @@ async function importDoc(doc: ImportDoc, ids: Map<string, string>, lists: Map<st
   const fields = fieldsWithCategory(doc, ids);
   const spec = kindSpec(doc.kind);
   for (const [locale, values] of Object.entries(fields) as [ContentLocale, Record<string, unknown>][]) {
-    const parsed = parseWrites(spec, { key: doc.key, fields: values }, locale);
+    const parsed = planWrites(spec, values, locale, doc.listKey);
     if (parsed.issues.length > 0) {
       return { why: parsed.issues.map((issue) => `${issue.path}: ${issue.message}`).join('; ') };
     }
@@ -424,7 +435,7 @@ async function importDoc(doc: ImportDoc, ids: Map<string, string>, lists: Map<st
   }
   const current = await getRow(doc.kind, existing.id);
   if (!current) return { why: 'row disappeared' };
-  const changed = needsWrite(current, spec, fields) || !existing.legacy_id;
+  const changed = needsWrite(current, spec, fields, doc.listKey) || !existing.legacy_id;
   const unpublished = current.status !== 'published';
   if (!changed && !unpublished) return 'unchanged';
   if (!apply) return 'updated';

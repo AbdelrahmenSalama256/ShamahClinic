@@ -112,8 +112,11 @@ describe('one control, everywhere a picture is set (BK-14a.2)', () => {
   it('puts the picker on an image-named field and the gallery inside a JSON one', () => {
     expect(editorSource).toMatch(/if \(isImageField\(name, field\)\)/);
     expect(editorSource).toMatch(/<ImagePicker labels=\{labels\} value=\{text\} disabled=\{disabled\} inputId=\{id\}/);
-    expect(editorSource).toMatch(/<ImageGallery labels=\{labels\} value=\{text\} disabled=\{disabled\} onChange=\{onChange\}/);
-    expect(editorSource).toMatch(/field\.kind === 'json' \? <ImageGallery/);
+    expect(editorSource).toMatch(/if \(isImageGalleryField\(name, field\)\)/);
+    expect(editorSource).toMatch(/<ImageGallery\s+labels=\{labels\}\s+value=\{text\}\s+disabled=\{disabled\}/);
+    // The gallery is asked before any textarea is built, and a JSON column that is not a
+    // gallery is answered with a sentence: neither reaches a person as text to edit.
+    expect(editorSource).toMatch(/if \(isImageGalleryField\(name, field\)\)[\s\S]*?<ImageGallery[\s\S]*?if \(field\.kind === 'json'\) \{\s*return <Alert>/);
     // The frame is the field's labelled control, so the `<label>` still points at a real one.
     expect(editorSource).toMatch(/inputId=\{id\}/);
   });

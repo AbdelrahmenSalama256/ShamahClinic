@@ -21,6 +21,17 @@
  * the read-out that makes the save/publish decision.
  */
 import type { ContentKind, ContentLocale } from '../content/kinds';
+import {
+  listDocBody,
+  listDocBullets,
+  listDocFromForm,
+  listDocImage,
+  listDocIntro,
+  listDocMeta,
+  listDocTitle,
+  listSchemaOf,
+  UNKNOWN_FORM_KEY,
+} from '../content/list-schema';
 import { localizedPath, publicPathOf } from '../content/paths';
 
 export type FormValue = string | boolean;
@@ -31,12 +42,8 @@ const COPY: Record<ContentKind, { title: string; intro: string; body: string; me
   article: { title: 'title', intro: 'excerpt', body: 'content', meta: ['image', 'categoryId', 'imageAlt'] },
   offer: { title: 'name', intro: 'excerpt', body: 'body', meta: ['price', 'regularPrice', 'currency', 'onSale', 'enabled'] },
   page: { title: 'title', intro: '', body: 'content', meta: ['redirectTo', 'enabled'] },
-  list_item: { title: '', intro: '', body: 'data', meta: ['position', 'enabled'] },
+  list_item: { title: '', intro: '', body: '', meta: [] },
 };
-
-/** The document keys a list row's heading and teaser are kept under, in the order tried. */
-const DOC_TITLE = ['name', 'title', 'label', 'question'];
-const DOC_INTRO = ['intro', 'description', 'area', 'answer', 'text'];
 
 export interface PreviewModel {
   title: string;
@@ -44,6 +51,10 @@ export interface PreviewModel {
   /** the body, whose trust level `bodyAs` decides */
   body: string;
   bodyAs: 'html' | 'text';
+  /** the first picture the item would show, if it has one */
+  image: string | null;
+  /** repeatable points a card prints under the teaser */
+  bullets: string[];
   /** this kind has no body field at all, only the fields listed in `meta` */
   fields: { name: string; value: string | boolean }[];
 }
@@ -52,29 +63,20 @@ function text(value: FormValue | undefined): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-/** A list document's bilingual field: `{ ar, en }`, or one string read as both languages. */
-function docText(doc: Record<string, unknown>, name: string, locale: ContentLocale): string {
-  const value = doc[name];
-  if (typeof value === 'string') return value.trim();
-  if (!value || typeof value !== 'object') return '';
-  const both = value as Record<string, unknown>;
-  const other: ContentLocale = locale === 'ar' ? 'en' : 'ar';
-  const mine = typeof both[locale] === 'string' ? (both[locale] as string).trim() : '';
-  const theirs = typeof both[other] === 'string' ? (both[other] as string).trim() : '';
-  return mine || theirs;
-}
-
-function parseDoc(raw: string): Record<string, unknown> | null {
+/** The hidden entries the console keeps until somebody removes them. */
+function extraOf(form: EditorForm): Record<string, unknown> {
+  const raw = String(form[UNKNOWN_FORM_KEY] ?? '');
+  if (!raw) return {};
   try {
     const value: unknown = JSON.parse(raw);
-    return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+    return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
   } catch {
-    return null;
+    return {};
   }
 }
 
 /** The row's copy as the form holds it right now. */
-export function previewModel(kind: ContentKind, form: EditorForm, locale: ContentLocale): PreviewModel {
+export function previewModel(kind: ContentKind, form: EditorForm, locale: ContentLocale, listKey?: string | null): PreviewModel {
   const spec = COPY[kind];
   // A flag says something even when it is off — `enabled: false` is the fact a person
   // is reviewing — while an empty text field says nothing.
@@ -88,28 +90,26 @@ export function previewModel(kind: ContentKind, form: EditorForm, locale: Conten
       intro: spec.intro ? text(form[spec.intro]) : '',
       body: text(form[spec.body]),
       bodyAs: 'html',
+      image: null,
+      bullets: [],
       fields,
     };
   }
 
-  const raw = text(form.data);
-  const doc = parseDoc(raw);
-  const pick = (names: string[]): string => {
-    if (!doc) return '';
-    for (const name of names) {
-      const value = docText(doc, name, locale);
-      if (value) return value;
-    }
-    return '';
-  };
-  // An invalid document is shown as the text it is: the editor's JSON box already says
-  // why, and hiding the half-typed document behind a blank pane would be worse.
+  // A list item is previewed as the card its list draws: the document is built from the
+  // same form the save builds, so the pane never shows JSON a person did not type.
+  const schema = listSchemaOf(listKey);
+  if (!schema) return { title: '', intro: '', body: '', bodyAs: 'text', image: null, bullets: [], fields };
+
+  const doc = listDocFromForm(schema, form, extraOf(form)).doc;
   return {
-    title: pick(DOC_TITLE),
-    intro: pick(DOC_INTRO),
-    body: doc ? JSON.stringify(doc, null, 2) : raw,
-    bodyAs: 'text',
-    fields,
+    title: listDocTitle(schema, doc, locale),
+    intro: listDocIntro(schema, doc, locale),
+    body: listDocBody(schema, doc, locale),
+    bodyAs: 'html',
+    image: listDocImage(schema, doc),
+    bullets: listDocBullets(schema, doc, locale),
+    fields: listDocMeta(schema, doc, locale).map((meta) => ({ name: meta.label, value: meta.value })),
   };
 }
 
@@ -127,7 +127,11 @@ function escapeHtml(value: string): string {
 export function previewDocument(model: PreviewModel, locale: ContentLocale): string {
   const dir = locale === 'ar' ? 'rtl' : 'ltr';
   const title = escapeHtml(model.title || model.intro || '—');
+  const image = model.image ? `<img class="card" src="${escapeHtml(model.image)}" alt="">` : '';
   const intro = model.intro && model.intro !== model.title ? `<p class="lede">${escapeHtml(model.intro)}</p>` : '';
+  const bullets = model.bullets.length
+    ? `<ul class="points">${model.bullets.map((point) => `<li>${escapeHtml(point)}</li>`).join('')}</ul>`
+    : '';
   const body = model.bodyAs === 'html' ? model.body : `<pre>${escapeHtml(model.body)}</pre>`;
   const fields = model.fields.length
     ? `<dl class="meta">${model.fields
@@ -142,12 +146,14 @@ export function previewDocument(model: PreviewModel, locale: ContentLocale): str
     'h1{margin:0 0 .6rem;font-size:1.25rem;line-height:1.35}',
     '.lede{margin:0 0 1rem;color:#555;font-size:1.05rem}',
     'img{max-width:100%;height:auto}',
+    'img.card{display:block;width:100%;max-height:14rem;object-fit:cover;border-radius:.6rem;margin:0 0 1rem}',
+    '.points{margin:0 0 1rem;padding-inline-start:1.2rem;color:#333}',
     'pre{white-space:pre-wrap;word-break:break-word;background:#f5f5f5;padding:.7rem;border-radius:.5rem;font-size:.8rem}',
     '.meta{margin:1.2rem 0 0;padding:0;display:flex;flex-wrap:wrap;gap:.4rem 1.1rem;font-size:.8rem;color:#555}',
     '.meta div{display:flex;gap:.35rem}',
     '.meta dt{margin:0;font-weight:600}.meta dd{margin:0}',
     '</style></head><body>',
-    `<h1>${title}</h1>${intro}${body}${fields}`,
+    `<h1>${title}</h1>${image}${intro}${body}${bullets}${fields}`,
     '</body></html>',
   ].join('');
 }

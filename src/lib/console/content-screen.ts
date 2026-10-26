@@ -20,7 +20,8 @@ import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale } from 
 import { LIST_LABELS, type ListKey } from '../content/lists';
 import { getRow, knownListKeys, listKeyOfItem, type ContentRow } from '../content/store';
 import { filtersFor, parseListView, parseListScope, sortsFor, type ListFilter, type ListView, type ListSort } from '../content/list-view';
-import { listSummaries, type ListPage } from '../content/summary';
+import { listChoices, linkedArticleTitle, listSummaries, type ListChoice, type ListPage } from '../content/summary';
+import { listDocTitle, listSchemaOf } from '../content/list-schema';
 import { catalogFor, type MessageKey } from './messages';
 import { listSectionPath } from './paths';
 import type { ConsoleLocale } from './prefs';
@@ -190,6 +191,8 @@ export interface ContentDetailData {
   title: string;
   /** the list screen this row came from, with its own scope kept */
   backHref: string;
+  /** what each `refs` field may point at, keyed by the field's stem */
+  referenceOptions: Record<string, ListChoice[]>;
   /** the row's search result: public path, inherited copy, override, and this role's write */
   seo: EntitySeo & { writable: boolean };
   labels: Record<MessageKey, string>;
@@ -229,10 +232,28 @@ export async function contentDetailData(
   }
 
   const abilities = abilitiesFor(kind, input.grants);
-  const titleField = spec.bi.find((field) => field.name === 'title' || field.name === 'name');
-  const title = titleField ? row.fields[titleField.name]?.draft?.[activeLocale]?.trim() || row.key : row.key;
+  const schema = listKey ? listSchemaOf(listKey) : null;
+  let title = '';
+  if (spec.table === 'list_items') {
+    const doc = row.fields.data?.draftJson;
+    if (schema) {
+      title = listDocTitle(schema, doc !== null && typeof doc === 'object' && !Array.isArray(doc) ? (doc as Record<string, unknown>) : {}, activeLocale);
+    }
+    // An unnamed result story is the article its uid points at; a heading of "1182" is
+    // the defect, not a name.
+    if (!title && listKey === 'results') title = await linkedArticleTitle(row.key, activeLocale);
+  } else {
+    const titleField = spec.bi.find((field) => field.name === 'title' || field.name === 'name');
+    title = titleField ? row.fields[titleField.name]?.draft?.[activeLocale]?.trim() || row.key : row.key;
+  }
+  if (!title) title = row.key;
   const publishable = spec.scope === 'lists' ? abilities.publish.filter((scope) => scope === listKey) : abilities.publish;
   const seo = await entitySeoOf(kind, row.key, listKey, activeLocale);
+
+  const referenceOptions: Record<string, ListChoice[]> = {};
+  for (const field of schema?.fields ?? []) {
+    if (field.type === 'refs') referenceOptions[field.stem] = await listChoices(field.source, activeLocale);
+  }
 
   return {
     ok: true,
@@ -248,6 +269,7 @@ export async function contentDetailData(
         spec.scope === 'lists'
           ? listSectionPath(listKey ?? '')
           : `/console/${kind}s?locale=${activeLocale}`,
+      referenceOptions,
       seo: { ...seo, writable: can(input.grants, 'seo', 'update', {}) },
       labels: catalogFor(input.locale),
     },

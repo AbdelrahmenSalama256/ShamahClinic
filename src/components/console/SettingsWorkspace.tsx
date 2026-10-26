@@ -1,25 +1,24 @@
 "use client";
 
 /**
- * The site's settings as four readable screens and one escape hatch.
+ * The site's settings, one screen per thing the site reads.
  *
  * Pages: every route the site actually renders, each with its own show/hide switch and an
  * optional target to redirect a hidden page to. The registry is `settings-catalog.ts`, so
  * the console cannot list a page the site does not have.
  *
  * Banners: the photo each listing page opens with. The default is the authored photo in
- * `banners-catalog.ts`; a saved row replaces it, and clearing the path restores it.
+ * `banners-catalog.ts`; a saved row replaces it, and removing the photo restores it.
  *
  * Identity and SEO: the words the site reads from the `site` and `seo` settings groups.
  * They are plain fields here rather than a JSON box, because the person editing a phone
  * number should not have to quote it.
  *
- * Advanced: every other saved row, still as JSON — a group the site reads that this screen
- * has not learned a shape for. A row flagged `is_secret` has no value in the payload at
- * all (`readSettings` withholds it), so this can only say the value exists and where it
- * lives. That is the point of rendering it rather than hiding it: an operator looking for
- * a token needs to learn it is configured in the environment, not that the console is
- * broken.
+ * There is deliberately no fourth way in. An earlier "Advanced" pane listed whatever this
+ * screen had no field for and let a person type its JSON; it is gone, because a value
+ * posted as JSON is a value nobody can check and any of us can corrupt. A setting that
+ * needs editing gets a labelled field on one of these screens — a group that has no field
+ * yet is left exactly as the site reads it, never offered as text to paste into.
  */
 import { useId, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -51,7 +50,6 @@ import {
 } from "@/lib/content/settings-catalog";
 import {
   BANNER_DEFAULTS,
-  BANNER_KEYS,
   BANNER_PAGES,
   BANNER_SETTING_GROUP,
   safeBannerSrc,
@@ -60,7 +58,6 @@ import {
   type SavedBanners,
 } from "@/lib/content/banners-catalog";
 import type { PageState, PageStates } from "@/lib/content/page-visibility";
-import { ImageGallery } from "./ImageGallery";
 import { ImagePicker } from "./ImagePicker";
 
 function encoded(value: unknown): string {
@@ -316,33 +313,6 @@ export function SettingsWorkspace({
     router.refresh();
   }
 
-  async function saveRaw(
-    row: SettingView,
-    text: string,
-    id: string,
-  ): Promise<void> {
-    let value: unknown;
-    try {
-      value = JSON.parse(text) as unknown;
-    } catch {
-      setNotice({ tone: "danger", text: labels["content.error.json"] });
-      return;
-    }
-    setBusy(`raw:${id}`);
-    const result = await consoleCall("/api/console/settings", "PATCH", {
-      group: row.group,
-      key: row.key,
-      value,
-    });
-    setBusy(null);
-    if (result.error) {
-      failure(result.error);
-      return;
-    }
-    setNotice({ tone: "ok", text: labels["content.saved"] });
-    router.refresh();
-  }
-
   const identityDirty = useMemo(
     () =>
       SITE_SETTING_FIELDS.some((field) => {
@@ -389,19 +359,6 @@ export function SettingsWorkspace({
       }),
     [bannerDraft, banners],
   );
-
-  const known = new Set(
-    [...SITE_SETTING_FIELDS, ...SEO_SETTING_FIELDS].map(
-      (field) => `${field.group}.${field.key}`,
-    ),
-  );
-  for (const key of BANNER_KEYS) known.add(`${BANNER_SETTING_GROUP}.${key}`);
-  const pageKeys = new Set<string>(SITE_PAGES.map((page) => page.key));
-  const advanced = rows.filter((row) => {
-    const id = `${row.group}.${row.key}`;
-    if (known.has(id)) return false;
-    return !(row.group === PAGE_SETTING_GROUP && pageKeys.has(row.key));
-  });
 
   const dirtyLabel = labels["settings.unsaved"];
   const readOnlyLabel = labels["settings.read_only"];
@@ -757,96 +714,6 @@ export function SettingsWorkspace({
           })}
         </div>
       </SettingsSection>
-
-      {advanced.length > 0 && (
-        <SettingsSection
-          id="settings-advanced"
-          index="05"
-          title={labels["settings.advanced.heading"]}
-          lede={labels["settings.advanced.intro"]}
-          dirty={false}
-          dirtyLabel={dirtyLabel}
-          busy={false}
-        >
-          <div className="settings-advanced">
-            {advanced.map((row) => {
-              const id = `${row.group}.${row.key}`;
-              const current = draft[id] ?? encoded(row.value);
-              const rowDirty = current !== encoded(row.value);
-              return (
-                <div
-                  className="settings-raw"
-                  key={id}
-                  data-dirty={rowDirty || undefined}
-                >
-                  <header className="settings-raw-head">
-                    <h3 className="settings-raw-heading">
-                      <code className="settings-raw-key">{row.key}</code>
-                      <Badge>{row.group}</Badge>
-                    </h3>
-                    {rowDirty && (
-                      <span className="settings-dirty">
-                        <span
-                          className="settings-dirty-dot"
-                          aria-hidden="true"
-                        />
-                        {dirtyLabel}
-                      </span>
-                    )}
-                  </header>
-                  {row.secret ? (
-                    <Alert>{labels["content.secret"]}</Alert>
-                  ) : (
-                    <>
-                      <Field label={id} htmlFor={`setting-${id}`}>
-                        <Textarea
-                          id={`setting-${id}`}
-                          rows={5}
-                          dir="ltr"
-                          value={current}
-                          readOnly={!canWrite}
-                          className="settings-raw-editor"
-                          onChange={(event) =>
-                            setDraft((state) => ({
-                              ...state,
-                              [id]: event.target.value,
-                            }))
-                          }
-                        />
-                        <ImageGallery
-                          labels={labels}
-                          value={current}
-                          disabled={!canWrite}
-                          onChange={(next) =>
-                            setDraft((state) => ({ ...state, [id]: next }))
-                          }
-                        />
-                      </Field>
-                      {canWrite && (
-                        <div className="settings-raw-actions">
-                          <Button
-                            variant={rowDirty ? "primary" : "default"}
-                            size="sm"
-                            loading={busy === `raw:${id}`}
-                            disabled={busy !== null && busy !== `raw:${id}`}
-                            onClick={() => void saveRaw(row, current, id)}
-                          >
-                            {labels["content.save"]}
-                          </Button>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  <Note>
-                    {labels["content.updated_at"]}: {row.updatedAt.slice(0, 10)}{" "}
-                    · {labels["content.version"]} {row.version}
-                  </Note>
-                </div>
-              );
-            })}
-          </div>
-        </SettingsSection>
-      )}
 
       {notice && (
         <div

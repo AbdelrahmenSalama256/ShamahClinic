@@ -62,6 +62,8 @@ export const SEO_SETTING_FIELDS: readonly SettingField[] = [
   { group: SEO_SETTING_GROUP, key: 'description.ar', label: { ar: 'وصف الموقع (عربي)', en: 'Site description (Arabic)' }, multiline: true },
   { group: SEO_SETTING_GROUP, key: 'description.en', label: { ar: 'وصف الموقع (إنجليزي)', en: 'Site description (English)' }, multiline: true },
   { group: SEO_SETTING_GROUP, key: 'verification.google', label: { ar: 'كود تحقق Google', en: 'Google verification' } },
+  // input read only and can copy from it 
+  { group: SEO_SETTING_GROUP, key: 'verification.bing', label: { ar: 'كود تحقق Bing', en: 'Bing verification' } },
 ];
 
 /**

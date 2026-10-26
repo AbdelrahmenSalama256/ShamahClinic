@@ -21,6 +21,14 @@ import type { FieldIssue } from './issues';
 import { plainText } from '../content/format';
 import type { ContentLocale } from '../content/kinds';
 import type { ContentRow, FieldView } from '../content/store';
+import {
+  listDocForm,
+  listDocFromForm,
+  listDocUnknown,
+  listSchemaOf,
+  UNKNOWN_FORM_KEY,
+  type ListSchema,
+} from '../content/list-schema';
 
 export type FormValue = string | boolean;
 export type Form = Record<string, FormValue>;
@@ -53,12 +61,50 @@ export function isPendingIn(field: FieldView, locale: ContentLocale): boolean {
   return published !== null && published !== undefined && field.draft?.[locale] !== published;
 }
 
+/** The typed form a list row's document deserves, or null when its list has no schema. */
+export function listSchemaOfRow(row: ContentRow): ListSchema | null {
+  return row.kind === 'list_item' ? listSchemaOf(row.listKey) : null;
+}
+
+/** The column's JSON as a document, or null when it is not a document at all. */
+function documentOf(value: unknown): Record<string, unknown> | null {
+  return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+/** A stored document the typed form cannot draw and therefore must not overwrite. */
+function unformable(value: unknown): boolean {
+  return value !== null && value !== undefined && documentOf(value) === null;
+}
+
+/** The entries a row's document holds that its list's form does not describe. */
+function unknownOf(form: Form): Record<string, unknown> {
+  const raw = String(form[UNKNOWN_FORM_KEY] ?? '');
+  if (!raw) return {};
+  try {
+    const value: unknown = JSON.parse(raw);
+    return value !== null && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
 export function formOf(row: ContentRow, locale: ContentLocale): Form {
   const out: Form = {};
+  const schema = listSchemaOfRow(row);
   for (const [name, field] of Object.entries(row.fields)) {
     if (field.kind === 'bi') out[name] = field.draft?.[locale] ?? '';
-    else if (field.kind === 'json') out[name] = JSON.stringify(field.draftJson ?? {}, null, 2);
-    else if (field.kind === 'flag') out[name] = Boolean(field.value);
+    else if (field.kind === 'json') {
+      // A list item's document is drawn as its list's own fields, never as JSON. The
+      // entries the schema does not describe ride in a hidden key so the editor can
+      // list them and refuse to save until a person removes them.
+      if (schema) {
+        const doc = documentOf(field.draftJson) ?? {};
+        Object.assign(out, listDocForm(schema, doc));
+        out[UNKNOWN_FORM_KEY] = JSON.stringify(listDocUnknown(schema, doc));
+      } else {
+        out[name] = JSON.stringify(field.draftJson ?? {}, null, 2);
+      }
+    } else if (field.kind === 'flag') out[name] = Boolean(field.value);
     else out[name] = field.value === null || field.value === undefined ? '' : String(field.value);
   }
   return out;
@@ -100,7 +146,15 @@ export function storedValue(field: FieldView, value: FormValue | undefined): str
 /** The form as the site would read it: every plain field cleaned, the rest as typed. */
 export function displayForm(row: ContentRow, form: Form): Form {
   const out: Form = {};
-  for (const [name, field] of Object.entries(row.fields)) out[name] = storedValue(field, form[name]);
+  const schema = listSchemaOfRow(row);
+  for (const [name, field] of Object.entries(row.fields)) {
+    if (schema && field.kind === 'json') {
+      const doc = listDocFromForm(schema, form, unknownOf(form)).doc;
+      Object.assign(out, listDocForm(schema, doc));
+      continue;
+    }
+    out[name] = storedValue(field, form[name]);
+  }
   return out;
 }
 
@@ -108,6 +162,7 @@ export function displayForm(row: ContentRow, form: Form): Form {
 export function fieldsFromForm(row: ContentRow, form: Form): ParsedForm {
   const fields: Record<string, unknown> = {};
   const issues: FieldIssue[] = [];
+  const schema = listSchemaOfRow(row);
 
   for (const [name, field] of Object.entries(row.fields)) {
     const value = form[name];
@@ -126,6 +181,20 @@ export function fieldsFromForm(row: ContentRow, form: Form): ParsedForm {
       continue;
     }
     if (field.kind === 'json') {
+      if (schema) {
+        // The browser builds the same canonical document the server will build, so a
+        // required box left empty and a half-typed price are the same sentence here as
+        // under the API — and no request carries a document the server would refuse.
+        if (unformable(field.draftJson)) {
+          // A column that holds an array or a bare string has no form to draw, and saving
+          // the empty one it would draw would write over whatever the row really holds.
+          issues.push({ path: name, message: 'expected an object or an array' });
+        }
+        const parsed = listDocFromForm(schema, form, unknownOf(form));
+        fields[name] = parsed.doc;
+        issues.push(...parsed.issues);
+        continue;
+      }
       const text = String(value ?? '').trim();
       if (text === '') {
         fields[name] = {};

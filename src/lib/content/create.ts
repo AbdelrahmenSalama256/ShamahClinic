@@ -13,6 +13,7 @@
  * (the import does) is told the key is taken instead of being silently renamed.
  */
 import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale } from './kinds';
+import { listDocFromTitle, listSchemaOf } from './list-schema';
 import { identityForTitle, identityVariant } from './slug';
 import { createRow, idForRowKey, saveDraft, type ContentRow, type StoreResult } from './store';
 import { sampleListSchema } from './summary';
@@ -51,9 +52,17 @@ export async function createTitledRow(kind: ContentKind, input: TitledCreate): P
 
   let fields: Record<string, unknown>;
   if (spec.scope === 'lists') {
-    const schema = await sampleListSchema(input.listKey ?? '');
-    const label = schema.labelKeys[locale] ?? (locale === 'ar' ? 'name_ar' : 'name_en');
-    fields = { data: { [label]: title } };
+    const listKey = input.listKey ?? '';
+    const schema = listSchemaOf(listKey);
+    if (schema) {
+      // The typed form names the field, so a new result story starts with `title_ar`
+      // rather than whichever key a sample of old rows happened to carry.
+      fields = { data: listDocFromTitle(schema, title, locale) };
+    } else {
+      const sampled = await sampleListSchema(listKey);
+      const label = sampled.labelKeys[locale] ?? (locale === 'ar' ? 'name_ar' : 'name_en');
+      fields = { data: { [label]: title } };
+    }
   } else {
     const titleField = spec.bi.find((field) => field.name === 'title' || field.name === 'name');
     if (!titleField) return { ok: true, value: created.value };
