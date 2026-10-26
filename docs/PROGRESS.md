@@ -2394,6 +2394,55 @@ owner's word.
       new badges and the counter's Arabic-Indic digits are claims from markup, not from a viewport. They
       belong to slice G. The live site still renders the old page until it is deployed.
 
+- [x] R3 A result stands on its own — the article is a link, not a requirement — `e42a130`
+      **What was fixed.** `getResultStories()` dropped every row whose `story` pointer resolved to no
+      article, so a result the owner titled and photographed — the exact case the brief asks for — could
+      not reach `/results` until a blog post existed to carry it. The article is optional now at every
+      rung. `ResultStory` gained a `key` (the row uid, the identity an article-less story still needs to
+      be opened, reordered and joined) and its `card` became nullable; the draw rule is *an article OR a
+      typed headline*, so a row whose article was deleted or unpublished keeps its own title, pictures,
+      caption and note instead of vanishing with the post. Only a row naming neither is skipped, and that
+      one is unnameable in the list, which is why the editor says so.
+      **The form.** `story` moved down the RESULTS field list behind `title`, `before`, `after` and
+      `alt` — the four that are a result by themselves — and was relabelled "Related article (optional)"
+      with a hint that says leaving it empty is a choice, not an error. The picker's empty row reads
+      "بدون مقال / No article" instead of a bare em dash, so the default state has a name.
+      `resultNotices()` answers three separate questions rather than one: nothing links and nothing names
+      (`content.result.nameless`), only one half of a pair (`content.result.pair`), and no picture at all
+      (`content.result.picture`). The old `content.result.unattached` is gone: it told the owner the row
+      was incomplete when the row was fine.
+      **One hazard left on purpose.** A row naming no article is still resolved by the numeric-key
+      heuristic, because that is how the 56 imported rows find their posts. If a console row's uid ever
+      came back all digits and equalled a WordPress `legacy_id`, it would claim that article. Retiring
+      the heuristic means rewriting the import to write `story` onto every row — the honest fix, and not
+      a cheap one — so the rule is recorded here instead of quietly trusted.
+      **The screen.** `ResultStoryView.article` is nullable and the card is drawn from `headline` alone:
+      two buttons when both halves exist, the headline and caption when they do not, the service chip
+      when a service was picked, and no `/blogs/` link and no "Open the article" for a case that has no
+      article. The enlarged dialog keeps its footer only when there is something to put in it. The page
+      copy — hero lead, section heading, disclaimer, empty state — was rewritten off the false claim that
+      every result is a journal post.
+      **Proved.** `tests/results-page.test.ts` (18) seeds a fifth row with a title, both halves, a
+      service, alt, caption and note and **no `story` at all**, then asserts it appears on the page at its
+      position with `card: null`, and that a row whose `story` names a deleted article keeps its typed
+      headline and falls back to the headline for `alt`. The screen half renders the article-less case
+      twice (English with both halves, Arabic without) and insists the markup contains `/blogs/` and
+      "Open the article" **not** at all, and no enlarge affordance when there is no pair. `editor.test.ts`
+      (76) covers the three notices against an attached row, a titled row, a complete standalone row and
+      a standalone row missing one half; `list-doc-fields.test.ts` asserts the "No article" option.
+      Every existing test that identified a story by `story.card.id` now uses `story.key`
+      (`import-wp.test.ts`), which is the honest handle: it is the row, not the post.
+      **Gates.** Typecheck clean, lint clean, touched suites (`results-page`, `editor`,
+      `list-doc-fields`, `import-wp`, `no-wp-network`) 124 passed, full run **616 passed, 7 failed** —
+      the same CSS assertions as R1 and R2, all four files reading the owner's uncommitted
+      `src/app/console/console.css` / `console-kit.css` / `globals.css`. Those three files and
+      `public/uploads/` are deliberately left for the next item, which removes the `transition: .3s all
+      ease !important` they reject and commits them.
+      **Not verified on a screen.** Still no dev address or password, so the article-less card is proven
+      from rendered markup and not from a viewport: its two-tap layout at 360px, the Arabic headline's
+      wrap, and whether "No article" reads as a choice to a person rather than a warning all remain
+      slice G's claims.
+
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
