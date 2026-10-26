@@ -1,12 +1,14 @@
 import type { ServiceCard } from "./types";
 // Both inputs of the merge come from the site's read path, so a treatment page can
 // never pair a database page with a snapshot service list.
-import { getPage, getServiceCards } from "../content/site";
+import { getPage, getServiceCards, getSourceServiceCards } from "../content/site";
 import { htmlToText } from "./sanitize";
 import { toPhotoSlot } from "./ui-helpers";
 import { arabicRatio } from "./lang";
 import { treatmentsData, type Treatment } from "@/data/treatments";
 import { featuredServiceSlugs } from "@/config/home";
+import { hasPublished, publicRows } from "../content/published";
+import { treatmentOfDoc } from "../content/list-docs";
 
 /**
  * The service cards WordPress publishes (pages/696) are the naming authority:
@@ -108,10 +110,51 @@ function fromServiceCard(card: ServiceCard): Treatment {
   };
 }
 
+/**
+ * The services the console edits, when that list has been published.
+ *
+ * This is the same rung rule the rest of the site uses: a list is served wholly from
+ * the database or wholly from the snapshot, never half of each. The import that fills
+ * it (`npm run db:import-lists`) reads the snapshot's own cards, so the first database
+ * answer is the seven services the page already showed.
+ */
+async function treatmentsFromDb(): Promise<Treatment[] | null> {
+  try {
+    if (!(await hasPublished('list_item', { listKey: 'services' }))) return null;
+    const rows = await publicRows('list_item', { listKey: 'services' });
+    const list = rows
+      .filter((row) => {
+        const enabled = row.values.enabled;
+        return enabled?.kind === 'flag' && enabled.value;
+      })
+      .map((row) => {
+        const data = row.values.data;
+        if (!data || data.kind !== 'json' || data.value === null || typeof data.value !== 'object') return null;
+        return treatmentOfDoc(data.value as Record<string, unknown>, row.key);
+      })
+      .filter((treatment): treatment is Treatment => treatment !== null);
+    return list.length ? list : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getMergedTreatments(): Promise<Treatment[]> {
+  const fromDb = await treatmentsFromDb();
+  if (fromDb) return fromDb;
+  return treatmentsFromSite();
+}
+
+/**
+ * The snapshot's service cards merged with the authored rows, without asking the
+ * database. The list import reads this: a services list holding one saved row would
+ * otherwise answer with that row alone and the import would copy itself instead of
+ * filling the list from the site.
+ */
+export async function treatmentsFromSite(): Promise<Treatment[]> {
   let cards: ServiceCard[] = [];
   try {
-    cards = await getServiceCards();
+    cards = await getSourceServiceCards();
   } catch {
     cards = [];
   }
@@ -195,6 +238,9 @@ export async function getMergedTreatment(slug: string): Promise<Treatment | null
   const all = await getMergedTreatments();
   const treatment = all.find((t) => t.id === slug);
   if (!treatment) return null;
+  // A database service carries its long-form body itself, so an edit is not overwritten
+  // by the snapshot the import first copied it from.
+  if (treatment.body?.en || treatment.body?.ar) return treatment;
 
   // WordPress gives a section its own page only when the data team creates one:
   // page 885 (`botox-injections`) is the treatment page in `/wp/v2/pages` today,

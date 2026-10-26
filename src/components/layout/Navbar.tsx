@@ -12,7 +12,8 @@ import { siteConfig } from "@/config/site";
 import { clinicData } from "@/data/clinic";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
-import { navItems, bookCta } from "@/data/nav";
+import type { NavItem } from "@/data/nav";
+import { bookCta } from "@/data/nav";
 import {
   Menu,
   X,
@@ -28,7 +29,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export const Navbar: React.FC<{ hiddenPaths: string[] }> = ({ hiddenPaths }) => {
+export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ nav, hiddenPaths }) => {
   const { language, toggleLanguage, t } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const { openBooking } = useBooking();
@@ -89,7 +90,7 @@ export const Navbar: React.FC<{ hiddenPaths: string[] }> = ({ hiddenPaths }) => 
 
   // A hidden page keeps its line in the authored menu but loses its way into the
   // chrome — the route itself answers 404 (or its redirect) when reached directly.
-  const visibleNavItems = navItems.filter((item) => !hiddenPaths.includes(item.href));
+  const visibleNavItems = nav.filter((item) => !hiddenPaths.includes(item.href));
   const mobileParent = visibleNavItems.find((l) => l.href === openMobileDropdown);
 
   // Shared link styling for the desktop nav

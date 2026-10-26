@@ -24,7 +24,6 @@ import * as wp from '../wp';
 import type { BranchView, PageCard, Query, WithSeo } from '../wp';
 import { arabicRatio, hrefPair } from '../wp/lang';
 import { decodeEntities, firstParagraph, htmlToText, sanitizeHtmlBody } from '../wp/sanitize';
-import { toPhotoSlot } from '../wp/ui-helpers';
 import { heroPhotos } from '../wp/hero';
 import { storyPhraseIndex } from '../wp/result-stories';
 import { parseHomeProse, splitHomeProse, type BilingualHomeBlock } from '../wp/home-prose';
@@ -41,6 +40,10 @@ import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue }
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
 import { SEO_SETTING_GROUP } from './settings-catalog';
+import { branchOfDoc, faqOfDoc, navOfDoc, specialistOfDoc } from './list-docs';
+import { faqData, type FaqItem } from '../../data/faq';
+import { navItems, type NavItem } from '../../data/nav';
+import { specialistsData, type Specialist } from '../../data/specialists';
 
 export type { PageCard, Query, WithSeo };
 
@@ -461,6 +464,32 @@ export async function getPageTitle(slug: string, authored: Bi): Promise<Bi> {
  * falls back instead of throwing, and a row with nothing usable in it is skipped
  * rather than rendered as an empty card.
  */
+// --- the source rung -----------------------------------------------------------
+//
+// What the site renders before a list has been published. The import reads these,
+// never the rung above: a list is served wholly from the database once anything in
+// it is published, so an importer that asked `getBranchList()` would copy back the
+// one row a person had already saved instead of importing the rest.
+export async function getSourceBranches(): Promise<BranchDetail[]> {
+  return wp.getBranchList();
+}
+
+export function getSourceSpecialists(): Specialist[] {
+  return specialistsData;
+}
+
+export function getSourceFaq(): FaqItem[] {
+  return faqData;
+}
+
+export function getSourceNav(): NavItem[] {
+  return navItems;
+}
+
+export async function getSourceServiceCards(): Promise<ServiceCard[]> {
+  return wp.getServiceCards();
+}
+
 async function listRung<T>(listKey: string, fromDb: () => Promise<T>, fromFallback: () => Promise<T>): Promise<T> {
   try {
     if (await hasPublished('list_item', { listKey })) {
@@ -520,21 +549,7 @@ function docStrings(doc: Record<string, unknown>, name: string): { ar: string[];
  */
 function branchOf(row: PublicRow): BranchDetail | null {
   const doc = documentOf(row);
-  if (!doc) return null;
-  const name = docBi(doc, 'name');
-  if (!name.ar && !name.en) return null;
-  const image = docText(doc, 'image');
-  return {
-    id: row.key,
-    name,
-    area: docBi(doc, 'area'),
-    address: docBi(doc, 'address'),
-    phone: docText(doc, 'phone'),
-    image: toPhotoSlot(image || null, name),
-    intro: docBi(doc, 'intro'),
-    features: docStrings(doc, 'features'),
-    landmark: docBi(doc, 'landmark'),
-  };
+  return doc ? branchOfDoc(doc, row.key) : null;
 }
 
 function toBranchView(b: BranchDetail): BranchView {
@@ -559,12 +574,72 @@ export async function getBranchList(): Promise<BranchDetail[]> {
         .filter((row) => flag(row, 'enabled'))
         .map(branchOf)
         .filter((branch): branch is BranchDetail => branch !== null),
-    () => wp.getBranchList(),
+    getSourceBranches,
   );
 }
 
 export async function getBranches(): Promise<BranchView[]> {
   return (await getBranchList()).map(toBranchView);
+}
+
+// specialists
+
+/**
+ * The medical team. `branches` are branch ids, so a card links to the same branch rows
+ * the branches screen edits; an id that names no branch simply renders no link.
+ */
+export async function getSpecialistList(): Promise<Specialist[]> {
+  return listRung(
+    'specialists',
+    async () =>
+      (await publicRows('list_item', { listKey: 'specialists' }))
+        .filter((row) => flag(row, 'enabled'))
+        .map((row) => {
+          const doc = documentOf(row);
+          return doc ? specialistOfDoc(doc, row.key) : null;
+        })
+        .filter((specialist): specialist is Specialist => specialist !== null),
+    async () => getSourceSpecialists(),
+  );
+}
+
+// questions
+
+/** The questions page, grouped by `category` in the client. */
+export async function getFaqList(): Promise<FaqItem[]> {
+  return listRung(
+    'faq',
+    async () =>
+      (await publicRows('list_item', { listKey: 'faq' }))
+        .filter((row) => flag(row, 'enabled'))
+        .map((row) => {
+          const doc = documentOf(row);
+          return doc ? faqOfDoc(doc, row.key) : null;
+        })
+        .filter((item): item is FaqItem => item !== null),
+    async () => getSourceFaq(),
+  );
+}
+
+// navigation
+
+/**
+ * The header and footer menu. `bookCta` is not part of it: the button's words are the
+ * site's own, not a link a person adds or removes.
+ */
+export async function getNavList(): Promise<NavItem[]> {
+  return listRung(
+    'nav',
+    async () =>
+      (await publicRows('list_item', { listKey: 'nav' }))
+        .filter((row) => flag(row, 'enabled'))
+        .map((row) => {
+          const doc = documentOf(row);
+          return doc ? navOfDoc(doc) : null;
+        })
+        .filter((item): item is NavItem => item !== null),
+    async () => getSourceNav(),
+  );
 }
 
 // services
@@ -598,7 +673,7 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
         .filter((row) => flag(row, 'enabled'))
         .map(serviceCardOf)
         .filter((card): card is ServiceCard => card !== null),
-    () => wp.getServiceCards(),
+    getSourceServiceCards,
   );
 }
 

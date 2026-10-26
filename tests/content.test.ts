@@ -349,8 +349,11 @@ describe('the list catalog reaches `lists`', () => {
   });
 
   it('names the lists the Editor is scoped to, and keeps the nav out of their reach', async () => {
-    const stored = await db.selectFrom('lists').select('list_key').execute();
-    expect(stored.map((row) => row.list_key).sort()).toEqual([...LIST_KEYS].sort());
+    const stored = (await db.selectFrom('lists').select('list_key').execute()).map((row) => row.list_key);
+    // A list the catalog no longer names (the archived `treatments`) may keep its row and
+    // its items; every catalog key is registered, and only the catalog keys are offered.
+    const catalog = [...LIST_KEYS].sort();
+    expect(stored).toEqual(expect.arrayContaining(catalog));
     expect(EDITOR_LIST_KEYS).not.toContain('nav');
     // The Editor's `lists` grants and the `lists` table are one vocabulary: an
     // Editor can edit every seeded list except the navigation.

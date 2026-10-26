@@ -138,7 +138,11 @@ export async function contentScreenData(
   const activeLocale = localeAskedFor(scope.locale, input.locale);
 
   const abilities = abilitiesFor(kind, input.grants);
-  const lists = spec.scope === 'lists' ? (await knownListKeys()).map((key) => ({ key, label: LIST_LABELS[key as ListKey]?.[input.locale] ?? key })) : [];
+  // The catalog decides which lists a screen may offer. An archived row (the old
+  // `treatments` list, kept in the database) stays content, but it is not a section
+  // the navigation or the editor can reach.
+  const known = new Set<string>(LIST_KEYS);
+  const lists = spec.scope === 'lists' ? (await knownListKeys()).filter((key) => known.has(key)).map((key) => ({ key, label: LIST_LABELS[key as ListKey]?.[input.locale] ?? key })) : [];
   // A section route pins its list; `?list=` is only the old spelling. An unknown `?list=`
   // falls back to the first list rather than drawing an empty one the URL cannot explain.
   const asked = scope.listKey ?? '';

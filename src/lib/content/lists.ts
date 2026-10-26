@@ -20,7 +20,6 @@ export const LIST_LABELS: Record<ListKey, { ar: string; en: string }> = {
   nav: { ar: 'القائمة العلوية', en: 'Header navigation' },
   branches: { ar: 'الفروع', en: 'Branches' },
   specialists: { ar: 'الأخصائيون', en: 'Specialists' },
-  treatments: { ar: 'العلاجيات', en: 'Treatments' },
   services: { ar: 'الخدمات', en: 'Services' },
   faq: { ar: 'الأسئلة الشائعة', en: 'Questions' },
   results: { ar: 'قصص النتائج', en: 'Result stories' },

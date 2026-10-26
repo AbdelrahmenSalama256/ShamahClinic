@@ -4,8 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { clinicData } from "@/data/clinic";
 import type { BranchLite } from "@/data/branches";
+import type { Specialist } from "@/data/specialists";
 import type { TreatmentOption } from "@/data/treatments";
-import { specialistsData } from "@/data/specialists";
 import {
   X,
   Check,
@@ -27,6 +27,8 @@ interface BookingModalProps {
   branches: BranchLite[];
   /** The service picker: names WordPress publishes, prices it does not. */
   treatments: TreatmentOption[];
+  /** The team the console edits, so the picker follows a rename here too. */
+  specialists: Specialist[];
   preSelectedTreatmentId?: string;
   preSelectedSpecialistId?: string;
   preSelectedOffer?: { ar: string; en: string };
@@ -40,6 +42,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   onClose,
   branches,
   treatments,
+  specialists,
   preSelectedTreatmentId,
   preSelectedSpecialistId,
   preSelectedOffer,
@@ -101,7 +104,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   );
   const currentBranch =
     branches.find((b) => b.id === selectedBranchId) || branches[0];
-  const currentSpecialist = specialistsData.find(
+  const currentSpecialist = specialists.find(
     (s) => s.id === selectedSpecialistId,
   );
 
@@ -544,7 +547,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         )}
                       </button>
 
-                      {specialistsData.map((doc) => {
+                      {specialists.map((doc) => {
                         const isSelected = doc.id === selectedSpecialistId;
                         return (
                           <button

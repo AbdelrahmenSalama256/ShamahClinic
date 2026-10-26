@@ -4,7 +4,7 @@ import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd, faqJsonLd } from "@/lib/jsonld";
 import { FaqClient } from "@/components/pages/FaqClient";
-import { getPageTitle } from "@/lib/content/site";
+import { getFaqList, getPageTitle } from "@/lib/content/site";
 import { guardPage } from '@/lib/content/guard-page';
 
 export const revalidate = 300;
@@ -19,22 +19,25 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function FaqPage() {
   await guardPage('faq');
-  const title = await getPageTitle("faq", {
-    ar: "الأسئلة الشائعة",
-    en: "Frequently asked questions",
-  });
+  const [title, items] = await Promise.all([
+    getPageTitle("faq", {
+      ar: "الأسئلة الشائعة",
+      en: "Frequently asked questions",
+    }),
+    getFaqList(),
+  ]);
   return (
     <>
       <JsonLd
         data={[
-          await faqJsonLd(),
+          await faqJsonLd(items),
           await breadcrumbJsonLd([
             { name: { ar: "الرئيسية", en: "Home" }, path: "" },
             { name: { ar: "الأسئلة الشائعة", en: "FAQ" }, path: "/faq" },
           ]),
         ]}
       />
-      <FaqClient title={title} />
+      <FaqClient title={title} items={items} />
     </>
   );
 }

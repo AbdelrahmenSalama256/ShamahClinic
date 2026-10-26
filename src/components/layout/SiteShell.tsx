@@ -11,27 +11,32 @@ import {
 import { LanguageProvider } from "@/context/LanguageContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import { BookingProvider } from "@/context/BookingContext";
+import { SpecialistsProvider } from "@/context/SpecialistsContext";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingActions } from "@/components/ui/FloatingActions";
 import { CtaBand } from "@/components/ui/CtaBand";
 import type { BranchLite } from "@/data/branches";
+import type { NavItem } from "@/data/nav";
+import type { Specialist } from "@/data/specialists";
 import type { TreatmentOption } from "@/data/treatments";
 
 /**
  * Application shell: providers, persistent chrome (navbar / footer / floating
  * actions / booking modal) and a smooth cross-fade between routes.
  *
- * The menu itself is authored in `@/data/nav`; only the branch cards the footer
- * lists come from WordPress.
+ * The menu, the team and the branch cards all arrive as props from the console's
+ * lists; the snapshot is only the fallback the readers use while nothing is published.
  */
 export const SiteShell: React.FC<{
   children: React.ReactNode;
   branches: BranchLite[];
   treatments: TreatmentOption[];
+  nav: NavItem[];
+  specialists: Specialist[];
   /** Top-level hrefs the owner has hidden; the header and footer stop linking to them. */
   hiddenPaths: string[];
-}> = ({ children, branches, treatments, hiddenPaths }) => {
+}> = ({ children, branches, treatments, nav, specialists, hiddenPaths }) => {
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
@@ -39,9 +44,10 @@ export const SiteShell: React.FC<{
     <MotionConfig reducedMotion="user">
       <LanguageProvider>
         <ThemeProvider>
-          <BookingProvider branches={branches} treatments={treatments}>
+          <SpecialistsProvider specialists={specialists}>
+            <BookingProvider branches={branches} treatments={treatments} specialists={specialists}>
             <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
-              <Navbar hiddenPaths={hiddenPaths} />
+              <Navbar nav={nav} hiddenPaths={hiddenPaths} />
 
               <AnimatePresence mode="wait" initial={false}>
                 <motion.main
@@ -61,10 +67,11 @@ export const SiteShell: React.FC<{
               <div className="h-px bg-gold-gradient" />
 
               <div className="h-0.5 bg-gold-gradient" />
-              <Footer branches={branches} hiddenPaths={hiddenPaths} />
+              <Footer branches={branches} nav={nav} hiddenPaths={hiddenPaths} />
               <FloatingActions />
             </div>
           </BookingProvider>
+          </SpecialistsProvider>
         </ThemeProvider>
       </LanguageProvider>
     </MotionConfig>

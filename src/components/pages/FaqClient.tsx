@@ -6,7 +6,7 @@ import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { WhatsAppButton, CallButton } from "@/components/shared/Actions";
-import { faqData, type FaqItem } from "@/data/faq";
+import { type FaqItem } from "@/data/faq";
 
 const categoryOrder: FaqItem["category"][] = ["laser", "injectables", "skincare", "general"];
 
@@ -19,11 +19,15 @@ const categoryLabels: Record<FaqItem["category"], { ar: string; en: string }> = 
 
 /** `title` is the WordPress page 169 heading, with an authored fallback for
  *  Arabic where the TranslatePress subsite never translated it. */
-export const FaqClient: React.FC<{ title: { ar: string; en: string } }> = ({ title }) => {
+export const FaqClient: React.FC<{
+  title: { ar: string; en: string };
+  /** The questions the console edits; the snapshot stands in only while no row is published. */
+  items: FaqItem[];
+}> = ({ title, items }) => {
   const { t } = useLanguage();
 
   const grouped = categoryOrder
-    .map((cat) => ({ cat, items: faqData.filter((f) => f.category === cat) }))
+    .map((cat) => ({ cat, items: items.filter((f) => f.category === cat) }))
     .filter((g) => g.items.length > 0);
 
   return (

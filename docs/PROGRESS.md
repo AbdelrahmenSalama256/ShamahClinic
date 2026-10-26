@@ -2167,6 +2167,45 @@ owner's word.
       site is a separate build that still reads its own data, so an upload is not yet visible on
       https://shamah-clinic.vercel.app; connecting the two is slices D and S. Gates: typecheck clean,
       lint clean, touched suites 3 files / 65 passed, full run 23 files / 570 passed.
+- [ ] D Import the site's lists, and serve them from the database
+      **What was wrong.** The console's Services screen was empty and the public site showed no
+      services. Two truths behind that: the lists had never been imported, and the import read the
+      site through the *database rung*, which answers with whatever is already published — so a
+      half-written list could only ever import its own first row back. The dev database held two
+      lorem placeholder services (one already trashed 2026-10-25, one a disabled draft); either was
+      enough to make the plan one row long. `treatmentsFromSite()` and the new `getSource*()` readers
+      in `site.ts` read the snapshot/authored source past the rung, and `planListDocs()` uses them.
+      `npm run db:import-lists -- --force-database --apply` wrote **34 rows**: services 7, branches 3,
+      specialists 3, questions 12, navigation 9. Re-running reports `unchanged`; the existing
+      placeholders were left exactly as they were, per the never-delete rule. The seven services,
+      three branches, three specialists, twelve questions and nine menu entries now read from the
+      database (`[site] db list …` on every read); `/ar/services` and `/en/services` both render the
+      seven real names. The two placeholder services are invisible to the site because one is in the
+      Trash and the other is disabled — not because anything was deleted.
+      **Treatments archived, not deleted.** `LIST_KEYS` no longer names `treatments`; `syncLists()`
+      creates only the six catalog keys and never drops a row, and `contentScreenData()` filters the
+      offered lists to the catalog, so the archived `treatments` list and its items stay in the
+      database but leave the sidebar, the palette and the editor. `/treatments/*` already answered
+      `308` to `/services/*` in `next.config.ts` (Arabic and English included), and
+      `publicPathOf()` still maps an archived row to `/services/<key>` for SEO.
+      **Public prop contracts changed (documented per the build rule).** The site now takes its lists
+      from the layout instead of importing the authored files deep inside client components:
+      `SiteShell` gained `nav` and `specialists`; `Navbar` gained `nav`; `Footer` gained `nav`;
+      `DoctorsClient` gained `specialists`; `FaqClient` gained `items`; `BookingProvider` and
+      `BookingModal` gained `specialists`; `ArticleCard` and `JournalArticleClient` read the byline
+      from the new `SpecialistsContext` instead of `getSpecialist()`. `NotFoundDocument` feeds the
+      same props as the layout, so the 404 keeps the site's chrome. API routes, server actions and
+      the DB schema are unchanged.
+      **Guards.** `tests/list-docs.test.ts` (9) round-trips every list type through its document,
+      proves the flat title keys the console names rows by, proves nested `{ar,en}` and single-string
+      documents still read, and proves the plan reads the source (more than one service) instead of
+      the database. `tests/content.test.ts` now tolerates an archived list row while still requiring
+      every catalog key. Gates: typecheck clean, lint clean, touched suites 4 files / 97 passed,
+      full run 24 files / 579 passed.
+      **Not verified on a screen.** No dev login was supplied, so the console was not clicked in a
+      browser. The screen's data was read through `contentScreenData()` against the dev database
+      (8 rows, the seven real titles plus the disabled draft), and the public page was fetched over
+      HTTP in both languages; visual RTL/phone/dark checks remain for slice G.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.

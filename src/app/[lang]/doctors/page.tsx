@@ -4,7 +4,7 @@ import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { DoctorsClient } from "@/components/pages/DoctorsClient";
-import { getBranchList } from "@/lib/content/site";
+import { getBranchList, getSpecialistList } from "@/lib/content/site";
 import { getBanner } from "@/lib/content/banners";
 import { guardPage } from '@/lib/content/guard-page';
 
@@ -20,7 +20,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function DoctorsPage() {
   await guardPage('doctors');
-  const [branches, banner] = await Promise.all([getBranchList(), getBanner('doctors')]);
+  const [branches, banner, specialists] = await Promise.all([getBranchList(), getBanner('doctors'), getSpecialistList()]);
   return (
     <>
       <JsonLd
@@ -29,7 +29,7 @@ export default async function DoctorsPage() {
           { name: { ar: "الأطباء", en: "Doctors" }, path: "/doctors" },
         ])}
       />
-      <DoctorsClient branches={branches} banner={banner} />
+      <DoctorsClient branches={branches} banner={banner} specialists={specialists} />
     </>
   );
 }

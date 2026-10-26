@@ -20,6 +20,7 @@
     "doctor": "tsx scripts/doctor.ts",
     "test": "vitest run",
     "wp:import": "tsx scripts/db/import-wp.ts",
+    "db:import-lists": "tsx scripts/db/import-lists.ts",
     "db:repair-plain": "tsx scripts/db/repair-plain.ts"
   },
   "dependencies": {

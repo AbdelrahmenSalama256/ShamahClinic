@@ -458,6 +458,33 @@ async function publish(doc: ImportDoc, id: string, fields: ImportDoc['fields'], 
  * Write the snapshot as console rows. Nothing is written unless `apply`, and a row
  * that already says what the snapshot says is left alone.
  */
+/**
+ * Write list items planned elsewhere (`import-lists.ts`), through the same store and
+ * publish path as the snapshot import.
+ *
+ * Kept separate from `importSnapshot` so re-running the WordPress import does not
+ * rewrite the lists an operator has since edited: the two commands share the writer,
+ * not the trigger.
+ */
+export async function importListItems(docs: ImportDoc[], options: { apply: boolean; database: string }): Promise<ImportReport> {
+  const lists = await resolveLists(docs);
+  const report: ImportReport = {
+    dryRun: !options.apply,
+    database: options.database,
+    categories: { created: 0, existed: 0 },
+    rows: { created: 0, updated: 0, unchanged: 0 },
+    skipped: lists.missing.map((listKey) => ({ kind: 'list_item', key: listKey, why: 'no `lists` row — run `npm run db:seed`' })),
+  };
+
+  for (const doc of docs) {
+    if (!doc.listKey || !lists.ids.has(doc.listKey)) continue;
+    const outcome = await importDoc(doc, new Map(), lists.ids, options.apply);
+    if (typeof outcome === 'string') report.rows[outcome] += 1;
+    else report.skipped.push({ kind: doc.kind, key: doc.key, why: outcome.why });
+  }
+  return report;
+}
+
 export async function importSnapshot(options: { apply: boolean; database: string }): Promise<ImportReport> {
   const apply = options.apply;
   const docs = planDocs();

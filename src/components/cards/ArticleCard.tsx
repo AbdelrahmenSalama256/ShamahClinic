@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { Photo } from "@/components/ui/Photo";
 import { getLocalizedHref } from "@/lib/locale";
-import { getSpecialist } from "@/data/specialists";
+import { useSpecialist } from "@/context/SpecialistsContext";
 import type { Article } from "@/data/journal";
 import { Clock } from "lucide-react";
 
@@ -15,7 +15,7 @@ export const ArticleCard: React.FC<{
   priority?: boolean;
 }> = ({ article, priority = false }) => {
   const { t, language, formatNumber } = useLanguage();
-  const author = getSpecialist(article.authorId);
+  const author = useSpecialist(article.authorId);
 
   return (
     <Link

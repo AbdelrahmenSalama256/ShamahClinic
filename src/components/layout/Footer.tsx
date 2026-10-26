@@ -9,7 +9,7 @@ import type { BranchLite } from "@/data/branches";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
 import { socialLinks } from "@/lib/site";
-import { navItems } from "@/data/nav";
+import type { NavItem } from "@/data/nav";
 import { Phone, Send, Check, MessageCircle } from "lucide-react";
 
 const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
@@ -41,12 +41,13 @@ const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-export const Footer: React.FC<{ branches: BranchLite[]; hiddenPaths: string[] }> = ({
+export const Footer: React.FC<{ branches: BranchLite[]; nav: NavItem[]; hiddenPaths: string[] }> = ({
   branches,
+  nav,
   hiddenPaths,
 }) => {
   const { language, t } = useLanguage();
-  const visibleNavItems = navItems.filter((item) => !hiddenPaths.includes(item.href));
+  const visibleNavItems = nav.filter((item) => !hiddenPaths.includes(item.href));
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [newsletterError, setNewsletterError] = useState("");

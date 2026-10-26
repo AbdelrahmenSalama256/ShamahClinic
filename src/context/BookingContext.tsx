@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import type { BranchLite } from "@/data/branches";
+import type { Specialist } from "@/data/specialists";
 import type { TreatmentOption } from "@/data/treatments";
 
 // Split out of the initial bundle: the wizard is only reached by a click, and its
@@ -31,7 +32,8 @@ export const BookingProvider: React.FC<{
   children: React.ReactNode;
   branches: BranchLite[];
   treatments: TreatmentOption[];
-}> = ({ children, branches, treatments }) => {
+  specialists: Specialist[];
+}> = ({ children, branches, treatments, specialists }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [bookingSession, setBookingSession] = useState(0);
   const [options, setOptions] = useState<BookingOptions>({});
@@ -56,6 +58,7 @@ export const BookingProvider: React.FC<{
           onClose={close}
           branches={branches}
           treatments={treatments}
+          specialists={specialists}
           preSelectedTreatmentId={options.treatmentId}
           preSelectedSpecialistId={options.specialistId}
           preSelectedOffer={options.offerName}

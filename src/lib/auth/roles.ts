@@ -29,8 +29,14 @@ import type { Action, Resource } from './permissions';
 /** Every account level in the console. */
 export type RoleName = 'Owner' | 'Admin' | 'Editor' | 'SEO' | 'Marketer' | 'Viewer';
 
-/** The lists the site actually renders; BK-6 seeds `lists.list_key` from this. */
-export const LIST_KEYS = ['nav', 'branches', 'specialists', 'treatments', 'services', 'faq', 'results'] as const;
+/**
+ * The lists the site actually renders; BK-6 seeds `lists.list_key` from this.
+ *
+ * `treatments` left this catalog when the site's /services page stopped being a
+ * treatments page: the data moved into `services` and the old rows stay in the
+ * database (never deleted) but no role is granted a screen for them.
+ */
+export const LIST_KEYS = ['nav', 'branches', 'specialists', 'services', 'faq', 'results'] as const;
 /** An editor may rewrite any list except the navigation, which is Admin's. */
 export const EDITOR_LIST_KEYS = LIST_KEYS.filter((key) => key !== 'nav');
 

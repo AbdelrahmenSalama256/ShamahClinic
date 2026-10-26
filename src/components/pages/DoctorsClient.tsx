@@ -6,15 +6,17 @@ import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Photo } from "@/components/ui/Photo";
 import { DoctorCard } from "@/components/cards/DoctorCard";
-import { specialistsData } from "@/data/specialists";
+import type { Specialist } from "@/data/specialists";
 import type { BranchDetail } from "@/data/branches";
 import { images } from "@/lib/images";
 import type { PhotoSlot } from "@/lib/images";
 
-export const DoctorsClient: React.FC<{ branches: BranchDetail[]; banner: PhotoSlot }> = ({
-  branches,
-  banner,
-}) => {
+export const DoctorsClient: React.FC<{
+  branches: BranchDetail[];
+  banner: PhotoSlot;
+  /** The team the console edits; the snapshot stands in only while no row is published. */
+  specialists: Specialist[];
+}> = ({ branches, banner, specialists }) => {
   const { t, formatNumber } = useLanguage();
 
   return (
@@ -36,7 +38,7 @@ export const DoctorsClient: React.FC<{ branches: BranchDetail[]; banner: PhotoSl
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="sr-only">{t("فريق الطبيبات", "Our doctors")}</h2>
           <div className="grid sm:grid-cols-3 gap-4 lg:gap-8">
-            {specialistsData.map((doc, i) => (
+            {specialists.map((doc, i) => (
               <Reveal className="h-full" key={doc.id} delay={i * 0.1}>
                 <DoctorCard doctor={doc} branches={branches} />
               </Reveal>

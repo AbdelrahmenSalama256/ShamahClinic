@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig, siteTheme } from "@/config/site";
 import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
-import { getBranchList, getSiteMeta } from "@/lib/content/site";
+import { getBranchList, getNavList, getSiteMeta, getSpecialistList } from "@/lib/content/site";
 import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 
@@ -84,10 +84,12 @@ export default async function RootLayout({
   const lang = normalizeLang(segment);
   if (!lang) notFound();
 
-  const [treatments, branches, pages] = await Promise.all([
+  const [treatments, branches, pages, nav, specialists] = await Promise.all([
     getMergedTreatments(),
     getBranchList(),
     readPageStates(),
+    getNavList(),
+    getSpecialistList(),
   ]);
 
   return (
@@ -104,7 +106,13 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <JsonLd data={await Promise.all([organizationJsonLd(), webSiteJsonLd()])} />
-        <SiteShell branches={branches} treatments={treatments} hiddenPaths={hiddenPageHrefs(pages)}>
+        <SiteShell
+          branches={branches}
+          treatments={treatments}
+          nav={nav}
+          specialists={specialists}
+          hiddenPaths={hiddenPageHrefs(pages)}
+        >
           {children}
         </SiteShell>
       </body>

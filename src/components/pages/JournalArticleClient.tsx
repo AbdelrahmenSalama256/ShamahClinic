@@ -10,7 +10,7 @@ import { ArticleCard } from "@/components/cards/ArticleCard";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
-import { getSpecialist } from "@/data/specialists";
+import { useSpecialist } from "@/context/SpecialistsContext";
 import {
   Clock,
   CalendarDays,
@@ -30,7 +30,7 @@ export const JournalArticleClient: React.FC<{
   related?: Article[];
 }> = ({ article, related = [] }) => {
   const { t, language, formatNumber } = useLanguage();
-  const author = getSpecialist(article.authorId);
+  const author = useSpecialist(article.authorId);
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
   // "Back" is the mirror of "onward", so it takes the opposite arrow — and one
   // literal "→" in both label strings pointed the wrong way for English readers.
