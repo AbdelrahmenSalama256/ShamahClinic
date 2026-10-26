@@ -2167,7 +2167,7 @@ owner's word.
       site is a separate build that still reads its own data, so an upload is not yet visible on
       https://shamah-clinic.vercel.app; connecting the two is slices D and S. Gates: typecheck clean,
       lint clean, touched suites 3 files / 65 passed, full run 23 files / 570 passed.
-- [ ] D Import the site's lists, and serve them from the database
+- [x] D Import the site's lists, and serve them from the database — `f68f313`
       **What was wrong.** The console's Services screen was empty and the public site showed no
       services. Two truths behind that: the lists had never been imported, and the import read the
       site through the *database rung*, which answers with whatever is already published — so a
