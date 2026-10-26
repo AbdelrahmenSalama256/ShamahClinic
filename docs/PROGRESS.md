@@ -2206,6 +2206,86 @@ owner's word.
       browser. The screen's data was read through `contentScreenData()` against the dev database
       (8 rows, the seven real titles plus the disabled draft), and the public page was fetched over
       HTTP in both languages; visual RTL/phone/dark checks remain for slice G.
+- [x] F Typed entity forms — no raw JSON left to edit anywhere — `a72051a`
+      **What was wrong.** The owner's point 2 is *"No generic 'edit the data' screen should remain,
+      not even for owners"*, and one did: every list item (Results, Services, Branches, Specialists,
+      FAQ, Navigation) opened as a textarea holding its `data` JSON column, so the only way to set a
+      service's name was to type `"name_ar"` inside braces. That is also how a public card can render
+      no title while the editor looks filled — nothing checked the keys a person typed, and the read
+      path looked for a nested `title` the write path never wrote.
+      **One schema, used by both ends.** `src/lib/content/list-schema.ts` declares the fields of all
+      six lists (services 16, branches 8, specialists 9, faq 3, nav 3, results 2) with a bilingual
+      label and one plain-language hint each, across ten field types (`text` with `mono`/`multiline`/
+      `html`, `list`, `strings`, `image`, `number`, `flag`, `select`, `href`, `refs`, `children`).
+      `parseListDoc()` is the contract: it accepts the flat keys the importer writes (`name_ar`,
+      `benefits_en`), the nested `{ar,en}` shape older rows hold, and a bare string, and answers with
+      the same flat complete shape every time — a field the schema knows is always present, so saving
+      an untouched row cannot look different from a row an import wrote. A key the schema does not
+      describe is reported as `unknown field` and the write is refused. `ListDocFields` paints one
+      labelled control per field against the same schema, and `planWrites()` in `store.ts` validates
+      the whole document through `parseListDoc()` and runs `sanitizeRichHtml()` over the `html` fields,
+      so the browser's form and the API's answer cannot disagree.
+      **The document is rewritten, not patched.** Because `planWrites()` canonicalises the whole
+      column, every writer posts a complete document: the console sends the full form (a field it
+      never drew is sent empty, not left stale) and `import-wp.ts` / `create.ts` build the full shape
+      too. A key nobody can describe cannot survive a save by accident — it survives as the
+      `__unknown` form value, which `ListDocFields` lists with one Remove button per key and renders
+      as `<code>`, never as an editable box. That is what lets the server refuse an unknown field
+      without the console ever silently deleting somebody's data.
+      **Titles, not numbers.** Rows are named by `listDocTitle()` against the schema's `title` field:
+      services, branches and specialists by `name`, FAQ by `question`, nav by `label`, results by their
+      own `title`. A result story has no name of its own — it *is* the article its `uid` carries — so
+      when nobody typed a title the linked article's title is used instead (`articleTitles()` /
+      `linkedArticleTitle()` in `summary.ts`, which read the `articles` drafts by `legacy_id`); printing
+      the raw uid — the owner's *"never an internal number like '1182'"* — is gone from both the list
+      and the editor heading. The other half of the mismatch was the read path: services were read from
+      a nested `title` while the form wrote `name_*`, so `serviceCardOf()` in `site.ts` now asks for
+      either (`docBiAny(doc, ['name', 'title'])`) and a row written by the older shape still gets its
+      name on the public card.
+      **Duplication left on purpose.** Three places still parse the same document: `listDoc*` readers
+      in `list-schema.ts` (the console's `content-screen.ts`, `preview.ts`, `ConsoleEditor.tsx`, and
+      `summary.ts`), `docStr`/`docBi`/`docBiAny` in `site.ts` for the public cards, and
+      `imageOfItem()` in `summary.ts` for the list thumbnail. They agree on every stem today, and the
+      new tests hold that agreement; folding them into one reader is slice R's first move, because a
+      stem rename still needs two edits.
+      **Two fields that were wrong on the screen, not only in the schema.** A branch phone is one
+      number for the whole site, not a sentence to translate twice: `mono: true` keeps the bare `phone`
+      key the site already reads and draws **one** `dir="ltr"` input, folding a legacy `phone_ar`/
+      `phone_en` pair on read instead of asking for the number twice. A service card's link came from
+      the site's own path builder, so a WordPress service that is a section of one page could not be
+      pointed at `/peeling`; `SERVICES` gained an optional `href` and `serviceCardOf()` builds the
+      card from that one authored path, defaulting to `/services`.
+      **The last JSON pane is gone.** `SettingsWorkspace.tsx`'s "Advanced" section — a textarea that
+      took `JSON.parse` for any setting whose value was not a string — is deleted (140 lines out, 7
+      in), leaving only typed inputs per setting.
+      **Measured, then proved twice.** Against the dev database: **99 `list_items` rows, 98 live**
+      (results 57, nav 13, faq 13, services 8, specialists 4, branches 3, treatments 0). The typed form
+      refuses **6** of them, all data-shape findings and nothing was rewritten or deleted: four nav rows
+      (`faq`, `faq-2`, `faq-3`, `faq-4`) are empty drafts missing the required `label` and `href`; one
+      service (`est-ducimus-…`) is an empty draft with no `name`; one results row (`nnn`) holds the
+      legacy key `name_en`, which the results schema does not describe and so arrives as an unknown
+      field with a Remove button. `settings` has 0 rows in dev. `tests/list-doc-fields.test.ts` (8,
+      new) renders the real form with `renderToStaticMarkup` and asserts what the screen paints: a
+      control for every field of all six lists, one box for a mono phone with no `-ar`/`-en` twin, a
+      picture slot that is `type="file"` plus an `<img>` and *not* an input holding a path, a sub-item
+      row that can be added, an unknown key shown as `<code>` whose value never appears in the markup,
+      no `data` box anywhere, and no textarea reachable from the editor's `json` branch. `editor.test.ts`
+      (+95) still proves the form model; `content`, `site`, `rich-editor`, `image-picker` and
+      `html-safety` were updated to the schema and the readers they now import. Gates: typecheck clean,
+      lint clean, full run **25 files / 593 passed**.
+      **Deliberately not committed.** `src/app/console/console.css` also holds an edit that is not part
+      of this slice — `a, button, div { transition: .3s all ease !important }` — along with
+      in-progress `console-kit.css` / `globals.css` work and `public/uploads/` from the upload slice;
+      all four were left out of `a72051a` (console.css was staged by removing that block, adding the
+      explicit paths, then restoring the file and checking its hash, and `git show` of the commit has
+      no `transition: 0.3s all ease`). New console rules went to `console.css`, not to the kit.
+      **Not verified on a screen, and what is still open.** No dev address or password was supplied,
+      so nothing here was clicked in a browser — Arabic RTL, 360px and dark mode are claims slice G
+      must make or retract. Left on purpose: the RESULTS schema is still `title` + `phrases`, with the
+      before/after slots, caption and zoomed text in slice R; BRANCHES has no `alt` field, so a branch
+      photo has no per-language alt text until slice O; `SettingsWorkspace.encoded()` still pretty-prints
+      a non-scalar setting value as JSON — no such row exists today, and removing the fallback is part
+      of slice S.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
