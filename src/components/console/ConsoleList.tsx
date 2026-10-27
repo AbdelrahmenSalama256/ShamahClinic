@@ -238,6 +238,47 @@ export function ConsoleList({
   const rows = page.rows;
   const allChecked = rows.length > 0 && rows.every((row) => checked.has(row.id));
 
+  // Moving a row means swapping it with its neighbour in the order the site renders, which is
+  // the position column over the whole list. So the arrows only appear on that view: under a
+  // filter or a search the row above may be several places away in the real order, and a press
+  // would move this one past rows the person cannot see.
+  const inAuthoredOrder = view.sort === 'position' && view.dir === 'asc' && view.filter === 'all' && view.q === '';
+  const orderable = sorts.includes('position') && !scope.trash && page.total > 1 && abilities.update.includes(scope.listKey ?? locale);
+  const canMove = orderable && inAuthoredOrder;
+
+  /** One row's place in the list, plus the two buttons that change it. */
+  function orderCell(row: ListSummary, index: number): ReactNode {
+    const rank = (page.page - 1) * page.per + index + 1;
+    const number = inAuthoredOrder ? rank : (row.cells.position ?? null);
+    // Up and down do not turn in Arabic the way the pager chevrons do: the order is a column
+    // of rows read top to bottom, and mirroring the page does not reverse it.
+    return (
+      <span className="console-controls">
+        {number === null ? <Mark state="none" label={labels['content.value.none']} /> : <bdi>{number}</bdi>}
+        {canMove && (
+          <span className="console-controls" role="group" aria-label={labels['content.sort.position']}>
+            <Button
+              size="icon"
+              variant="ghost"
+              disabled={busy || rank <= 1}
+              aria-label={`${labels['content.order.up']}: ${titleOf(row, locale)}`}
+              onClick={() => void moveTo(row, 'up')}
+              leading={<ArrowUp size={16} aria-hidden="true" />}
+            />
+            <Button
+              size="icon"
+              variant="ghost"
+              disabled={busy || rank >= page.total}
+              aria-label={`${labels['content.order.down']}: ${titleOf(row, locale)}`}
+              onClick={() => void moveTo(row, 'down')}
+              leading={<ArrowDown size={16} aria-hidden="true" />}
+            />
+          </span>
+        )}
+      </span>
+    );
+  }
+
   function toggleRow(id: string): void {
     setChecked((current) => {
       const next = new Set(current);
@@ -266,6 +307,21 @@ export function ConsoleList({
       setChecked(new Set());
       await load(query);
     }
+  }
+
+  async function moveTo(row: ListSummary, direction: 'up' | 'down'): Promise<void> {
+    setBusy(true);
+    const result = await consoleCall<{ ids?: string[] }>(`${api}/${row.id}/move${scopeQuery}`, 'POST', { direction });
+    setBusy(false);
+    if (result.error) {
+      const mapped = `content.error.${result.error}` as MessageKey;
+      setNotice({ tone: 'danger', key: labels[mapped] ? mapped : 'content.error.save' });
+      return;
+    }
+    setNotice({ tone: 'ok', key: 'content.order.moved' });
+    // The list is re-read rather than reordered in place: the server renumbered the whole
+    // scope, so a neighbour's number changed too, and only its answer is the truth.
+    await load(query);
   }
 
   async function saveView(): Promise<void> {
@@ -315,6 +371,12 @@ export function ConsoleList({
       trash: params.get('trash') === '1',
       focusKey: null,
     });
+  }
+
+  /** One click puts the list back the way the site reads it, so the arrows come back with it. */
+  function showWholeOrder(): void {
+    setTerm('');
+    setView(withView(view, { sort: 'position', dir: 'asc', filter: 'all', q: '' }));
   }
 
   const bulkable = (verb: 'publish' | 'trash' | 'restore'): boolean => {
@@ -438,6 +500,15 @@ export function ConsoleList({
         </div>
       )}
 
+      {orderable && !inAuthoredOrder && (
+        <div className="console-controls">
+          <Note>{labels['content.order.locked']}</Note>
+          <Button size="sm" variant="ghost" onClick={showWholeOrder}>
+            {labels['content.order.show']}
+          </Button>
+        </div>
+      )}
+
       {failed ? (
         <Alert tone="danger">
           {labels[failed]}
@@ -453,7 +524,7 @@ export function ConsoleList({
             <Checkbox checked={allChecked} onChange={toggleAll} label={labels['content.select.all']} />
           </div>
           <ul className="console-cards">
-            {rows.map((row) => {
+            {rows.map((row, index) => {
               const state = stateOf(row);
               return (
                 <Card as="li" key={row.id}>
@@ -466,6 +537,8 @@ export function ConsoleList({
                     </span>
                     <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
                   </Link>
+                  {/* Cards are the phone drawing of the same list, so the order moves here too. */}
+                  {sorts.includes('position') && orderCell(row, index)}
                 </Card>
               );
             })}
@@ -492,7 +565,7 @@ export function ConsoleList({
               </tr>
             </thead>
             <tbody>
-              {rows.map((row) => {
+              {rows.map((row, index) => {
                 const state = stateOf(row);
                 return (
                   <tr key={row.id}>
@@ -519,7 +592,7 @@ export function ConsoleList({
                         {row.publishedAt ? <bdi>{row.publishedAt.slice(0, 10)}</bdi> : <Mark state="none" label={labels['content.value.none']} />}
                       </td>
                     )}
-                    {sorts.includes('position') && <td>{cell(row.cells.position ?? null, labels)}</td>}
+                    {sorts.includes('position') && <td>{orderCell(row, index)}</td>}
                     {columns.map((name) => (
                       <td key={name} className="console-cell-extra">
                         {cell(row.cells[name] ?? null, labels)}

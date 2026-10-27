@@ -19,7 +19,7 @@ import type { Tone } from '@/components/console/kit';
 import type { MessageKey } from './messages';
 import type { FieldIssue } from './issues';
 import { plainText } from '../content/format';
-import type { ContentLocale } from '../content/kinds';
+import { isOrderedKind, type ContentLocale } from '../content/kinds';
 import type { ContentRow, FieldView } from '../content/store';
 import {
   listDocForm,
@@ -189,6 +189,10 @@ export function fieldsFromForm(row: ContentRow, form: Form): ParsedForm {
   const schema = listSchemaOfRow(row);
 
   for (const [name, field] of Object.entries(row.fields)) {
+    // An authored order is moved, never typed. A save that re-posted the number the row was
+    // opened with would undo a move a colleague made while this form sat open, and the person
+    // who moved a service to the top would find it back at the bottom on their own save.
+    if (name === 'position' && isOrderedKind(row.kind)) continue;
     const value = form[name];
     if (field.kind === 'flag') {
       fields[name] = Boolean(value);

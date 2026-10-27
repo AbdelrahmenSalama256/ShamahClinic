@@ -1468,3 +1468,128 @@ describe('search appearance is one override per address and language (S4)', () =
     expect(results.path).toBeNull();
   });
 });
+
+// --- an authored order is moved, not typed (review item 2) ---------------------
+
+describe('moving a row one step renumbers its list, and no route takes a typed number', () => {
+  const od = (name: string): string => `${ar}-od-${name}`;
+  const ids: Record<string, string> = {};
+
+  /**
+   * The list in the order both the site and the arrows read it: the column, then the key.
+   *
+   * It answers with ids, because a move has to name the row this same read just returned —
+   * looking an id up again by `uid` alone can hand back a trashed twin of it, and the route
+   * would then refuse a row that is plainly on the screen.
+   */
+  async function orderOf(listKey: string): Promise<{ id: string; uid: string; position: number }[]> {
+    const list = await db.selectFrom('lists').select('id').where('list_key', '=', listKey).executeTakeFirstOrThrow();
+    const rows = await db
+      .selectFrom('list_items')
+      .select(['id', 'uid', 'position'])
+      .where('list_id', '=', list.id)
+      .where('deleted_at', 'is', null)
+      .orderBy('position', 'asc')
+      .orderBy('uid', 'asc')
+      .execute();
+    return rows.map((row) => ({ id: row.id, uid: row.uid, position: Number(row.position) }));
+  }
+
+  /** Just this describe's questions, in the order the list reads them. */
+  const uidsOf = async (): Promise<string[]> => (await orderOf('faq')).filter((row) => row.uid.startsWith(od(''))).map((row) => row.uid);
+
+  beforeAll(async () => {
+    for (const name of ['a', 'b', 'c']) {
+      const created = await call('/content/list_item?list=faq', write(actors.Editor, 'POST', { key: od(name) }));
+      ids[name] = created.row.id;
+      await call(`/content/list_item/${ids[name]}?list=faq`, write(actors.Editor, 'PATCH', { fields: { data: { question_ar: `سؤال ${name}`, question_en: `Question ${name}` } } }));
+    }
+    // A second list, so a request scoped to one can name a row that lives in the other.
+    ids.doctor = (await call('/content/list_item?list=specialists', write(actors.Editor, 'POST', { key: od('doctor') }))).row.id;
+    ids.offer = (await call('/content/offer?locale=ar', write(actors.Editor, 'POST', { key: od('offer'), fields: { name: 'عرض ترتيب' } }))).row.id;
+  });
+
+  it('appends a new row at the end of the list instead of in front of it', async () => {
+    // The column defaults to 0 and the WordPress import left every imported row at 0, so a
+    // question added through *Add new* used to arrive ahead of the list it had just joined.
+    expect(await uidsOf()).toEqual([od('a'), od('b'), od('c')]);
+    expect((await orderOf('faq')).at(-1)?.uid).toBe(od('c'));
+  });
+
+  it('swaps a row with the one above it and numbers the whole list 1..n', async () => {
+    const before = await auditCount('list.update', actors.Editor);
+    const res = await call(`/content/list_item/${ids.b}/move?list=faq`, write(actors.Editor, 'POST', { direction: 'up' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect((res.body.ids as string[]).length).toBe((await orderOf('faq')).length);
+    expect(await uidsOf()).toEqual([od('b'), od('a'), od('c')]);
+
+    // No two rows are left sharing a number: that is what made an imported list change place
+    // between two loads, because the read ordered by a column every row equalled.
+    const all = await orderOf('faq');
+    expect(all.map((row) => row.position)).toEqual(all.map((_, index) => index + 1));
+    expect(await auditCount('list.update', actors.Editor)).toBe(before + 1);
+  });
+
+  it('has nowhere to go at either end, and writes nothing when it cannot move', async () => {
+    const all = await orderOf('faq');
+    // The ids come from the same read the route will run, so this names the row that is
+    // actually first on the screen and not a trashed twin of it.
+    const up = await call(`/content/list_item/${all[0]!.id}/move?list=faq`, write(actors.Editor, 'POST', { direction: 'up' }));
+    expect(up.status, JSON.stringify(up.body)).toBe(409);
+    expect(up.error).toBe('nothing_to_move');
+    const down = await call(`/content/list_item/${all[all.length - 1]!.id}/move?list=faq`, write(actors.Editor, 'POST', { direction: 'down' }));
+    expect(down.status, JSON.stringify(down.body)).toBe(409);
+    expect(await orderOf('faq')).toEqual(all);
+  });
+
+  it('takes a direction and not a number', async () => {
+    // The editor's Order box is gone, and this is the other half of that: the route cannot be
+    // handed a position to jump to, only a step, so a saved number can never outrank a move.
+    const typed = await call(`/content/list_item/${ids.a}/move?list=faq`, write(actors.Editor, 'POST', { position: 2 }));
+    expect(typed.status).toBe(400);
+    expect(typed.issues.map((issue) => issue.path)).toEqual(['direction']);
+    expect((await call(`/content/list_item/${ids.a}/move?list=faq`, write(actors.Editor, 'POST', { direction: 'left' }))).status).toBe(400);
+    expect(await uidsOf()).toEqual([od('b'), od('a'), od('c')]);
+  });
+
+  it('will not reorder a row the address does not name, and asks permission first', async () => {
+    const cross = await call(`/content/list_item/${ids.doctor}/move?list=faq`, write(actors.Editor, 'POST', { direction: 'up' }));
+    expect(cross.status).toBe(404);
+
+    const denied = await call(`/content/list_item/${ids.doctor}/move?list=faq`, write(actors.Viewer, 'POST', { direction: 'up' }));
+    expect(denied.status).toBe(403);
+    expect(denied.denied).toBe('list.update');
+    // A refusal never reached the table, so the order is exactly what the test above left.
+    expect(await uidsOf()).toEqual([od('b'), od('a'), od('c')]);
+  });
+
+  it('moves an offer on the scope its own screen names', async () => {
+    const second = await call('/content/offer?locale=ar', write(actors.Editor, 'POST', { key: od('offer2'), fields: { name: 'عرض ترتيب ثانٍ' } }));
+    const slugsOf = async (): Promise<string[]> => {
+      const rows = await db
+        .selectFrom('offers')
+        .select(['slug', 'position'])
+        .where('deleted_at', 'is', null)
+        .orderBy('position', 'asc')
+        .orderBy('slug', 'asc')
+        .execute();
+      return rows.map((row) => row.slug).filter((slug) => slug.startsWith(od('')));
+    };
+    expect(await slugsOf()).toEqual([od('offer'), od('offer2')]);
+
+    const res = await call(`/content/offer/${second.row.id}/move?locale=ar`, write(actors.Editor, 'POST', { direction: 'up' }));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(await slugsOf()).toEqual([od('offer2'), od('offer')]);
+  });
+
+  it('answers a list request with the order the move just wrote', async () => {
+    // The whole scope on one page, because the claim is about the list as the site reads it:
+    // every row printed at its own rank, so two rows can never share a number and swap places
+    // between two loads. A search-filtered page would only prove the order of a slice.
+    const res = await call(listUrl('list_item', { list: 'faq', per: '100' }), read(actors.Editor));
+    expect(res.view.sort).toBe('position');
+    const numbers = res.page.rows.map((row) => Number(row.cells.position));
+    expect(numbers).toEqual(numbers.map((_, index) => index + 1));
+    expect(res.page.rows.map((row) => row.key).filter((key) => key.startsWith(od('')))).toEqual(await uidsOf());
+  });
+});

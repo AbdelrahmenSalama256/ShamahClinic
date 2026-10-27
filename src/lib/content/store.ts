@@ -15,7 +15,8 @@ import { db } from '../db';
 import { readStored, type FieldFormat } from './format';
 import { sanitizeRichHtml } from './rich';
 import { htmlStems, listSchemaOf, parseListDoc } from './list-schema';
-import { CONTENT_LOCALES, kindSpec, parseWrites, type ContentKind, type ContentLocale, type KindSpec, type ParseResult } from './kinds';
+import { positionForNewItem } from './order';
+import { CONTENT_LOCALES, kindSpec, parseWrites, positionColumn, type ContentKind, type ContentLocale, type KindSpec, type ParseResult } from './kinds';
 
 type AnyRow = Record<string, unknown>;
 
@@ -272,6 +273,13 @@ export async function createRow(
     values.list_id = listId;
     values.draft = JSON.stringify({});
   }
+  // A row joining an ordered list lands at the end of it. The column's SQL default is 0, and
+  // the lists imported from WordPress were numbered from 0 too, so a result added through *Add
+  // new* arrived sharing a number with the whole list — and the order the site then rendered
+  // came down to whichever tie MariaDB felt like. The console never sends this field, so the
+  // only writer of it inside the app is `./order.ts`; an importer that knows the order it read
+  // may still PATCH a number, because then it is not a guess.
+  if (positionColumn(spec)) values.position = await positionForNewItem(kind, input.listKey ?? null);
 
   await (db.insertInto(spec.table).values(values as never) as unknown as ExecuteShape).execute();
   const row = await getRow(kind, id);

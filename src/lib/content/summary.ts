@@ -302,13 +302,17 @@ function docTitles(typed: TypedList | null, sampled: SampledList, doc: Record<st
 }
 
 function cellsOf(spec: KindSpec, row: Record<string, unknown>, columns: string[]): Record<string, string | number | boolean | null> {
+  const out: Record<string, string | number | boolean | null> = {};
   if (spec.table === 'list_items') {
     const doc = typeof row.doc === 'string' ? (JSON.parse(row.doc as string) as unknown) : row.doc;
-    if (doc === null || typeof doc !== 'object') return {};
-    const record = doc as Record<string, unknown>;
-    return Object.fromEntries(columns.map((key) => [key, scalarValue(record[key])]) as [string, string | number | boolean | null][]);
+    if (doc !== null && typeof doc === 'object') {
+      const record = doc as Record<string, unknown>;
+      for (const key of columns) out[key] = scalarValue(record[key]);
+    }
   }
-  const out: Record<string, string | number | boolean | null> = {};
+  // A list item's printed columns are sampled from its own documents, but its number and flag
+  // columns are read the way a document kind reads them: an item's order is a column, not a key
+  // inside the JSON, and the Order cell has to print the number the move just wrote.
   for (const field of spec.number) out[field.name] = row[`cell_${field.name}`] === null || row[`cell_${field.name}`] === undefined ? null : asText(row[`cell_${field.name}`]);
   for (const field of spec.flag) out[field.name] = Number(row[`cell_${field.name}`] ?? 0) === 1;
   return out;
@@ -389,8 +393,10 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
     return sql.ref(titled ? titled.draft[query.locale] : spec.keyColumn);
   };
   // Every order needs a stable tie: two rows updated in the same second must not swap
-  // between page one and page two.
-  const tie = spec.table === 'list_items' ? sql.ref('position') : sql.ref(spec.keyColumn);
+  // between page one and page two. When the sort *is* the order column the tie has to be
+  // something else — the lists the WordPress import left all at `0` otherwise read in an
+  // order MariaDB picks for itself, and the same two rows trade places between two loads.
+  const tie = sql.ref(view.sort === 'position' ? spec.keyColumn : spec.table === 'list_items' ? 'position' : spec.keyColumn);
 
   const selects: Selectable[] = [
     sql<string>`${sql.ref('id')}`.as('id'),

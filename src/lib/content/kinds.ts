@@ -177,6 +177,27 @@ export function kindSpec(kind: ContentKind): KindSpec {
   return BY_KIND.get(kind)!;
 }
 
+/**
+ * The column an authored order lives in, when this kind has one.
+ *
+ * `./order.ts` is the only writer. The editor used to draw a number box over it, which made a
+ * person guess a free number and let two rows claim the same one.
+ */
+export function positionColumn(spec: KindSpec): string | null {
+  return spec.number.find((field) => field.name === 'position')?.column ?? null;
+}
+
+/**
+ * Whether a kind's rows are shown in an order a person authored.
+ *
+ * Only two kinds are: an offer carries its own `position`, and every list item does. An
+ * article is ordered by its date and a page by its route, so neither gets a move button —
+ * and the screen that drew a control for them would be promising an order the site ignores.
+ */
+export function isOrderedKind(kind: ContentKind): boolean {
+  return positionColumn(kindSpec(kind)) !== null;
+}
+
 export function isContentKind(value: string): value is ContentKind {
   return (CONTENT_KINDS as readonly string[]).includes(value);
 }

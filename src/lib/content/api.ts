@@ -27,6 +27,7 @@ import { createRow, getRow, listKeyOfItem, saveDraft, setTrashed, type StoreResu
 import { createTitledRow } from './create';
 import { listRevisions, publishRow, rollbackToRevision } from './publish';
 import { listSummaries } from './summary';
+import { moveRow } from './order';
 import { parseListView, parseListScope } from './list-view';
 import { readSettings, writeSetting } from './settings';
 
@@ -50,10 +51,16 @@ const trashSchema = z.object({ trashed: z.boolean().optional() });
 const publishSchema = z.object({ locales: z.array(z.enum(['ar', 'en'])).min(1).max(2).optional(), note: z.string().max(200).optional() });
 const rollbackSchema = z.object({ revision: z.number().int().positive() });
 const settingSchema = z.object({ group: z.string().min(1).max(64), key: z.string().min(1).max(120), value: z.unknown() });
+/**
+ * A move names a step, never a number. The caller says "this row, one place up" and the
+ * server works out which row it passed and renumbers the list, because a position typed into
+ * a box is a position two people can claim at once.
+ */
+const moveSchema = z.object({ direction: z.enum(['up', 'down']) });
 /** A bulk request is capped: 100 rows is a page of lists, and anything larger is a script's job. */
 const bulkSchema = z.object({ ids: z.array(z.string().min(1).max(64)).min(1).max(100) });
 
-type RowAction = 'publish' | 'restore' | 'rollback' | 'revisions';
+type RowAction = 'publish' | 'restore' | 'rollback' | 'revisions' | 'move';
 /** The bulk verbs, named in the path so permission is decided before the body is read. */
 type Bulk = 'publish' | 'trash' | 'restore';
 const BULK_ACTIONS: readonly Bulk[] = ['publish', 'trash', 'restore'];
@@ -77,7 +84,7 @@ function parseRoute(url: string): Route | null {
     if (!action || !BULK_ACTIONS.includes(action as Bulk)) return null;
     return { kind, id: null, action: null, bulk: action as Bulk };
   }
-  const known: readonly RowAction[] = ['publish', 'restore', 'rollback', 'revisions'];
+  const known: readonly RowAction[] = ['publish', 'restore', 'rollback', 'revisions', 'move'];
   if (action && !known.includes(action as RowAction)) return null;
   return { kind, id: id ?? null, action: (action as RowAction) ?? null, bulk: null };
 }
@@ -261,6 +268,36 @@ async function rollbackHandler(req: Request, spec: KindSpec, kind: ContentKind, 
 }
 
 /**
+ * Move one row one step through its list.
+ *
+ * The scope is read off the request line like every other write, and a list item is then
+ * checked against the list it names — the same test a bulk write runs, so a grant over
+ * `branches` cannot reorder `specialists` by pasting one of their ids. The renumbering itself
+ * is `./order.ts`, which rewrites the whole list `1..n` so no two rows can end up sharing a
+ * number and trading places between two page loads.
+ */
+async function moveHandler(req: Request, spec: KindSpec, kind: ContentKind, id: string): Promise<Response> {
+  return guard<z.output<typeof moveSchema>, Body>(
+    req,
+    { resource: spec.resource, action: 'update', schema: moveSchema, target: (r) => scopeOf(r, spec) },
+    async (ctx): Promise<GuardResult<Body>> => {
+      const listKey = spec.scope === 'lists' ? param(req, 'list') : null;
+      if (spec.scope === 'lists' && !listKey) return { status: 400, data: { error: 'list_required' } };
+      if (listKey && (await listKeyOfItem(id)) !== listKey) return notFound();
+
+      const moved = await moveRow(kind, { id, direction: ctx.input.direction, listKey, actorId: ctx.auth.user.id });
+      if (!moved.ok) return failure(moved);
+      // The order a visitor sees is the order this just changed, and the pages are ISR.
+      revalidateSite();
+      return {
+        data: { ids: moved.value.ids },
+        audit: { entityType: kind, entityId: id, after: { direction: ctx.input.direction, renumbered: moved.value.written } },
+      };
+    },
+  );
+}
+
+/**
  * Publish, Trash or restore a page of rows in one request.
  *
  * The verb is a path segment, not a body field, because `guard()` decides permission
@@ -330,7 +367,7 @@ export async function contentItemHandler(req: Request): Promise<Response> {
   return jsonError(405, 'method_not_allowed');
 }
 
-/** `POST /api/console/content/<kind>/<id>/publish|restore|rollback`, `GET .../revisions`, `POST .../bulk/<verb>` */
+/** `POST /api/console/content/<kind>/<id>/publish|restore|rollback|move`, `GET .../revisions`, `POST .../bulk/<verb>` */
 export async function contentActionHandler(req: Request): Promise<Response> {
   const route = parseRoute(req.url);
   if (!route) return jsonError(404, 'unknown_route');
@@ -343,6 +380,7 @@ export async function contentActionHandler(req: Request): Promise<Response> {
   if (req.method !== 'POST') return jsonError(405, 'method_not_allowed');
   if (route.action === 'publish') return publishHandler(req, spec, kind, id);
   if (route.action === 'rollback') return rollbackHandler(req, spec, kind, id);
+  if (route.action === 'move') return moveHandler(req, spec, kind, id);
   return trashHandler(req, spec, kind, id, false);
 }
 

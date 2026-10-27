@@ -67,7 +67,7 @@ import { SeoPanel } from './SeoPanel';
 import { imageSlots, isImageField, isImageGalleryField, looksLikeImage } from '@/lib/console/image-field';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { EntitySeo } from '@/lib/console/seo-center';
-import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
+import { isOrderedKind, type ContentKind, type ContentLocale } from '@/lib/content/kinds';
 import type { ContentRow, FieldView } from '@/lib/content/store';
 import type { RevisionView } from '@/lib/content/publish';
 import type { MessageKey } from '@/lib/console/messages';
@@ -439,6 +439,10 @@ export function ConsoleEditor({
             ) : null}
             {Object.entries(row.fields)
               .filter(([, field]) => !(row.kind === 'list_item' && field.kind === 'json'))
+              // The order is set with the arrows on the list, never with a number in a box. Typing
+              // one meant reading every other row's number to work out what was free — and two
+              // rows given the same number share a place, so a list could reorder itself on reload.
+              .filter(([name]) => !(name === 'position' && isOrderedKind(row.kind)))
               .map(([name, field]) => (
                 <FieldRow
                   key={name}
