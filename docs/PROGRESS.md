@@ -3065,6 +3065,51 @@ owner's word.
       questions rather than facts until the host answers. The restore evidence in the section above
       came from the local MariaDB, not the server's.
 
+- [x] A-7b The first deploy on the host was the wrong app; the artifact was missing `data/wp`
+      — `ec35e6c`
+      **What the log showed.** The owner uploaded something and got a successful deploy:
+      `node:22` image, `npm ci` (423 packages), `next build --webpack` on Next 16.3.6, 60 s
+      compile and 267 pages prerendered on two workers, the app started, the reverse proxy was
+      wired to port 10000, exit 0. That answers three host questions (Node 22 is enough; the host
+      builds with memory to spare; the port is injected, so `next start` must honour `PORT`).
+
+      **What it was not.** The deployed routes include `/[lang]/treatments`,
+      `/[lang]/treatments/[slug]`, `/api/v1/home`, `/api/v1/offer-categories` and
+      `/[lang]/preview-missing-fields`, and they do not include `/console`, `/uploads` or
+      `/api/console/*`. Its build log prints `[wp] snapshot <lang> <kind> (build …)` with kinds
+      `posts-list`, `pages-list` and `products` — the old reader in `D:\shamah\src\lib\wp\index.ts`
+      (`logSource(name, lang, "snapshot", "build")`). This build prints `[site]`, has no
+      treatments route, and `logSource` here has no callers. So the artifact was `D:\shamah`, which
+      the brief says is not to be uploaded, and it carries neither the console nor a database read.
+
+      **What it exposed in the runbook.** "Always in the zip" did not name `data/wp/` — the frozen
+      snapshot every page falls back to, 18 files / 3.4 MB, read during prerender and whenever the
+      database is unreachable. A zip without it builds a site with no fallback. It also did not
+      say that `NEXT_PUBLIC_SITE_URL` must exist **before** the build (it is inlined, and
+      `src/config/site.ts` throws in production when it is missing), which matters on a host that
+      builds first and injects variables afterwards. Both are now in `docs/SELF-HOSTED.md`, along
+      with a record of what this host's build actually did.
+
+      **Cleanup.** `vercel.json` (a region pin for the abandoned target) was still tracked; it is
+      deleted. The missing-URL error no longer tells the operator to set the variable "in the
+      Vercel project".
+
+      **The artifact, built and audited.** `git archive HEAD` over `src/ public/ data/wp/ scripts/
+      docs/SELF-HOSTED.md next.config.ts package.json package-lock.json tsconfig.json
+      postcss.config.mjs` → `.tmp/shamah-cms-2026-10-27.zip`, 4.9 MB, 546 entries. Audited by
+      listing: no `.env*`, `node_modules`, `.next`, `backups/`, `public/uploads`, `assets-source/`
+      or `tests/`; it does contain `src/lib/db/migrations/` (8 files), `src/app/console/` (33),
+      `src/app/uploads/[...path]/route.ts`, `public/wp/` (61) and `data/wp/posts.en.json`.
+      `npm ci --dry-run` resolves the lock against `package.json`, so the host's install step is
+      consistent.
+
+      **Gates.** Typecheck clean, lint clean, full run **33 files / 694 passed, 0 failed**.
+
+      **Not verified.** The artifact has not been built or deployed (no `next build` without the
+      owner's word), so the only real-host evidence remains the old app's log. Whether the console
+      is reachable, whether the database connects, and whether the host keeps `MEDIA_ROOT` outside
+      the replaced folder are all still to be seen on the server.
+
 ## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
