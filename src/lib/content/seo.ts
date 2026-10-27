@@ -14,6 +14,7 @@
  * fetch to show it.
  */
 import { randomUUID } from 'node:crypto';
+import { cache } from 'react';
 import { db } from '../db';
 import type { ContentKind, ContentLocale } from './kinds';
 import { publicPathOf } from './paths';
@@ -65,7 +66,7 @@ export function seoPathOf(kind: ContentKind, key: string, listKey?: string | nul
 }
 
 /** The override for one address, or null when the site's own copy is still in charge. */
-export async function readSeoOverride(path: string, locale: ContentLocale): Promise<SeoOverride | null> {
+export const readSeoOverride = cache(async function readSeoOverride(path: string, locale: ContentLocale): Promise<SeoOverride | null> {
   try {
     const row = await db
       .selectFrom('seo_entries')
@@ -83,7 +84,7 @@ export async function readSeoOverride(path: string, locale: ContentLocale): Prom
     // read; the authored copy is a complete answer.
     return null;
   }
-}
+});
 
 /** Every override on one screen in one query, keyed by path. */
 export async function readSeoOverrides(paths: readonly string[], locale: ContentLocale): Promise<Map<string, SeoOverride>> {

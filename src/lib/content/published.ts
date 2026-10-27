@@ -12,6 +12,7 @@
  * and the publish step read the same definition of "published", so a kind that
  * gains a field is visible here without a fourth copy of the column list.
  */
+import { cache } from 'react';
 import { db } from '../db';
 import { readStored } from './format';
 import { kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
@@ -128,11 +129,19 @@ interface Options {
   listKey?: string;
 }
 
-/** The `lists` row an item kind reads from; `null` when that list does not exist. */
-async function listIdOf(options: Options): Promise<string | null> {
-  const row = await db.selectFrom('lists').select('id').where('list_key', '=', options.listKey ?? '').executeTakeFirst();
+/**
+ * The `lists` row an item kind reads from; `null` when that list does not exist.
+ *
+ * Memoised per render: one page asks for the same list through several readers
+ * (the layout reads the nav, the page reads the same list, a card asks again), and
+ * before this each caller spent its own query on a column that cannot change
+ * mid-render. React's `cache()` is a no-op outside a server render — tests and CLI
+ * scripts still get a real read every call.
+ */
+const listIdOf = cache(async (listKey: string): Promise<string | null> => {
+  const row = await db.selectFrom('lists').select('id').where('list_key', '=', listKey).executeTakeFirst();
   return row?.id ?? null;
-}
+});
 
 /** Published and not in the Trash — the two conditions every site read shares. */
 function live(query: QueryShape, listId: string | null): QueryShape {
@@ -145,9 +154,9 @@ function live(query: QueryShape, listId: string | null): QueryShape {
  * when it lives in one, ordered the way the site renders it. `null` means the list
  * does not exist, which is the same as "this kind has nothing published".
  */
-async function base(kind: ContentKind, options: Options): Promise<{ spec: KindSpec; query: QueryShape } | null> {
+async function base(kind: ContentKind, listKey: string | undefined): Promise<{ spec: KindSpec; query: QueryShape } | null> {
   const spec = kindSpec(kind);
-  const listId = spec.table === 'list_items' ? await listIdOf(options) : null;
+  const listId = spec.table === 'list_items' ? await listIdOf(listKey ?? '') : null;
   if (spec.table === 'list_items' && !listId) return null;
   const query = live(db.selectFrom(spec.table).selectAll() as unknown as QueryShape, listId);
   return {
@@ -159,17 +168,38 @@ async function base(kind: ContentKind, options: Options): Promise<{ spec: KindSp
           ? query.orderBy('position', 'asc').orderBy('slug', 'asc')
           : spec.table === 'pages'
             ? query.orderBy('route', 'asc')
-            : query.orderBy('published_at', 'desc').orderBy('slug', 'asc'),
+            // Both directions agree so `articles_public` can be walked backwards:
+            // a mixed `published_at DESC, slug ASC` cannot use the index and sorts.
+            : query.orderBy('published_at', 'desc').orderBy('slug', 'desc'),
   };
 }
 
-/** Every published, non-trashed row of a kind, in the order the site renders them. */
-export async function publicRows(kind: ContentKind, options: Options = {}): Promise<PublicRow[]> {
-  const started = await base(kind, options);
+/**
+ * The queries below take strings, not the `Options` object, because `cache()` keys on
+ * argument identity: `{ listKey: 'nav' }` is a new object at every call site and would
+ * miss on every call. The exported functions keep their shape and normalise first.
+ */
+const rowsOf = cache(async (kind: ContentKind, listKey: string): Promise<PublicRow[]> => {
+  const started = await base(kind, listKey || undefined);
   if (!started) return [];
   const rows = (await started.query.execute()) as AnyRow[];
-  return rows.map((row) => toPublicRow(started.spec, row, options.listKey ?? null));
+  return rows.map((row) => toPublicRow(started.spec, row, listKey || null));
+});
+
+/** Every published, non-trashed row of a kind, in the order the site renders them. */
+export async function publicRows(kind: ContentKind, options: Options = {}): Promise<PublicRow[]> {
+  return rowsOf(kind, options.listKey ?? '');
 }
+
+const rowOf = cache(async (kind: ContentKind, listKey: string, key: string): Promise<PublicRow | null> => {
+  const started = await base(kind, listKey || undefined);
+  if (!started) return null;
+  const bare = key.replace(/^\/+/, '');
+  const candidates = [...new Set([key, bare, `/${bare}`])];
+  const rows = (await started.query.where(started.spec.keyColumn, 'in', candidates).execute()) as AnyRow[];
+  const row = rows.find((r) => String(r[started.spec.keyColumn]) === key) ?? rows[0];
+  return row ? toPublicRow(started.spec, row, listKey || null) : null;
+});
 
 /**
  * One published row by its public key. A page's `route` is stored with or without
@@ -177,14 +207,16 @@ export async function publicRows(kind: ContentKind, options: Options = {}): Prom
  * the exact one wins.
  */
 export async function publicRow(kind: ContentKind, key: string, options: Options = {}): Promise<PublicRow | null> {
-  const started = await base(kind, options);
-  if (!started) return null;
-  const bare = key.replace(/^\/+/, '');
-  const candidates = [...new Set([key, bare, `/${bare}`])];
-  const rows = (await started.query.where(started.spec.keyColumn, 'in', candidates).execute()) as AnyRow[];
-  const row = rows.find((r) => String(r[started.spec.keyColumn]) === key) ?? rows[0];
-  return row ? toPublicRow(started.spec, row, options.listKey ?? null) : null;
+  return rowOf(kind, options.listKey ?? '', key);
 }
+
+const anyPublished = cache(async (kind: ContentKind, listKey: string): Promise<boolean> => {
+  const spec = kindSpec(kind);
+  const listId = spec.table === 'list_items' ? await listIdOf(listKey) : null;
+  if (spec.table === 'list_items' && !listId) return false;
+  const query = live(db.selectFrom(spec.table).select('id') as unknown as QueryShape, listId);
+  return Boolean(await query.limit(1).executeTakeFirst());
+});
 
 /**
  * Whether the database holds anything published of this kind. The site's read path
@@ -193,11 +225,7 @@ export async function publicRow(kind: ContentKind, key: string, options: Options
  * genuinely does not exist.
  */
 export async function hasPublished(kind: ContentKind, options: Options = {}): Promise<boolean> {
-  const spec = kindSpec(kind);
-  const listId = spec.table === 'list_items' ? await listIdOf(options) : null;
-  if (spec.table === 'list_items' && !listId) return false;
-  const query = live(db.selectFrom(spec.table).select('id') as unknown as QueryShape, listId);
-  return Boolean(await query.limit(1).executeTakeFirst());
+  return anyPublished(kind, options.listKey ?? '');
 }
 
 /** The two locales a published row actually carries text in. */

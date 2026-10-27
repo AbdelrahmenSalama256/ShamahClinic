@@ -6,6 +6,7 @@
  * as an empty group — the authored photo — because a banner is decoration and must
  * never be the reason a public page fails to render.
  */
+import { cache } from 'react';
 import { db } from '../db';
 import type { PhotoSlot } from '../images';
 import {
@@ -17,7 +18,11 @@ import {
   type SavedBanners,
 } from './banners-catalog';
 
-export async function readBanners(): Promise<SavedBanners> {
+/**
+ * One read per render: a page asks for one banner, but the hero and a later section
+ * can ask for the same override, and the group is small enough to read once.
+ */
+export const readBanners = cache(async function readBanners(): Promise<SavedBanners> {
   try {
     const rows = await db
       .selectFrom('settings')
@@ -34,7 +39,7 @@ export async function readBanners(): Promise<SavedBanners> {
   } catch {
     return {};
   }
-}
+});
 
 /**
  * A saved override keeps the authored alt text for any language the operator left

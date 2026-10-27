@@ -87,6 +87,12 @@ export function getDb(): Db {
   };
   const db = new Kysely<Database>({
     dialect: new MysqlDialect({ pool: createPool(poolOptions) }),
+    // A diagnostic, off unless asked for: `DATABASE_LOG_QUERIES=1` prints the SQL of every
+    // statement (placeholders only, no bound values) so a route's query count can be read
+    // off the server log. It costs a string per query and must stay off in normal service.
+    ...(process.env.DATABASE_LOG_QUERIES === '1'
+      ? { log: (event: { query: { sql: string }; queryDurationMillis: number }) => console.log(`[dbq] ${event.queryDurationMillis.toFixed(1)}ms ${event.query.sql}`) }
+      : {}),
   });
   globalForDb.__shamahDb = db;
   return db;

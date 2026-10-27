@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { ServiceCard } from "./types";
 // Both inputs of the merge come from the site's read path, so a treatment page can
 // never pair a database page with a snapshot service list.
@@ -139,11 +140,11 @@ async function treatmentsFromDb(): Promise<Treatment[] | null> {
   }
 }
 
-export async function getMergedTreatments(): Promise<Treatment[]> {
+export const getMergedTreatments = cache(async function getMergedTreatments(): Promise<Treatment[]> {
   const fromDb = await treatmentsFromDb();
   if (fromDb) return fromDb;
   return treatmentsFromSite();
-}
+});
 
 /**
  * The snapshot's service cards merged with the authored rows, without asking the
@@ -234,7 +235,7 @@ export async function getFeaturedServices(limit = 3): Promise<Treatment[]> {
   return picked;
 }
 
-export async function getMergedTreatment(slug: string): Promise<Treatment | null> {
+export const getMergedTreatment = cache(async function getMergedTreatment(slug: string): Promise<Treatment | null> {
   const all = await getMergedTreatments();
   const treatment = all.find((t) => t.id === slug);
   if (!treatment) return null;
@@ -266,4 +267,4 @@ export async function getMergedTreatment(slug: string): Promise<Treatment | null
       en: html.en,
     },
   };
-}
+});

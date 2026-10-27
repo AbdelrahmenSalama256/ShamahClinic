@@ -10,6 +10,7 @@
  * everywhere. A page whose state cannot be read stays visible; the console's own
  * write path still reports the failure loudly.
  */
+import { cache } from 'react';
 import { db } from '../db';
 import {
   PAGE_SETTING_GROUP,
@@ -58,7 +59,12 @@ export function parsePageState(value: unknown): PageState {
   return { enabled, redirectTo: redirect };
 }
 
-export async function readPageStates(): Promise<PageStates> {
+/**
+ * One read per render: the layout asks for the hidden pages to build the menu, and the
+ * page's own guard asks again before rendering. The two answers cannot differ inside a
+ * render, and a save revalidates the route, so the next render reads the new row.
+ */
+export const readPageStates = cache(async function readPageStates(): Promise<PageStates> {
   const states = defaultPageStates();
   try {
     const rows = await db
@@ -75,7 +81,7 @@ export async function readPageStates(): Promise<PageStates> {
     /* fail open: an unreadable setting must not take the whole site down */
   }
   return states;
-}
+});
 
 /** The hrefs the header and footer must stop linking to. */
 export function hiddenPageHrefs(states: PageStates): string[] {

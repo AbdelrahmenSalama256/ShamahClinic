@@ -20,6 +20,7 @@
  * can be database-backed while the services still come from the snapshot, because
  * "has this been published yet?" is a question about one list, not about a table.
  */
+import { cache } from 'react';
 import * as wp from '../wp';
 import type { BranchView, PageCard, Query, WithSeo } from '../wp';
 import { arabicRatio, hrefPair } from '../wp/lang';
@@ -182,15 +183,15 @@ interface CategoryRef {
   name: Bi;
 }
 
-/** The `categories` rows an article's `category_id` can point at. */
-async function categoryIndex(): Promise<Map<string, CategoryRef>> {
+/** The `categories` rows an article's `category_id` can point at. One per render. */
+const categoryIndex = cache(async (): Promise<Map<string, CategoryRef>> => {
   const rows = await db
     .selectFrom('categories')
     .select(['id', 'slug', 'name_ar', 'name_en'])
     .where('deleted_at', 'is', null)
     .execute();
   return new Map(rows.map((row) => [row.id, { slug: row.slug, name: { ar: row.name_ar || row.name_en, en: row.name_en || row.name_ar } }]));
-}
+});
 
 function articleCard(row: PublicRow, index: number, categories: Map<string, CategoryRef>): ArticleCard {
   const title = decoded(pair(row, 'title'));
@@ -286,8 +287,8 @@ export async function getCategories(): Promise<CategoryTerm[]> {
   return wp.getCategories();
 }
 
-/** How many published articles each category holds — the chip's count. */
-async function articleCategoryCounts(): Promise<Map<string, number>> {
+/** How many published articles each category holds — the chip's count. One per render. */
+const articleCategoryCounts = cache(async (): Promise<Map<string, number>> => {
   const rows = await db
     .selectFrom('articles')
     .select(['category_id'])
@@ -300,7 +301,7 @@ async function articleCategoryCounts(): Promise<Map<string, number>> {
     counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
   }
   return counts;
-}
+});
 
 // --- offers -------------------------------------------------------------------
 
@@ -844,7 +845,8 @@ function asWord(value: unknown): string | null {
   return text ? value : null;
 }
 
-async function savedGroup(group: string): Promise<Map<string, string>> {
+/** One group's saved words per render: the settings screen and the clinic numbers read it. */
+const savedGroup = cache(async (group: string): Promise<Map<string, string>> => {
   const rows = await db
     .selectFrom('settings')
     .select(['setting_key', 'value'])
@@ -859,7 +861,7 @@ async function savedGroup(group: string): Promise<Map<string, string>> {
     if (value?.trim()) values.set(row.setting_key, value);
   }
   return values;
-}
+});
 
 const savedSettings = () => savedGroup(SETTING_GROUP);
 
