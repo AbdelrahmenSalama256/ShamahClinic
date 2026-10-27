@@ -2600,6 +2600,84 @@ owner's word.
       it; and whether anything now moves less than it did — the reduced-motion claim is a rule
       removed, not a key pressed.
 
+- [ ] A Slice A, re-scoped: production is a self-hosted Node server, not a hosted platform
+      **The owner's decision (2026-10-27).** "Stop the current plan. Do not continue with Vercel,
+      TiDB, Aiven or Vercel Blob. I do not want to pay for a hosted database or per-usage storage."
+      Production is one long-lived Node process (`next start`, or `output: 'standalone'` under
+      Passenger or PM2) with MariaDB on the same machine — the same engine as the local XAMPP, so
+      the migrations do not change. Hosted-DB research from this slice (PlanetScale, Aiven, TiDB
+      Cloud, all priced off their own pages) is dead: keep it only as the reason the wire protocol
+      was checked before choosing.
+
+      **Kept.** S1 (below) and the move script: dump local, restore to the server, never writing to
+      or deleting local, dry run first, row counts per table before and after, and a JSON round-trip
+      check per table.
+      **Discarded, and what to revert.** The Blob-token-or-refuse-to-boot rule, the serverless pool,
+      the Vercel deploy step and the TiDB recommendation never reached a commit. Exactly one commit
+      depends on the discarded storage choice: `e0dae71` (slice M) — the Blob branch of
+      `src/lib/media/storage.ts`, the `@vercel/blob` line in `package.json`, and the Blob block in
+      `.env.example`. One revert-shaped commit removes all three.
+      **Still to do, in order.** A-0 revert · A-2 plain MariaDB, TLS optional by env only ·
+      A-5a one script creates the database and runs the migrations on an empty server ·
+      A-4 the move script · A-3 uploads on local disk outside the build output, with a route that
+      serves them · A-8 the cache statement and the security checklist · A-7 the deploy steps for
+      cPanel and for Cloudways/VPS. `next build` is not run without the owner's word.
+      **Untouched by all of it.** `shamah-clinic.vercel.app`, its project and its domain; `main`;
+      `D:\shamah`; `src/data`; `data/wp/*.json` and `public/wp/*`. Nothing is pushed.
+
+- [x] A-S1 The number an owner saves is the number the site dials — `88d036c`
+      **What was wrong.** Item 7 of the review is "settings that really change the site", and the
+      first proof the owner asked for was the phone: change it in Settings, save, and see it on
+      Navbar, Footer, Contact, CtaBand and FloatingActions — before any other screen. It was not
+      seen anywhere. `getSettings` has read the saved `site` rows since 6.3c-a, so the dashboard
+      answered correctly and the public page did not: all five screens imported `clinicData`, which
+      is built from `src/config/site.ts:37` at module load, and JSON-LD did the same. An owner
+      typing a new number wrote a row nothing rendered.
+
+      **The moves.** One server read, `getClinicWords()` in `src/lib/content/site.ts`: the saved
+      `phone` and `whatsapp` from the same group `savedSettings()` returns, with the config file as
+      a **per-key** fallback, and the `wa.me` link built from the digits of whatever was saved (a
+      `+` or a space in that address does not open). One client boundary, `src/context/ClinicContext.tsx`:
+      the site layout reads once and wraps `SiteShell`, so the header, the footer, every page and
+      the dynamically-imported booking modal all sit under it, and its default is the shipped
+      `clinicData` — a page whose database is unreachable, or a control above the layout, renders a
+      real number rather than an empty `tel:`. Nine files moved off `clinicData` (the five named
+      screens plus Privacy, BookingModal, OfferCard, HomeBody), `organizationJsonLd` now dials the
+      same read, and `Actions.tsx`'s exported `whatsappHref(language, custom)` became
+      `useWhatsappHref()` — a module-scope builder is the bug returning, because the number is page
+      data. `src/data/clinic.ts` is untouched, as the owner required.
+
+      **Proved.** `tests/clinic-words.test.ts`, 11 tests, none of them a prop hand-fed a marker: the
+      save is a `PATCH` through the guarded `settingsHandler` with a session minted by the real
+      login route, and the renders are of the five components under the providers the layout uses —
+      the contact page with the props `src/app/[lang]/contact/page.tsx` passes it. Asserted: both
+      writes return 200 and call `revalidatePath('/[lang]','layout')` and `/sitemap.xml`; the reader
+      returns the saved pair; structured data carries the saved phone; a blanked phone falls back to
+      config while the untouched WhatsApp row keeps its saved link; the marker `tel:` and `wa.me`
+      address appear in the header, footer, contact page, band and floating bar (Arabic included);
+      with no provider the shipped number appears instead and never `href="tel:"`; the layout still
+      wires the provider to the read; and no file under `src/components` may import `@/data/clinic`
+      again except the context that holds the fallback.
+
+      **Changed contracts, documented as the rule asks.** `whatsappHref()` is gone from
+      `Actions.tsx` in favour of `useWhatsappHref()` (two call sites, both inside components). A
+      `ClinicWords` type and `getClinicWords()` are exported from `src/lib/content/site.ts`.
+      `[lang]` layout gains one provider — no route, no API shape, no component's own props and no
+      table changed.
+
+      **Gates.** Typecheck clean, lint clean, full run **28 files / 651 passed, 0 failed** (was
+      27/640). Working tree clean before this docs commit.
+
+      **Left on purpose.** The footer's per-branch line still emits `href="tel:+20 2 2575 0000"`
+      with its spaces, because that number is branch data and not this read path's to normalize —
+      the test asserts the spacing so a future change cannot quietly decide both at once.
+
+      **Not verified on a screen.** There is still no dev address or password, so the owner's own
+      check is unperformed: a real tap of a `tel:` link on a phone, the number inside the mobile
+      menu and under the sticky bar, and — the part a node render cannot reach — whether
+      `revalidatePath` from a save actually replaces the page a running server had already cached.
+      That last claim is why A-8 exists: it holds on one process and breaks on more than one.
+
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
@@ -2613,6 +2691,12 @@ owner's word.
   `data-vc-public-nonce="…"` into the `home` page body on every request, so a re-sync always reports page 622
   changed in both locales while its text, length and `modified` stamp hold still. Normalize that attribute — or
   compare row hashes with it stripped — before concluding the client edited anything (measured in 7.1).
+- **Two `next/*` modules cannot be imported by a node test at all.** `next/cache` (outside a build) and
+  `next/root-params` are compiler placeholders: their top-level shim throws "This module is a placeholder …
+  should be replaced by the compiler", and the failure lands on the whole file before a single test runs.
+  `src/lib/jsonld.ts` reads `next/root-params`, so any test that renders structured data — or imports anything
+  reaching it — has to `vi.mock` both; see `tests/clinic-words.test.ts`. Mock `next/cache` wholesale rather than
+  with `importOriginal`, which loads the same throwing shim.
 
 ### Things MariaDB and Kysely do differently (each one cost debugging time)
 - **No `INSERT … ON CONFLICT (cols) DO NOTHING`.** That is Postgres syntax; Kysely's
