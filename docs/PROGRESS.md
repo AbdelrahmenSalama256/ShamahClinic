@@ -2617,7 +2617,7 @@ owner's word.
       depends on the discarded storage choice: `e0dae71` (slice M) — the Blob branch of
       `src/lib/media/storage.ts`, the `@vercel/blob` line in `package.json`, and the Blob block in
       `.env.example`. One revert-shaped commit removes all three.
-      **Still to do, in order.** A-0, A-2, A-5a, A-4, A-3 and the read audit are done (below).
+      **Still to do, in order.** A-0, A-2, A-5a, A-4, A-3, A-6 and the read audit are done (below).
       Left: A-8 the cache statement and the security checklist · A-7 the deploy steps for cPanel
       and for Cloudways/VPS. `next build` is not run without the owner's word.
       **Untouched by all of it.** `shamah-clinic.vercel.app`, its project and its domain; `main`;
@@ -2921,6 +2921,39 @@ owner's word.
       server's version and `max_allowed_packet` still have to be checked before the first real
       move. Backups also sit on the same disk as the data until the owner copies them off the
       server.
+
+- [x] A-6 Every public page renders from `src/data` when the database is unreachable
+      **How it was proved.** Not with a mock: a dev server was started with `DATABASE_PORT=3999`,
+      where nothing listens, so every read ended in `connect ECONNREFUSED 127.0.0.1:3999`. Twenty
+      routes were requested once each — `/en`, `/en/about`, `/en/blogs`, an article, `/en/branches`,
+      a branch, `/en/contact`, `/en/doctors`, `/en/faq`, `/en/offers`, an offer, `/en/privacy`,
+      `/en/results`, `/en/services`, a service, `/ar`, `/ar/services`, `/ar/blogs`, `/sitemap.xml`,
+      `/robots.txt`. All **200**, 105,955–210,786 bytes of HTML, and 1,903–25,575 characters of
+      visible text after scripts and styles are stripped: no empty page. No page carried a Next error
+      overlay, `Application error`, `Internal Server Error` or a `digest` marker.
+
+      **That the fallback is what answered.** The server log prints one line per kind on its first
+      miss, and it printed twelve distinct ones, all naming the refused port: article, category,
+      clinic, list branches / faq / nav / results / services / specialists, offer, page, settings.
+      The rendered pages carry the snapshot's content: the article `<h1>` is its snapshot title,
+      the branch page's `<title>` is "Nasr City | Shamah Clinics", the home header links to all
+      eight section routes, and `/en/contact` emits four `tel:` links (the central number plus the
+      three branch numbers) because the settings rung fell back to `src/config/site.ts` per key.
+
+      **Where it lives.** `rung()` (`src/lib/content/site.ts:71`) wraps the "is anything published?"
+      probe and the rows read in one `try`; `listRung()` (`:494`) does the same for list kinds.
+      Settings, site meta, page titles, hero photos, banners, SEO overrides, page visibility and
+      treatments each catch on their own. No code changed for this row: the fallback was already
+      the contract, and this is the measurement that says it holds.
+
+      **Gates.** No source changed, so the suite is the one from `dc39c78` (33 files / 694). The
+      probe server was stopped, `tsconfig.json` was hash-checked before and after and did not
+      change, and the working tree was clean.
+
+      **Not verified.** A dev server, not a production build (no `next build` without the owner's
+      word), so the compiled server's behaviour is inferred, not seen. `/console` and the API routes
+      are not covered — they need the database and are expected to fail without it. No browser was
+      opened; the evidence is the HTML the server returned.
 
 ## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
