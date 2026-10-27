@@ -8,6 +8,8 @@ import { Kysely, MysqlDialect } from 'kysely';
 // Kysely's MysqlDialect drives the callback API and never completes against
 // `mysql2/promise`, so the pool is created from `mysql2` itself.
 import { createPool } from 'mysql2';
+import type { PoolOptions } from 'mysql2';
+import { readFileSync } from 'node:fs';
 import type { Database, Db } from './types';
 
 export interface DbConfig {
@@ -18,7 +20,9 @@ export interface DbConfig {
   database: string;
 }
 
-export function readDbConfig(env: NodeJS.ProcessEnv = process.env): DbConfig {
+export type Env = Record<string, string | undefined>;
+
+export function readDbConfig(env: Env = process.env): DbConfig {
   const url = env.DATABASE_URL ? new URL(env.DATABASE_URL) : null;
   const config = {
     host: env.DATABASE_HOST ?? url?.hostname ?? '',
@@ -36,6 +40,28 @@ export function readDbConfig(env: NodeJS.ProcessEnv = process.env): DbConfig {
 }
 
 /**
+ * TLS is off unless an operator asks for it, and the only place to ask is the environment.
+ * Production runs MariaDB on the same machine, reached over the loopback interface, so
+ * encrypting that hop buys nothing and a certificate that expires at 3 a.m. buys less.
+ * A remote database (a staging copy, a managed box someone else insists on) sets
+ * `DATABASE_TLS=require` for encryption or `DATABASE_TLS=verify` to also check the
+ * certificate against the system roots, or against `DATABASE_TLS_CA_FILE` when the server
+ * has a private CA.
+ */
+export type DbTls = false | { rejectUnauthorized: boolean; ca?: Buffer };
+
+export function readTls(env: Env = process.env): DbTls {
+  const mode = (env.DATABASE_TLS ?? '').trim().toLowerCase();
+  if (!mode || mode === 'off' || mode === 'false' || mode === '0' || mode === 'disable') return false;
+  if (mode !== 'require' && mode !== 'verify') {
+    throw new Error(`DATABASE_TLS must be one of: (unset), require, verify. Got "${env.DATABASE_TLS}".`);
+  }
+  const caFile = (env.DATABASE_TLS_CA_FILE ?? '').trim();
+  const ca = caFile ? readFileSync(caFile) : undefined;
+  return { rejectUnauthorized: mode === 'verify', ...(ca ? { ca } : {}) };
+}
+
+/**
  * Cached across hot reloads in `next dev`: a new pool per module evaluation would
  * exhaust MariaDB's connections while you edit.
  */
@@ -44,22 +70,23 @@ const globalForDb = globalThis as typeof globalThis & { __shamahDb?: Db };
 export function getDb(): Db {
   if (globalForDb.__shamahDb) return globalForDb.__shamahDb;
   const config = readDbConfig();
+  const tls = readTls();
+  const poolOptions: PoolOptions = {
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    database: config.database,
+    connectionLimit: Number(process.env.DATABASE_POOL_SIZE ?? 8),
+    // Keep DATETIME(3) as Date and DECIMAL as string, so a price never loses cents to a float.
+    dateStrings: false,
+    decimalNumbers: false,
+    multipleStatements: false,
+    enableKeepAlive: true,
+    ...(tls ? { ssl: tls } : {}),
+  };
   const db = new Kysely<Database>({
-    dialect: new MysqlDialect({
-      pool: createPool({
-        host: config.host,
-        port: config.port,
-        user: config.user,
-        password: config.password,
-        database: config.database,
-        connectionLimit: Number(process.env.DATABASE_POOL_SIZE ?? 8),
-        // Keep DATETIME(3) as Date and DECIMAL as string, so a price never loses cents to a float.
-        dateStrings: false,
-        decimalNumbers: false,
-        multipleStatements: false,
-        enableKeepAlive: true,
-      }),
-    }),
+    dialect: new MysqlDialect({ pool: createPool(poolOptions) }),
   });
   globalForDb.__shamahDb = db;
   return db;
