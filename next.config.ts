@@ -70,13 +70,6 @@ const nextConfig: NextConfig = {
         hostname: "www.shamahclinics.com",
         pathname: "/wp-content/**",
       },
-      {
-        // Console uploads when BLOB_READ_WRITE_TOKEN is set: the address it stores is
-        // absolute, so the site has to be allowed to optimise that host.
-        protocol: "https",
-        hostname: "**.public.blob.vercel-storage.com",
-        pathname: "/uploads/**",
-      },
     ],
   },
 };

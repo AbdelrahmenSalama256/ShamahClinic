@@ -185,10 +185,9 @@ beforeAll(async () => {
   await purge();
   root = await mkdtemp(join(tmpdir(), 'shamah-media-'));
   // The route under test calls `putUpload` without an explicit root, so the folder it
-  // would have written into is redirected for the whole file. `MEDIA_DRIVER=local` makes
-  // the test independent of a Blob token that happens to be in the developer's shell.
+  // would have written into is redirected for the whole file. Nothing may write into the
+  // repo's own `public/uploads/` from a test run.
   process.env.MEDIA_ROOT = root;
-  process.env.MEDIA_DRIVER = 'local';
   await syncRoles({ dryRun: false, database: readDbConfig().database });
 
   const system = await db.selectFrom('roles').select(['id', 'name']).where('deleted_at', 'is', null).execute();
@@ -220,7 +219,6 @@ afterAll(async () => {
   await purge();
   await destroyDb();
   delete process.env.MEDIA_ROOT;
-  delete process.env.MEDIA_DRIVER;
   await rm(root, { recursive: true, force: true });
 });
 

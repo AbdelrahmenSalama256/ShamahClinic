@@ -1,28 +1,17 @@
 /**
- * Where the bytes of an uploaded picture live.
+ * Where the bytes of an uploaded picture live: on this server's disk, nowhere else.
  *
- * The console runs in two places that cannot share a filesystem: a laptop, where
- * `public/uploads/` is fine, and Vercel, where the deployment is read-only and a file
- * written there disappears with the next request. So the address is decided by one
- * environment switch and nothing else in the upload path knows which driver is in use:
+ * The production target is one long-lived Node process with MariaDB on the same machine
+ * (docs/SELF-HOSTED.md), so there is no read-only function filesystem to work around and no
+ * per-usage store to pay for. One environment variable moves the folder — `MEDIA_ROOT` — and
+ * the only reason to set it is that the default is a path a deploy replaces.
  *
- *   - `BLOB_READ_WRITE_TOKEN` present → Vercel Blob (durable, served from its own host);
- *   - otherwise → `public/uploads/` (or `MEDIA_ROOT`, for a cPanel host that keeps a
- *     writable folder outside the replaced document root).
- *
- * `MEDIA_DRIVER=local` forces the second even when a token exists — useful for tests and
- * for a deploy that deliberately serves files itself. There is no third mode: a path that
- * only works on the machine that wrote it is the bug this file exists to prevent.
+ * Nothing here decides a driver, because there is no second driver to choose. A path that
+ * only works on the machine that wrote it is still the bug this file exists to prevent, and
+ * it is prevented by storing the root-relative address rather than the absolute one.
  */
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-
-export type MediaDriver = 'blob' | 'local';
-
-export function mediaDriver(): MediaDriver {
-  if ((process.env.MEDIA_DRIVER ?? '').trim().toLowerCase() === 'local') return 'local';
-  return (process.env.BLOB_READ_WRITE_TOKEN ?? '').trim() === '' ? 'local' : 'blob';
-}
 
 /**
  * Where local files are written. Defaults to the app's `public/`, which is what the site
@@ -34,7 +23,7 @@ export function mediaRoot(): string {
 }
 
 export interface StoredObject {
-  /** The address content stores: root-relative for local, absolute for Blob. */
+  /** The address content stores: always root-relative, so it means the same on every machine. */
   src: string;
 }
 
@@ -51,22 +40,11 @@ function resolveUnder(root: string, key: string): string {
  * Store one object under `key` and answer the address the site will use.
  *
  * The caller writes the file **before** the database row, so a failure here is a refusal,
- * not a row pointing at nothing. `contentType` is always `image/webp` today because the
- * server re-encodes every upload; the parameter is here so a future video or PDF does not
- * have to guess.
+ * not a row pointing at nothing. Every byte reaching this function is a WebP the server
+ * re-encoded itself, which is why the address carries the extension and no content type
+ * travels with it.
  */
-export async function writeMediaObject(key: string, bytes: Uint8Array, contentType: string, options: { root?: string } = {}): Promise<StoredObject> {
-  if (mediaDriver() === 'blob') {
-    const { put } = await import('@vercel/blob');
-    const result = await put(key, Buffer.from(bytes), {
-      access: 'public',
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-      contentType,
-      addRandomSuffix: false,
-    });
-    return { src: result.url };
-  }
-
+export async function writeMediaObject(key: string, bytes: Uint8Array, options: { root?: string } = {}): Promise<StoredObject> {
   const root = options.root ?? mediaRoot();
   const absolute = resolveUnder(root, key);
   await mkdir(join(absolute, '..'), { recursive: true });

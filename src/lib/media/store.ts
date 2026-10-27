@@ -25,7 +25,7 @@ import sharp from 'sharp';
 import { db } from '../db';
 import type { StoreResult } from '../content/store';
 import { MAX_IMAGE_EDGE, inspectImage, type ImageInfo } from './image-info';
-import { mediaDriver, mediaRoot, writeMediaObject } from './storage';
+import { mediaRoot, writeMediaObject } from './storage';
 
 /** The browser shrinks before it sends, so this catches a hand-made request rather than a phone photo. */
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
@@ -37,7 +37,7 @@ export const THUMB_EDGE = 640;
 
 export interface StoredMedia {
   id: string;
-  /** The address content stores: `/uploads/…` on a local driver, an absolute Blob URL otherwise. */
+  /** The address content stores: `/uploads/…`, root-relative whatever machine wrote it. */
   src: string;
   /** The 640 px companion, derived from `src`, for lists and cards. */
   thumb: string;
@@ -157,7 +157,7 @@ export async function putUpload(input: UploadInput, options: UploadOptions = {})
   // database but not `public/uploads/` — the bytes in hand restore it at the address
   // content already points to, which is the only address the site can be asked for.
   if (existing) {
-    if (existing.path.startsWith('/uploads/') && mediaDriver() === 'local') {
+    if (existing.path.startsWith('/uploads/')) {
       const restored = await encode(input.bytes);
       if (restored) {
         try {
@@ -196,12 +196,9 @@ export async function putUpload(input: UploadInput, options: UploadOptions = {})
 
   let src: string;
   try {
-    src = (await writeMediaObject(key, encoded.main, 'image/webp', { root: options.root })).src;
-    await writeMediaObject(thumbKey(key), encoded.thumb, 'image/webp', { root: options.root });
+    src = (await writeMediaObject(key, encoded.main, { root: options.root })).src;
+    await writeMediaObject(thumbKey(key), encoded.thumb, { root: options.root });
   } catch {
-    if (mediaDriver() === 'blob') {
-      return { ok: false, status: 502, code: 'storage_unavailable', issues: [{ path: 'data', message: 'the picture store refused the file' }] };
-    }
     return { ok: false, status: 500, code: 'write_failed', issues: [{ path: 'data', message: 'the uploads folder is not writable' }] };
   }
 
@@ -249,7 +246,7 @@ function thumbKey(key: string): string {
   return key.replace(/\.webp$/, `-${THUMB_EDGE}.webp`);
 }
 
-/** Only the local driver has a file to restore; Blob already keeps its own copies. */
+/** The row points at an address the server serves from disk, so the bytes can be put back there. */
 async function restoreLocal(src: string, encoded: Encoded, root: string | undefined): Promise<void> {
   const base = root ?? mediaRoot();
   for (const [target, bytes] of [
