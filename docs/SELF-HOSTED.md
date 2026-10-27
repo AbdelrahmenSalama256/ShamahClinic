@@ -250,7 +250,7 @@ not as a record of something that happened.
 
 | | Value |
 |---|---|
-| Node.js | 24 (tested locally on v24.21.0). Next 16 requires 20.9 or newer; the host's AI App Hosting chooses from what it offers |
+| Node.js | 24 (tested locally on v24.21.0). Next 16 requires 20.9 or newer; the host's `node:22` image built and started a previous upload successfully, so 22 is enough |
 | Build command | `npm ci && npm run build` (which is `next build --webpack`) |
 | Start command | `npm start` (`next start`), or `node server.js` when built with `output: 'standalone'` |
 | Database | MariaDB/MySQL on `localhost`, `utf8mb4`, one database, one user |
@@ -270,15 +270,27 @@ LEAD_MODE  CF7_FORM_ID  WP_BASE_URL  COOKIE_FORCE_SECURE  DATABASE_LOG_QUERIES
 `LOCAL_DB_ROOT_PASSWORD`, `LOCAL_MARIADB_BASEDIR` and `LOCAL_MARIADB_MY_INI` are for this
 machine's disposable MariaDB and must not be set on the server.
 
+**`NEXT_PUBLIC_SITE_URL` has to exist before the build, not only before the start.** It is a
+`NEXT_PUBLIC_` value, so Next inlines it into the client bundle, and
+`src/config/site.ts` throws in production when it is missing — a host that builds first and
+injects environment variables afterwards fails the build with that message. Set the whole
+environment first, then build.
+
 ### Artifact inventory
 
 **Never in the zip:** `.env`, `.env.local`, `.env.test`, `node_modules` (unless uploading a
-standalone build), `.next/cache`, `public/uploads`, `backups/`, `*.json.gz`, `docs/`, test
-files that are not needed at runtime, `.git`.
+standalone build), `.next/cache`, `public/uploads`, `backups/`, `data/wp-20*` (dated
+snapshots), `assets-source/`, `*.json.gz`, `.git`. Tests and `docs/` are not needed at
+runtime either; they only add weight.
 
-**Always in the zip:** `src/`, `public/` (without `uploads/`), `next.config.ts`,
-`package.json`, `package-lock.json`, `tsconfig.json`, `postcss.config.*`, `scripts/db/`
-(needed once, to create and migrate the database), `docs/SELF-HOSTED.md`.
+**Always in the zip:** `src/`, `public/` (without `uploads/`), `data/wp/` — the frozen
+snapshot every page falls back to, read at build time and whenever the database is
+unreachable — `next.config.ts`, `package.json`, `package-lock.json`,
+`tsconfig.json`, `postcss.config.*`, `scripts/` (the database setup and the backup cron both
+run from there) and `docs/SELF-HOSTED.md`.
+
+An artifact cut from `git archive` already has the right shape: only tracked files travel,
+so `.env*`, `node_modules`, `.next`, `public/uploads` and `backups/` never enter it.
 
 Two supported shapes:
 
@@ -295,6 +307,23 @@ Two supported shapes:
    listing `mysql2` (run `npm ci --omit=dev` in that folder so `server-setup.mjs` can reach
    the driver), or run the setup from the source upload before switching to the standalone
    one.
+
+### What this host did on its first deploy (2026-10-27)
+
+An upload to AI App Hosting was built and started, and its log answers three of the open
+questions even though the artifact was the **old** site (`D:\shamah`) rather than this one:
+
+- The runtime image is `docker.io/library/node:22`; `npm ci` installed 423 packages and
+  `next build --webpack` (Next 16.3.6) finished — 60 s compile, 267 pages prerendered on two
+  workers, ~2.5 min total — so the host has enough memory to build here.
+- The app was then started and the panel wired its reverse proxy to port 10000 itself, so the
+  app must listen on the injected `PORT` (`next start` does), not on a hard-coded 3000.
+- The build log says nothing about the database or the console: that application has neither.
+  Its `[wp] snapshot …` lines are the old WordPress reader; this build prints `[site]`.
+
+Two consequences for the next upload: build the artifact from `shamah_cms`, and set
+`NEXT_PUBLIC_SITE_URL` (and the database variables) **before** pressing deploy, because the
+build runs before anything is started.
 
 ### cPanel (AI App Hosting)
 

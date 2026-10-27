@@ -13,9 +13,9 @@ function resolveSiteUrl(): string {
     throw new Error(
       "NEXT_PUBLIC_SITE_URL is not set. It is the single source of the site's " +
         "absolute URL (canonical, og:url, sitemap, robots, JSON-LD, hreflang). " +
-        "Set it in .env.local and the Vercel project before building or serving " +
-        "for production — it must point at the deployed site, not the WordPress " +
-        "import origin.",
+        "Set it in .env.local and in the application's environment before it is " +
+        "built or started for production — it must point at the deployed site, " +
+        "not the WordPress import origin.",
     );
   }
   return "http://localhost:3000";
