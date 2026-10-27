@@ -26,7 +26,6 @@ const passwords = {
   app: randomPassword(),
   test: randomPassword(),
   sessionSecret: randomBytes(32).toString('hex'),
-  previewSecret: randomBytes(32).toString('hex'),
 };
 
 function randomPassword() {
@@ -76,7 +75,6 @@ const names = [
   'DATABASE_URL',
   'LOCAL_DB_ROOT_PASSWORD',
   'SESSION_SECRET',
-  'PREVIEW_SECRET',
 ];
 console.log(`MariaDB provisioned on ${HOST}:${PORT}.`);
 console.log(`Wrote .env.local (shamah_cms) and .env.test (shamah_cms_test) — variables: ${names.join(', ')}.`);
@@ -94,7 +92,6 @@ function envBlock(target, secrets) {
     `DATABASE_URL=${url}`,
     `LOCAL_DB_ROOT_PASSWORD=${secrets.root}`,
     `SESSION_SECRET=${secrets.sessionSecret}`,
-    `PREVIEW_SECRET=${secrets.previewSecret}`,
     '',
   ].join('\n');
 }
