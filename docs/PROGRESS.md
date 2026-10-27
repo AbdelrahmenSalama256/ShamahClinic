@@ -2617,10 +2617,9 @@ owner's word.
       depends on the discarded storage choice: `e0dae71` (slice M) — the Blob branch of
       `src/lib/media/storage.ts`, the `@vercel/blob` line in `package.json`, and the Blob block in
       `.env.example`. One revert-shaped commit removes all three.
-      **Still to do, in order.** A-0, A-2, A-5a, A-4 and the read audit are done (below).
-      Left: A-3 uploads on local disk outside the build output, with a route that serves them ·
-      A-8 the cache statement and the security checklist · A-7 the deploy steps for cPanel and
-      for Cloudways/VPS. `next build` is not run without the owner's word.
+      **Still to do, in order.** A-0, A-2, A-5a, A-4, A-3 and the read audit are done (below).
+      Left: A-8 the cache statement and the security checklist · A-7 the deploy steps for cPanel
+      and for Cloudways/VPS. `next build` is not run without the owner's word.
       **Untouched by all of it.** `shamah-clinic.vercel.app`, its project and its domain; `main`;
       `D:\shamah`; `src/data`; `data/wp/*.json` and `public/wp/*`. Nothing is pushed.
 
@@ -2852,8 +2851,78 @@ owner's word.
       word). No browser was used: the pages answer 200 in both locales, but the per-route *latency*
       improvement is unmeasured, and the `[dbq]` diagnostic must stay off in service.
 
-## Known gaps / notes
-- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
+- [x] A-3 Uploads live on disk outside the app, the app serves them, and a backup of the
+      database and the folder has been put back — `dc39c78` (route + backup), `e611831` (setup fix)
+      **What was wrong.** Everything worked locally for one reason that does not survive deployment:
+      the upload folder was `public/uploads`, so Next served the files as public assets. On the
+      server `MEDIA_ROOT` must point outside the app (a redeploy replaces the app folder) and
+      outside the build output, and then `/uploads/<yyyyMM>/<name>.webp` — the address every row
+      stores — has nothing behind it. Nothing backed up the folder either: `move-data` carried the
+      database, and the pictures existed in exactly one place.
+
+      **The route.** `src/app/uploads/[...path]/route.ts` reads `MEDIA_ROOT/uploads`, resolving the
+      path and checking the result again after `realpath` so a symlink cannot leave the folder; a
+      segment with `..`, `\` or a NUL is refused. Only `.webp` is served — a `.php` planted in the
+      folder is a 404, not an execution. Headers: `Cache-Control: public, max-age=31536000,
+      immutable` (safe because a name is random and never reused), `X-Content-Type-Options:
+      nosniff`, `Content-Disposition: inline`, and `Content-Length` from the stat. GET and HEAD;
+      a miss is a plain 404 with `no-store`. `tests/uploads-route.test.ts` 8/8: bytes and headers,
+      missing file, `..`, backslash, wrong extension, a directory, a symlink out of the folder,
+      HEAD.
+
+      **The backup.** `npm run backup` (`scripts/backup/run.mjs`, plain JS — the server has no tsx),
+      dry run unless `--apply`: one `backup-<UTC stamp>/` folder with `db.json.gz` (the same dump
+      `db:move-data` writes, source opened read-only), `uploads.tar.gz` and `manifest.json` (sizes
+      and SHA-256 of both files, database host and name only, never a credential). Retention keeps
+      the newest `--keep` and deletes only folders matching its own stamp pattern — a stray file or
+      folder in the backup directory is never touched. A failed run deletes the folder it just
+      created, so a half-written backup cannot pass for one. The archive is written by a small
+      in-process ustar + gzip writer (`scripts/backup/tar.mjs`) after the system `tar` failed on
+      this machine: GNU tar read `C:\…` as a remote host ("Cannot connect to C: resolve failed").
+      A backup that only works on the machine that wrote it is not a backup. `tests/backup.test.ts`
+      8/8 covers argument rules, the dry-run default, stamp sort and retention, `folderStats` and
+      the hash of known bytes.
+
+      **The tested restore (2026-10-27).** Scratch database `shamah_cms_restore_probe` created by
+      `server-setup.mjs --create --apply` on an empty server, then `move-data restore --replace
+      --apply` from the real backup: 8 migrations / 40 tables, **39 tables / 941 rows**, every
+      count equal and every content hash `match`; 22 JSON columns verified on read — 160
+      `audit_log.before_json`, 233 `after_json`, 253 `revisions.snapshot`, 99 `list_items.draft`,
+      95 `published`, 7 `lists.item_schema`, 6 `offers.images`, 4 `leads.fields`, 15
+      `role_permissions.scope` — all decoded, 0 arrived as text; `app_migrations` 8 = 8. The
+      uploads archive extracted with system `tar` gives 12 files / 511,402 bytes and all 12 SHA-256
+      hashes identical to the live folder; the manifest's two hashes match the files on disk. The
+      probe database, its grant and the probe env file (it holds the password) were then removed;
+      `mysql.db` now lists only `shamah_cms` for the app user.
+
+      **Fixed on the way.** `server-setup.mjs --create` without `--apply` printed its plan and then
+      connected with credentials that do not exist yet, so the documented first run against an
+      empty server ended in "Access denied". It now stops after the plan and says why. It also
+      creates the account at `DATABASE_HOST` (not a hard-coded `localhost`): with name resolution
+      off, a connection from 127.0.0.1 never matches an account created at `localhost`, and the
+      error reads as a missing grant. `tests/server-setup.test.ts` gains that case (4/4).
+
+      **Changed contracts, documented as the rule asks.** (1) `/uploads/<path>` is now served by a
+      route handler rather than as a public file: same bytes, but only `.webp` and with immutable
+      caching. The measured folder holds 12 files, all `.webp`, so nothing reachable today is lost.
+      (2) `npm run backup` is a new script; no route, action, table or public prop changed.
+      (3) `.env.example` describes `MEDIA_ROOT` as the parent of `uploads/` and says the folder must
+      not be executable; `.gitignore` loses its "the durable home is the Blob driver" comment.
+      (4) `docs/SELF-HOSTED.md` is new: folder layout, an Apache block for serving it without the
+      app, the cron line, retention, the restore procedure and the restore result above.
+
+      **Gates.** Typecheck clean, lint clean on all touched files, focused tests 20/20, full run
+      **33 files / 694 passed, 0 failed** (was 31/677). Working tree clean before this docs commit.
+
+      **Not verified.** No server, no browser: the route was exercised by calling the handler in a
+      test, not by a running Node process serving a real upload over HTTPS; the cron entry has not
+      been installed anywhere; the archive was extracted on this machine, not on the VPS; and the
+      restore went into the local MariaDB 11.4.13, not the cPanel one — same engine, but the
+      server's version and `max_allowed_packet` still have to be checked before the first real
+      move. Backups also sit on the same disk as the data until the owner copies them off the
+      server.
+
+## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
 - **A byte-for-byte HTML comparison is only stable on some routes.** `/` hashes the same across cold renders of the
