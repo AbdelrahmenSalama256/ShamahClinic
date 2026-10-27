@@ -1,8 +1,3 @@
-a,
-button,
-div {
-  transition: 0.3s all ease;
-}
 /* --- button ---------------------------------------------------------------- */
 .console-btn {
   display: inline-flex;
@@ -17,7 +12,7 @@ div {
   color: var(--c-text);
   font: inherit;
   font-size: var(--c-font-size);
-  font-weight: 500;
+  font-weight: 800;
   text-decoration: none;
   cursor: pointer;
   transition:
@@ -141,10 +136,16 @@ div {
 }
 
 /* --- field ----------------------------------------------------------------- */
-.console-field {
+/* One painter for both sheets: `console.css` places a field inside its bar or its form,
+   this file draws one. A doc field is the same column with a `span` for its name, so the
+   pair shares the box and only the label rule tells them apart. */
+.console-field,
+.console-doc-field {
   display: flex;
   flex-direction: column;
-  gap: var(--c-gap-tight);
+  align-items: stretch;
+  gap: 0.5rem;
+  min-inline-size: 0;
   margin-block-end: var(--c-stack);
 }
 
@@ -155,12 +156,17 @@ div {
   flex-direction: column;
 }
 
-.console-field > label {
-  color: var(--c-text-2);
-  font-size: var(--c-font-small);
+/* `:not(.console-check)`: a flag row nests its own label under the field, and that label is
+   the control, not a caption above one. */
+.console-field > label:not(.console-check) {
+  display: block;
+  color: var(--c-text);
+  font-size: var(--c-font-micro);
+  font-weight: 650;
+  line-height: 1.5;
 }
 
-.console-field[data-invalid] > label {
+.console-field[data-invalid] > label:not(.console-check) {
   color: var(--c-danger);
 }
 
@@ -171,23 +177,35 @@ div {
 }
 
 .console-control {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
   min-block-size: var(--c-tap-field);
-  padding: var(--c-sp-2) var(--c-sp-3);
+  padding: 0.6rem 0.75rem;
   border: 1px solid var(--c-line-strong);
-  border-radius: var(--c-r-md);
-  background: var(--c-surface-soft);
+  border-radius: var(--c-r-ctl);
+  background: var(--c-surface);
   color: var(--c-text);
   font: inherit;
-  font-size: var(--c-font-size);
+  font-size: var(--c-font-ctl);
+  line-height: 1.5;
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.04);
   transition:
-    border-color var(--c-dur-fast) var(--c-ease-soft),
+    border-color var(--c-dur-base) ease,
+    background-color var(--c-dur-base) ease,
+    box-shadow var(--c-dur-base) ease,
     opacity var(--c-dur-fast) var(--c-ease-soft);
 }
 
-/* `:where()` is load-bearing: written as two plain rules, the hover selector would
-   outrank the invalid one below and a red field would turn gold under a cursor. */
-.console-control:where(:hover:not(:disabled), :focus) {
+/* `:where()` is load-bearing: written as plain rules, the hover selector would outrank the
+   invalid one below and a red field would turn gold under a cursor. */
+.console-control:where(:hover:not(:disabled)) {
+  border-color: color-mix(in srgb, var(--c-accent) 55%, var(--c-line-strong));
+}
+
+.console-control:where(:focus, :focus-visible) {
   border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px var(--c-tint);
 }
 
 textarea.console-control {
@@ -197,9 +215,11 @@ textarea.console-control {
   overflow-wrap: anywhere;
 }
 
-/* The native arrow is drawn on the reading side in both directions, so no `[dir]` rule. */
+/* The native arrow is drawn on the reading side in both directions, so no `[dir]` rule —
+   and `text-align` needs none either, since `start` is the default and follows the box. */
 select.console-control {
-  padding-inline-end: var(--c-sp-2);
+  padding-inline-end: 1.75rem;
+  cursor: pointer;
 }
 
 .console-control[data-bar] {
@@ -214,14 +234,43 @@ select.console-control {
   appearance: none;
 }
 
-.console-control:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+/* A number is never a long word, and a field that stretches to the line makes a rank look
+   like a title. Below the editor's own breakpoint the pair has already stacked. */
+.console-control[type="number"] {
+  max-inline-size: 11rem;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Read-only is not disabled: the words are still there to be read and copied. */
+@media (max-width: 680px) {
+  .console-control[type="number"] {
+    max-inline-size: none;
+  }
+}
+
+/* In an inline row the control is as wide as its own words, not as wide as the line. */
+.console-inline .console-control {
+  inline-size: auto;
+  min-inline-size: 4.75rem;
+}
+
+@media (max-width: 639.98px) {
+  .console-list-bar .console-inline .console-control {
+    flex: 0 0 6.25rem;
+  }
+}
+
+/* Muted, not hidden: a disabled or read-only field keeps every character to be read and
+   copied, and only says with its cursor that typing is refused. */
+.console-control:disabled,
 .console-control[readonly] {
+  background: var(--c-surface-soft);
+  color: var(--c-text-2);
+  cursor: not-allowed;
   opacity: 0.7;
+}
+
+.console-control::placeholder {
+  color: var(--c-text-3);
 }
 
 .console-control[aria-invalid="true"] {
@@ -235,24 +284,27 @@ select.console-control {
 }
 /* --- checkbox -------------------------------------------------------------- */
 /* The native box, painted by the platform: the kit's markup is a label around the
-   input and its words, so hiding the input would leave the person with nothing. */
+   input and its words, so hiding the input would leave the person with nothing. The label
+   stays in the row it belongs to — a table cell, a bulk bar, a flag field — and nothing
+   else can move it. */
 .console-check {
-  align-items: center;
-  gap: var(--c-sp-2);
-  color: var(--c-text);
-  font-size: var(--c-font-size);
-  cursor: pointer;
   display: inline-flex;
-  position: absolute;
-  right: 12px;
-  top: 20px;
+  align-items: center;
+  gap: 0.55rem;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  color: var(--c-text);
+  font-size: var(--c-font-ctl);
+  font-weight: 650;
+  cursor: pointer;
 }
 
-.console-check input {
-  flex-shrink: 0;
-  inline-size: var(--c-sp-5);
-  block-size: var(--c-sp-5);
+.console-check input[type="checkbox"] {
+  flex: none;
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
   margin: 0;
+  cursor: pointer;
   accent-color: var(--c-focus);
 }
 
@@ -903,4 +955,9 @@ select.console-control {
   clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
+}
+.console-lead-contact svg {
+  width: auto;
+  border-radius: initial;
+  margin: 0;
 }

@@ -1,46 +1,37 @@
 /*
- * Console chrome: the tokens every screen reads, the responsive frame, and the shared
- * primitives (cards, fields, buttons, the list/editor workspace).
+ * Console chrome: tokens, responsive frame, and ONE shared component kit.
  *
- * This file is self-contained. Every custom property it reads is declared in the
- * token block below under the `--c-` prefix; it imports no site stylesheet and reads
- * no site token (`--bg-*`, `--text-*`, `--hairline*`, `--tap`, `--sp-*`, `--z-*`,
- * the shared control library). The two surfaces share a design language, not a stylesheet.
+ * Self-contained: every custom property is declared below under the `--c-` prefix.
+ * No site stylesheet is imported and no site token is read.
  *
- * One attribute sets the whole look, written by the server from the prefs cookie
- * (src/lib/console/prefs.ts), so there is no script and no flash:
- *   data-theme='light'|'dark'   the console's own palette, below
- * There is one comfortable rhythm; no density switch exists to vary it.
- *
- * Three breakpoints, spelled out in px because a media query cannot read a custom
- * property — they are also named in the row that introduced them (docs/PROGRESS.md, 13.1):
- *   1024px  at or above it the sidebar is a column; below it the sidebar is an
- *           off-canvas drawer opened by the header toggle
- *    900px  at or above it the content workspace splits list | editor; below it the
- *           editor stacks under the list. Deliberately lower than 1024: what that grid
- *           needs is 900px of *content* width, and below 1024 the sidebar is out of the
- *           flow, so the content has the whole viewport.
- *    640px  below it the same links are also mirrored into a sticky horizontal tab bar,
- *           so a phone can change screen without opening anything
- *
- * Logical properties (`-inline-*`) throughout so the same file works in RTL; the one
- * physical property is the drawer's slide, which gets its sign from `[dir]`.
+ * One attribute sets the look, written by the server from the prefs cookie:
+ *   data-theme='light'|'dark'
  *
  * ---------------------------------------------------------------------------
- * Design language (2026): SOFT / TONAL / ROOMY
- *   Surfaces separate by tone and a faint ring, not by rules. Corners are generous,
- *   depth is a short, quiet lift, labels are sentence case, and the active state is
- *   a gold-tinted pill. The one signature is the arch: it stays on the leads screen
- *   (empty state and the detail avatar). Motion is 160–240ms and answers an action.
+ * ONE DESIGN SYSTEM (the "bottom" style: glass bars, shimmer buttons, 1px lines)
+ *   - Every control/button is the same object: 2.5rem tall, --c-r-ctl corners,
+ *     1px line, 13px type, a light sheen, a shimmer sweep and a 2px lift on hover.
+ *   - Variants are data attributes, never new classes:
+ *       .console-btn[data-variant="primary|success|danger|ghost"], [data-size="sm"]
+ *   - Every bar (pager, editor bar, list bar) shares one glass shell.
+ *   - Every soft panel (status, rows, settings cards) shares one surface.
+ *   - Tones (ok / warn / error) are defined once for badges, alerts and counts.
+ *   - No per-component colour variables (--editor-*, --list-bar-*, --pager-*):
+ *     everything reads the --c-* tokens, so light and dark both work.
+ *   - To re-brand the primary action change --c-primary-* only.
+ *
+ * Breakpoints (px, because a media query cannot read a custom property):
+ *   1024  sidebar column  |  below: off-canvas drawer
+ *    900  list | editor split
+ *    640  sticky horizontal tab bar on phones
+ *
+ * Logical properties throughout so the file works in RTL.
  * ---------------------------------------------------------------------------
  */
 
-/* --- tokens ---------------------------------------------------------------- */
-/*
- * One palette, owned here. Light and dark are both declared on the console root,
- * keyed on the console's own `data-theme` (written by the console layout from the
- * prefs cookie), so an `html[data-theme]` rule elsewhere cannot repaint the console.
- */
+/* =========================================================================
+   1. TOKENS
+   ========================================================================= */
 [data-surface="console"] {
   color-scheme: light;
 
@@ -58,18 +49,30 @@
   --c-accent: #85640f;
   --c-success: #0a6636;
   --c-danger: #b3261e;
+  --c-on-danger: #ffffff;
   --c-on-fill: #fffaf0;
+  --c-warn: #94631c;
+  --c-warn-bg: #fbf1dc;
+  --c-warn-line: #ead5a9;
   --c-line: rgba(33, 26, 22, 0.1);
   --c-line-strong: rgba(33, 26, 22, 0.16);
   --c-focus: #85640f;
   --c-overlay: rgb(20 14 10 / 0.45);
   --c-backdrop: rgb(0 0 0 / 45%);
 
-  /* Type. The console layout puts the family `next/font` loaded on the root as
-     `--font-tajawal`; the stack after it is the fallback while the file loads. */
+  /* Primary action (the only non-theme colour; change here to re-brand) */
+  --c-primary-a: #637cff;
+  --c-primary-b: #7868e9;
+  --c-primary-a-hover: #7890ff;
+  --c-primary-b-hover: #8b7aff;
+  --c-primary-line: rgb(145 155 255 / 0.55);
+  --c-primary-glow: #818cf8;
+
+  /* Type */
   --c-font: var(--font-tajawal), "Segoe UI", Tahoma, Arial, sans-serif;
   --c-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
   --c-font-size: 0.9rem;
+  --c-font-ctl: 0.8125rem;
   --c-font-small: 0.8rem;
   --c-font-micro: 0.75rem;
   --c-font-title: 1.5rem;
@@ -97,23 +100,40 @@
   --c-list-h: 36rem;
   --c-off: translateX(-100%);
 
-  /* Targets. `--c-tap` is the floor for everything a finger hits. */
+  /* Targets */
   --c-tap: 2.75rem;
+  --c-ctl-h: 2.5rem;
+  --c-ctl-h-sm: 2.05rem;
   --c-tap-field: 2.75rem;
 
-  /* Soft local radii. */
+  /* Radii */
   --c-r-xs: 0.35rem;
   --c-r-sm: 0.55rem;
+  --c-r-ctl: 0.65rem;
   --c-r-md: 0.85rem;
+  --c-r-panel: 1rem;
   --c-r-lg: 1.15rem;
   --c-r-pill: 999px;
 
-  /* Depth: a ring that replaces the border, and a short, quiet lift. */
+  /* Depth */
   --c-ring: 0 0 0 1px var(--c-line);
   --c-lift: 0 1px 2px rgb(0 0 0 / 0.04), 0 10px 24px -14px rgb(0 0 0 / 0.18);
+  --c-lift-sm: 0 6px 16px rgb(0 0 0 / 0.1);
   --c-lift-lg: 0 14px 32px -12px rgb(0 0 0 / 0.3);
+  --c-sheen: rgb(255 255 255 / 0.6);
+  --c-bar-shadow: 0 8px 24px rgb(0 0 0 / 0.07), inset 0 1px 0 var(--c-sheen);
+  --c-bar-shadow-hover:
+    0 12px 30px rgb(0 0 0 / 0.1), inset 0 1px 0 var(--c-sheen);
   --c-tint: color-mix(in srgb, var(--c-accent) 13%, transparent);
   --c-tint-strong: color-mix(in srgb, var(--c-accent) 24%, transparent);
+  --c-fill: color-mix(in srgb, var(--c-text) 4%, transparent);
+  --c-glass:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--c-text) 5%, transparent),
+      color-mix(in srgb, var(--c-text) 1.5%, transparent)
+    ),
+    color-mix(in srgb, var(--c-surface) 86%, transparent);
 
   /* Stacking */
   --c-z-sticky: 30;
@@ -128,6 +148,7 @@
   --c-dur-fast: 140ms;
   --c-dur-base: 160ms;
   --c-dur-slow: 240ms;
+  --c-dur-shine: 450ms;
   --c-dur-shimmer: 1100ms;
   --c-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --c-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -150,21 +171,32 @@
   --c-accent: #e1c15b;
   --c-success: #3ddc84;
   --c-danger: #f2a0a0;
+  --c-on-danger: #211a16;
   --c-on-fill: #211a16;
+  --c-warn: #f0ca83;
+  --c-warn-bg: #3b3020;
+  --c-warn-line: #65502e;
   --c-line: rgba(245, 238, 230, 0.12);
   --c-line-strong: rgba(245, 238, 230, 0.2);
   --c-focus: #e1c15b;
   --c-overlay: rgb(0 0 0 / 0.6);
   --c-backdrop: rgb(0 0 0 / 55%);
+  --c-sheen: rgb(255 255 255 / 0.05);
   --c-lift: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 24px -14px rgb(0 0 0 / 0.5);
+  --c-lift-sm: 0 6px 16px rgb(0 0 0 / 0.3);
   --c-lift-lg: 0 14px 32px -12px rgb(0 0 0 / 0.55);
+  --c-bar-shadow: 0 8px 24px rgb(0 0 0 / 0.25), inset 0 1px 0 var(--c-sheen);
+  --c-bar-shadow-hover:
+    0 12px 30px rgb(0 0 0 / 0.35), inset 0 1px 0 var(--c-sheen);
 }
 
 [data-surface="console"][dir="rtl"] {
   --c-off: translateX(100%);
 }
 
-/* --- base ----------------------------------------------------------------- */
+/* =========================================================================
+   2. BASE + SCOPED RESET
+   ========================================================================= */
 .console-body {
   margin: 0;
   min-height: 100vh;
@@ -177,15 +209,7 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* --- scoped reset and element defaults -------------------------------------
- * The console imports no site stylesheet, so it cannot lean on one for the browser's
- * defaults. Everything below is scoped to the surface: boxes are border-box, headings
- * and paragraphs start at zero margin, a control inherits the console's type, and the
- * form elements a screen draws by hand still look like a field. The console kit in the
- * next section builds on these defaults rather than restating them.
- */
-/* The reset lives in a layer so every class a component writes outranks it: a
- * primitive may restyle a button without having to out-specify an element rule. */
+/* The reset lives in a layer so every class a component writes outranks it. */
 @layer console-reset {
   [data-surface="console"],
   [data-surface="console"] *,
@@ -246,10 +270,11 @@
     cursor: pointer;
   }
 
+  /* Raw form elements already look like a .console-control. */
   [data-surface="console"] :where(input, select, textarea) {
     margin: 0;
     border: 1px solid var(--c-line-strong);
-    border-radius: var(--c-r-sm);
+    border-radius: var(--c-r-ctl);
     background: var(--c-surface);
     color: var(--c-text);
     font: inherit;
@@ -302,7 +327,8 @@
     border-block-start: 1px solid var(--c-line);
   }
 
-  [data-surface="console"] :where(img, svg, video) {
+  /* Photos fill their box; inline icons are just blocks (they size themselves). */
+  [data-surface="console"] :where(img, video) {
     display: block;
     width: 100%;
     height: 100%;
@@ -311,10 +337,32 @@
     object-fit: cover;
   }
 
+  [data-surface="console"] :where(svg) {
+    display: block;
+    max-inline-size: 100%;
+  }
+
+  /* The UA outline is the one thing two sheets cannot draw twice: the ring below is the
+     keyboard indicator, and each component adds its own focus shadow. */
+  [data-surface="console"] :where(input, select, textarea) {
+    outline: none;
+  }
+
   [data-surface="console"]
     :where(a, button, input, select, textarea, [tabindex]):focus-visible {
     outline: 2px solid var(--c-focus);
     outline-offset: 2px;
+  }
+
+  /* Soft default transition for interactive elements. It replaces the old
+     global `a, button, div { transition: .3s all ease !important }`: it is
+     scoped, specific to the properties that change, and any component that
+     writes its own transition simply overrides it. */
+  [data-surface="console"] :where(a, button, input, select, textarea, summary) {
+    transition-property:
+      color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--c-dur-base);
+    transition-timing-function: var(--c-ease-soft);
   }
 
   [data-surface="console"] ::selection {
@@ -322,7 +370,6 @@
     color: var(--c-text);
   }
 
-  /* The site's scrollbar stays gold-on-cream; the console's is quiet. */
   [data-surface="console"] ::-webkit-scrollbar {
     inline-size: 6px;
     block-size: 6px;
@@ -340,19 +387,348 @@
   [data-surface="console"] ::-webkit-scrollbar-thumb:hover {
     background: var(--c-text-3);
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    [data-surface="console"] *,
-    [data-surface="console"] *::before,
-    [data-surface="console"] *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
 }
 
-/* --- the frame ------------------------------------------------------------- */
+/* =========================================================================
+   3. THE SHARED KIT
+   Buttons, controls, fields, badges, alerts, chips, notes.
+   Everything below this section reuses these; nothing restyles them.
+   ========================================================================= */
+
+/* --- buttons: one object, four class names ---------------------------------
+   .console-btn is the standard. The header toggle, the drawer close and the
+   square tools wear the same skin. Variants only swap the --c-b-* variables. */
+:is(.console-btn, .console-toggle, .console-side-close, .console-tool) {
+  --c-b-fg: var(--c-text);
+  --c-b-bg: var(--c-fill);
+  --c-b-line: var(--c-line-strong);
+  --c-b-hfg: var(--c-text);
+  --c-b-hbg: var(--c-tint);
+  --c-b-hline: color-mix(in srgb, var(--c-accent) 55%, var(--c-line-strong));
+  --c-b-hshadow: var(--c-lift-sm);
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-block-size: var(--c-ctl-h);
+  max-inline-size: 100%;
+  padding: 0 1rem;
+  color: var(--c-b-fg);
+  background: var(--c-b-bg);
+  border: 1px solid var(--c-b-line);
+  border-radius: var(--c-r-ctl);
+  box-shadow: inset 0 1px 0 var(--c-sheen);
+  font: inherit;
+  font-size: var(--c-font-ctl);
+  font-weight: 650;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color var(--c-dur-base) var(--c-ease-soft),
+    background-color var(--c-dur-base) var(--c-ease-soft),
+    border-color var(--c-dur-base) var(--c-ease-soft),
+    box-shadow var(--c-dur-base) var(--c-ease-soft),
+    transform var(--c-dur-base) cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* the shimmer sweep */
+:is(.console-btn, .console-toggle, .console-side-close, .console-tool)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    110deg,
+    transparent 20%,
+    rgb(255 255 255 / 0.16) 50%,
+    transparent 80%
+  );
+  transform: translateX(-130%);
+  transition: transform var(--c-dur-shine) ease;
+  pointer-events: none;
+}
+
+:is(.console-btn, .console-toggle, .console-side-close, .console-tool):not(
+    :disabled
+  ):hover {
+  color: var(--c-b-hfg);
+  background: var(--c-b-hbg);
+  border-color: var(--c-b-hline);
+  box-shadow:
+    var(--c-b-hshadow),
+    inset 0 1px 0 var(--c-sheen);
+  transform: translateY(-2px);
+}
+
+:is(.console-btn, .console-toggle, .console-side-close, .console-tool):not(
+    :disabled
+  ):hover::before {
+  transform: translateX(130%);
+}
+
+:is(.console-btn, .console-toggle, .console-side-close, .console-tool):not(
+    :disabled
+  ):active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: none;
+}
+
+:is(
+  .console-btn,
+  .console-toggle,
+  .console-side-close,
+  .console-tool
+):disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.console-btn svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+  flex: none;
+  margin: 0;
+  border-radius: 0;
+}
+
+.console-btn[data-size="sm"] {
+  min-block-size: var(--c-ctl-h-sm);
+  padding: 0 0.7rem;
+  border-radius: var(--c-r-sm);
+  font-size: var(--c-font-micro);
+}
+
+/* variants */
+.console-btn[data-variant="primary"] {
+  --c-b-fg: #fff;
+  --c-b-bg: linear-gradient(120deg, var(--c-primary-a), var(--c-primary-b));
+  --c-b-line: var(--c-primary-line);
+  --c-b-hfg: #fff;
+  --c-b-hbg: linear-gradient(
+    120deg,
+    var(--c-primary-a-hover),
+    var(--c-primary-b-hover)
+  );
+  --c-b-hline: var(--c-primary-line);
+  --c-b-hshadow: 0 8px 22px rgb(99 124 255 / 0.3);
+}
+
+.console-btn[data-variant="success"],
+.console-editor-bar > .console-btn[data-variant="default"]:nth-child(2) {
+  --c-b-line: color-mix(in srgb, var(--c-success) 28%, var(--c-line));
+  --c-b-hfg: var(--c-success);
+  --c-b-hbg: color-mix(in srgb, var(--c-success) 12%, transparent);
+  --c-b-hline: color-mix(in srgb, var(--c-success) 50%, transparent);
+  --c-b-hshadow: 0 6px 18px color-mix(in srgb, var(--c-success) 14%, transparent);
+}
+
+.console-btn[data-variant="danger"] {
+  --c-b-fg: var(--c-danger);
+  --c-b-bg: color-mix(in srgb, var(--c-danger) 6%, transparent);
+  --c-b-line: color-mix(in srgb, var(--c-danger) 28%, transparent);
+  --c-b-hfg: var(--c-on-danger);
+  --c-b-hbg: var(--c-danger);
+  --c-b-hline: var(--c-danger);
+  --c-b-hshadow: 0 7px 20px color-mix(in srgb, var(--c-danger) 25%, transparent);
+}
+
+.console-btn[data-variant="ghost"],
+.console-editor-bar > .console-btn:nth-child(4) {
+  --c-b-bg: transparent;
+  --c-b-line: transparent;
+  --c-b-hbg: color-mix(in srgb, var(--c-text) 8%, transparent);
+  --c-b-hline: var(--c-line-strong);
+  --c-b-hshadow: none;
+  box-shadow: none;
+}
+
+/* --- placements around a control -------------------------------------------- */
+/* The control itself is painted once, in `console-kit.css`. What is left here is where a
+   control sits inside a bar of this surface, which is the frame sheet's own business. */
+.console-search {
+  flex: 1 1 14rem;
+  min-inline-size: 0;
+  max-inline-size: 27.5rem;
+}
+
+.console-search::-webkit-search-cancel-button {
+  cursor: pointer;
+}
+
+.console-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--c-text-2);
+  font-size: var(--c-font-micro);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* --- notes and counts ----------------------------------------------------- */
+.console-note {
+  display: block;
+  color: var(--c-text-2);
+  font-size: 0.6875rem;
+  font-weight: 450;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.console-count {
+  margin-inline-start: auto;
+  color: var(--c-text-3);
+  font-size: var(--c-font-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- badge + alert: same tones, defined once ------------------------------- */
+.console-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-pill);
+  background: var(--c-surface-soft);
+  color: var(--c-text);
+  font-size: 0.6875rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
+.console-doc-label > .console-badge {
+  font-size: 0.625rem;
+  font-weight: 600;
+}
+
+.console-alert {
+  margin: 0;
+  padding: 0.75rem 0.95rem;
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-md);
+  background: var(--c-surface-soft);
+  color: var(--c-text);
+  font-size: var(--c-font-micro);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+:is(.console-badge, .console-alert, .console-count)[data-tone="ok"] {
+  color: var(--c-success);
+  background: color-mix(in srgb, var(--c-success) 8%, var(--c-surface));
+  border-color: color-mix(in srgb, var(--c-success) 24%, var(--c-line));
+}
+
+:is(.console-badge, .console-alert, .console-count)[data-tone="warn"] {
+  color: var(--c-warn);
+  background: var(--c-warn-bg);
+  border-color: var(--c-warn-line);
+}
+
+:is(.console-badge, .console-alert, .console-count)[data-tone="error"],
+:is(.console-badge, .console-alert, .console-count)[data-tone="danger"] {
+  color: var(--c-danger);
+  background: color-mix(in srgb, var(--c-danger) 8%, var(--c-surface));
+  border-color: color-mix(in srgb, var(--c-danger) 24%, var(--c-line));
+}
+
+/* --- chips ---------------------------------------------------------------- */
+.console-chip-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  min-inline-size: 0;
+  padding: 0.25rem;
+  background: var(--c-surface-soft);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-md);
+}
+
+.console-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-block-size: 2.25rem;
+  padding: 0 0.75rem;
+  color: var(--c-text-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--c-r-sm);
+  font: inherit;
+  font-size: var(--c-font-ctl);
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.console-chip:hover {
+  color: var(--c-text);
+  background: var(--c-hover);
+}
+
+.console-chip[data-active="true"],
+.console-chip[aria-pressed="true"] {
+  color: var(--c-text);
+  background: var(--c-surface);
+  border-color: var(--c-line);
+  box-shadow: 0 2px 7px rgb(0 0 0 / 0.07);
+}
+
+/* --- soft panels: one surface ---------------------------------------------- */
+.console-detail-status,
+.console-doc-unknown,
+.console-doc-row,
+.console-doc-child,
+.settings-page,
+.settings-banner {
+  background: var(--c-surface-soft);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-md);
+}
+
+/* --- glass bars: one shell for pager, editor bar and list bar ---------------- */
+:is(.console-pager, .console-editor-bar, .console-list-bar) {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0.85rem 1rem;
+  background: var(--c-glass);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-panel);
+  box-shadow: var(--c-bar-shadow);
+  transition:
+    border-color 250ms ease,
+    box-shadow 250ms ease;
+}
+
+:is(.console-pager, .console-editor-bar, .console-list-bar):hover {
+  border-color: color-mix(in srgb, var(--c-accent) 30%, var(--c-line));
+  box-shadow: var(--c-bar-shadow-hover);
+}
+
+/* =========================================================================
+   4. THE FRAME
+   ========================================================================= */
 .console-frame {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -404,9 +780,7 @@
   color: var(--c-text-3);
 }
 
-/* The three utilities are one shape: a square the size of a finger, one border, one
-   radius, one stroke weight. The glyph is the whole label, so each carries an
-   `aria-label` for the screen reader and a `title` for a pointer that hovers. */
+/* Square utilities: size only; the skin is the shared button above. */
 .console-tool {
   inline-size: var(--c-tap);
   min-inline-size: var(--c-tap);
@@ -423,26 +797,7 @@
   stroke-width: 1.75;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-
-.console-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: var(--c-tap);
-  padding: 0 1rem;
-  border: 0;
-  border-radius: var(--c-r-pill);
-  background: var(--c-bg-alt);
-  box-shadow: var(--c-ring);
-  color: var(--c-text);
-  font-size: var(--c-font-size);
-  font-weight: 500;
-  text-decoration: none;
-  white-space: nowrap;
-  transition:
-    background var(--c-dur-base) var(--c-ease-soft),
-    box-shadow var(--c-dur-base) var(--c-ease-soft);
+  margin: 0;
 }
 
 .console-toggle-mark {
@@ -456,11 +811,6 @@
   stroke: currentColor;
   stroke-width: 1.75;
   stroke-linecap: round;
-}
-
-.console-toggle:hover {
-  background: var(--c-tint);
-  box-shadow: 0 0 0 1px var(--c-line-strong);
 }
 
 .console-main {
@@ -520,25 +870,13 @@
   color: var(--c-text-3);
 }
 
+/* skin = shared button; this only makes it the small size */
 .console-side-close {
-  display: inline-flex;
-  align-items: center;
-  min-height: 2.1rem;
+  min-block-size: var(--c-ctl-h-sm);
   padding: 0 0.85rem;
-  border-radius: var(--c-r-pill);
-  box-shadow: var(--c-ring);
-  color: var(--c-text-2);
+  border-radius: var(--c-r-sm);
   font-size: var(--c-font-small);
   font-weight: 500;
-  text-decoration: none;
-  transition:
-    background var(--c-dur-base) var(--c-ease-soft),
-    color var(--c-dur-base) var(--c-ease-soft);
-}
-
-.console-side-close:hover {
-  background: var(--c-bg-alt);
-  color: var(--c-text);
 }
 
 .console-nav {
@@ -564,8 +902,7 @@
     color var(--c-dur-base) var(--c-ease-soft);
 }
 
-/* Sign-out is the one row that acts instead of navigating: a DELETE, not an address a
-   browser could prefetch. It keeps the row's shape and loses only the browser's chrome. */
+/* Sign-out acts instead of navigating, but keeps the row's shape. */
 .console-nav button.console-nav-link {
   inline-size: 100%;
   border: 0;
@@ -591,7 +928,6 @@
   font-weight: 600;
 }
 
-/* The active marker is a small gold dot at the end of the pill. */
 .console-nav a[aria-current="page"]::before {
   content: "";
   position: absolute;
@@ -602,14 +938,6 @@
   margin-block-start: -0.2rem;
   border-radius: 50%;
   background: var(--c-accent);
-}
-
-.console-nav a:focus-visible,
-.console-nav button.console-nav-link:focus-visible,
-.console-toggle:focus-visible,
-.console-side-close:focus-visible {
-  outline: 2px solid var(--c-focus);
-  outline-offset: 2px;
 }
 
 /* --- the phone tab bar ----------------------------------------------------- */
@@ -628,7 +956,6 @@
   display: none;
 }
 
-/* The same list, laid along the strip instead of down the column. */
 .console-nav-strip .console-nav-list {
   flex-direction: row;
   align-items: center;
@@ -751,6 +1078,10 @@ details[open] > .console-nav-head .console-nav-caret {
   opacity: 0.7;
 }
 
+.console-nav-confirm {
+  border-color: var(--c-danger);
+}
+
 /* --- the command palette --------------------------------------------------- */
 .console-palette {
   inline-size: min(38rem, 92vw);
@@ -855,13 +1186,22 @@ details[open] > .console-nav-head .console-nav-caret {
   display: none;
 }
 
-/* --- shared primitives ----------------------------------------------------- */
+/* =========================================================================
+   5. SHARED PRIMITIVES
+   ========================================================================= */
 .console-heading {
   margin: 0 0 0.5rem;
   font-size: 1.5rem;
   font-weight: 650;
   letter-spacing: -0.025em;
   line-height: 1.2;
+}
+
+.console-subheading {
+  margin: 0 0 0.65rem;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 .console-grid {
@@ -889,11 +1229,18 @@ details[open] > .console-nav-head .console-nav-caret {
   max-width: var(--c-panel-w);
 }
 
+.console-panel > .console-note,
+.console-content > .console-note {
+  display: block;
+  margin-block-start: var(--c-stack);
+}
+
 .console-controls {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--c-gap-tight);
+  gap: var(--c-sp-2);
+  min-inline-size: 0;
 }
 
 .console-account-site {
@@ -939,13 +1286,113 @@ details[open] > .console-nav-head .console-nav-caret {
   width: min(25rem, 100%);
 }
 
-.console-panel > .console-note,
-.console-content > .console-note {
-  display: block;
-  margin-block-start: var(--c-stack);
+/* =========================================================================
+   6. BARS: only what is specific to each (the shell is in section 3)
+   ========================================================================= */
+
+/* list bar */
+.console-list-bar .console-controls {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  margin-inline-start: auto;
 }
 
-/* --- the content screens --------------------------------------------------- */
+/* pager */
+.console-pager {
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-block-start: 1.1rem;
+}
+
+.console-pager .console-note {
+  white-space: nowrap;
+  font-weight: 500;
+  letter-spacing: 0.025em;
+}
+
+.console-pager .console-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline-start: 0;
+}
+
+.console-pager .console-count::before {
+  content: "";
+  inline-size: 7px;
+  block-size: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: var(--c-primary-glow);
+  box-shadow: 0 0 12px
+    color-mix(in srgb, var(--c-primary-glow) 55%, transparent);
+}
+
+.console-pager .console-controls {
+  justify-content: center;
+  gap: 0.75rem;
+  margin-inline-start: auto;
+}
+
+.console-pager .console-controls > .console-note {
+  padding: 0.5rem 0.7rem;
+  color: var(--c-text);
+  background: color-mix(in srgb, var(--c-primary-glow) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--c-primary-glow) 20%, transparent);
+  border-radius: var(--c-r-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.console-pager .console-btn svg {
+  inline-size: 0.95rem;
+  block-size: 0.95rem;
+  flex: 0 0 0.95rem;
+  transition: transform var(--c-dur-base) ease;
+}
+
+.console-pager .console-btn:first-child:hover svg {
+  transform: translateX(-3px);
+}
+
+.console-pager .console-btn:last-child:hover svg {
+  transform: translateX(3px);
+}
+
+/* editor bar */
+.console-editor-bar {
+  position: sticky;
+  bottom: 0.9rem;
+  z-index: 6;
+  min-block-size: var(--c-tap);
+  margin-block: 1.1rem;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.console-editor-bar .console-count {
+  margin-inline-start: auto;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-sm);
+  background: var(--c-surface);
+  font-size: 0.6875rem;
+}
+
+.console-editor-bar > .console-note {
+  margin-inline-start: auto;
+  padding: 0.5rem 0.7rem;
+  background: var(--c-fill);
+  border: 1px solid var(--c-line);
+  border-radius: var(--c-r-sm);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* =========================================================================
+   7. CONTENT SCREENS: work, list, table, cards
+   ========================================================================= */
 .console-work {
   display: block;
 }
@@ -961,13 +1408,6 @@ details[open] > .console-nav-head .console-nav-caret {
   margin-block-end: 1rem;
 }
 
-.console-count {
-  margin-inline-start: auto;
-  font-size: var(--c-font-small);
-  font-variant-numeric: tabular-nums;
-  color: var(--c-text-3);
-}
-
 .console-rows {
   list-style: none;
   margin: 0;
@@ -981,13 +1421,6 @@ details[open] > .console-nav-head .console-nav-caret {
   background: var(--c-surface);
   box-shadow: var(--c-ring), var(--c-lift);
   border-radius: var(--c-r-lg);
-}
-
-.console-subheading {
-  margin: 0 0 0.65rem;
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
 }
 
 .console-tabs {
@@ -1008,32 +1441,11 @@ details[open] > .console-nav-head .console-nav-caret {
   overflow-wrap: anywhere;
 }
 
-/* --- the content list ------------------------------------------------------ */
 .console-list {
   display: flex;
   flex-direction: column;
   gap: var(--c-gap);
   min-width: 0;
-}
-
-.console-list-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--c-gap-tight) var(--c-gap);
-}
-
-.console-search {
-  flex: 1 1 11rem;
-  min-width: 0;
-}
-
-.console-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: var(--c-font-small);
-  color: var(--c-text-2);
 }
 
 .console-bulk {
@@ -1070,7 +1482,6 @@ details[open] > .console-nav-head .console-nav-caret {
   display: none;
 }
 
-/* --- the row itself -------------------------------------------------------- */
 .console-table {
   font-variant-numeric: tabular-nums;
 }
@@ -1078,6 +1489,8 @@ details[open] > .console-nav-head .console-nav-caret {
 .console-table th,
 .console-table td {
   vertical-align: middle;
+  position: relative;
+  padding: 0.5rem 0.75rem;
 }
 
 .console-table thead th {
@@ -1085,8 +1498,8 @@ details[open] > .console-nav-head .console-nav-caret {
 }
 
 .console-table .console-cell-title {
-  inline-size: 45%;
-  min-inline-size: 16rem;
+  inline-size: 25%;
+  min-inline-size: 10rem;
 }
 
 .console-row-link {
@@ -1134,6 +1547,12 @@ span.console-thumb[data-empty] {
   }
 }
 
+@container console-list (min-width: 34rem) {
+  .console-cell-extra {
+    display: table-cell;
+  }
+}
+
 .console-create {
   display: grid;
   gap: var(--c-gap);
@@ -1173,7 +1592,6 @@ span.console-thumb[data-empty] {
 
 .console-cards .console-card-link {
   flex: 1;
-  /* min-width: 0; */
   display: block;
 }
 
@@ -1181,23 +1599,9 @@ span.console-thumb[data-empty] {
   margin-inline-start: auto;
 }
 
-.console-pager {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--c-gap-tight);
-}
-
-.console-pager .console-count {
-  margin-inline-start: 0;
-}
-
-.console-pager .console-controls {
-  margin-inline-start: auto;
-  align-items: center;
-}
-
-/* --- the content editor ---------------------------------------------------- */
+/* =========================================================================
+   8. THE CONTENT EDITOR
+   ========================================================================= */
 .console-detail {
   display: flex;
   flex-direction: column;
@@ -1229,14 +1633,32 @@ span.console-thumb[data-empty] {
 
 .console-detail-key {
   overflow-wrap: anywhere;
-  font-family: var(--c-font-mono, ui-monospace, "SFMono-Regular", monospace);
+  font-family: var(--c-font-mono);
   font-size: 0.78rem;
   color: var(--c-text-3);
 }
 
 .console-detail-status {
+  display: flex;
   align-items: center;
-  gap: var(--c-gap-tight) var(--c-gap);
+  flex-wrap: wrap;
+  gap: 0.65rem 0.9rem;
+  min-width: 0;
+  padding: 0.8rem 1rem;
+}
+
+.console-detail-status .console-note {
+  flex: 1 1 16rem;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--c-font-micro);
+  line-height: 1.7;
+}
+
+.console-detail-status bdi {
+  color: var(--c-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .console-editor {
@@ -1246,7 +1668,14 @@ span.console-thumb[data-empty] {
   align-items: start;
 }
 
-.console-editor-main,
+.console-editor-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  min-width: 0;
+  color: var(--c-text);
+}
+
 .console-editor-side {
   min-width: 0;
 }
@@ -1255,32 +1684,22 @@ span.console-thumb[data-empty] {
   max-width: none;
 }
 
-/* The save bar floats above the page as a pill-cornered tray. */
-.console-editor-bar {
-  position: sticky;
-  bottom: 0.9rem;
-  z-index: 6;
-  min-height: var(--c-tap);
-  align-items: center;
-  gap: var(--c-gap-tight) var(--c-gap);
-  margin-block-start: var(--c-stack);
-  padding: 0.65rem 0.9rem;
-  background: color-mix(in srgb, var(--c-surface) 92%, transparent);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-radius: var(--c-r-lg);
-  box-shadow:
-    var(--c-ring),
-    0 14px 32px -12px rgb(0 0 0 / 0.3);
+@container console-edit (min-width: 54rem) {
+  .console-editor {
+    grid-template-columns: minmax(0, 1fr) minmax(23rem, 27rem);
+  }
 }
 
-.console-editor-bar .console-count {
-  flex-basis: 100%;
-  margin-inline-start: 0;
-}
-
-.console-nav-confirm {
-  border-color: var(--c-danger);
+.console-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: calc(var(--c-r-md) + 3px);
+  box-shadow: var(--c-lift);
 }
 
 .console-preview-frame {
@@ -1323,6 +1742,7 @@ span.console-thumb[data-empty] {
   display: block;
   inline-size: 7.5rem;
   block-size: 5.5rem;
+  margin: 0;
   border-radius: var(--c-r-md);
   background: var(--c-bg-alt);
   box-shadow: var(--c-ring);
@@ -1337,7 +1757,7 @@ span.console-thumb[data-empty] {
 }
 
 .console-seo-path {
-  font-family: var(--c-font-mono, ui-monospace, "SFMono-Regular", monospace);
+  font-family: var(--c-font-mono);
   font-size: 0.75rem;
   color: var(--c-accent);
 }
@@ -1347,10 +1767,119 @@ span.console-thumb[data-empty] {
   color: var(--c-text-2);
 }
 
-/* --- the SEO center -------------------------------------------------------- */
-/* One row per address, grouped by where it lives. The tables are not height-capped:
-   comparing every title is the reason the screen exists, and a 36rem scroll box would
-   hide the four rows that need fixing below the fold of the box. */
+/* --- typed list form ------------------------------------------------------- */
+.console-doc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.375rem;
+  min-width: 0;
+}
+
+.console-doc-label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--c-sp-2);
+  color: var(--c-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* Two languages of one field, side by side until the column turns to a phone. */
+.console-doc-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.875rem;
+  min-width: 0;
+  margin-block-start: 3px;
+  align-items: start;
+}
+
+.console-doc-pair .console-field {
+  gap: 0.45rem;
+  padding: 0.875rem;
+  background: var(--c-surface-soft);
+  border: 1px solid var(--c-line);
+  border-radius: 0.75rem;
+}
+
+.console-doc-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.console-doc-row,
+.console-doc-child {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--c-sp-2);
+  align-items: end;
+  padding: var(--c-gap-tight);
+  border-radius: var(--c-r-sm);
+}
+
+.console-doc-row > .console-field,
+.console-doc-child > .console-field {
+  margin-block-end: 0;
+}
+
+.console-doc-add {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-block-start: 3px;
+}
+
+.console-doc-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--c-sp-2) var(--c-gap);
+}
+
+.console-doc-unknown {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap-tight);
+  padding: var(--c-gap);
+}
+
+.console-doc-unknown-heading {
+  margin: 0;
+  font-size: var(--c-font-small);
+  font-weight: 600;
+}
+
+.console-doc-unknown-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-sp-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.console-doc-unknown-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--c-sp-2);
+}
+
+.console-doc-unknown-key {
+  color: var(--c-text-2);
+  font-family: var(--c-font-mono);
+  font-size: var(--c-font-small);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* =========================================================================
+   9. THE SEO CENTER
+   ========================================================================= */
 .console-seo-tools {
   display: flex;
   flex-wrap: wrap;
@@ -1477,117 +2006,16 @@ span.console-thumb[data-empty] {
   margin-block-end: var(--c-stack);
 }
 
-@media (max-width: 639.98px) {
-  .console-seo-tools {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-@container console-edit (min-width: 54rem) {
-  .console-editor {
-    grid-template-columns: minmax(0, 1fr) minmax(23rem, 27rem);
-  }
-}
-
-/* --- ≥ 1024px: the sidebar is a column ------------------------------------ */
-@media (min-width: 1024px) {
-  .console-frame {
-    grid-template-columns: var(--c-side-w) minmax(0, 1fr);
-  }
-  /* In the column the sidebar sits on the page itself, no card, no edge. */
-  .console-side {
-    grid-column: 1;
-    grid-row: 2;
-    position: sticky;
-    top: var(--c-topbar-h);
-    align-self: start;
-    width: auto;
-    max-height: calc(100vh - var(--c-topbar-h));
-    padding: 1rem 0 2rem;
-    background: transparent;
-    box-shadow: none;
-    transform: none;
-    visibility: visible;
-  }
-  .console-main {
-    grid-column: 2;
-    grid-row: 2;
-  }
-  .console-toggle,
-  .console-side-head,
-  .console-nav-strip,
-  .console-scrim {
-    display: none;
-  }
-}
-
-/* --- 640–1023px: drawer only, no strip ----------------------------------- */
-@media (min-width: 640px) and (max-width: 1023.98px) {
-  .console-nav-strip {
-    display: none;
-  }
-}
-
-/* --- < 640px: tab bar and a compact header ------------------------------- */
-@media (max-width: 639.98px) {
-  .console-nav-strip {
-    display: flex;
-  }
-  /* The header keeps its brand and the three tools. The drawer toggle becomes a square
-     glyph so the row still fits a 360px phone; the strip below carries the same links. */
-  .console-header {
-    gap: var(--c-sp-2);
-    padding-inline: var(--c-sp-3);
-  }
-  .console-toggle {
-    inline-size: var(--c-tap);
-    min-inline-size: var(--c-tap);
-    justify-content: center;
-    padding: 0;
-    font-size: 0;
-  }
-  .console-brand strong {
-    font-size: 0.95rem;
-  }
-  .console-brand span {
-    display: none;
-  }
-  .console-main {
-    padding-block-start: 1.25rem;
-  }
-  .console-grid {
-    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  }
-}
-
-@media (max-width: 1023.98px) {
-  .console-frame[data-nav="open"] .console-scrim,
-  .console-side:target ~ .console-scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: var(--c-z-scrim);
-    background: var(--c-backdrop);
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
-  }
-}
-
-@container console-list (min-width: 34rem) {
-  .console-cell-extra {
-    display: table-cell;
-  }
-}
-
-/* --- leads ---------------------------------------------------------------- */
+/* =========================================================================
+   10. LEADS
+   ========================================================================= */
 .console-leads {
   --c-lead-dir: 1;
   --c-lead-ease: cubic-bezier(0.25, 0.8, 0.3, 1);
   --c-lead-accent: var(--c-accent);
   --c-lead-new: var(--c-accent);
   --c-lead-contacted: var(--c-text-2);
-  --c-lead-booked: var(--c-success, #2f8f5b);
+  --c-lead-booked: var(--c-success);
   --c-lead-done: color-mix(in srgb, var(--c-lead-booked) 70%, var(--c-text));
   --c-lead-lost: var(--c-danger);
 
@@ -1649,8 +2077,7 @@ span.console-thumb[data-empty] {
   background: var(--c-lead-c);
 }
 
-/* ── Layout ──────────────────────────────────────────────────────────────── */
-
+/* Layout */
 .console-leads-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1667,20 +2094,7 @@ span.console-thumb[data-empty] {
   container-name: leads-list;
 }
 
-@media (min-width: 1024px) {
-  .console-leads-split {
-    grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem);
-  }
-}
-
-@media (max-width: 639.98px) {
-  .console-leads .console-search {
-    flex-basis: 100%;
-  }
-}
-
-/* ── The list: each lead is its own tile ─────────────────────────────────── */
-
+/* The list: each lead is its own tile */
 .console-lead-list {
   margin: 0;
   padding: 0.2rem;
@@ -1690,12 +2104,6 @@ span.console-thumb[data-empty] {
   gap: 0.4rem;
   overflow: auto;
   scrollbar-width: thin;
-}
-
-@media (min-width: 1024px) {
-  .console-lead-list {
-    max-block-size: var(--c-list-h);
-  }
 }
 
 .console-lead-row {
@@ -1737,7 +2145,6 @@ span.console-thumb[data-empty] {
   outline-offset: 2px;
 }
 
-/* Round avatar, ringed in the lead's status colour. */
 .console-lead-avatar {
   display: grid;
   place-items: center;
@@ -1757,7 +2164,7 @@ span.console-thumb[data-empty] {
   line-height: 1;
 }
 
-/* The big avatar is the arch — the one signature of this screen. */
+/* The big avatar is the arch: the one signature of this screen. */
 .console-lead-avatar-lg {
   inline-size: 3.1rem;
   block-size: 3.6rem;
@@ -1831,8 +2238,7 @@ span.console-thumb[data-empty] {
   }
 }
 
-/* ── The detail ──────────────────────────────────────────────────────────── */
-
+/* The detail */
 .console-lead-detail {
   display: flex;
   flex-direction: column;
@@ -1846,22 +2252,6 @@ span.console-thumb[data-empty] {
 
 .console-lead-detail:focus {
   outline: none;
-}
-
-@media (min-width: 1024px) {
-  .console-lead-detail {
-    position: sticky;
-    inset-block-start: calc(var(--c-topbar-h) + 0.75rem);
-    max-block-size: calc(100dvh - var(--c-topbar-h) - 1.5rem);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-  }
-
-  .console-lead-back,
-  .console-lead-scrim {
-    display: none;
-  }
 }
 
 .console-lead-stage {
@@ -1964,13 +2354,10 @@ span.console-thumb[data-empty] {
   box-shadow: inset 0 0 0 1px var(--c-tint-strong);
 }
 
-.console-lead-link:focus-visible {
-  outline: 2px solid var(--c-focus);
-  outline-offset: 2px;
-}
-
 .console-lead-link > svg {
   flex: none;
+  inline-size: 1.15rem;
+  block-size: 1.15rem;
   color: var(--c-accent);
 }
 
@@ -2031,8 +2418,7 @@ span.console-thumb[data-empty] {
   margin: 0;
 }
 
-/* ── Notes: a thread ─────────────────────────────────────────────────────── */
-
+/* Notes: a thread */
 .console-lead-notes {
   display: flex;
   flex-direction: column;
@@ -2092,8 +2478,7 @@ span.console-thumb[data-empty] {
   inline-size: 100%;
 }
 
-/* ── Source / context ────────────────────────────────────────────────────── */
-
+/* Source / context */
 .console-lead-context {
   padding: 0 0.9rem var(--c-gap-tight);
   border-radius: var(--c-r-md);
@@ -2141,48 +2526,11 @@ span.console-thumb[data-empty] {
   padding-block-end: var(--c-gap-tight);
 }
 
-/* ── Narrow screens ──────────────────────────────────────────────────────── */
-
 .console-lead-scrim {
   display: none;
 }
 
-@media (max-width: 1023.98px) {
-  .console-lead-detail {
-    display: none;
-  }
-  .console-lead-detail[data-sheet="open"] {
-    display: flex;
-    position: fixed;
-    inset-block: 0;
-    inset-inline-end: 0;
-    z-index: var(--c-z-drawer);
-    inline-size: min(32rem, 100%);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    border-radius: var(--c-r-lg) 0 0 var(--c-r-lg);
-    box-shadow: -16px 0 48px -12px rgb(0 0 0 / 0.35);
-    animation: console-lead-sheet var(--c-dur-slow) var(--c-lead-ease) both;
-  }
-  :where([dir="rtl"]) .console-lead-detail[data-sheet="open"] {
-    border-radius: 0 var(--c-r-lg) var(--c-r-lg) 0;
-  }
-  .console-lead-scrim {
-    display: block;
-    position: fixed;
-    inset: 0;
-    z-index: var(--c-z-scrim);
-    margin: 0;
-    border: 0;
-    background: var(--c-backdrop);
-    -webkit-backdrop-filter: blur(2px);
-    backdrop-filter: blur(2px);
-    animation: console-lead-fade var(--c-dur-slow) var(--c-lead-ease) both;
-  }
-}
-
-/* ── Toast ───────────────────────────────────────────────────────────────── */
-
+/* Toast */
 .console-leads-toast {
   position: fixed;
   inset-block-end: 20px;
@@ -2192,8 +2540,6 @@ span.console-thumb[data-empty] {
   filter: drop-shadow(0 14px 28px rgb(0 0 0 / 0.22));
   animation: console-lead-toast 260ms var(--c-lead-ease) both;
 }
-
-/* ── Motion ──────────────────────────────────────────────────────────────── */
 
 @keyframes console-lead-sheet {
   from {
@@ -2214,120 +2560,22 @@ span.console-thumb[data-empty] {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .console-side,
-  .console-scrim {
-    transition: none !important;
-  }
-  .console-leads *,
-  .console-leads-toast,
-  .console-lead-scrim {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-}
+/* =========================================================================
+   11. SETTINGS
+   ========================================================================= */
 .settings-workspace {
   display: flex;
   flex-direction: column;
   gap: var(--c-stack);
+  max-inline-size: 100%;
 }
-/* --- Settings Workspace Fixes --------------------------------------------- */
 
-/* Override the narrow panel width for settings so it uses the full page */
+/* Each section is one card in three bands: head, body (owns the grid), foot. */
 .settings-section {
-  max-width: none; /* Breaks out of --c-panel-w */
-  width: 100%;
-  overflow: hidden;
-}
-
-.settings-workspace {
-  display: flex;
-  flex-direction: column;
-  gap: var(--c-stack);
-  max-width: 100%;
-}
-
-/* Force the page list into a grid, kill the bullets */
-.settings-pages,
-.settings-banner-grid,
-.settings-field-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
-  gap: var(--c-gap);
-  list-style: none; /* Kills the bullets */
-  margin: 0;
-  padding: var(--c-pad);
-  align-items: start;
-  grid-gap: 15px;
-}
-.settings-banner-head {
-  margin-bottom: 10px;
-  margin-top: 15px;
-}
-/* Fix the individual row layout */
-.settings-page {
-  display: flex;
-  flex-direction: column; /* Stack the ID, toggle, and save button */
-  gap: var(--c-gap-tight);
-  padding: var(--c-gap);
-  border: 1px solid var(--c-line);
-  border-radius: var(--c-r-md);
-  background: var(--c-surface-soft);
-  border-block-end: 1px solid var(--c-line); /* Override old rule */
-}
-
-/* Clean up the ID and path inside the row */
-.settings-page-id {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.settings-page-label {
-  font-weight: 600;
-  font-size: 1rem;
-}
-
-.settings-page-path {
-  font-family: var(--c-font-mono, ui-monospace, monospace);
-  font-size: 0.75rem;
-  color: var(--c-text-3);
-}
-
-/* Ensure the controls row is clean */
-.settings-page-controls {
-  display: flex;
-  flex-direction: column;
-  gap: var(--c-gap-tight);
-  margin-block: 0.5rem;
-}
-
-/* Force the fields inside sections to use the full width nicely */
-.settings-field-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
-  gap: var(--c-gap);
-  max-inline-size: none; /* Remove the 64rem cap */
-}
-
-/* Mobile fallback so the 24rem grid doesn't overflow */
-@media (max-width: 640px) {
-  .settings-pages,
-  .settings-banner-grid,
-  .settings-field-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* --- Settings: the section frame and its rows ----------------------------- */
-/* Each section is one card in three bands: a soft head (index, title, the unsaved
-   flag), a body that owns the grid, and a tonal foot holding that section's save.
-   The card pads none of them itself; the bands do, so the grids above do not sit in
-   two gutters. Colours, radii and motion all come from the `--c-*` block. */
-.settings-section {
+  inline-size: 100%;
+  max-inline-size: none; /* breaks out of --c-panel-w */
   padding: 0;
+  overflow: hidden;
 }
 
 .settings-section-head {
@@ -2372,14 +2620,6 @@ span.console-thumb[data-empty] {
   padding: var(--c-pad);
 }
 
-/* The owner's grids pad themselves; inside a padded body that is a second gutter. */
-.settings-section-body > .settings-pages,
-.settings-section-body > .settings-banner-grid,
-.settings-section-body > .settings-field-grid {
-  margin: 0;
-  padding: 0;
-}
-
 .settings-section-foot {
   display: flex;
   flex-wrap: wrap;
@@ -2394,39 +2634,69 @@ span.console-thumb[data-empty] {
   margin-inline-end: auto;
 }
 
-/* The unsaved flag is the same object in a section head, a banner overlay and a raw
-   row, so it is written once. */
-.settings-dirty {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--c-sp-2);
-  padding: 0.15rem 0.55rem;
-  border-radius: var(--c-r-pill);
-  background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
-  color: var(--c-accent);
-  font-size: var(--c-font-micro);
-  font-weight: 600;
-  white-space: nowrap;
+/* Grids: page list, banner list, field list */
+.settings-pages,
+.settings-banner-grid,
+.settings-field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+  gap: 15px;
+  list-style: none;
+  margin: 0;
+  padding: var(--c-pad);
+  align-items: start;
 }
 
-.settings-dirty-dot {
-  inline-size: 0.4rem;
-  block-size: 0.4rem;
-  border-radius: 50%;
-  background: currentColor;
+.settings-field-grid {
+  grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+  max-inline-size: none;
 }
 
-/* A row that differs from what is saved lifts out of its neighbours by its ring, not
-   by a second border: the page row already owns a 1px line. */
+/* Inside a padded body the grid must not add a second gutter. */
+.settings-section-body > .settings-pages,
+.settings-section-body > .settings-banner-grid,
+.settings-section-body > .settings-field-grid {
+  margin: 0;
+  padding: 0;
+}
+
+/* Page row (surface shared in section 3) */
+.settings-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap-tight);
+  padding: var(--c-gap);
+}
+
 .settings-page,
 .settings-banner {
   min-inline-size: 0;
   transition: box-shadow var(--c-dur-base) var(--c-ease-soft);
 }
 
-.settings-page[data-dirty],
-.settings-banner[data-dirty] {
-  box-shadow: 0 0 0 1.5px var(--c-accent);
+.settings-page-id {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.settings-page-label {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.settings-page-path {
+  font-family: var(--c-font-mono);
+  font-size: 0.75rem;
+  color: var(--c-text-3);
+}
+
+.settings-page-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--c-gap-tight);
+  margin-block: 0.5rem;
 }
 
 .settings-page-actions,
@@ -2437,15 +2707,12 @@ span.console-thumb[data-empty] {
   gap: var(--c-gap-tight);
 }
 
-/* --- banner card ----------------------------------------------------------- */
+/* Banner card (surface shared in section 3) */
 .settings-banner {
   display: flex;
   flex-direction: column;
   gap: var(--c-gap-tight);
   padding: var(--c-gap);
-  border: 1px solid var(--c-line);
-  border-radius: var(--c-r-md);
-  background: var(--c-surface-soft);
 }
 
 .settings-banner-frame {
@@ -2460,6 +2727,7 @@ span.console-thumb[data-empty] {
   display: block;
   inline-size: 100%;
   block-size: 100%;
+  margin: 0;
   object-fit: cover;
 }
 
@@ -2485,119 +2753,37 @@ span.console-thumb[data-empty] {
   align-items: baseline;
   justify-content: space-between;
   gap: var(--c-sp-2);
+  margin-block: 15px 10px;
 }
 
-/* --- typed list form ------------------------------------------------------- */
-/* One labelled field per thing the list's schema names. The rhythm comes from each field's
-   own margin, exactly as `.console-field` does, so a typed document and an article body
-   measure the same on the page. */
-.console-doc-form {
-  display: flex;
-  flex-direction: column;
-}
-
-.console-doc-field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--c-gap-tight);
-  margin-block-end: var(--c-stack);
-  min-inline-size: 0;
-}
-
-.console-doc-label {
-  display: flex;
-  flex-wrap: wrap;
+/* The unsaved flag: one object in a section head, a banner overlay and a raw row. */
+.settings-dirty {
+  display: inline-flex;
   align-items: center;
   gap: var(--c-sp-2);
-  color: var(--c-text-2);
-  font-size: var(--c-font-small);
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--c-r-pill);
+  background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
+  color: var(--c-accent);
+  font-size: var(--c-font-micro);
   font-weight: 600;
+  white-space: nowrap;
 }
 
-/* Two languages of one field, side by side until the column turns to a phone. */
-.console-doc-pair {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
-  gap: var(--c-gap);
-  align-items: start;
+.settings-dirty-dot {
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
 }
 
-.console-doc-rows {
-  display: flex;
-  flex-direction: column;
-  gap: var(--c-gap-tight);
+/* A row that differs from what is saved lifts out by its ring, not a second border. */
+.settings-page[data-dirty],
+.settings-banner[data-dirty] {
+  box-shadow: 0 0 0 1.5px var(--c-accent);
 }
 
-.console-doc-row,
-.console-doc-child {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-  gap: var(--c-sp-2);
-  align-items: end;
-  padding: var(--c-gap-tight);
-  border: 1px solid var(--c-line);
-  border-radius: var(--c-r-sm);
-  background: var(--c-surface-soft);
-}
-
-.console-doc-row > .console-field,
-.console-doc-child > .console-field {
-  margin-block-end: 0;
-}
-
-.console-doc-add {
-  margin-block-start: var(--c-sp-2);
-}
-
-.console-doc-refs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--c-sp-2) var(--c-gap);
-}
-
-.console-doc-unknown {
-  display: flex;
-  flex-direction: column;
-  gap: var(--c-gap-tight);
-  padding: var(--c-gap);
-  margin-block-end: var(--c-stack);
-  border: 1px solid var(--c-line);
-  border-radius: var(--c-r-md);
-  background: var(--c-surface-soft);
-}
-
-.console-doc-unknown-heading {
-  margin: 0;
-  font-size: var(--c-font-small);
-  font-weight: 600;
-}
-
-.console-doc-unknown-rows {
-  display: flex;
-  flex-direction: column;
-  gap: var(--c-sp-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.console-doc-unknown-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--c-sp-2);
-}
-
-.console-doc-unknown-key {
-  color: var(--c-text-2);
-  font-family: var(--c-font-mono);
-  font-size: var(--c-font-small);
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-/* --- notice --------------------------------------------------------------- */
+/* Notice */
 .settings-notice {
   position: sticky;
   inset-block-end: var(--c-pad);
@@ -2608,15 +2794,323 @@ span.console-thumb[data-empty] {
   box-shadow: var(--c-ring), var(--c-lift);
 }
 
-@media (max-width: 640px) {
+/* =========================================================================
+   12. RESPONSIVE (in breakpoint order)
+   ========================================================================= */
+
+/* >= 1024: the sidebar is a column */
+@media (min-width: 1024px) {
+  .console-frame {
+    grid-template-columns: var(--c-side-w) minmax(0, 1fr);
+  }
+  .console-side {
+    grid-column: 1;
+    grid-row: 2;
+    position: sticky;
+    top: var(--c-topbar-h);
+    align-self: start;
+    width: auto;
+    max-height: calc(100vh - var(--c-topbar-h));
+    padding: 1rem 0 2rem;
+    background: transparent;
+    box-shadow: none;
+    transform: none;
+    visibility: visible;
+  }
+  .console-main {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .console-toggle,
+  .console-side-head,
+  .console-nav-strip,
+  .console-scrim {
+    display: none;
+  }
+
+  .console-leads-split {
+    grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem);
+  }
+  .console-lead-list {
+    max-block-size: var(--c-list-h);
+  }
+  .console-lead-detail {
+    position: sticky;
+    inset-block-start: calc(var(--c-topbar-h) + 0.75rem);
+    max-block-size: calc(100dvh - var(--c-topbar-h) - 1.5rem);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .console-lead-back,
+  .console-lead-scrim {
+    display: none;
+  }
+}
+
+/* 640 to 1023: drawer only, no strip */
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .console-nav-strip {
+    display: none;
+  }
+}
+
+/* < 1024: drawer scrim + lead detail as a sheet */
+@media (max-width: 1023.98px) {
+  .console-frame[data-nav="open"] .console-scrim,
+  .console-side:target ~ .console-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--c-z-scrim);
+    background: var(--c-backdrop);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+  }
+
+  .console-lead-detail {
+    display: none;
+  }
+  .console-lead-detail[data-sheet="open"] {
+    display: flex;
+    position: fixed;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: var(--c-z-drawer);
+    inline-size: min(32rem, 100%);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border-radius: var(--c-r-lg) 0 0 var(--c-r-lg);
+    box-shadow: -16px 0 48px -12px rgb(0 0 0 / 0.35);
+    animation: console-lead-sheet var(--c-dur-slow) var(--c-lead-ease) both;
+  }
+  :where([dir="rtl"]) .console-lead-detail[data-sheet="open"] {
+    border-radius: 0 var(--c-r-lg) var(--c-r-lg) 0;
+  }
+  .console-lead-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: var(--c-z-scrim);
+    margin: 0;
+    border: 0;
+    background: var(--c-backdrop);
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+    animation: console-lead-fade var(--c-dur-slow) var(--c-lead-ease) both;
+  }
+}
+
+/* <= 900: list bar stacks */
+@media (max-width: 900px) {
+  .console-list-bar {
+    gap: 0.65rem;
+  }
+  .console-list-bar .console-chip-row {
+    flex: 1 1 100%;
+    inline-size: 100%;
+  }
+  .console-list-bar .console-search {
+    flex: 1 1 100%;
+    max-inline-size: none;
+  }
+  .console-list-bar .console-controls {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+    margin-inline-start: 0;
+  }
+}
+
+/* <= 700: editor bar */
+@media (max-width: 700px) {
+  .console-editor-bar {
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 0.875rem;
+  }
+  .console-editor-bar > .console-btn {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-block-size: 2.4rem;
+    padding: 0 0.75rem;
+    font-size: var(--c-font-micro);
+  }
+  .console-editor-bar .console-count,
+  .console-editor-bar > .console-note {
+    flex: 1 1 100%;
+    margin-inline-start: 0;
+    text-align: center;
+  }
+}
+
+/* <= 680: editor form */
+@media (max-width: 680px) {
+  .console-editor-main {
+    gap: 1rem;
+  }
+  .console-detail-status {
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+  .console-detail-status .console-note {
+    flex-basis: 100%;
+  }
+  .console-fields {
+    gap: 1.05rem;
+    padding: 0.875rem;
+  }
+  .console-doc-form {
+    gap: 1.125rem;
+  }
+  .console-doc-pair {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.625rem;
+  }
+}
+
+/* < 640: tab bar and compact header */
+@media (max-width: 639.98px) {
+  .console-nav-strip {
+    display: flex;
+  }
+  .console-header {
+    gap: var(--c-sp-2);
+    padding-inline: var(--c-sp-3);
+  }
+  /* The drawer toggle becomes a square glyph so the row fits a 360px phone. */
+  .console-toggle {
+    inline-size: var(--c-tap);
+    min-inline-size: var(--c-tap);
+    justify-content: center;
+    padding: 0;
+    font-size: 0;
+  }
+  .console-brand strong {
+    font-size: 0.95rem;
+  }
+  .console-brand span {
+    display: none;
+  }
+  .console-main {
+    padding-block-start: 1.25rem;
+  }
+  .console-grid {
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  }
+  .console-leads .console-search {
+    flex-basis: 100%;
+  }
+  .console-seo-tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-pages,
+  .settings-banner-grid,
+  .settings-field-grid {
+    grid-template-columns: 1fr;
+  }
   .settings-section-head,
   .settings-section-body,
   .settings-section-foot {
     padding-inline: var(--c-gap);
   }
-
   /* A phone thumb reaches the section's own save without aiming. */
   .settings-section-foot > .console-btn {
     inline-size: 100%;
+  }
+}
+
+/* <= 560: pager */
+@media (max-width: 560px) {
+  .console-pager {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.8rem;
+    border-radius: 0.875rem;
+  }
+  .console-pager .console-count {
+    inline-size: 100%;
+  }
+  .console-pager .console-controls {
+    inline-size: 100%;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+  .console-pager .console-btn {
+    min-block-size: 2.25rem;
+    gap: 0.4rem;
+    padding: 0 0.65rem;
+  }
+  .console-pager .console-controls > .console-note {
+    padding: 0.5rem;
+    font-size: 0.6875rem;
+  }
+}
+
+/* <= 520: list bar on small phones */
+@media (max-width: 520px) {
+  .console-list-bar {
+    padding: 0.6rem;
+    gap: 0.55rem;
+    border-radius: 0.8rem;
+  }
+  .console-list-bar .console-chip-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.25rem;
+  }
+  .console-list-bar .console-chip {
+    inline-size: 100%;
+    min-inline-size: 0;
+    padding-inline: 0.5rem;
+    white-space: normal;
+    text-align: center;
+  }
+  .console-list-bar .console-controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .console-list-bar .console-inline {
+    grid-column: 1 / -1;
+    justify-content: space-between;
+  }
+  .console-list-bar .console-btn {
+    inline-size: 100%;
+    white-space: normal;
+  }
+}
+
+/* <= 420: editor bar buttons may wrap their label */
+@media (max-width: 420px) {
+  .console-editor-bar > .console-btn {
+    padding-inline: 0.5rem;
+    white-space: normal;
+  }
+}
+
+/* =========================================================================
+   13. REDUCED MOTION (one block for the whole console)
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce) {
+  [data-surface="console"] *,
+  [data-surface="console"] *::before,
+  [data-surface="console"] *::after,
+  .console-leads-toast,
+  .console-lead-scrim {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  :is(
+    .console-btn,
+    .console-toggle,
+    .console-side-close,
+    .console-tool
+  )::before {
+    display: none;
   }
 }

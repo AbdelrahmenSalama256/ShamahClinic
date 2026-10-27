@@ -368,6 +368,34 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     }
   });
 
+  it('hangs no transition on a bare element', () => {
+    // A `transition` written on `a, button, div` or `*` is not a style, it is an order to
+    // every component: it outranks a named list, it moves layout properties a person is
+    // reading, and it survives `prefers-reduced-motion` only until someone answers it with
+    // `!important` — at which point the reduced-motion block loses too. The same four lines
+    // came back in two sheets in one week, so the sweep is every sheet at once, and it reads
+    // the selector rather than the value: the number is a taste, the selector is the defect.
+    const sheets = [
+      'src/app/console/console.css',
+      'src/app/console/console-kit.css',
+      'src/app/globals.css',
+      'src/styles/tokens.css',
+    ];
+    for (const sheet of sheets) {
+      const text = readFileSync(join(process.cwd(), ...sheet.split('/')), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      expect(text, `${sheet} forces a transition`).not.toMatch(/transition:[^;]*!important/);
+      for (const [, selector, body] of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        if (!/transition\s*:/.test(body ?? '')) continue;
+        // No class, attribute, id, pseudo-class, at-rule or universal: a bare element list.
+        expect(/[.\[#@:*]/.test(selector ?? ''), `${sheet} transitions ${selector?.replace(/\s+/g, ' ').trim()}`).toBe(true);
+      }
+    }
+    // What the console does keep is the scoped default in its own reset: a named list of the
+    // properties that actually change, on the elements a finger hits.
+    expect(css).toMatch(/:where\(a, button, input, select, textarea, summary\)/);
+    expect(css).toMatch(/transition-property:/);
+  });
+
   it('lets the drawer become visible in the frame it opens, not one later', () => {
     // A drawer that transitions `visibility` is still `hidden` a frame after it opens,
     // and focus cannot enter a hidden subtree — `ConsoleFrame` moves focus in the same
