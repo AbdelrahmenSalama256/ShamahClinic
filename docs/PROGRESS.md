@@ -2617,13 +2617,50 @@ owner's word.
       depends on the discarded storage choice: `e0dae71` (slice M) — the Blob branch of
       `src/lib/media/storage.ts`, the `@vercel/blob` line in `package.json`, and the Blob block in
       `.env.example`. One revert-shaped commit removes all three.
-      **Still to do, in order.** A-0 revert · A-2 plain MariaDB, TLS optional by env only ·
+      **Still to do, in order.** A-0 is done (below). A-2 plain MariaDB, TLS optional by env only ·
       A-5a one script creates the database and runs the migrations on an empty server ·
       A-4 the move script · A-3 uploads on local disk outside the build output, with a route that
       serves them · A-8 the cache statement and the security checklist · A-7 the deploy steps for
       cPanel and for Cloudways/VPS. `next build` is not run without the owner's word.
       **Untouched by all of it.** `shamah-clinic.vercel.app`, its project and its domain; `main`;
       `D:\shamah`; `src/data`; `data/wp/*.json` and `public/wp/*`. Nothing is pushed.
+
+- [x] A-0 Uploads are disk-only; the Blob driver the old target needed is gone — `28cb2bc`
+      **What was wrong.** `e0dae71` (slice M) made storage choose a backend at runtime: a
+      `BLOB_READ_WRITE_TOKEN` in the environment sent every upload to Vercel Blob and an absolute
+      Blob URL into the content column, the token's absence fell back to disk, `MEDIA_DRIVER=local`
+      overrode both. The self-hosted target has no blob store and no read-only function filesystem —
+      it has one writable folder. A branch that cannot be taken is not a feature; it is a path every
+      future reader has to rule out, and one that can refuse to boot or write an address the site
+      cannot serve from this machine.
+
+      **The moves.** `src/lib/media/storage.ts`: `MediaDriver`/`mediaDriver()` deleted,
+      `writeMediaObject(key, bytes, { root })` takes no content type and has no second branch.
+      `src/lib/media/store.ts`: the reuse branch tests `existing.path.startsWith('/uploads/')`
+      instead of "and the driver is local"; a failed write is always `500 write_failed`, never the
+      Blob-only `502 storage_unavailable`. `package.json` and the lockfile: `@vercel/blob` removed
+      (the lock also drops its whole transitive tree — `@vercel/oidc`, `@vercel/cli-config`,
+      `jose`, `execa` and friends); npm filled in nested optional `@tailwindcss/oxide-wasm32-wasi`
+      entries at the same time. `next.config.ts`: the `**.public.blob.vercel-storage.com` image
+      remote pattern removed — a same-origin `/uploads/…` never needed it. `.env.example`: Blob
+      token and driver gone, `MEDIA_ROOT` described as the persistent folder outside the app and
+      outside the build output, `NEXT_PUBLIC_SITE_URL` no longer a vercel.app address.
+      `tests/media.test.ts` stops setting `MEDIA_DRIVER`.
+
+      **Evidence.** Typecheck clean, lint clean, `tests/media.test.ts` 20/20, full run
+      **28 files / 651 passed, 0 failed**. `git grep` over the tree now finds no
+      `@vercel/blob`, `BLOB_READ_WRITE_TOKEN`, `MEDIA_DRIVER` or `blob.vercel-storage` outside
+      historical notes (`docs/PROGRESS.md`, `docs/PAYLOAD-PLAN.md`) and the
+      `NEXT_PUBLIC_SITE_URL` comment in `.env.example`.
+
+      **Left on purpose.** `isMediaSrc()` still accepts an absolute `https://<host>/uploads/…`
+      address, because rows written by the Blob branch carry one and the owner's local database is
+      not to be rewritten by a revert. A-3 decides what happens to those rows.
+      `docs/PAYLOAD-PLAN.md` is the abandoned Payload migration's brief and still mentions Blob and
+      vercel.app; it is history, not a live instruction, and is left untouched.
+
+      **Not verified.** No server and no browser here: that an upload lands in the folder
+      `MEDIA_ROOT` names on the VPS, and that the site then serves that picture, is A-3's proof.
 
 - [x] A-S1 The number an owner saves is the number the site dials — `88d036c`
       **What was wrong.** Item 7 of the review is "settings that really change the site", and the
