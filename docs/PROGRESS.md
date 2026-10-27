@@ -2443,6 +2443,84 @@ owner's word.
       wrap, and whether "No article" reads as a choice to a person rather than a warning all remain
       slice G's claims.
 
+- [x] R4 An authored order is moved with arrows, and one file writes the column — `d7e3766`
+      **What was fixed.** `position` was a number box in the editor and a bare `<input type=number>`, so
+      putting a service second meant reading every other service's number and guessing a free one. A
+      clash is not cosmetic: the read orders by that column and then by a tie MariaDB chooses, so two
+      rows claiming `3` trade places between two loads — and every list the WordPress import wrote left
+      at `0`, which is one clash across the whole list. The box is gone; `src/lib/content/order.ts` is
+      now the only thing inside the app that writes `offers.position` and `list_items.position`, in the
+      two moments a number is actually decided: a row joins, and a row moves.
+
+      **The route.** `POST /api/console/content/<kind>/<id>/move` takes `{direction: 'up'|'down'}` and
+      nothing else — a caller asks for a step, never a destination, so no request can jump a row to a
+      number. Permission comes off the URL scope before the body is parsed (the same `guard()` spelling
+      as every other write: `?list=` for a list item, `?locale=` for an offer), a list item is checked
+      against the list the address names — a grant over `branches` cannot reorder `specialists` by
+      pasting one of their ids — and a row at either end is refused with `409 nothing_to_move` before it
+      writes. A move rewrites the whole scope `1..n` in the order the list was just read, so after one
+      press no two rows share a number, and it ends at `revalidateSite()` because the order a visitor
+      sees is the order that just changed. One audit line per press, with `renumbered` in it.
+
+      **The screen.** Each row's Order cell carries its place plus the pair of arrows: `role="group"`
+      labelled by the column, and each button's `aria-label` names the row it moves ("Move up: Dr Nelly"
+      / `تحريك لأعلى: …`), because six identical icon buttons in one column are otherwise
+      indistinguishable to a keyboard or a screen reader. Ends are drawn disabled rather than pressed
+      and refused. Up/down do not mirror in Arabic the way the pager chevrons do — the order is a column
+      read top to bottom, and mirroring a page does not reverse it. The arrows appear only on the whole
+      list in its own order (sort = position asc, no filter, no search, not the Trash, ≥2 rows, and a
+      caller whose grants cover the scope); elsewhere the screen says why they are gone and gives one
+      button, *Show the full order*, that puts the list back. The cell is drawn in the card list too, so
+      a phone gets the same move. After a press the list is re-read instead of reordered locally: the
+      server renumbered the neighbours, and only its answer is the truth.
+
+      **The number printed.** In the authored-order view the cell prints the row's rank — dense from 1,
+      continuing across pages — not the raw column, because a list the import left at `0` would
+      otherwise read as nine identical zeros and tell a person nothing about the order they are looking
+      at. Anywhere else the cell prints what the column holds, since the rank of a title-sorted page is
+      not an order anybody authored.
+
+      **The editor.** `ConsoleEditor` no longer draws a field for `position` on a kind that has an
+      authored order, and `fieldsFromForm` skips it, so a save cannot post a number. That is the half
+      that keeps a move alive: a form left open across a colleague's move used to re-write the number it
+      was opened with and put the row straight back.
+
+      **The read.** The list's tie-break was the order column itself when the sort was something else,
+      and the key column otherwise; it is now the key column whenever the sort *is* `position`, so a
+      legacy list stops changing place between two loads before anyone moves a row in it. A list item's
+      own number/flag columns also reach `cells` now — the Order cell had nothing to print, so it showed
+      "No value" on every list row.
+
+      **Proved.** `tests/content.test.ts` (+8 in one describe): a new row lands at the end of its list
+      rather than in front of it; a move swaps with the row above and leaves the whole scope numbered
+      `1..n`; both ends answer `409` and write nothing; a body carrying `position` is refused with a
+      `direction` issue; a cross-list id is a `404` and a Viewer's press is a `403 list.update` that
+      never reaches the table; an offer moves on the scope its own screen names; and a list read answers
+      with numbers that are exactly its ranks. `tests/list-order.test.ts` (9) renders the real
+      `ConsoleList` and asserts the arrows, the per-row labels, the disabled ends, the rank across page
+      two, the pair in card mode and on an offer list, the hint and *Show the full order* under a search,
+      a title sort and in the Trash, nothing at all for a read-only caller, and nothing for an article —
+      plus `fieldsFromForm` posting no `position` while still posting the document.
+
+      **Three choices to review.** Drag-and-drop is not built: the brief said "and drag if cheap", and
+      making a pointer drag keyboard-accessible and correct in RTL is not cheap — the arrows are the
+      same action with the same guarantee. Renumbering runs on a move and on a create, not on every
+      autosave, because the box that could introduce a clash no longer exists. And `PATCH …/fields`
+      still accepts a `position`: the WordPress importer and the seed scripts know the order they read,
+      which is the only case where a number is not a guess — the console never sends it.
+
+      **Gates.** Typecheck clean, lint clean, `tests/content.test.ts` 66 passed, `tests/list-order.test.ts`
+      9 passed, full run **641 passed, 7 failed** — the same CSS assertions as R1–R3, all four files
+      reading the owner's uncommitted `src/app/console/console.css` / `console-kit.css` / `globals.css`.
+      Those three and `public/uploads/` are left untouched and unstaged for the next item, which removes
+      the `transition: .3s all ease !important` they reject and commits them.
+
+      **Not verified on a screen.** Still no dev address or password. Everything above about the arrows
+      is proven from rendered markup, not from a viewport: the tap size of the two icons at 360px inside
+      a card, their place in the tab order next to the row link, whether `تحريك لأعلى` reads as a move
+      to a person who cannot see the arrow, and what the list looks like while `busy` holds every control
+      — all remain slice G's claims.
+
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
