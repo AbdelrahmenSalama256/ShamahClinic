@@ -46,4 +46,10 @@ describe('server-setup agrees with the TypeScript migration runner', () => {
       DATABASE_PASSWORD: 'p a s s',
     });
   });
+
+  it('creates the account at the host the app connects from, unless told otherwise', () => {
+    expect(setup.accountHost({ DATABASE_HOST: 'localhost' })).toBe('localhost');
+    expect(setup.accountHost({ DATABASE_HOST: '127.0.0.1' })).toBe('127.0.0.1');
+    expect(setup.accountHost({ DATABASE_HOST: '127.0.0.1', DATABASE_USER_HOST: 'localhost' })).toBe('localhost');
+  });
 });

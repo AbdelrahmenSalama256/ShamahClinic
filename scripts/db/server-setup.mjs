@@ -106,6 +106,17 @@ async function appliedMigrations(connection, existingTables) {
 // Steps
 // ---------------------------------------------------------------------------
 
+/**
+ * The host part of the account `--create` mints. It defaults to DATABASE_HOST because that
+ * is where the app will come from: an account created at 'localhost' is never chosen by a
+ * connection from 127.0.0.1 when the server has name resolution off, and the failure reads
+ * as "access denied to database" rather than "wrong account".
+ */
+export function accountHost(env) {
+  const host = (env.DATABASE_HOST ?? '').trim();
+  return (env.DATABASE_USER_HOST ?? host).trim();
+}
+
 async function createDatabaseAndUser(env, args) {
   const host = (env.DATABASE_HOST ?? '').trim();
   if (!LOOPBACK.has(host) && !args.allowHost) {
@@ -124,7 +135,7 @@ async function createDatabaseAndUser(env, args) {
   const database = env.DATABASE_NAME;
   const user = env.DATABASE_USER;
   const password = env.DATABASE_PASSWORD ?? '';
-  const userHost = (env.DATABASE_USER_HOST ?? 'localhost').trim();
+  const userHost = accountHost(env);
   if (!password) {
     await admin.end();
     throw new Error('DATABASE_PASSWORD is empty. Set it (the account is created with this password) or create the user in cPanel and run without --create.');
@@ -242,6 +253,14 @@ async function main() {
 
   if (args.create) await createDatabaseAndUser(env, args);
   else console.log('Create step skipped (pass --create only if the database and user do not exist yet).');
+
+  if (args.create && !args.apply) {
+    // Nothing exists yet, so the app credentials cannot read a table list. Saying that is
+    // more useful than the "Access denied" a connection attempt would print.
+    console.log('Dry run: the database and user are not created, so the migrations cannot be inspected yet.');
+    console.log('Re-run with --create --apply to create them and apply every migration.');
+    return;
+  }
 
   await applyMigrations(env, args);
 }
