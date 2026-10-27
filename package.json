@@ -21,7 +21,8 @@
     "test": "vitest run",
     "wp:import": "tsx scripts/db/import-wp.ts",
     "db:import-lists": "tsx scripts/db/import-lists.ts",
-    "db:repair-plain": "tsx scripts/db/repair-plain.ts"
+    "db:repair-plain": "tsx scripts/db/repair-plain.ts",
+    "db:server-setup": "node scripts/db/server-setup.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
