@@ -2617,9 +2617,10 @@ owner's word.
       depends on the discarded storage choice: `e0dae71` (slice M) — the Blob branch of
       `src/lib/media/storage.ts`, the `@vercel/blob` line in `package.json`, and the Blob block in
       `.env.example`. One revert-shaped commit removes all three.
-      **Still to do, in order.** A-0, A-2, A-5a, A-4, A-3, A-6 and the read audit are done (below).
-      Left: A-8 the cache statement and the security checklist · A-7 the deploy steps for cPanel
-      and for Cloudways/VPS. `next build` is not run without the owner's word.
+      **Done, in the order asked.** A-0, A-2, A-5a, A-4, A-3, the read audit, A-6, A-8 (the cache
+      statement and the security checklist) and A-7 (the deploy steps for cPanel and for
+      Cloudways/VPS), each below. What remains in slice A is on the owner's side: the host answers,
+      a server, and the word to run `next build`.
       **Untouched by all of it.** `shamah-clinic.vercel.app`, its project and its domain; `main`;
       `D:\shamah`; `src/data`; `data/wp/*.json` and `public/wp/*`. Nothing is pushed.
 
@@ -2954,6 +2955,115 @@ owner's word.
       word), so the compiled server's behaviour is inferred, not seen. `/console` and the API routes
       are not covered — they need the database and are expected to fail without it. No browser was
       opened; the evidence is the HTML the server returned.
+
+- [x] A-8 One process makes a save visible on the next request; the security checklist and the
+      environment names are written down — `87ef729`
+      **What was missing.** The owner asked for two things this build had only implied: "confirm a
+      save in the console updates the public page without a rebuild on a single Node process, and
+      say what breaks if the host runs more than one process", and the list of what to configure on
+      the server. `.env.example` also still described `PREVIEW_SECRET`, and nothing reads it.
+
+      **The cache statement, from the code.** Every public page exports `revalidate = 300` (fourteen
+      route files under `src/app/[lang]`); the console is `force-dynamic` throughout. A save calls
+      `revalidatePath('/[lang]', 'layout')` and `revalidatePath('/sitemap.xml', 'page')`
+      (`src/lib/content/api.ts:418`), and an SEO save revalidates the one path it changed. React's
+      `cache()` is per request, so it cannot serve a stale value across requests and plays no part.
+      With one Node process the worker that handled the save forgets those pages and the next
+      request renders them from the database. With more than one, `revalidatePath` only reaches the
+      worker that answered the save: the others keep their copy for up to 300 seconds, and the
+      symptom is the old value, then the new one after a refresh, then the old one again. Nothing is
+      lost, but that is exactly the "I saved it and nothing changed" the owner wanted gone. Sessions,
+      CSRF hashes, throttling, `audit_log`, leads, settings and content are database rows, and
+      uploads are files under `MEDIA_ROOT`, so nothing else diverges between workers — there is no
+      in-memory limiter or session store in this build. Guidance: run one process (PM2
+      `instances: 1`, `exec_mode: 'fork'`); if the host insists on several, lower `revalidate`, put
+      the console on a second deployment over the same database, or add a shared `cacheHandler`.
+
+      **The security checklist.** A table in `docs/SELF-HOSTED.md` with the requirement, the value
+      and the file that enforces it: secrets in a mode-600 env file outside the document root; TLS;
+      session cookie `HttpOnly` / `SameSite=Lax` / `Secure` in production
+      (`src/lib/auth/cookies.ts:53`, which does not trust the proxy to be honest); the CSRF
+      double submit (`src/lib/auth/guard.ts:103`); 8 per-account and 25 per-address failures in 15
+      minutes from `login_attempts`; opaque session tokens stored as SHA-256 with a 14-day life;
+      one database user confined to one database; a non-executable uploads folder outside the app;
+      backups copied off the machine; `DATABASE_LOG_QUERIES` off; and the paths that must not be
+      reachable. It ends with what rotating `SESSION_SECRET` costs (every console session at once),
+      because that is the action held in reserve if a laptop is lost.
+
+      **The dead secret.** `PREVIEW_SECRET` was in `.env.example`, `scripts/db/provision-local.mjs`
+      (generated and written) and `docs/LOCAL-MARIADB.md`. No source reads it: the console preview is
+      an inline pane fed by the editor's draft, not a signed link (`src/lib/console/preview.ts`). A
+      secret nobody reads is worse than none — an operator sets it, believes something is protected,
+      and nothing is. Removed from all four files (the fourth is this row's doc); `grep -r
+      PREVIEW_SECRET` over the tree now returns nothing.
+
+      **Gates.** Typecheck clean, lint clean, full run **33 files / 694 passed, 0 failed**.
+
+      **Not verified.** The `revalidatePath` effect of a save on a *running built* server is the one
+      claim here that rests on Next's contract plus code, not on a measurement: it needs `next
+      build`, a start, and a login, and there is no build without the owner's word. Nothing in the
+      checklist has been applied to a real server — it is a list of settings, not a record of them.
+
+- [x] A-7 The deploy runbook: artifact, environment names, cPanel steps, PM2 steps, host questions
+      — `87ef729`
+      **What it is.** The placeholder at the end of `docs/SELF-HOSTED.md` is replaced by the section
+      the owner asked for: "the exact deploy steps for cPanel and for a Cloudways/VPS with SSH +
+      PM2, and tell me what to ask my host". It opens by saying it is a runbook to approve, not a
+      record — no build has run.
+
+      **Runtime.** Node 24 tested locally (v24.21.0); Next 16 needs 20.9 or newer, so the host
+      chooses from what it offers. Build `npm ci && npm run build` (`next build --webpack`); start
+      `npm start`, or `node server.js` for a standalone build. MariaDB on `localhost`, `utf8mb4`,
+      one database. Memory: the build is the peak, so a 512 MB cap means building locally and
+      uploading standalone output.
+
+      **Environment names, names only.** The runtime list is `DATABASE_HOST`, `DATABASE_PORT`,
+      `DATABASE_NAME`, `DATABASE_USER`, `DATABASE_PASSWORD`, `DATABASE_POOL_SIZE`, `DATABASE_TLS`,
+      `DATABASE_TLS_CA_FILE`, `DATABASE_URL`, `SESSION_SECRET`, `NEXT_PUBLIC_SITE_URL`,
+      `REVALIDATE_SECRET`, `MEDIA_ROOT`, `LEAD_MODE`, `CF7_FORM_ID`, `WP_BASE_URL`,
+      `COOKIE_FORCE_SECURE`, `DATABASE_LOG_QUERIES`; `LOCAL_DB_ROOT_PASSWORD`,
+      `LOCAL_MARIADB_BASEDIR` and `LOCAL_MARIADB_MY_INI` are named as this machine's only and must
+      not be set on the server. Each runtime name was checked against a reader in the code before
+      being written down (grep for the name, not for the doc). `CF7_FORM_ID` and
+      `COOKIE_FORCE_SECURE` have code defaults and are absent from `.env.example`; they are listed
+      because the code reads them.
+
+      **Artifact.** Two explicit lists. Never uploaded: `.env*`, `node_modules`, `.next/cache`,
+      `public/uploads`, `backups/`, `*.json.gz`, `docs/`, `.git`. Always: `src/`, `public/` without
+      `uploads/`, `next.config.ts`, `package.json`, `package-lock.json`, `tsconfig.json`,
+      `postcss.config.*`, `scripts/db/` (needed once) and this document. Two shapes: the host builds
+      from source, or the build is made here and only `.next/standalone` plus `.next/static` plus
+      `public` are uploaded — with the warning that the database scripts are not in a standalone
+      output, so the first setup runs from the source upload or from a small folder holding
+      `scripts/db/`, the migrations and `mysql2`.
+
+      **cPanel (seven steps).** Create the subdomain with its own document root; create the database
+      and a user with rights on that database only (cPanel prefixes both names); env file outside the
+      document root, mode 600, with `NEXT_PUBLIC_SITE_URL=https://test.shamahclinics.com`; upload and
+      choose the newest Node the panel offers; run `server-setup.mjs` dry, expect "8 migration files
+      … 8 to apply", then `--apply`; move the data dry then `--replace --apply` and copy
+      `public/uploads` to the media folder; add the cron line and the folder permissions.
+      **Cloudways/VPS.** `npm ci && npm run build`, setup `--apply`, `pm2 start npm --name shamah --
+      start` with `instances: 1`, `pm2 save`, nginx on `127.0.0.1:3000` with certbot — and the note
+      that the app's own `/uploads` route already sends immutable headers, so no proxy rule is
+      required.
+
+      **Eight questions for the host** close the section: Node versions offered; how the app is
+      started and whether standalone is supported; how many processes per application (this is the
+      A-8 question); RAM limit; SSH/Terminal; MariaDB version and `max_allowed_packet`; the exact
+      prefixed database and user names; whether cron is allowed.
+
+      **Left on purpose.** `output: 'standalone'` is documented but **not** added to
+      `next.config.ts`. It changes the build's shape, and no build runs without the owner's word;
+      adding it is one line when they choose that path.
+
+      **Gates.** Typecheck clean, lint clean, full run **33 files / 694 passed, 0 failed** (same run
+      as A-8; no source changed).
+
+      **Not verified.** Nothing in this runbook has been executed: no build, no upload, no visit to
+      the cPanel panel, no PM2 start. The process count, the RAM cap and the MariaDB version are
+      questions rather than facts until the host answers. The restore evidence in the section above
+      came from the local MariaDB, not the server's.
 
 ## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
