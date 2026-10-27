@@ -2521,6 +2521,85 @@ owner's word.
       to a person who cannot see the arrow, and what the list looks like while `busy` holds every control
       — all remain slice G's claims.
 
+- [x] R5 No blanket transition, one painter for a field, and the guards made true — `9f409f9`
+      **What was wrong.** The rule the review named was in the tree three times, not once:
+      `a, button, div { transition: 0.3s all ease }` was already **committed** at the top of
+      `console-kit.css` (so it has been shipping), and the uncommitted work added the same four
+      selectors with `!important` at its foot and at the foot of `globals.css`. A blanket
+      transition is not a style but an order to every component: it outranks any named list, it
+      animates `width`/`transform` on elements that never meant to move, and `!important` on it
+      outranks the `prefers-reduced-motion` block that is supposed to stop everything — the one
+      setting a person asks for when motion makes them ill. All three are gone, and
+      `console.css:351-360` keeps the replacement it already carried: a scoped list of six
+      properties on `:where(a, button, input, select, textarea, summary)` inside
+      `[data-surface="console"]`, which any component can still answer. Nothing in the four
+      sheets writes `transition: … !important` any more.
+
+      **Why the four files failed, and which side was wrong.** They are the fence around the
+      console's architecture, and the uncommitted `console.css` rewrite crossed it: it painted
+      the kit's own components a second time inside the surface sheet (`.console-control` and
+      every state of it, `.console-field`, `.console-check`), renamed the field tap floor from
+      44px to 40px, hung the button variants on `--b-*` names, wrote `text-align: right` and
+      `text-align: left`, and squared the header tools. The brief said to make the tests pass
+      against the real `console.css`, so the stylesheet moved and the tests were kept.
+      **The moves.** `console-kit.css` is again the only file that draws a field: the rewrite's
+      paint went into it line for line (13px control text, `--c-r-ctl`, the inset sheen, the
+      gold-mix hover, the 3px focus ring, the number field's `11rem`, the muted disabled and
+      read-only pair) and the block left `console.css`, whose remaining business is where a
+      control sits inside one of its bars — `.console-search`, `.console-inline`, and the two
+      responsive rules that travel with the base rule instead of splitting from it.
+      `.console-doc-field`, which `ListDocFields` puts on seven real nodes, joined `.console-field`
+      in the kit; the label rule kept the rewrite's `:not(.console-check)`, because a flag row
+      nests its own label under the field and that label *is* the control. `--b-*` became
+      `--c-b-*` (39 places), which is what the isolation guard asks for — every name the console
+      reads is console-owned and console-declared, in either of its two sheets. The two
+      `text-align` rules went, not translated: `start` is the default and follows `dir`, so they
+      said nothing and broke the RTL sweep. `.console-tool` wears `--c-r-pill` again.
+      `outline: none` could not come with the control rule — `rich-editor.test.ts` and
+      `image-picker.test.ts` both forbid `outline:` in the kit precisely so that the ring stays
+      the single scoped one — so it is where a reset belongs, on `[data-surface="console"]
+      :where(input, select, textarea)`, below the `:focus-visible` rule that still gives a
+      keyboard user the 2px outline.
+
+      **Two things the owner will see, stated plainly.** A field is 44px tall again while a button
+      stays at the rewrite's 40px, because the guard names the field floor and the row it shares
+      (`--c-tap-field` vs `--c-ctl-h`); whether that reads as aligned or as a mistake is a pixel
+      claim, not a test claim. And `.console-check` is no longer `position: absolute;
+      right: 12px; top: 20px` — that was committed in `aa8b2be` and never removed, and it puts
+      every checkbox in the console — the bulk-select box in a table head, each row's select, a
+      visible-on/off flag, a role's permission grid — outside its own row, at the top-right of
+      whatever ancestor happens to be positioned, on the wrong side in Arabic. It is an inline-flex
+      label again. That is a layout change made from the markup, not from a screen.
+
+      **Proved.** `tests/console.test.ts` +1: *hangs no transition on a bare element* sweeps
+      `console.css`, `console-kit.css`, `globals.css` and `tokens.css`, fails on any `transition`
+      written on a selector that carries no class, attribute, id, pseudo-class or scope, and fails
+      on any forced `transition: … !important`. It was run against the committed `console-kit.css`
+      before the fix and named `a, button, div` — the guard catches the rule that shipped, not only
+      the one that was coming.
+
+      **Gates.** Typecheck clean, lint clean, full run **27 files / 640 passed, 0 failed** — the
+      first clean full run since the rewrite. `console.css`, `console-kit.css`, the new guard and
+      `.gitignore` are committed together, so the working tree no longer holds an unstaged
+      stylesheet. `globals.css` needed no commit: its only difference from `HEAD` was the
+      uncommitted `!important` rule, so removing it leaves the file exactly as it was shipped.
+      `public/uploads/` is gitignored: `src/lib/media/store.ts` writes every local-driver upload
+      under it and the upload tests write real files there on a run, so it is a generated folder,
+      and the durable home for those bytes is the Blob driver, not this repo.
+
+      **Left on purpose.** The rewrite layered new paint over the kit rather than moving it, so
+      `console.css` still draws `.console-btn`, `.console-chip`, `.console-badge`, `.console-note`
+      and `.console-count` a second time on top of the kit's. Nothing guards against that today and
+      every test passes either way, but it is two vocabularies for one component and the next
+      styling slice should finish the move rather than add to it.
+
+      **Not verified on a screen.** Still no dev address or password, so all of the above is
+      cascade arithmetic on two sheets that never share a page. What could not be seen: a field
+      beside a button in the same bar at 360px; the header tools as circles next to a long page
+      title in Arabic; a checkbox back inside its table row and its bulk bar; dark mode for any of
+      it; and whether anything now moves less than it did — the reduced-motion claim is a rule
+      removed, not a key pressed.
+
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
