@@ -23,7 +23,8 @@
     "db:import-lists": "tsx scripts/db/import-lists.ts",
     "db:repair-plain": "tsx scripts/db/repair-plain.ts",
     "db:server-setup": "node scripts/db/server-setup.mjs",
-    "db:move-data": "node scripts/db/move-data.mjs"
+    "db:move-data": "node scripts/db/move-data.mjs",
+    "backup": "node scripts/backup/run.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
