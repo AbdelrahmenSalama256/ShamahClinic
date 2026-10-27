@@ -1,6 +1,6 @@
 import { SITE_URL } from "./site";
 import { siteConfig } from "@/config/site";
-import { clinicData } from "@/data/clinic";
+import { getClinicWords } from "./content/site";
 import type { BranchDetail } from "@/data/branches";
 import type { Treatment } from "@/data/treatments";
 import { faqData, type FaqItem } from "@/data/faq";
@@ -37,6 +37,7 @@ function names(label: { ar: string; en: string }, lang: Locale) {
 export async function organizationJsonLd(): Promise<Json> {
   const lang = await routeLang();
   const brand = names(siteConfig.brand.name, lang);
+  const clinic = await getClinicWords();
   return {
     "@context": "https://schema.org",
     "@type": ["MedicalClinic", "LocalBusiness"],
@@ -46,7 +47,7 @@ export async function organizationJsonLd(): Promise<Json> {
     logo: logoUrl,
     image: `${SITE_URL}${images.interiors.reception.src}`,
     description: lang === "ar" ? siteConfig.metadata.description : siteConfig.metadata.descriptionEn,
-    telephone: clinicData.phone,
+    telephone: clinic.phone,
     medicalSpecialty: ["Dermatology", "CosmeticMedicine", "LaserTreatment"],
     areaServed: [
       { "@type": "City", name: lang === "ar" ? "القاهرة" : "Cairo" },

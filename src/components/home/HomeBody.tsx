@@ -7,7 +7,7 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { Photo } from "@/components/ui/Photo";
 import { Swiper } from "@/components/ui/Swiper";
-import { GoldLink, whatsappHref } from "@/components/shared/Actions";
+import { GoldLink, useWhatsappHref } from "@/components/shared/Actions";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { TreatmentCard } from "@/components/cards/TreatmentCard";
@@ -74,6 +74,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   branches,
 }) => {
   const { t, language, formatNumber } = useLanguage();
+  const waHref = useWhatsappHref();
   const hasIntro = !!(intro.title.ar || intro.title.en);
 
   return (
@@ -237,7 +238,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                         {b.phone}
                       </a>
                       <a
-                        href={whatsappHref(
+                        href={waHref(
                           language,
                           language === "ar"
                             ? `مرحباً عيادات شامه، أرغب في الحجز في فرع ${b.name.ar}.`

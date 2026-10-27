@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
-import { clinicData } from "@/data/clinic";
+import { useClinic } from "@/context/ClinicContext";
 import type { BranchLite } from "@/data/branches";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
@@ -47,6 +47,7 @@ export const Footer: React.FC<{ branches: BranchLite[]; nav: NavItem[]; hiddenPa
   hiddenPaths,
 }) => {
   const { language, t } = useLanguage();
+  const clinic = useClinic();
   const visibleNavItems = nav.filter((item) => !hiddenPaths.includes(item.href));
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
@@ -66,7 +67,7 @@ export const Footer: React.FC<{ branches: BranchLite[]; nav: NavItem[]; hiddenPa
     setNewsletterSubscribed(true);
   };
 
-  const whatsappUrl = `${clinicData.whatsappUrl}?text=${encodeURIComponent(
+  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(
     language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن الخدمات المتاحة لديكم."
       : "Hello Shamah Clinics, I would like to inquire about services.",
@@ -95,12 +96,12 @@ export const Footer: React.FC<{ branches: BranchLite[]; nav: NavItem[]; hiddenPa
             </p>
             <div className="pt-1 flex flex-col gap-2.5 text-xs text-gray-300">
               <a
-                href={`tel:${clinicData.phone.replace(/\s/g, "")}`}
+                href={`tel:${clinic.phone.replace(/\s/g, "")}`}
                 className="flex items-center gap-2 hover:text-[var(--gold-start)] transition-colors duration-300"
                 // dir="ltr"
               >
                 <Phone className="w-4 h-4 text-[var(--text-gold)]" />
-                <span>{clinicData.phone}</span>
+                <span>{clinic.phone}</span>
               </a>
               <a
                 href={whatsappUrl}

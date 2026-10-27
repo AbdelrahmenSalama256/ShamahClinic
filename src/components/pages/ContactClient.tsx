@@ -6,8 +6,8 @@ import { useBooking } from "@/context/BookingContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Photo } from "@/components/ui/Photo";
-import { whatsappHref } from "@/components/shared/Actions";
-import { clinicData } from "@/data/clinic";
+import { useWhatsappHref } from "@/components/shared/Actions";
+import { useClinic } from "@/context/ClinicContext";
 import type { BranchDetail } from "@/data/branches";
 import type { TreatmentOption } from "@/data/treatments";
 import { images } from "@/lib/images";
@@ -29,6 +29,8 @@ export const ContactClient: React.FC<{
   banner: PhotoSlot;
 }> = ({ branches, services, banner }) => {
   const { t, language } = useLanguage();
+  const clinic = useClinic();
+  const waHref = useWhatsappHref();
   const { openBooking } = useBooking();
 
   const [form, setForm] = useState<{
@@ -150,7 +152,7 @@ export const ContactClient: React.FC<{
       : `Hello Shamah Clinics, my name is ${form.name || "..."}. I would like to ask about ${
           serviceNames || "your services"
         }.`;
-  const continueWaUrl = serverWaUrl || whatsappHref(language, waMessage);
+  const continueWaUrl = serverWaUrl || waHref(language, waMessage);
 
   return (
     <>
@@ -175,7 +177,7 @@ export const ContactClient: React.FC<{
           {/* Direct channels */}
           <div className="lg:col-span-5 space-y-4">
             <a
-              href={whatsappHref(language)}
+              href={waHref(language)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-success)] bg-[var(--bg-success-soft)]/60 hover:bg-[var(--bg-success-soft)] hover:-translate-y-0.5 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
@@ -197,7 +199,7 @@ export const ContactClient: React.FC<{
             </a>
 
             <a
-              href={`tel:${clinicData.phone.replace(/\s/g, "")}`}
+              href={`tel:${clinic.phone.replace(/\s/g, "")}`}
               // dir="ltr"
               className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] hover:-translate-y-0.5 hover:shadow-md transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
             >
@@ -209,7 +211,7 @@ export const ContactClient: React.FC<{
                   {t("الخط الرئيسي", "Main line")}
                 </span>
                 <span className="block text-sm text-[var(--text-secondary)]">
-                  {clinicData.phone}
+                  {clinic.phone}
                 </span>
               </span>
             </a>

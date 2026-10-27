@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
-import { clinicData } from "@/data/clinic";
+import { useClinic } from "@/context/ClinicContext";
 import type { BranchLite } from "@/data/branches";
 import type { Specialist } from "@/data/specialists";
 import type { TreatmentOption } from "@/data/treatments";
@@ -48,6 +48,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   preSelectedOffer,
 }) => {
   const { language, t, formatNumber } = useLanguage();
+  const clinic = useClinic();
 
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>(() => {
@@ -284,7 +285,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         (currentSpecialist ? `• الطبيبة: ${currentSpecialist.name.ar}\n` : "") +
         `أرجو تأكيد الموعد معي. شكراً لكم!`,
     );
-    return `${clinicData.whatsappUrl}?text=${text}`;
+    return `${clinic.whatsappUrl}?text=${text}`;
   };
 
   const ArrowPrev = language === "ar" ? ChevronRight : ChevronLeft;

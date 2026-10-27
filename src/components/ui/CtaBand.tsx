@@ -3,7 +3,7 @@
 import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
-import { clinicData } from "@/data/clinic";
+import { useClinic } from "@/context/ClinicContext";
 import { images } from "@/lib/images";
 import { Photo } from "./Photo";
 import { Reveal } from "./Reveal";
@@ -26,6 +26,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
   compact = false,
 }) => {
   const { t, language } = useLanguage();
+  const clinic = useClinic();
   const { openBooking } = useBooking();
 
   const heading = title ?? {
@@ -37,7 +38,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
     en: "Book your consultation at the nearest branch, or message us on WhatsApp.",
   };
 
-  const whatsappUrl = `${clinicData.whatsappUrl}?text=${encodeURIComponent(
+  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(
     language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات."
       : "Hello Shamah Clinics, I would like to inquire about appointments.",
@@ -100,12 +101,12 @@ export const CtaBand: React.FC<CtaBandProps> = ({
               </a>
               <Reveal delay={0.2}>
                 <a
-                  href={`tel:${clinicData.phone.replace(/\s/g, "")}`}
+                  href={`tel:${clinic.phone.replace(/\s/g, "")}`}
                   className="bg-transparent border border-[var(--border-on-dark)] text-[var(--text-on-dark)] font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-[var(--bg-dark-card)] transition-colors duration-300 flex items-center justify-center gap-2"
                   dir="ltr"
                 >
                   <Phone className="w-4 h-4 text-[var(--gold-start)]" />
-                  <span>{clinicData.phone}</span>
+                  <span>{clinic.phone}</span>
                 </a>
               </Reveal>
             </Reveal>

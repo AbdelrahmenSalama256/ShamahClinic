@@ -3,7 +3,7 @@
 import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
-import { clinicData } from "@/data/clinic";
+import { useClinic } from "@/context/ClinicContext";
 import { MessageCircle, Calendar, Phone } from "lucide-react";
 
 /**
@@ -13,13 +13,14 @@ import { MessageCircle, Calendar, Phone } from "lucide-react";
  */
 export const FloatingActions: React.FC = () => {
   const { language, t } = useLanguage();
+  const clinic = useClinic();
   const { openBooking, isBookingOpen } = useBooking();
 
   // The wizard owns the screen once it is open; two stacked CTAs compete for
   // the same thumb reach and the bubble ends up under the modal.
   if (isBookingOpen) return null;
 
-  const whatsappUrl = `${clinicData.whatsappUrl}?text=${encodeURIComponent(
+  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(
     language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
       : "Hello Shamah Clinics, I would like to inquire about appointments and services.",
@@ -64,7 +65,7 @@ export const FloatingActions: React.FC = () => {
           <span>{t("احجزي موعدكِ الآن", "Book Appointment")}</span>
         </button>
         <a
-          href={`tel:${clinicData.phone.replace(/\s/g, "")}`}
+          href={`tel:${clinic.phone.replace(/\s/g, "")}`}
           className="w-11 h-11 rounded-xl bg-[var(--bg-secondary)] text-[var(--text-gold)] border border-[var(--border-control)] flex items-center justify-center shrink-0"
           aria-label={t("اتصال بالعيادة", "Call clinic")}
         >

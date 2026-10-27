@@ -9,7 +9,7 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useBooking } from "@/context/BookingContext";
 import { siteConfig } from "@/config/site";
-import { clinicData } from "@/data/clinic";
+import { useClinic } from "@/context/ClinicContext";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
 import type { NavItem } from "@/data/nav";
@@ -31,6 +31,7 @@ import {
 
 export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ nav, hiddenPaths }) => {
   const { language, toggleLanguage, t } = useLanguage();
+  const clinic = useClinic();
   const { theme, toggleTheme } = useTheme();
   const { openBooking } = useBooking();
   const pathname = usePathname();
@@ -82,7 +83,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
   const isActive = (href: string) =>
     href === "/" ? normalizedPath === "/" : normalizedPath.startsWith(href);
 
-  const whatsappUrl = `${clinicData.whatsappUrl}?text=${encodeURIComponent(
+  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(
     language === "ar"
       ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
       : "Hello Shamah Clinics, I would like to inquire about appointments and services.",
@@ -132,12 +133,12 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
             </div>
             <div className="flex items-center gap-4">
               <a
-                href={`tel:${clinicData.phone.replace(/\s/g, "")}`}
+                href={`tel:${clinic.phone.replace(/\s/g, "")}`}
                 dir="ltr"
                 className="flex items-center gap-1.5 hover:text-[var(--text-gold)] transition-colors duration-300"
               >
                 <Phone className="w-3.5 h-3.5 text-[var(--text-gold)]" />
-                <span>{clinicData.phone}</span>
+                <span>{clinic.phone}</span>
               </a>
               <span className="text-[var(--gold-end)]" aria-hidden="true">
                 |

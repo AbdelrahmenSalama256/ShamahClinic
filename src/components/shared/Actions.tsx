@@ -1,11 +1,11 @@
 "use client";
 
-import React from "react";
+import React, { useCallback } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
 import { getLocalizedHref } from "@/lib/locale";
-import { clinicData } from "@/data/clinic";
+import { useClinic } from "@/context/ClinicContext";
 import {
   Calendar,
   MessageCircle,
@@ -14,13 +14,26 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-export function whatsappHref(language: "ar" | "en", custom?: string): string {
-  const text =
-    custom ??
-    (language === "ar"
-      ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
-      : "Hello Shamah Clinics, I would like to inquire about appointments and services.");
-  return `${clinicData.whatsappUrl}?text=${encodeURIComponent(text)}`;
+/** The words a WhatsApp button opens with when the caller has not written its own. */
+function defaultWaMessage(language: "ar" | "en"): string {
+  return language === "ar"
+    ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
+    : "Hello Shamah Clinics, I would like to inquire about appointments and services.";
+}
+
+/**
+ * Build a WhatsApp link for the number the clinic saved in Settings. A hook rather than
+ * an exported function because the number is page data: called from a module scope it
+ * would be the number baked into the bundle, which is exactly the bug where a saved
+ * phone changed nothing on the site.
+ */
+export function useWhatsappHref() {
+  const { whatsappUrl } = useClinic();
+  return useCallback(
+    (language: "ar" | "en", custom?: string): string =>
+      `${whatsappUrl}?text=${encodeURIComponent(custom ?? defaultWaMessage(language))}`,
+    [whatsappUrl],
+  );
 }
 
 interface BookButtonProps {
@@ -77,6 +90,7 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
   className = "",
 }) => {
   const { t, language } = useLanguage();
+  const whatsappHref = useWhatsappHref();
   const pad =
     size === "sm"
       ? "text-xs px-4 py-2"
@@ -108,7 +122,8 @@ export const CallButton: React.FC<{
   className?: string;
 }> = ({ phone, size = "md", className = "" }) => {
   const { t } = useLanguage();
-  const num = (phone ?? clinicData.phone).replace(/\s/g, "");
+  const clinic = useClinic();
+  const num = (phone ?? clinic.phone).replace(/\s/g, "");
   const pad = size === "sm" ? "text-xs px-4 py-2" : "text-sm px-6 py-3";
   return (
     <a
@@ -117,7 +132,7 @@ export const CallButton: React.FC<{
       className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--blush-light)] transition-[background-color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${pad} ${className}`}
     >
       <Phone className="w-4 h-4" />
-      <span>{phone ?? clinicData.phone}</span>
+      <span>{phone ?? clinic.phone}</span>
       <span className="sr-only">{t("اتصال", "Call")}</span>
     </a>
   );

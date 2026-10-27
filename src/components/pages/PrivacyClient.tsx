@@ -4,7 +4,7 @@ import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
-import { clinicData } from "@/data/clinic";
+import { useClinic } from "@/context/ClinicContext";
 
 interface PolicyBlock {
   heading: { ar: string; en: string };
@@ -67,6 +67,7 @@ const policy: PolicyBlock[] = [
  *  leaves page 3 in English, so Arabic keeps the authored "سياسة الخصوصية". */
 export const PrivacyClient: React.FC<{ title: { ar: string; en: string } }> = ({ title }) => {
   const { t, language } = useLanguage();
+  const clinic = useClinic();
 
   return (
     <>
@@ -105,7 +106,7 @@ export const PrivacyClient: React.FC<{ title: { ar: string; en: string } }> = ({
             <h2 className="text-lg font-black text-[var(--text-primary)] mb-2">{t("للتواصل بشأن الخصوصية", "Privacy contact")}</h2>
             <p className="text-sm text-[var(--text-secondary)] mb-4">
               {t("عيادات شامه — ", "Shamah Clinics — ")}
-              <a href={`tel:${clinicData.phone.replace(/\s/g, "")}`} dir="ltr" className="text-[var(--gold-end)] hover:underline">{clinicData.phone}</a>
+              <a href={`tel:${clinic.phone.replace(/\s/g, "")}`} dir="ltr" className="text-[var(--gold-end)] hover:underline">{clinic.phone}</a>
             </p>
           </Reveal>
         </div>

@@ -903,6 +903,42 @@ export async function getSettings(lang: Lang = 'en'): Promise<Settings> {
   };
 }
 
+export interface ClinicWords {
+  phone: string;
+  whatsapp: string;
+  whatsappUrl: string;
+}
+
+/**
+ * The two numbers the site dials and the link it opens, for the client tree.
+ *
+ * `getSettings` already answered from these rows, but nothing on a public page read it:
+ * the header, the footer, the contact page, the call-to-action band and the floating
+ * buttons each imported `clinicData`, which is built from `config/site.ts` at module
+ * load. An operator typing a new number into Settings wrote a row nothing rendered.
+ *
+ * The fallback is the config file again, and it is per call rather than per key: a page
+ * that cannot reach the database shows the number it shipped with, never a blank
+ * `tel:` link. The digits in a `wa.me` address are whatever the operator typed with the
+ * spaces, the plus and the dashes taken out — a wa.me link with a `+` in it does not open.
+ */
+export async function getClinicWords(): Promise<ClinicWords> {
+  let saved = new Map<string, string>();
+  try {
+    saved = await savedSettings();
+    if (saved.size) note('db', 'clinic', `${saved.size} key(s)`);
+  } catch (err: unknown) {
+    note('snapshot', 'clinic', reason(err));
+  }
+  const phone = saved.get('phone') ?? siteConfig.contact.phone;
+  const whatsapp = saved.get('whatsapp') ?? WHATSAPP;
+  return {
+    phone,
+    whatsapp,
+    whatsappUrl: `https://wa.me/${whatsapp.replace(/\D/g, '')}`,
+  };
+}
+
 export interface SiteMeta {
   title: string;
   description: string;

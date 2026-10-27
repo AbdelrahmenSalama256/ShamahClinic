@@ -9,9 +9,10 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig, siteTheme } from "@/config/site";
 import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
-import { getBranchList, getNavList, getSiteMeta, getSpecialistList } from "@/lib/content/site";
+import { getBranchList, getClinicWords, getNavList, getSiteMeta, getSpecialistList } from "@/lib/content/site";
 import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
 import { getMergedTreatments } from "@/lib/wp/treatments";
+import { ClinicProvider } from "@/context/ClinicContext";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -84,12 +85,13 @@ export default async function RootLayout({
   const lang = normalizeLang(segment);
   if (!lang) notFound();
 
-  const [treatments, branches, pages, nav, specialists] = await Promise.all([
+  const [treatments, branches, pages, nav, specialists, clinic] = await Promise.all([
     getMergedTreatments(),
     getBranchList(),
     readPageStates(),
     getNavList(),
     getSpecialistList(),
+    getClinicWords(),
   ]);
 
   return (
@@ -105,16 +107,18 @@ export default async function RootLayout({
         className="min-h-full flex flex-col antialiased bg-[var(--bg-primary)] text-[var(--text-primary)]"
         suppressHydrationWarning
       >
-        <JsonLd data={await Promise.all([organizationJsonLd(), webSiteJsonLd()])} />
-        <SiteShell
-          branches={branches}
-          treatments={treatments}
-          nav={nav}
-          specialists={specialists}
-          hiddenPaths={hiddenPageHrefs(pages)}
-        >
-          {children}
-        </SiteShell>
+        <ClinicProvider value={clinic}>
+          <JsonLd data={await Promise.all([organizationJsonLd(), webSiteJsonLd()])} />
+          <SiteShell
+            branches={branches}
+            treatments={treatments}
+            nav={nav}
+            specialists={specialists}
+            hiddenPaths={hiddenPageHrefs(pages)}
+          >
+            {children}
+          </SiteShell>
+        </ClinicProvider>
       </body>
     </html>
   );

@@ -4,7 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
-import { whatsappHref } from "@/components/shared/Actions";
+import { useWhatsappHref } from "@/components/shared/Actions";
 import { Photo } from "@/components/ui/Photo";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Offer } from "@/data/offers";
@@ -12,6 +12,7 @@ import { Check, Calendar, MessageCircle } from "lucide-react";
 
 export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
   const { t, language, formatNumber } = useLanguage();
+  const waHref = useWhatsappHref();
   const { openBooking } = useBooking();
 
   const badge = t(offer.badge.ar, offer.badge.en);
@@ -123,7 +124,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
               <span>{t("احجزي العرض", "Book Offer")}</span>
             </button>
             <a
-              href={whatsappHref(language, waMsg)}
+              href={waHref(language, waMsg)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-success)] text-[var(--text-success)] font-bold text-sm py-3 hover:bg-[var(--bg-success-soft)] transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
