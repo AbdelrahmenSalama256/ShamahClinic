@@ -2617,11 +2617,10 @@ owner's word.
       depends on the discarded storage choice: `e0dae71` (slice M) — the Blob branch of
       `src/lib/media/storage.ts`, the `@vercel/blob` line in `package.json`, and the Blob block in
       `.env.example`. One revert-shaped commit removes all three.
-      **Still to do, in order.** A-0 is done (below). A-2 plain MariaDB, TLS optional by env only ·
-      A-5a one script creates the database and runs the migrations on an empty server ·
-      A-4 the move script · A-3 uploads on local disk outside the build output, with a route that
-      serves them · A-8 the cache statement and the security checklist · A-7 the deploy steps for
-      cPanel and for Cloudways/VPS. `next build` is not run without the owner's word.
+      **Still to do, in order.** A-0, A-2, A-5a, A-4 and the read audit are done (below).
+      Left: A-3 uploads on local disk outside the build output, with a route that serves them ·
+      A-8 the cache statement and the security checklist · A-7 the deploy steps for cPanel and
+      for Cloudways/VPS. `next build` is not run without the owner's word.
       **Untouched by all of it.** `shamah-clinic.vercel.app`, its project and its domain; `main`;
       `D:\shamah`; `src/data`; `data/wp/*.json` and `public/wp/*`. Nothing is pushed.
 
@@ -2714,6 +2713,144 @@ owner's word.
       menu and under the sticky bar, and — the part a node render cannot reach — whether
       `revalidatePath` from a save actually replaces the page a running server had already cached.
       That last claim is why A-8 exists: it holds on one process and breaks on more than one.
+
+- [x] A-2 The database connection is a plain loopback pool; TLS is opt-in from the environment — `2448d82`
+      **What changed.** `src/lib/db/index.ts` builds one `PoolOptions` object: host/port/user/
+      password/database from `DATABASE_*` (or `DATABASE_URL`, with the discrete names winning),
+      `connectionLimit` from `DATABASE_POOL_SIZE`, `dateStrings:false`, `decimalNumbers:false` (a price
+      never loses cents to a float), `multipleStatements:false`, keep-alive. `readDbConfig()` now takes
+      an `Env` record so a test can hand it values instead of mutating `process.env`.
+      `readTls()` is the only switch: unset/`off`/`false`/`0`/`disable` → no TLS; `require` → encrypted,
+      certificate not checked; `verify` → checked against the system roots or the PEM in
+      `DATABASE_TLS_CA_FILE`; anything else throws rather than guessing. There is no serverless branch,
+      no driver-by-token behaviour, nothing to buy. `.env.example` documents both names.
+
+      **Proved.** `tests/db-config.test.ts` (86 lines) drives `readDbConfig` and `readTls` directly: the
+      discrete names beat the URL, a missing password stays empty rather than becoming the string
+      `"undefined"`, every accepted TLS spelling maps to the documented mode, an unknown mode throws, and
+      a CA file is read into a `Buffer`. Typecheck and lint clean; the full suite including this file is
+      green below.
+
+      **Not verified.** No production database exists yet, so TLS has never been negotiated against a
+      real certificate and the pool has never run on cPanel's `localhost` socket path. A-7's checklist
+      covers both.
+
+- [x] A-5a One script creates the database and applies the migrations on an empty server — `e9c2195`
+      **What changed.** `scripts/db/server-setup.mjs` is plain JavaScript on purpose: the uploaded
+      artifact has no `tsx` and no dev dependencies, so the server cannot run `src/lib/db/migrate.ts`.
+      It reads an env file (values are never printed), connects, and by default is a **read-only report**:
+      server version, tables that exist, migrations that would run. `--apply` applies the pending files
+      with the app's own credentials. `--create --apply` additionally creates the database and the
+      one-database user, which needs `SERVER_ADMIN_USER`/`SERVER_ADMIN_PASSWORD` and a loopback host —
+      refused otherwise, because that path mints a password. It is safe to run twice.
+
+      **Proved.** `tests/server-setup.test.ts` holds the two migration readers to each other: same file
+      list, same order, same SHA-256 checksums, identical statement split (a database that recorded a
+      different checksum is refused by the app's own runner on the next deploy). On an empty scratch
+      database the script created the full schema — 39 application tables plus `app_migrations` — and a
+      second run reported nothing pending and changed nothing. At the time that was 7 files / 88
+      statements; 008 (below) makes it 8 / 93, and the test's count was raised with it. The scratch
+      database was dropped afterwards; the local development database was never the target.
+
+      **Not verified.** No cPanel account has run it. Whether the panel's DB user may create tables and
+      indexes (some shared plans restrict DDL) is the first thing to check there.
+
+- [x] A-4 The content moves with a dump/restore/verify script that cannot write to the local database — `97c0e58`
+      **What changed.** `scripts/db/move-data.mjs` has three verbs. `dump --from <env> --out <file>`:
+      opens the source with a **read-only** connection, issues only `SELECT`s, and writes a gzipped JSON
+      file under `/backups/` (git-ignored — it holds real leads and password hashes). `restore --to <env>
+      --in <file>`: a dry run unless `--apply`; refuses a target that is the database the dump came from;
+      refuses a target whose tables already hold rows unless `--replace` says those rows may go. `verify
+      --to <env> --in <file>`: compares per-table row counts **and** a key-order-independent content
+      hash, then reads every JSON column back and requires it to arrive already parsed, because the
+      application's readers expect an object and call no `JSON.parse`.
+
+      **How the JSON columns are found.** MariaDB stores JSON as LONGTEXT with a `json_valid()` CHECK, so
+      the script reads those check clauses instead of guessing by column name: 22 columns in this schema,
+      and a new one is covered the day its migration lands. A scalar stored in such a column is the
+      dangerous case — `"20555000111"` parses to a number, and a reader that treats "not a string" as
+      "nothing saved" silently falls back to the config file. The readers in `content/settings.ts` and
+      `content/site.ts` decode only documents; the verifier asserts the value it gets back is the value
+      that went in.
+
+      **Proved.** A dump of the local database restored into a scratch database, then `verify` reported
+      matching counts and hashes for every table and every JSON column parsed on the target engine
+      (MariaDB 11.4.13). The local database was not written to on any verb; the scratch databases were
+      dropped afterwards. `tests/move-data.test.ts` holds the pure parts: the env-file reader (quotes,
+      blanks, not-an-assignment), `stableStringify` (key order does not move the hash; Buffers survive),
+      and the `json_valid()` column extraction.
+
+      **Not verified.** The restore has not been aimed at the real cPanel MariaDB. Its version and
+      `max_allowed_packet` can both reject a batch of 200 rows with a large body — check both before the
+      first real move (A-7's checklist).
+
+- [x] A-4b Every public route reads the database 17–26 times instead of 45–78 — `bb9b7d6`
+      **How it was measured.** A dev server (Turbopack, Node v24.21.0) with `DATABASE_LOG_QUERIES=1`
+      prints one `[dbq]` line per statement. Each route was warmed once, then one request was counted
+      with a two-second flush wait on either side of the log read (a redirected stdout lags the request;
+      without the wait a count silently absorbs the previous request's lines — that mistake was made and
+      discarded). Baseline was then re-measured from the pre-change files with the identical procedure,
+      not copied from the earlier run, and reproduced it exactly: 78 · 56 · 56 · 58 · 48 · 59 · 52 · 52 ·
+      49 · 48 · 51 · 45 · 66 · 50 · 67 · 78.
+
+      | route | before | after | | route | before | after |
+      |---|---:|---:|---|---|---:|---:|
+      | `/en` home | 78 | 25 | | `/en/offers` | 48 | 21 |
+      | `/en/about` | 56 | 20 | | `/en/offers/:slug` | 51 | 22 |
+      | `/en/blogs` | 56 | 25 | | `/en/privacy` | 45 | 18 |
+      | `/en/blogs/:slug` | 58 | 26 | | `/en/results` | 66 | 23 |
+      | `/en/branches` | 48 | 17 | | `/en/services` | 50 | 19 |
+      | `/en/branches/:slug` | 59 | 24 | | `/en/services/:slug` | 67 | 26 |
+      | `/en/contact` | 52 | 17 | | `/ar` home | 78 | 25 |
+      | `/en/doctors` | 52 | 17 | | `/en/faq` | 49 | 21 |
+
+      **What the queries were.** Not an N+1: no public read issues a statement per row. Home's 78 were
+      28 × `select id from lists where list_key = ?`, 14 × the published-existence probe and 14 × the
+      rows for the same list, 7 × the settings group, and one or two each of pages/offers/articles/
+      categories/SEO — the same small leaves asked by the layout, the page, `generateMetadata` and the
+      composite getters in `src/lib/content/site.ts`. React's `cache()` now memoises the primitives:
+      `listIdOf`, published rows, published row by key, any-published, the settings group, page states,
+      banners, the SEO override, the category index and counts, and merged treatments. The cached
+      functions take **strings**, because `cache()` keys on argument identity and a fresh
+      `{ listKey: 'nav' }` object at every call site would always miss; the exported signatures
+      (`publicRows(kind, { listKey })`, `publicRow(kind, key, { listKey })`, `readSeoOverride(path,
+      locale)`, …) are unchanged. Outside a server render `cache()` calls the function directly, so
+      tests and CLI scripts still read every time.
+
+      **The indexes.** `008_public_indexes.sql` adds five, additively (no existing index is dropped, so
+      a console plan that worked keeps working):
+
+      ```sql
+      CREATE INDEX articles_public ON articles (status, deleted_at, published_at, slug);
+      CREATE INDEX offers_public ON offers (status, deleted_at, position, slug);
+      CREATE INDEX pages_public ON pages (status, deleted_at, route);
+      CREATE INDEX list_items_public ON list_items (list_id, status, deleted_at, position, uid);
+      CREATE INDEX categories_public ON categories (deleted_at, enabled, position);
+      ```
+
+      EXPLAIN before: offers, pages and categories were full scans ending in a filesort; list_items used
+      `list_items_uid` and then sorted; articles used `articles_status` and then sorted. After: offers,
+      pages, list_items and categories each use the new index as `ref` with no filesort. Articles still
+      sorted, because the site asked for `published_at DESC, slug ASC` — MariaDB cannot walk an ascending
+      composite backwards for one column and forwards for the other. The tie-break is now `slug DESC`
+      (`published.ts`), EXPLAIN shows `articles_public` with no filesort, and the existence probe is
+      `Using index` only.
+
+      **Changed contracts, as the rule requires.** (1) Two articles with the *exact* same `published_at`
+      now order by slug descending instead of ascending; no row's data changed and the visible order is
+      otherwise identical. (2) Indexes were added; no column, table, route, action or public prop shape
+      changed. (3) `.env.example` gains `DATABASE_LOG_QUERIES` (off unless `1`; prints SQL text with
+      placeholders, never a bound value). (4) `tests/server-setup.test.ts` now expects 8 migrations,
+      last `008_public_indexes.sql`.
+
+      **Gates.** Typecheck clean, lint clean on all touched files, full run **31 files / 677 passed, 0
+      failed**. The one failure on the way was the migration-count guard above, updated deliberately
+      rather than worked around.
+
+      **Not verified.** These are dev-server counts on a long-lived process; a production build's first
+      render should be the same statements but has not been run (no `next build` without the owner's
+      word). No browser was used: the pages answer 200 in both locales, but the per-route *latency*
+      improvement is unmeasured, and the `[dbq]` diagnostic must stay off in service.
 
 ## Known gaps / notes
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
