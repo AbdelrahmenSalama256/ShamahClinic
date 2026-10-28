@@ -3119,6 +3119,70 @@ the only painter in the console stylesheets, (2) prove style isolation from the 
 Click-to-edit from the public site is deferred and must not be built. Deploy work is prepared
 here and run by the owner; no secret is asked for or stored.
 
+- [x] S2 — two document roots, and the built output proves each sheet reaches one surface — `42d85eb`
+
+      **The structure.** The console moved from `src/app/console` to `src/app/(console)/console`,
+      so its `layout.tsx` is a second root layout beside `src/app/[lang]/layout.tsx`, and a route
+      group — not a path segment — is what keeps the two import graphs apart. The console root
+      imports `console-kit.css` and `console.css` only; the public root imports `globals.css`
+      (Tailwind + the site token layer). The site was moved into `(site)/[lang]` first and had to
+      be moved back: Next 16.3.6's `next-root-params-loader.js` builds its lookup key from
+      `path.relative(appDir, layoutPath)` without normalising separators, so on Windows a
+      two-segment root layout becomes `/(site)\[lang]`, `getSegmentParam` never finds `[lang]`,
+      the generated layout has no `lang` export, and every `/[lang]` page dies on
+      `(0, d.v) is not a function`. A one-segment root layout is what works here; the asymmetry
+      (`(console)/console` vs `[lang]`) is the consequence, not a preference.
+
+      **The three states.** `(console)/console/not-found.tsx` (server, reads prefs) answers any
+      console URL that names no screen with the console palette and direction, never the site's
+      header or sheet. `(console)/console/error.tsx` is the client boundary: it reads the locale
+      the root layout already wrote with `useSyncExternalStore` (server snapshot: Arabic) so no
+      effect writes state after hydration. `(workspace)/loading.tsx` is the streamed skeleton and
+      deliberately reads the prefs cookie itself instead of `consoleView()`, so the fallback does
+      not wait on the database that the page it covers is already waiting on. Seven keys under
+      `state.*` in both catalogs name the three screens' words.
+
+      **What the browser was sent.** From the running artifact build: `/ar`, `/en/services`,
+      `/ar/blogs` → `e5843fe87b9ecb6d.css` (890 B, the two Tajawal faces + `next/font`'s
+      `.__className`/`.__variable` rules — the one legitimate share) and `0df7b1253de5b1a0.css`
+      (103,284 B, Tailwind). `/console/login` → the same font chunk and `980cf70fb0ba6b7c.css`
+      (61,316 B, the console kit + surface). No site chunk on a console page, no console chunk on
+      a public page, and no unknown chunk in either list. `bdc8353fadd67def.css` (react-day-picker)
+      is a per-page chunk on the editor screens, not a root-layout one.
+
+      **Guards.** `tests/built-css.test.ts` (5 tests, skipped with a named command when no build
+      exists) reads every emitted `.css`, classifies it, then reads each route's `entryCSSFiles`
+      from `page_client-reference-manifest.js`: a console layout may carry console|fonts, a public
+      layout site|fonts, no chunk may be claimed by both, and no chunk may mix `--tw-` with
+      `@layer reset, tokens, kit, screens`. `scripts/verify-style-isolation.mjs` does the same
+      against a *running* server by downloading the `<link rel=stylesheet>`s — the manifests can
+      name a chunk that is never linked, and the browser only loads links.
+      `tests/console-layers.test.ts` gained a sixth test: every selector in every layer must carry
+      `[`, `.` or `#` (element selectors are what leaked site paint into the console before).
+      `tests/console-isolation.test.ts` keeps the four source-graph guards, now pointed at the new
+      path.
+
+      **Gates.** Typecheck clean, lint clean, `next build --webpack` exit 0 into `.next-build`
+      (271 pages), and the HTTP check above green on the artifact server. Full run: **35 files /
+      708 tests passed**. An intermediate full run failed three DB-heavy suites and the login
+      throttle test; every one of them passed when re-run alone and the next two full runs were
+      green — parallel-suite contention on `shamah_cms_test`, recorded rather than excused.
+
+      **What the owner should check by eye.** Open `/console/login` and a public page: the console
+      must look like the console (no site fonts or spacing) and the site must not pick up console
+      chrome. In the console, mistype a URL (`/console/nope-xyz`) and confirm the Arabic 404 in the
+      console's colours; a slow screen should show the skeleton, not a blank pane.
+
+      **Not verified on a screen.** No pixels: the in-app browser reports a hidden surface, so the
+      screenshots were refused and the evidence is DOM snapshots plus the fetched stylesheet
+      lists. The error boundary was never rendered — triggering it needs a page to throw, and the
+      DB was not going to be stopped for it. The console's `not-found` sits above the workspace
+      shell, so an authenticated user who mistypes a list URL loses the nav and is offered only
+      "back to overview"; moving that boundary into `(workspace)` is a UX call, not part of this
+      slice. `consoleView()` runs in the console root layout, so a database outage fails the
+      layout before any `error.tsx` can catch it — an owner-visible white page under that
+      condition is a known limitation.
+
 - [x] S6.1 — one painter: the kit draws every object, the surface only places it — `c6608a3`
 
       **What was wrong.** `console.css` (imported after the kit) re-painted `.console-btn`,
