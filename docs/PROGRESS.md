@@ -937,8 +937,10 @@ last two into the database so the team never needs a developer for a word.
 - [x] 14.1 Element registry: an address per editable thing (`screen.element.field`, locale-aware), a type, a validator,
       and a default equal to today's hard-coded value — so the site renders byte-identical before the row exists.
       One table, one reader, one permission-checked API. **Done below, with the address scheme changed.**
-- [ ] 14.2 The shell: nav labels, order and dropdown children, footer groups, branch strip, booking CTA labels,
-      phone / WhatsApp / email / hours, brand, tagline, theme colour.
+- [x] 14.2 The shell: nav labels, order and dropdown children, footer groups, branch strip, booking CTA labels,
+      phone / WhatsApp / email / hours, brand, tagline, theme colour. → **Done below, but three of the brief's
+      items are deliberately not faked:** the theme colour and the logo have no field (they need 14a.3's picker),
+      and `tagline` / `email` / `hours` have rows or CONFIG values that nothing on the site renders yet.
 - [ ] 14.3 Home, section by section: hero slides, intro prose, the three-card blocks and their "View all" labels,
       the reasons carousel, the CTA band.
 - [ ] 14.4 The other pages: about, contact, faq, results header, privacy, services intro, and each treatment's
@@ -1162,6 +1164,92 @@ last two into the database so the team never needs a developer for a word.
       **Not in this slice:** 14.2's shell (nav labels are rows, not copy — `bookCta` is still authored and reached
       through `t(bookCta.ar, bookCta.en)`, so it is invisible to the catalog, and the theme colour has no address at
       all), 14.3/14.4's per-page prose, 14.5's section control, and click-to-edit, which stays deferred by order.
+
+- [x] 14.2 The shell: the menu, the clinic's name and the booking button, editable and browser-proven — `f9d5bff`
+      **The shell was the last place a word needed a developer**, and it is the first thing an owner asks about: what
+      the clinic is called, which lines are in the menu, what the button says. `getNavList()` now reads the `nav`
+      list rows and falls back to `src/data/nav.ts` only when the list has never been published, so a menu line is
+      renamed, reordered, or switched off on the same list screen every other kind uses; the dropdown children are
+      that row's own sub-items, and the footer's link group is *the same list*, not a second source that can drift
+      from the header. The branch strip and the footer's branch names were already list rows from BK-6.3c, so this
+      row moves nothing there — the proof only had to show the words reach the page.
+      **The brand name was a dead field, and the brief's own word "brand" is what uncovered it.** Settings already
+      had a clinic-name input: it wrote a `site.name` row that nothing on the site ever read again, so the honest
+      answer to "is the brand editable?" was *the box exists and the site ignores it*. `getBrandWords()`
+      (`src/lib/content/site.ts`) now resolves `site.name.ar` / `site.name.en` → an older single `site.name` row (a
+      clinic that saved before the split still gets its word, in both languages) → `src/config/site.ts`, and every
+      consumer goes through it: the `<title>` suffix and `og:site_name` in `src/lib/seo.ts`, `authors`/`siteName` in
+      the `[lang]` layout, and the organization, branch, article and WebSite JSON-LD nodes in `src/lib/jsonld.ts`.
+      `branchNode()` takes the brand as an argument rather than reading config, so one Publish moves the header and
+      the structured data together — a mismatch between the name Google is told and the name in the corner is a
+      trust problem, not a cosmetic one. Two Settings rows carry the per-language split; `tests/site.test.ts`
+      asserts the pair beats the legacy single row.
+      **`bookCta` is deleted, not deprecated.** The header button is now `t("احجزي موعدك", "Book")`, so 14.1's
+      override mechanism is the only place its words can change; leaving the constant in `nav.ts` would have made
+      two sources answerable and one of them invisible. Same reasoning for the empty-title case: `ArticleCard` and
+      the journal article view fall back to `t("بلا عنوان", "Untitled")`, because emptying a row's title in the
+      console previously produced a blank `<h3>` — a card with nothing on it is not "the owner's choice", it is a
+      missing state nobody designed. The catalog grew to **222 entries / 102 data-driven calls skipped**.
+      **The verification script had been grading itself, and the 16 failures 14.1 reported were its fault, not the
+      site's.** `scripts/verify-render.mjs` parsed `src/data/nav.ts` and asserted the rendered header equalled it —
+      so the moment the menu moved to the database the comparison measured a source that no longer produces the
+      page, and 12 of those 16 failures were the script being wrong while the site was right. It now asserts the
+      served contract instead: a header line that is not empty, no line twice, every label in the language being
+      served, the footer repeating each header line, the booking button carrying words, a dropdown adding no stray
+      anchor, and each menu line answering 200 — **253 checks, 0 failed**. The other four failures are now genuinely
+      fixed: the two blank `<h3>`s by the fallback above, and the two results-page ones by replacing a prose check
+      ("the page prints the no-photos note") with a structural one (a card that opens a pair holds both halves).
+      **That last check was vacuous at first and is worth recording as a mistake**: the saved `/en/results` HTML
+      contains 0 `<article>` elements and 0 half-picture buttons, so "0 or 2 halves" passes over nothing. The rule
+      prints the pair-card count in its own message — `no pair card rendered today` is now visibly different from a
+      pass — and media provenance is left to its own slice (BK-7.5).
+      **Evidence — the gates describe the committed tree.** `node scripts/copy-catalog.mjs --check` → 222 entries
+      current · `tsc --noEmit` 0 errors · `eslint` 0 problems · full `vitest run` **789 passed in 41 files** (was
+      788; the new test is the per-language brand pair) · `npm run build` 0 · `npm run prove:no-wp` **5/5** with 275
+      routes rendered, 0 failed, **0 requests to the WordPress origin**, sitemap 242 URLs ·
+      `node scripts/verify-render.mjs` against the production build on `http://127.0.0.1:3342` **253/0**.
+      **Evidence — a real browser driving the real console against that build** (`.tmp/shell-proof.mjs`, **60 checks,
+      0 failed, restored=true**, run marker `742CCD`): the English header equals the nav list in list order and the
+      Arabic header is the same list; each header shows its own language's column; renaming the Blogs row in English
+      changes the English header and leaves the Arabic one saying `المدونة`; the two order buttons move the line in
+      **both** headers and one press back restores it; switching the offers row off removes it from the page and on
+      puts it back; the Services row's sub-items are exactly the anchors of its open menu, in order, plus the one
+      "see them all" link; a branch row's new name reaches the footer in its own language; a phone typed into
+      Settings lands in the footer `tel:`, the header `tel:` and `/en/contact`; the brand field moves the `<title>`
+      suffix, `og:site_name` and the organization node while the Arabic page's title never moves; the texts screen
+      lists the booking button's label and its accessible name as **two** addresses, and overriding the English label
+      changes the visible words only — the `aria-label` and the Arabic page are untouched. Then the `finally` block
+      compared every row it had touched against the snapshot taken before the run: **16 nav and branch rows, 0
+      different; 0 settings rows where 0 existed; 0 booking overrides left behind; 92 live content rows still
+      there**. Screenshots read this pass: `s142-console-rename-row.png`, `s142-console-brand-name.png`,
+      `s142-console-settings-phone.png`, `s142-header-dropdown.png`, `s142-shell-390.png`.
+      **A failure the owner needs to see before the runbook ships:** the full suite first came back **788/789** with
+      `tests/console.test.ts > the overview > counts only the resources the caller may read` → `Error: Too many
+      connections`. This is not flaky and it is not the test's fault: this MariaDB has `max_connections = 40`, the
+      pool default is `DATABASE_POOL_SIZE ?? 8`, and `Threads_connected` measured **34** at the moment of failure —
+      three orphaned `next start` processes from earlier verification runs (each holding a pool of sleeping
+      `shamah_app` sessions) plus a hung probe. `TaskStop` kills the `npm` wrapper, **not** the `next start` child,
+      so every "start a server, check a page, stop the task" cycle can leak a pool; the positive control was
+      `DATABASE_POOL_SIZE=2 npx vitest run tests/console.test.ts` → **63 passed on the same code**, and after the
+      orphans were stopped `Threads_connected` fell to **9** and the full suite went 789/789. Two consequences for
+      the deploy package (item 0's runbook): the PM2/instance count multiplied by `DATABASE_POOL_SIZE` must stay
+      under the host's `max_connections`, and a shared host will not forgive a leaked pool.
+      **What the owner must check by eye:** the menu's *feel* — a row's position after a save, whether a dropdown
+      reads as a dropdown at 390 px where the drawer flattens it, and the tab order of the renamed line — plus the
+      header's new words on `/ar` and `/en` and whether the clinic's name still looks right in the `<title>` of a
+      journal post, where it is appended to a sentence rather than sitting alone.
+      **What could not be verified, and is not claimed:** the **theme colour and the logo stay uneditable on
+      purpose** — `src/config/site.ts` still owns them, there is no Settings field for either, and a colour box
+      without the media/token picker (14a.3, still open) would be a second place to break the site rather than a
+      feature. **`tagline` has a Settings row that nothing renders** and **`email`/`hours` are CONFIG-only and are
+      not printed anywhere** (Task G removed the unverified ones in an earlier slice); this row did not invent a
+      surface for a field the client has not asked to show, so they are listed here rather than quietly marked done.
+      The phone/WhatsApp/brand/CTA/menu are the parts of the brief's list that are now genuinely live. Also not
+      proven: any of this under a *concurrent* edit (two people renaming the same row), and the `nav` list's
+      enable/disable flag is proven only for one row.
+      **Not in this slice:** 14.3's home sections, 14.4's per-page prose, 14.5's section control (where a draft
+      state starts to mean something for a menu row), 14.6's remaining strings, BK-7.5's results-card drift
+      (`ResultCaseCard.tsx` still mixes file and DB lightboxes), and click-to-edit, deferred by order.
 
 ## BK-15 — SEO center: the specialist's feature set, all local
 New tables: `seo_meta` (per entity per locale), `seo_templates`, `redirects`, `not_found_hits`, `crawl_issues`,

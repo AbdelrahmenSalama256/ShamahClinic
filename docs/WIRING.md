@@ -10,6 +10,11 @@ languages, with the WordPress evidence for the verdict.
 > publishes one row of it. `scripts/sync-wp.mjs` is the only code left that reaches the origin, by hand.
 > The gate table in §19 (including its "snapshot fallback" row) is a record of the run that day.
 
+> **The shell has changed too (BK-14.2, 2026-10-28).** The rows below that call the menu, the branch
+> strip, the booking label or the clinic name STATIC now name a file that is only a fallback: the
+> console's `nav` and `branches` rows answer for the first two, the Texts screen addresses the third,
+> and `getBrandWords()` reads the fourth from Settings. `bookCta` is gone from `src/data/nav.ts`.
+
 Columns, as the brief asks:
 
 | column | meaning |

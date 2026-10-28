@@ -44,14 +44,15 @@ client used to send per read; `scripts/sync-wp.mjs` still sends them.
 ## Global / shell
 | UI | source |
 |----|--------|
-| Brand name, tagline, currency, theme colour | CONFIG (`src/config/site.ts`) |
-| Phone 01121880908, WhatsApp 201121880908, email, hours | CONFIG (contact info is not exposed by WP REST; from the client brief) |
-| Primary nav (9 lines + 4 dropdown children) and the footer link group | **STATIC `src/data/nav.ts`** (`navItems`, `bookCta`) — authored by the client's decision on 2026-10-12: "NAV IS STATIC AGAIN… no WordPress dependency". Removing a page from the menu deletes one line in that file. A WordPress menu does exist (homepage item ids `870`→622, `717`→696, `755`→9, `643`→62, `646`→67, `647`→32, `838`→837); it is deliberately not followed, and `src/lib/wp/nav.ts` was deleted. Proof: `node scripts/verify-render.mjs` compares the rendered header/footer against the file, AR + EN |
-| Booking CTA label (header, footer, hero, cards) | STATIC (`src/data/nav.ts` `bookCta`) |
+| Brand name | **DB-first** — Settings `site.name.ar` / `site.name.en` through `getBrandWords()` (`src/lib/content/site.ts`), which answers the `<title>` suffix, `og:site_name`, the layout's `authors`/`siteName` and every JSON-LD `Organization`/`MedicalClinic`/article node. CONFIG (`src/config/site.ts`) is the fallback rung, and a `site.name` row saved before the split still answers for both languages. |
+| Tagline, currency, theme colour | CONFIG (`src/config/site.ts`) — `tagline` also has a Settings row that nothing on the site renders yet, `currency` comes from the published offers when there are any, and the theme colour has no Settings field at all |
+| Phone 01121880908, WhatsApp 201121880908, email, hours | DB-first for phone + WhatsApp (Settings `site.phone` / `site.whatsapp`, read by `getSettings()`); email and hours are CONFIG-only and are not rendered anywhere — contact info is not exposed by WP REST, and both were taken off the site as unverified |
+| Primary nav (labels, order, enabled flag, 4 dropdown children) and the footer link group | **DB** — the console's `nav` list (`list_items`, one row per line, children in the row's own JSON), through `getNavList()`. `src/data/nav.ts` is what it falls back to while the list holds nothing published; a WordPress menu does exist (homepage item ids `870`→622, `717`→696, `755`→9, `643`→62, `646`→67, `647`→32, `838`→837), it is deliberately not followed, and `src/lib/wp/nav.ts` was deleted. Renaming, reordering or switching a line off is a row edit, not a deploy. Proof: `node scripts/verify-render.mjs http://127.0.0.1:<port>` asserts the served header and footer are the same one menu, in the served language, with every line answering 200 (AR + EN) |
+| Booking CTA label (header, footer, hero, cards) | **COPY** — `t("احجزي موعدك", "Book")` at the call site (`Navbar.tsx:329`), so the Texts screen addresses it (`copy.05e94757c108`); the accessible name is a second, separate address. It was `bookCta` in `src/data/nav.ts` until BK-14.2 |
 | Logo image + alt | STATIC local wordmark (`public/images/logo.png`) — `media.json` does hold id 722 `Shamah_Header.png`, but swapping it would change the header, which the decision forbids |
 | Social links | CONFIG |
-| Footer branch strip | WP (page 622 office blocks, see Branches) |
-| Service names in the dropdown | STATIC (`navItems[2].children`) — the WordPress-merged names are used on `/services`, `/results`, the pickers and the JSON-LD, not in the menu |
+| Footer branch strip | **DB** — the console's `branches` list (`list_items`), read by `getBranchList()`; `src/data/branches.ts` is the fallback while the list holds nothing published. It came from page 622's office blocks in the import |
+| Service names in the dropdown | **DB** — the `nav` list's Services row carries its own sub-items, so the dropdown is rows like every other line; `navItems[2].children` in `src/data/nav.ts` is only the fallback. The WordPress-merged service names are used on `/services`, `/results`, the pickers and the JSON-LD, not in the menu |
 
 ## Home (SHORTER — full cut list at the bottom)
 Every card list on Home renders at most 3 cards (`HOME_CARDS` in `src/components/home/HomeBody.tsx:60`)
@@ -70,7 +71,7 @@ before/after, is `docs/HOME-PRIORITY.md`.
 | 01 introduction (heading + lead) | WP — page 622 row 1 (`The Best Aesthetic Center` + "Discover the highest standards…"), parsed by `src/lib/wp/home-prose.ts` through `getHomeIntro()`; the authored `homeIntroFallback` only when the dashboard changes the row beyond recognition |
 | 02 services (max 3) + "All services" | WP:pages/696 order, first three whose card renders with a photo and an intro (`getFeaturedServices` in `src/lib/wp/treatments.ts`); `featuredServiceSlugs` in `src/config/home.ts` overrides, empty means computed. Selection rule and the current three slugs in `docs/HOME-PRIORITY.md` |
 | 03 Offers (max 3) + "All offers" | WP:offers (WooCommerce Store API, the products that language's base returns, in WP order — nothing merged or filtered) |
-| 04 Branches strip (max 3) with call / WhatsApp | WP — page 622 `.ws-contact-office-item` blocks (name EN, address, phone, photo) over `src/data/branches.ts` for the Arabic side |
+| 04 Branches strip (max 3) with call / WhatsApp | **DB** — the `branches` list rows through `getBranchList()`, proped into the strip; `src/data/branches.ts` is the fallback rung. (Originally page 622's `.ws-contact-office-item` blocks, imported once) |
 | 05 Latest journal (max 3) + "All blogs" | WP:posts (4 fetched, 3 shown, both subsites) |
 | One strong CTA band | STATIC |
 

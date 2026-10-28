@@ -6,6 +6,11 @@ localized (per-field AR/EN), and how the UI behaves when it is empty. This is th
 contract Phase 1's collections/globals are built from and Phase 2's seed is written
 against.
 
+> **A record of Phase 0** — Payload was later dropped for the console in `D:\shamah_cms`, and BK-14.2
+> (2026-10-28) already moved the shell this map marks `STATIC`/`FILE`: the menu and the branch strip are
+> console rows, the booking label is a Texts address, the clinic name is a Settings row, and
+> `bookCta` no longer exists in `src/data/nav.ts`. For what the site reads today, see `docs/inventory.md`.
+
 Legend for **Source**:
 - `WP` — WordPress owns this today (`lib/wp/*` reads it at runtime/snapshot). One-time
   import into Payload, then published.
