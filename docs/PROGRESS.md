@@ -1150,8 +1150,10 @@ last two into the database so the team never needs a developer for a word.
       **What could not be verified, and is not claimed:** `node scripts/verify-render.mjs` against this build reports
       **235 passed, 16 failed**, and every failure predates this row — none of the files it names is in `53b0fa2`.
       Twelve (six per language) are the header and footer comparing the rendered menu against `src/data/nav.ts` while
-      the site has moved to the `list_items` rows, which publish 8 entries with `/branches` absent and a Services row
-      carrying **no dropdown children**, so the four authored sub-links never reach the header. Two are `/blogs`
+      the site reads the `list_items` rows, where `/branches` and `/faq` have been retired (soft-deleted, still in the
+      table) — so the header shows 8 live lines against the authored 9, and the dropdown assertion, which counts the
+      same anchors, fails with it. The Services row itself carries its 4 children in the database, as the script's own
+      comment predicts for a hover-rendered menu. Two are `/blogs`
       rendering one blank `<h3>` for an imported post whose Arabic title is empty; two are the results page,
       which now holds a real before/after case and so no longer prints the "no before/after photos" note the script
       still requires. That drift belongs to BK-7.5 and 14.2, and the script needs the same rewrite. Also unproven:
