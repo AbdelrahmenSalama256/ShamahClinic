@@ -3265,6 +3265,66 @@ here and run by the owner; no secret is asked for or stored.
       Consent is a working UI gate, not legal sign-off; the wording should be reviewed by whoever
       owns the clinic's policy.
 
+- [x] S4 — the SEO center: named roles, refused writes, and the head a crawler actually gets — `d394aac`
+
+      **What was actually missing.** The screen, the storage and the single metadata builder
+      already existed; no production file changed in this slice. What did not exist was a test
+      that named a role, a test that proved the handler refuses before it validates, or a proof
+      that a saved pair reaches the rendered `<head>`. Those are this slice.
+
+      **The matrix, written down.** `tests/seo.test.ts` reads `ROLE_SEEDS` and asserts, for all six
+      roles, `read` for everyone and `update` + `publish` only for Owner, Admin and SEO — so a
+      future grant edit that hands a content writer the SEO fields fails a test instead of
+      shipping. `tests/seo-api.test.ts` runs the real `seoHandler` against `shamah_cms_test` with
+      one ephemeral user per role: Owner, Admin and SEO save (200, row in `seo_entries`, an
+      `audit_log` row `seo.update` on `path#locale` with the actor's email); Editor, Marketer and
+      Viewer answer `403 forbidden` to a *malformed* body, which is how "permission before
+      parsing" is shown rather than asserted; SEO gets `400 invalid_input` for `about`; an empty
+      pair removes one language's row and leaves the other; `GET` is `405`; and the screen's
+      `writable` flag — the same grant the inputs use — is false for Editor and true for SEO.
+
+      **The rendered HTML, in a browser against the production build.** `.tmp/seo-proof.mjs` ran
+      **167/167** checks on `127.0.0.1:3340`. Seven real addresses across all five sections —
+      home ar and en, `/about` ar, an article en, an offer ar, a service ar, a branch en — were
+      saved through the SEO screen itself (fill, blur, read the POST), and each public page was
+      then polled until the new `<head>` appeared: `<title>` equals the override plus
+      `| عيادات شامه` / `| Shamah Clinics`, the meta description, `og:title` (unbranded),
+      `og:description`, `og:locale` (`ar_EG`/`en_US`), `twitter:title` and `twitter:description`
+      are the saved pair, `<html lang>` is the row's language, and canonical plus hreflang
+      ar/en/x-default are byte-identical to the baseline captured before the write. The other
+      language's URL was fetched and carries neither marker. On the screen after a reload the row
+      shows the saved pair, the "custom" note and a healthy-length badge. Then each pair was
+      cleared from the screen and every page returned to its authored `<title>` with no proof text
+      anywhere in the HTML, and `seo_entries` held zero proof rows.
+
+      **The read-only screen, as a real second account.** An ephemeral Editor (the Owner's
+      password hash, a marker email) signed in and opened `/console/seo`: the read-only note is
+      present, all **242** fields report non-editable, the saved override is still visible, and the
+      row offers no reset button. A direct `POST /api/console/seo` from that session answered
+      `403 forbidden` with `action: seo.update`, and the row it named was unchanged. The account
+      and its sessions/role/login attempts were deleted afterwards.
+
+      **Gates.** eslint clean on both test files; `npm run typecheck` clean; full run **39 files /
+      751 tests passed** (was 741). Screenshots: `.tmp/seo-center-ar.png`, `.tmp/seo-center-en.png`,
+      `.tmp/seo-center-readonly.png`, `.tmp/seo-public-home-ar.png`. The dev database was
+      snapshotted before the proof and restored to its **2** pre-existing `seo_entries` rows; the
+      proof's `seo.update` audit rows are left in place for the same append-only reason as S3.
+
+      **What the owner should check by eye.** Open `/console/seo`, pick العربية, and change the
+      home title; open the site in a private window and check the browser tab and the page source
+      `<title>`, description and og tags. Switch the screen to English and type in the same row:
+      the Arabic page must keep the Arabic words. Press "Use page copy" and confirm the tab goes
+      back to the authored title without a deploy. Sign in as an Editor: the same rows should be
+      visible but not editable, with no reset buttons.
+
+      **Not verified.** Nothing here proves how Google or social platforms will index the result —
+      only what the server emits. ISR invalidation was observed through repeated public fetches on
+      one local process; a CDN's propagation delay was not measured. The permission proof ran
+      against the disposable test database plus one ephemeral dev account; no permanent
+      Editor/Marketer account exists in the dev database. The full-page screenshots are very tall
+      (the screen deliberately does not paginate), so the assertions — not the images — are the
+      evidence for the row contents.
+
 - [x] S6.1 — one painter: the kit draws every object, the surface only places it — `c6608a3`
 
       **What was wrong.** `console.css` (imported after the kit) re-painted `.console-btn`,
