@@ -4,14 +4,16 @@
  *
  *   node scripts/db/move-data.mjs dump --from .env.xampp --out backups/move.json.gz
  *   node scripts/db/move-data.mjs restore --to /home/USER/shamah.env --in backups/move.json.gz
- *   node scripts/db/move-data.mjs restore --to … --in … --apply
+ *   node scripts/db/move-data.mjs restore --to … --in … --apply --confirm-target NAME
  *   node scripts/db/move-data.mjs verify --to … --in backups/move.json.gz
  *
  * The dump is a gzipped JSON file, never committed (`/backups/` is ignored): it holds real
  * leads and password hashes. `dump` opens the source connection READ ONLY and issues only
  * SELECTs. `restore` is a dry run unless `--apply` is given, refuses to run against the
  * database the dump came from, and refuses a target whose tables already hold rows unless
- * `--replace` says those rows may be deleted (the dump is the only copy either way).
+ * `--replace` says those rows may be deleted (the dump is the only copy either way). A write
+ * also requires `--confirm-target` to name the target's DATABASE_NAME, so a restore cannot
+ * reach a database the command did not mention.
  *
  * The verify step is not "did the rows land": counts and a per-table content hash are
  * compared, and every JSON column is read back and must arrive already parsed, because
@@ -222,8 +224,25 @@ async function readDump(path) {
   return dump;
 }
 
+/**
+ * A write needs the target named in the command as well as in the env file. Two files that
+ * look alike is how a restore reaches the wrong database; spelling the name makes the
+ * operator read it, and a typo is refused before a connection is opened.
+ */
+export function assertConfirmedTarget(target, args) {
+  if (args.confirmTarget && args.confirmTarget !== target.database) {
+    throw new Error(
+      `--confirm-target is "${args.confirmTarget}" but the target env file names "${target.database}". Refusing to write to a database the command did not name.`,
+    );
+  }
+  if (args.apply && !args.confirmTarget) {
+    throw new Error(`restore --apply requires --confirm-target ${target.database} (the target's DATABASE_NAME).`);
+  }
+}
+
 async function restore(dump, targetEnv, args) {
   const config = requireConfig(targetEnv);
+  assertConfirmedTarget(config, args);
   const connection = await mysql.createConnection(config);
   try {
     if (dump.source.host === config.host && dump.source.database === config.database) {
@@ -393,14 +412,15 @@ async function verify(dump, targetEnv) {
 // ---------------------------------------------------------------------------
 
 function parseArgs(argv) {
-  const args = { mode: argv[0], apply: false, replace: false, from: null, to: null, in: null, out: null };
+  const args = { mode: argv[0], apply: false, replace: false, from: null, to: null, in: null, out: null, confirmTarget: null };
   if (!['dump', 'restore', 'verify'].includes(args.mode)) {
-    throw new Error('Usage: move-data.mjs <dump|restore|verify> [--from .env] [--to .env] [--in dump.gz] [--out dump.gz] [--apply] [--replace]');
+    throw new Error('Usage: move-data.mjs <dump|restore|verify> [--from .env] [--to .env] [--in dump.gz] [--out dump.gz] [--apply] [--replace] [--confirm-target NAME]');
   }
   for (let i = 1; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--apply') args.apply = true;
     else if (arg === '--replace') args.replace = true;
+    else if (arg === '--confirm-target') args.confirmTarget = argv[++i];
     else if (arg === '--from') args.from = argv[++i];
     else if (arg === '--to') args.to = argv[++i];
     else if (arg === '--in') args.in = argv[++i];

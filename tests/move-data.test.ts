@@ -18,6 +18,23 @@ import * as move from '../scripts/db/move-data.mjs';
 const scratch = mkdtempSync(join(tmpdir(), 'shamah-move-'));
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
 
+describe('move-data refuses to write to a database it was not told about', () => {
+  const target = { database: 'user_shamah' };
+
+  it('wants the target named on the command line before it writes', () => {
+    expect(() => move.assertConfirmedTarget(target, { apply: true, confirmTarget: null })).toThrow(/--confirm-target user_shamah/);
+  });
+
+  it('refuses a name that differs from the env file', () => {
+    expect(() => move.assertConfirmedTarget(target, { apply: true, confirmTarget: 'user_other' })).toThrow(/names "user_shamah"/);
+  });
+
+  it('accepts a dry run without the flag, and a write that names the same target', () => {
+    expect(() => move.assertConfirmedTarget(target, { apply: false, confirmTarget: null })).not.toThrow();
+    expect(() => move.assertConfirmedTarget(target, { apply: true, confirmTarget: 'user_shamah' })).not.toThrow();
+  });
+});
+
 describe('move-data hashing and value conversion', () => {
   it('hashes the same document regardless of key order', () => {
     const a = { title: 'x', meta: { title: 'y', description: 'z' } };
