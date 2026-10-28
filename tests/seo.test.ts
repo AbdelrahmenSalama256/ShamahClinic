@@ -11,9 +11,51 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { can, type Grant } from '../src/lib/auth/permissions';
+import { ROLE_SEEDS, type RoleName } from '../src/lib/auth/roles';
 import { SEO_DESCRIPTION_MAX, SEO_TITLE_MAX, seoLength, seoStatus, worstStatus } from '../src/lib/content/seo-limits';
 import { isSeoPath, seoPathOf } from '../src/lib/content/seo';
 import { SITE_SEO } from '../src/lib/content/seo-defaults';
+
+/**
+ * The matrix, in one table before any code is trusted with it.
+ *
+ * `seo` is the console's own resource, not a content grant: an Editor who may publish an
+ * article still may not rewrite its search title, and a Marketer who owns leads still
+ * reads these rows without touching them. The SEO role exists for exactly these writes.
+ */
+describe('who may read and write the SEO section', () => {
+  const grantsOf = (name: RoleName): Grant[] => {
+    const seed = ROLE_SEEDS.find((role) => role.name === name);
+    if (!seed) throw new Error(`no seed for ${name}`);
+    return seed.grants.flatMap((grant) =>
+      grant.actions.map((action) => ({ resource: grant.resource, action, scope: grant.scope ?? null })),
+    );
+  };
+
+  const MATRIX: Record<RoleName, { read: boolean; update: boolean; publish: boolean }> = {
+    Owner: { read: true, update: true, publish: true },
+    Admin: { read: true, update: true, publish: true },
+    Editor: { read: true, update: false, publish: false },
+    SEO: { read: true, update: true, publish: true },
+    Marketer: { read: true, update: false, publish: false },
+    Viewer: { read: true, update: false, publish: false },
+  };
+
+  it('gives every role the screen but only three roles the fields', () => {
+    for (const [name, expected] of Object.entries(MATRIX) as [RoleName, (typeof MATRIX)[RoleName]][]) {
+      const grants = grantsOf(name);
+      expect({ read: can(grants, 'seo', 'read'), update: can(grants, 'seo', 'update'), publish: can(grants, 'seo', 'publish') }, name).toEqual(expected);
+    }
+  });
+
+  it('does not hand the SEO writes to a content writer or a marketer', () => {
+    // Spelled out because this is the pair that looks reasonable and is not.
+    expect(can(grantsOf('Editor'), 'seo', 'update'), 'Editor').toBe(false);
+    expect(can(grantsOf('Marketer'), 'seo', 'update'), 'Marketer').toBe(false);
+    expect(can(grantsOf('SEO'), 'seo', 'update'), 'SEO').toBe(true);
+  });
+});
 
 describe('a title is judged by what a person sees, not by its bytes', () => {
   it('counts code points, so an Arabic or emoji title is not called long early', () => {
