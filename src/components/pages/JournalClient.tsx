@@ -201,7 +201,7 @@ export const JournalClient: React.FC<Props> = ({
 
           <h2 className="sr-only">{t("أحدث المدونات", "Latest blog posts")}</h2>
           <p className="mb-6 text-sm text-[var(--text-muted)]">
-            {t(`${total} مقالاً`, `${total} articles`)}
+            {t("{0} مقالاً", "{0} articles", total)}
           </p>
 
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
@@ -226,10 +226,7 @@ export const JournalClient: React.FC<Props> = ({
               </button>
             )}
             <p className="text-xs text-[var(--text-muted)]">
-              {t(
-                `عرض ${shownCount} من ${total}`,
-                `Showing ${shownCount} of ${total}`,
-              )}
+              {t("عرض {0} من {1}", "Showing {0} of {1}", shownCount, total)}
             </p>
             <nav className="flex items-center gap-1" aria-label={t("ترقيم الصفحات", "Pagination")}>
               {Array.from({ length: totalPages }).map((_, idx) => {

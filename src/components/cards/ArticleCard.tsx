@@ -39,10 +39,8 @@ export const ArticleCard: React.FC<{
           {article.readMinutes ? (
             <span className="inline-flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              {t(
-                `${formatNumber(article.readMinutes)} دقائق قراءة`,
-                `${article.readMinutes} min read`,
-              )}
+              {/* Two slots, not one: Arabic counts in Eastern digits, English in Western. */}
+              {t("{0} دقائق قراءة", "{1} min read", formatNumber(article.readMinutes), article.readMinutes)}
             </span>
           ) : null}
         </div>

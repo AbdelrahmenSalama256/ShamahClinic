@@ -128,10 +128,8 @@ export const JournalArticleClient: React.FC<{
                 {article.readMinutes ? (
                   <span className="inline-flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-[var(--text-gold)]" />
-                    {t(
-                      `${formatNumber(article.readMinutes)} دقائق قراءة`,
-                      `${article.readMinutes} min read`,
-                    )}
+                    {/* Two slots, not one: Arabic counts in Eastern digits, English in Western. */}
+                    {t("{0} دقائق قراءة", "{1} min read", formatNumber(article.readMinutes), article.readMinutes)}
                   </span>
                 ) : null}
                 {author && (

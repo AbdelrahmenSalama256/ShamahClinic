@@ -40,6 +40,7 @@ export interface ConsoleScreen {
     | 'offers'
     | 'pages'
     | 'lists'
+    | 'texts'
     | 'seo'
     | 'tracking'
     | 'settings'
@@ -75,6 +76,10 @@ export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   // Each named list is its own section, so the aggregate row is never rendered; the
   // screen stays here because the page file and the `list read` grant still exist.
   { key: 'lists', path: '/console/lists', resource: 'list', action: 'read', entities: 'lists' },
+  // The site's own sentences. It sits with the content screens because that is what it
+  // edits — the words of a page — and it needs no new grant: a role that may write a page
+  // may write its wording, in the languages it is already limited to.
+  { key: 'texts', path: '/console/texts', resource: 'page', action: 'read', entities: 'locales' },
   // Every address the site serves, with the words a search result shows for it. It sits
   // after the content sections because the words come from those rows; the screen is a
   // second way to read the same site, not a separate content type.

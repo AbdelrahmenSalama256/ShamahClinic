@@ -473,6 +473,9 @@ describe('no console route writes without guard()', () => {
     // Marketing and the sheet connector share one handler across two route files: the
     // tracking PATCH and the sheets PATCH take different bodies but the same grant.
     ['@/lib/integrations/api', 'src/lib/integrations/api.ts'],
+    // A sentence override is one write and one route file. The locale is a query
+    // parameter — the guard's scope rule — so the handler cannot be inlined in the page.
+    ['@/lib/copy/api', 'src/lib/copy/api.ts'],
   ]);
 
   function routeFiles(dir: string): string[] {

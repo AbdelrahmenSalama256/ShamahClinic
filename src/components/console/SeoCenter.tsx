@@ -92,11 +92,11 @@ export function SeoCenter({ data, labels }: Readonly<{ data: SeoCenterData; labe
         className="console-tabs"
       />
 
-      <div className="console-seo-tools">
+      <div className="console-screen-tools">
         <Input
           bar
           type="search"
-          className="console-seo-search"
+          className="console-screen-search"
           value={search}
           placeholder={labels['seo.search']}
           aria-label={labels['seo.search']}
@@ -104,7 +104,7 @@ export function SeoCenter({ data, labels }: Readonly<{ data: SeoCenterData; labe
         />
         <Select
           bar
-          className="console-seo-filter"
+          className="console-screen-filter"
           value={filter}
           aria-label={labels['seo.column.status']}
           onChange={(event) => setFilter(event.target.value as SeoStatus | 'all')}
@@ -117,13 +117,13 @@ export function SeoCenter({ data, labels }: Readonly<{ data: SeoCenterData; labe
         </Select>
       </div>
 
-      {!data.writable && <Note className="console-seo-readonly">{labels['seo.readonly']}</Note>}
+      {!data.writable && <Note className="console-screen-readonly">{labels['seo.readonly']}</Note>}
 
       {groups.length === 0 ? (
         <Empty>{labels['seo.empty']}</Empty>
       ) : (
         groups.map((group) => (
-          <section key={group.section} className="console-seo-section">
+          <section key={group.section} className="console-screen-section">
             <h2 className="console-subheading">{labels[`seo.section.${group.section}` as MessageKey]}</h2>
             <Card flat flush className="console-table-wrap">
               <table className="console-table console-seo-table">
@@ -138,7 +138,7 @@ export function SeoCenter({ data, labels }: Readonly<{ data: SeoCenterData; labe
                 <tbody>
                   {group.rows.map((row) => (
                     <tr key={row.key}>
-                      <th scope="row" className="console-seo-cell-page">
+                      <th scope="row" className="console-screen-cell-name">
                         <a className="console-seo-link" href={row.href} target="_blank" rel="noreferrer">
                           <span className="console-row-title">{row.label}</span>
                           <code className="console-row-key">{row.path === '' ? '/' : row.path}</code>

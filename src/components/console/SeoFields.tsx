@@ -45,7 +45,7 @@ function statusTone(status: SeoStatus): Tone {
 
 function Meter({ value, max, status, labels }: Readonly<{ value: string; max: number; status: SeoStatus; labels: Record<MessageKey, string> }>) {
   return (
-    <span className="console-seo-meter">
+    <span className="console-screen-meter">
       <Badge tone={statusTone(status)}>{labels[`seo.status.${status}` as MessageKey]}</Badge>
       <Note>{labels['seo.count'].replace('{n}', String(seoLength(value))).replace('{max}', String(max))}</Note>
     </span>
@@ -130,7 +130,7 @@ export function SeoFields({ path, locale, inherited, initial, writable, labels, 
   const titleInput = (
     <Input
       id={titleId}
-      className="console-seo-input"
+      className="console-screen-input"
       value={shownTitle}
       placeholder={inherited.title || labels['seo.placeholder.title']}
       aria-label={variant === 'row' ? `${labels['seo.column.title']}: ${rowLabel}` : undefined}
@@ -154,7 +154,7 @@ export function SeoFields({ path, locale, inherited, initial, writable, labels, 
   const descriptionInput = (
     <Textarea
       id={descriptionId}
-      className="console-seo-input console-seo-textarea"
+      className="console-screen-input console-screen-textarea"
       rows={variant === 'panel' ? 4 : 2}
       value={shownDescription}
       placeholder={inherited.description || labels['seo.placeholder.description']}
@@ -192,7 +192,7 @@ export function SeoFields({ path, locale, inherited, initial, writable, labels, 
           )}
         </div>
         {notice && (
-          <Note tone={notice.tone} className="console-seo-notice">
+          <Note tone={notice.tone} className="console-screen-notice">
             {labels[notice.key]}
           </Note>
         )}
@@ -210,7 +210,7 @@ export function SeoFields({ path, locale, inherited, initial, writable, labels, 
         {descriptionInput}
         <Meter value={effectiveDescription} max={SEO_DESCRIPTION_MAX} status={descriptionStatus} labels={labels} />
       </td>
-      <td className="console-seo-cell-status">
+      <td className="console-screen-cell-status">
         <Badge tone={statusTone(rowStatus)}>{labels[`seo.status.${rowStatus}` as MessageKey]}</Badge>
         {canReset && (
           <Button size="sm" variant="ghost" onClick={reset} disabled={saving}>
@@ -219,7 +219,7 @@ export function SeoFields({ path, locale, inherited, initial, writable, labels, 
         )}
         {!writable && <Note>{labels['seo.readonly']}</Note>}
         {notice && (
-          <Note tone={notice.tone} className="console-seo-notice">
+          <Note tone={notice.tone} className="console-screen-notice">
             {labels[notice.key]}
           </Note>
         )}

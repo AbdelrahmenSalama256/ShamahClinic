@@ -11,6 +11,7 @@ import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
 import { getBranchList, getClinicWords, getNavList, getSiteMeta, getSpecialistList } from "@/lib/content/site";
 import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
+import { readCopy } from "@/lib/copy/store";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 import { ClinicProvider } from "@/context/ClinicContext";
 import { TrackingTags } from "@/components/tracking/TrackingTags";
@@ -89,7 +90,7 @@ export default async function RootLayout({
   const lang = normalizeLang(segment);
   if (!lang) notFound();
 
-  const [treatments, branches, pages, nav, specialists, clinic, tracking] = await Promise.all([
+  const [treatments, branches, pages, nav, specialists, clinic, tracking, copyValues] = await Promise.all([
     getMergedTreatments(),
     getBranchList(),
     readPageStates(),
@@ -97,6 +98,7 @@ export default async function RootLayout({
     getSpecialistList(),
     getClinicWords(),
     getTrackingPlan(),
+    readCopy(lang),
   ]);
   const hasTracking = !planIsEmpty(tracking);
 
@@ -124,6 +126,7 @@ export default async function RootLayout({
             specialists={specialists}
             hiddenPaths={hiddenPageHrefs(pages)}
             cookieSettings={hasTracking}
+            copy={{ locale: lang, values: copyValues }}
           >
             {children}
           </SiteShell>

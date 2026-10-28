@@ -165,8 +165,9 @@ export const Swiper: React.FC<SwiperProps> = ({
                   key={i}
                   onClick={() => goTo(i)}
                   aria-label={t(
-                    `الانتقال إلى المجموعة ${i + 1}`,
-                    `Go to group ${i + 1}`,
+                    "الانتقال إلى المجموعة {0}",
+                    "Go to group {0}",
+                    i + 1,
                   )}
                   aria-current={i === index}
                   // Padding + background-clip keeps the dot the same size and the

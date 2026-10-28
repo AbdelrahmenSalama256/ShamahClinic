@@ -270,14 +270,16 @@ describe('the sidebar registry', () => {
     // grant and only Owner/Admin can read `setting`, so those rows are the proof the
     // sidebar is filtered by the catalog rather than hardcoded.
     const content = ['articles', 'offers', 'pages'];
+    // `texts` is the site's own wording, addressed through the `page` grant, so every role
+    // that reads pages sees the row — six of six here.
     const expected: Record<RoleName, string[]> = {
-      Owner: ['overview', 'leads', ...content, 'lists', 'seo', 'tracking', 'roles', 'users', 'settings', 'password'],
-      Admin: ['overview', 'leads', ...content, 'lists', 'seo', 'tracking', 'roles', 'users', 'settings', 'password'],
-      Editor: ['overview', 'leads', ...content, 'lists', 'seo', 'password'],
-      SEO: ['overview', ...content, 'lists', 'seo', 'password'],
+      Owner: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'tracking', 'roles', 'users', 'settings', 'password'],
+      Admin: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'tracking', 'roles', 'users', 'settings', 'password'],
+      Editor: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'password'],
+      SEO: ['overview', ...content, 'lists', 'texts', 'seo', 'password'],
       // The Marketer is the role the screen exists for: `integration` and nothing else.
-      Marketer: ['overview', 'leads', ...content, 'seo', 'tracking', 'password'],
-      Viewer: ['overview', 'leads', ...content, 'lists', 'seo', 'password'],
+      Marketer: ['overview', 'leads', ...content, 'texts', 'seo', 'tracking', 'password'],
+      Viewer: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'password'],
     };
     for (const name of Object.keys(expected) as RoleName[]) {
       expect(visibleScreens(grantsFor(name)).map((screen) => screen.key), name).toEqual(expected[name]);
@@ -533,6 +535,9 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
   it('shows a read-only role the whole structure, greyed', () => {
     const items = navItems(grantsFor('SEO'), 'en');
     expect(items.find((item) => item.key === 'articles')?.writable).toBe(false);
+    // The texts screen reads through `page`, so a role that reads pages but writes none of
+    // them gets the row greyed rather than a screen that answers 403 on every field.
+    expect(items.find((item) => item.key === 'texts')?.writable).toBe(false);
     for (const listKey of LIST_KEYS) {
       expect(items.find((item) => item.key === listKey)?.writable, listKey).toBe(false);
     }
@@ -548,6 +553,10 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
     for (const listKey of LIST_KEYS.filter((key) => key !== 'nav')) {
       expect(items.find((item) => item.key === listKey)?.writable, listKey).toBe(true);
     }
+    // The Editor publishes both languages, so its texts row is live. The greyed `nav` row
+    // above is a `list` grant the catalog withholds on purpose; the wording screen reads
+    // `page`, which this role holds for every language.
+    expect(items.find((item) => item.key === 'texts')?.writable).toBe(true);
   });
 
   it('draws one flat row per destination, in the owner’s order', () => {
@@ -559,6 +568,7 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
       'offers',
       'pages',
       ...LIST_KEYS,
+      'texts',
       'seo',
       'tracking',
       'roles',
@@ -574,6 +584,7 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
     }
     expect(items.find((item) => item.key === 'articles')?.path).toBe('/console/articles');
     expect(items.find((item) => item.key === 'services')?.path).toBe('/console/services');
+    expect(items.find((item) => item.key === 'texts')?.path).toBe('/console/texts');
   });
 
   it('uses the same flat list for the phone strip and the palette', () => {

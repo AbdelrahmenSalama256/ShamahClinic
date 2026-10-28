@@ -156,7 +156,7 @@ export const ResultsClient: React.FC<{
 
           <div className="mt-10 flex flex-col items-center gap-4">
             <p className="text-xs text-[var(--text-muted)]">
-              {t(`${total} نتيجة`, `${total} results`)}
+              {t("{0} نتيجة", "{0} results", total)}
             </p>
             {totalPages > 1 && (
               <nav className="flex items-center gap-1" aria-label={t("ترقيم الصفحات", "Pagination")}>
@@ -354,7 +354,11 @@ const ResultCase: React.FC<{
               key={half.key}
               type="button"
               onClick={onOpen}
-              aria-label={t(`تكبير صورة ${half.label.ar}`, `Enlarge the ${half.label.en.toLowerCase()} picture`)}
+              aria-label={t(
+                "تكبير صورة {0}",
+                "Enlarge the {0} picture",
+                language === "ar" ? half.label.ar : half.label.en.toLowerCase(),
+              )}
               className="group relative block cursor-zoom-in overflow-hidden text-start"
             >
               <Photo

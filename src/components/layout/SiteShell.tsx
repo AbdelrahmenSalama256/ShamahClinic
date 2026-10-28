@@ -20,6 +20,7 @@ import type { BranchLite } from "@/data/branches";
 import type { NavItem } from "@/data/nav";
 import type { Specialist } from "@/data/specialists";
 import type { TreatmentOption } from "@/data/treatments";
+import type { CopyBundle } from "@/lib/copy/shared";
 
 /**
  * Application shell: providers, persistent chrome (navbar / footer / floating
@@ -38,13 +39,15 @@ export const SiteShell: React.FC<{
   hiddenPaths: string[];
   /** Show the footer's "Cookie settings" control; only when tags are configured to load. */
   cookieSettings?: boolean;
-}> = ({ children, branches, treatments, nav, specialists, hiddenPaths, cookieSettings = false }) => {
+  /** The owner's wording, read for this page's language on the server. */
+  copy?: CopyBundle;
+}> = ({ children, branches, treatments, nav, specialists, hiddenPaths, cookieSettings = false, copy }) => {
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
   return (
     <MotionConfig reducedMotion="user">
-      <LanguageProvider>
+      <LanguageProvider copy={copy}>
         <ThemeProvider>
           <SpecialistsProvider specialists={specialists}>
             <BookingProvider branches={branches} treatments={treatments} specialists={specialists}>

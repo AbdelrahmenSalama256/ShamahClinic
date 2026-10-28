@@ -283,14 +283,16 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
             {siteConfig.enableDarkmoodOption && (
               <button
                 onClick={toggleTheme}
-                aria-label={t(
-                  theme === "dark" ? "تفعيل الوضع الفاتح" : "تفعيل الوضع الداكن",
-                  theme === "dark" ? "Switch to light mode" : "Switch to dark mode",
-                )}
-                title={t(
-                  theme === "dark" ? "الوضع الفاتح" : "الوضع الداكن",
-                  theme === "dark" ? "Light mode" : "Dark mode",
-                )}
+                aria-label={
+                  theme === "dark"
+                    ? t("تفعيل الوضع الفاتح", "Switch to light mode")
+                    : t("تفعيل الوضع الداكن", "Switch to dark mode")
+                }
+                title={
+                  theme === "dark"
+                    ? t("الوضع الفاتح", "Light mode")
+                    : t("الوضع الداكن", "Dark mode")
+                }
                 className="inline-flex items-center justify-center rounded-full w-8 h-8 border border-[var(--gold-border)] text-[var(--text-primary)] hover:border-[var(--border-control)] transition-colors duration-300 cursor-pointer"
               >
                 {theme === "dark" ? (
@@ -468,10 +470,9 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                           {t("المظهر", "Appearance")}
                         </span>
                         <span className="text-[var(--gold-end)] font-bold">
-                          {t(
-                            theme === "dark" ? "الوضع الفاتح" : "الوضع الداكن",
-                            theme === "dark" ? "Light mode" : "Dark mode",
-                          )}
+                          {theme === "dark"
+                            ? t("الوضع الفاتح", "Light mode")
+                            : t("الوضع الداكن", "Dark mode")}
                         </span>
                       </button>
                     )}

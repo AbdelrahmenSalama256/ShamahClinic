@@ -1592,9 +1592,13 @@
   }
 
   /* =========================================================================
-     9. THE SEO CENTER
+     9. THE SEO CENTER, AND THE TEXTS SCREEN BUILT BESIDE IT
+
+     The `console-screen-*` rules are the shape both share: a search box and a filter
+     beside it, then tables in named groups, with one inline field per row. Only the
+     column widths stay per screen, because the two tables count different columns.
      ========================================================================= */
-  .console-seo-tools {
+  .console-screen-tools {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1602,25 +1606,25 @@
     margin-block-end: var(--c-stack);
   }
 
-  .console-seo-search {
+  .console-screen-search {
     flex: 1 1 16rem;
     min-inline-size: 0;
   }
 
-  .console-seo-filter {
+  .console-screen-filter {
     flex: 0 0 auto;
   }
 
-  .console-seo-readonly {
+  .console-screen-readonly {
     display: block;
     margin-block-end: var(--c-stack);
   }
 
-  .console-seo-section {
+  .console-screen-section {
     margin-block-end: var(--c-sp-6);
   }
 
-  .console-seo-section .console-table-wrap {
+  .console-screen-section .console-table-wrap {
     max-block-size: none;
   }
 
@@ -1648,7 +1652,7 @@
     vertical-align: top;
   }
 
-  .console-seo-cell-page {
+  .console-screen-cell-name {
     font-weight: 500;
   }
 
@@ -1665,20 +1669,20 @@
     background: var(--c-hover);
   }
 
-  .console-seo-cell-page > .console-note {
+  .console-screen-cell-name > .console-note {
     display: block;
     margin-block-start: 0.25rem;
   }
 
-  .console-seo-input {
+  .console-screen-input {
     inline-size: 100%;
   }
 
-  .console-seo-textarea {
+  .console-screen-textarea {
     min-block-size: 4.5rem;
   }
 
-  .console-seo-meter {
+  .console-screen-meter {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1686,11 +1690,11 @@
     margin-block-start: var(--c-sp-1);
   }
 
-  .console-seo-cell-status > * {
+  .console-screen-cell-status > * {
     margin-block-end: var(--c-sp-1);
   }
 
-  .console-seo-cell-status > *:last-child {
+  .console-screen-cell-status > *:last-child {
     margin-block-end: 0;
   }
 
@@ -1711,13 +1715,51 @@
     flex: 1 1 12rem;
   }
 
-  .console-seo-notice {
+  .console-screen-notice {
     display: block;
     margin-block-start: var(--c-sp-1);
   }
 
   .console-seo-edit .console-seo-path {
     margin-block-end: var(--c-stack);
+  }
+
+  /* --- the texts screen's own table ----------------------------------------- */
+  .console-texts-table {
+    table-layout: fixed;
+    min-inline-size: 46rem;
+    font-variant-numeric: normal;
+  }
+
+  .console-texts-table th:nth-child(1) {
+    inline-size: 32%;
+  }
+  .console-texts-table th:nth-child(2) {
+    inline-size: 53%;
+  }
+  .console-texts-table th:nth-child(3) {
+    inline-size: 15%;
+  }
+
+  .console-texts-table th,
+  .console-texts-table td {
+    vertical-align: top;
+  }
+
+  /* The sentence a row edits, quoted so it reads as text rather than as a field label. */
+  .console-texts-word {
+    display: block;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .console-texts-source {
+    display: block;
+    margin-block-start: 0.25rem;
+    font-family: var(--c-font-mono);
+    font-size: 0.72rem;
+    color: var(--c-text-3);
+    overflow-wrap: anywhere;
   }
 
   /* =========================================================================
@@ -2934,7 +2976,7 @@
     .console-leads .console-search {
       flex-basis: 100%;
     }
-    .console-seo-tools {
+    .console-screen-tools {
       flex-direction: column;
       align-items: stretch;
     }

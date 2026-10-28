@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { getLocalizedHref } from "@/lib/locale";
 import { siteConfig } from "@/config/site";
+import { fillSlots, pairKey, type CopyBundle } from "@/lib/copy/shared";
 
 export type Language = "ar" | "en";
 export type Direction = "rtl" | "ltr";
@@ -13,7 +14,7 @@ interface LanguageContextType {
   direction: Direction;
   toggleLanguage: () => void;
   setLanguage: (lang: Language) => void;
-  t: (arText: string, enText: string) => string;
+  t: (arText: string, enText: string, ...values: (string | number)[]) => string;
   formatNumber: (num: number | string) => string;
 }
 
@@ -35,9 +36,16 @@ const arabicDigits: { [key: string]: string } = {
   "9": "٩",
 };
 
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+/**
+ * `copy` is the owner's own wording for the sentences the site was built with, read for
+ * one language on the server. It is optional because it is an overlay: no bundle, no
+ * database, no rows — all of those mean "say the words the component authored", which is
+ * what the site rendered before this existed and what it must keep rendering.
+ */
+export const LanguageProvider: React.FC<{
+  children: React.ReactNode;
+  copy?: CopyBundle;
+}> = ({ children, copy }) => {
   const router = useRouter();
   const pathname = usePathname();
 
@@ -75,8 +83,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
     setLanguage(nextLang);
   };
 
-  const t = (arText: string, enText: string) => {
-    return language === "ar" ? arText : enText;
+  const t = (arText: string, enText: string, ...values: (string | number)[]) => {
+    // A bundle is only for the language it was read in. The path can change a few
+    // milliseconds before the layout's props do, and Arabic words leaking into an
+    // English page for one frame is worse than the authored wording for that frame.
+    const overrides = copy?.locale === language ? copy.values : undefined;
+    const authored = language === "ar" ? arText : enText;
+    return fillSlots(overrides?.[pairKey(arText, enText)] ?? authored, values);
   };
 
   const formatNumber = (num: number | string) => {

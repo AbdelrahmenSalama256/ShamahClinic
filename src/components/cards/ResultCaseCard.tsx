@@ -84,18 +84,17 @@ export const ResultCaseCard: React.FC<{ result: ResultCase }> = ({
               slot: result.before,
               label: { ar: "قبل", en: "Before" },
               style: "bg-[var(--bg-dark)]/85 text-[var(--text-on-dark)]",
-              aria: t(
-                `عرض نتيجة ${result.treatment.ar}`,
-                `View ${result.treatment.en} result`,
-              ),
+              aria: t("عرض نتيجة {0}", "View {1} result", result.treatment.ar, result.treatment.en),
             },
             {
               slot: result.after,
               label: { ar: "بعد", en: "After" },
               style: "bg-[var(--gold-end)] text-[var(--text-inverse)]",
               aria: t(
-                `عرض نتيجة ${result.treatment.ar} بعد الخدمة`,
-                `View ${result.treatment.en} after treatment`,
+                "عرض نتيجة {0} بعد الخدمة",
+                "View {1} after treatment",
+                result.treatment.ar,
+                result.treatment.en,
               ),
             },
           ] as const

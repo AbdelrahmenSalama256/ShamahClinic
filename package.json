@@ -4,10 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build --webpack",
+    "build": "node scripts/copy-catalog.mjs --check && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "copy:catalog": "node scripts/copy-catalog.mjs",
+    "copy:check": "node scripts/copy-catalog.mjs --check",
     "sync:wp": "node scripts/sync-wp.mjs",
     "prove:no-wp": "node scripts/prove-no-wp.mjs",
     "db:local:start": "node scripts/db/local-server.mjs",
