@@ -3110,6 +3110,75 @@ owner's word.
       is reachable, whether the database connects, and whether the host keeps `MEDIA_ROOT` outside
       the replaced folder are all still to be seen on the server.
 
+## BK-21 — the owner's brief of 2026-10-27 (work in the owner's order)
+
+The order, verbatim in intent: (0) a deploy package for `new.shamahclinics.com`, (1) make the kit
+the only painter in the console stylesheets, (2) prove style isolation from the built CSS,
+(3) Marketing & Tracking integrations plus a Google Sheets leads card, (4) SEO as its own section,
+(5) every text editable, (6) guidance for a non-designer, (7) performance measured before/after.
+Click-to-edit from the public site is deferred and must not be built. Deploy work is prepared
+here and run by the owner; no secret is asked for or stored.
+
+- [x] S6.1 — one painter: the kit draws every object, the surface only places it — `c6608a3`
+
+      **What was wrong.** `console.css` (imported after the kit) re-painted `.console-btn`,
+      `.console-chip`, `.console-badge`, `.console-note` and `.console-count` unconditionally, so
+      every light/dark value the kit declared was dead. The previous slice's own note said so and
+      left the move for this one; this is that move.
+
+      **What was removed from `console.css`** (25 selectors, all paint, no placement): the
+      `:is(.console-btn, .console-toggle, .console-side-close, .console-tool)` base and its
+      `::before` shimmer, `:hover`, `:active` and `:disabled` states; the four
+      `.console-btn[data-variant=…]` blocks (primary / success / danger / ghost, including the two
+      positional `.console-editor-bar > .console-btn:nth-child(2|4)` rules); the base paint of
+      `.console-note`, `.console-badge`, `.console-alert` and `.console-chip` (+ hover,
+      `[data-active]`, `[aria-pressed]`, `.console-chip-row`, `.console-doc-label > .console-badge`);
+      the whole `[data-tone]` table for badge/alert/count; `.console-table`'s
+      `font-variant-numeric`; `.console-pager .console-count::before`; and
+      `.settings-notice .console-alert`'s shadow. Nothing that remains in the surface sheet sets
+      colour, background, border, shadow, type, fill, stroke or opacity on a kit class.
+
+      **What was kept, and where it went.** Rules that were refinements rather than duplicates kept
+      their pixels by moving into the kit layer: the smaller badge inside `.console-doc-label`, the
+      settings notice's floating shadow, the pager count's 7px lamp, and the editor bar's two
+      positional actions (green-tinted second button, ghost fourth). The positional pair is
+      knowingly brittle; naming a variant at the call site is the follow-up, not a reason to change
+      the shipped look inside a cleanup slice. `.console-fields` was never a kit object — it is the
+      editor's stack — so it now lives only in the surface sheet.
+
+      **Layers.** Both sheets open with `@layer reset, tokens, kit, screens;` before any rule, and
+      every rule in both sits inside one of those layers (no unlayered selector can outrank the
+      kit's order). `console.css` has no `kit` layer at all.
+
+      **New guard.** `tests/console-layers.test.ts` (5 tests) reads both sheets: same layer order
+      first; every rule layered and nothing after the last block; the kit holds the objects (>20
+      rules) and the surface the screens (>20); every class the kit paints is painted only by the
+      kit (it derives the class list from the kit's own selector subjects and scans the `screens`
+      layer with a paint-property regex); `.console-count` rules in `screens` are placement only.
+      It failed on the first run with exactly three real leftovers (`.console-table`,
+      `.console-row-link`, `.console-fields`), which is what a guard is for.
+
+      **Four visual guards.** `tests/console-isolation.test.ts` is unchanged and green: (a) every
+      `var()` in the console is declared by the console, (b) no site sheet selects the console's
+      surface or classes, (c) the import graphs stay apart both ways, (d) no `ui-*` class appears in
+      a console component.
+
+      **Gates.** Typecheck clean, lint clean, full run **34 files / 699 passed, 0 failed**,
+      `next build --webpack` exit 0 into `.next-build` (271 pages, 20.6 s compile). The built console
+      chunk carries `@layer reset, tokens, kit, screens;` once and no second paint of a kit class.
+      Lint was noisy before this slice only because the deploy build's generated types were not
+      ignored: `eslint.config.mjs` now ignores `.next-build/**`, and `.gitignore` ignores
+      `.next-build/`.
+
+      **What the owner should check by eye.** Buttons, chips, badges, alerts, notes and counts now
+      render at the kit's sizes rather than the surface's: notes and badges are larger (0.8rem, not
+      0.6875rem), chips and buttons take the 44px tap floor, and the shimmer sweep is gone. If any
+      of those is unwanted, the kit is now the one place to say so.
+
+      **Not verified on a screen.** No browser was available: the numbers above are cascade
+      arithmetic and a built-CSS read, not pixels. Dark mode, RTL, the editor bar at 360px and the
+      pager's lamp were not seen.
+
 ## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
