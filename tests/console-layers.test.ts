@@ -15,20 +15,70 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const ROOT = process.cwd();
-const read = (name: string): string => readFileSync(join(ROOT, 'src/app/console', name), 'utf8');
+const read = (name: string): string => readFileSync(join(ROOT, 'src/app/(console)/console', name), 'utf8');
 const strip = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, '');
 const blankComments = (css: string): string => css.replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' '));
 
 const ORDER = '@layer reset, tokens, kit, screens;';
 
 /** Rules declared directly inside a named layer, at its own depth (not inside @media). */
-function rulesInLayer(css: string, layer: string): { selector: string; body: string }[] {
+function layerBody(css: string, layer: string): string {
   const text = blankComments(css);
   const marker = `@layer ${layer} {`;
   const layerStart = text.indexOf(marker);
   if (layerStart < 0) throw new Error(`layer ${layer} not found`);
   let depth = 0;
   const bodyStart = layerStart + marker.length;
+  let layerEnd = -1;
+  for (let index = bodyStart - 1; index < text.length; index += 1) {
+    const char = text[index];
+    if (char === '{') depth += 1;
+    else if (char === '}') {
+      depth -= 1;
+      if (depth === 0) {
+        layerEnd = index;
+        break;
+      }
+    }
+  }
+  if (layerEnd < 0) throw new Error(`layer ${layer} does not close`);
+  return text.slice(bodyStart, layerEnd);
+}
+
+/** Every selector in a layer body, including those inside @media/@supports wrappers. */
+function selectorsInLayer(css: string, layer: string): string[] {
+  const out: string[] = [];
+  const walk = (text: string): void => {
+    let headerStart = 0;
+    for (let index = 0; index < text.length; index += 1) {
+      if (text[index] !== '{') continue;
+      let depth = 0;
+      let close = index;
+      for (; close < text.length; close += 1) {
+        if (text[close] === '{') depth += 1;
+        else if (text[close] === '}') {
+          depth -= 1;
+          if (depth === 0) break;
+        }
+      }
+      const header = text.slice(headerStart, index).trim();
+      const body = text.slice(index + 1, close);
+      if (/^@(media|supports|container)\b/.test(header)) walk(body);
+      else if (!header.startsWith('@')) out.push(...splitSelectors(header));
+      index = close;
+      headerStart = close + 1;
+    }
+  };
+  walk(layerBody(css, layer));
+  return out;
+}
+
+function rulesInLayer(css: string, layer: string): { selector: string; body: string }[] {
+  const text = blankComments(css);
+  const layerStart = text.indexOf(`@layer ${layer} {`);
+  if (layerStart < 0) throw new Error(`layer ${layer} not found`);
+  let depth = 0;
+  const bodyStart = layerStart + `@layer ${layer} {`.length;
   let layerEnd = -1;
   for (let index = bodyStart - 1; index < text.length; index += 1) {
     const char = text[index];
@@ -184,5 +234,23 @@ describe('the console stylesheets are four named layers (S6)', () => {
     for (const rule of rules) {
       expect(rule.body, `${rule.selector} paints the count`).not.toMatch(PAINT);
     }
+  });
+
+  it('scopes every selector to a class, an attribute or an id', () => {
+    const offenders: string[] = [];
+    for (const [name, sheet] of [
+      ['console.css', consoleCss],
+      ['console-kit.css', consoleKit],
+    ] as const) {
+      for (const layer of ['reset', 'tokens', 'kit', 'screens']) {
+        if (!strip(sheet).includes(`@layer ${layer} {`)) continue;
+        for (const selector of selectorsInLayer(sheet, layer)) {
+          // The reset reaches elements through `[data-surface="console"]`, which is a scope;
+          // a bare `h1` or `*` would repaint every document that shares the chunk.
+          if (!/[.#\[]/.test(selector)) offenders.push(`${name} @layer ${layer}: ${selector}`);
+        }
+      }
+    }
+    expect(offenders, 'an element selector with no class, attribute or id to scope it').toEqual([]);
   });
 });

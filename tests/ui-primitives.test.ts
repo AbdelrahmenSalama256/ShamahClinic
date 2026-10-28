@@ -18,11 +18,11 @@ const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8')
 // here now; `globals.css` and the console layout both import this file.
 const tokens = readFileSync(join(process.cwd(), 'src/styles/tokens.css'), 'utf8');
 const buttonSource = readFileSync(join(process.cwd(), 'src/components/ui/Button.tsx'), 'utf8');
-const consoleCss = readFileSync(join(process.cwd(), 'src/app/console/console.css'), 'utf8');
+const consoleCss = readFileSync(join(process.cwd(), 'src/app/(console)/console/console.css'), 'utf8');
 // Slice 0 of the console redesign split the two surfaces' control layers: the console now
 // paints its own kit from its own `--c-*` tokens and imports neither `ui.css` nor the site
 // palette. The cases below keep the site's kit honest and prove the console's twin exists.
-const consoleKitCss = readFileSync(join(process.cwd(), 'src/app/console/console-kit.css'), 'utf8');
+const consoleKitCss = readFileSync(join(process.cwd(), 'src/app/(console)/console/console-kit.css'), 'utf8');
 const kitSource = readFileSync(join(process.cwd(), 'src/components/console/kit.tsx'), 'utf8');
 
 /** Declarations, not prose: the header comments quote the hexes they measured, and a
@@ -65,7 +65,7 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
     // token file nor the shared control layer: `globals.css` carries the public page's
     // element rules (`img { width: 100% !important }` would flatten every thumbnail), and
     // `ui.css` paints the site's controls in the site's palette.
-    const layout = readFileSync(join(process.cwd(), 'src/app/console/layout.tsx'), 'utf8');
+    const layout = readFileSync(join(process.cwd(), 'src/app/(console)/console/layout.tsx'), 'utf8');
     expect(layout).toContain("import './console-kit.css';");
     expect(layout).toContain("import './console.css';");
     expect(layout).not.toContain('components/ui/ui.css');
@@ -402,8 +402,8 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
 
   /** Every `tone=` written anywhere in the console, in a literal or inside an expression. */
   const namedTones = [
-    readFileSync(join(process.cwd(), 'src/app/console/(workspace)/page.tsx'), 'utf8'),
-    readFileSync(join(process.cwd(), 'src/app/console/password/page.tsx'), 'utf8'),
+    readFileSync(join(process.cwd(), 'src/app/(console)/console/(workspace)/page.tsx'), 'utf8'),
+    readFileSync(join(process.cwd(), 'src/app/(console)/console/password/page.tsx'), 'utf8'),
     listSource,
     editorSource,
     ...['ConsolePalette', 'ConsoleShell', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) =>
@@ -530,9 +530,9 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
     }
     for (const path of [
       ...['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ConsoleShell', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) => `src/components/console/${name}.tsx`),
-      'src/app/console/(workspace)/page.tsx',
-      'src/app/console/(workspace)/settings/page.tsx',
-      'src/app/console/password/page.tsx',
+      'src/app/(console)/console/(workspace)/page.tsx',
+      'src/app/(console)/console/(workspace)/settings/page.tsx',
+      'src/app/(console)/console/password/page.tsx',
     ]) {
       const source = readFileSync(join(process.cwd(), path), 'utf8');
       for (const name of [...dead, 'className="console-chip"']) {

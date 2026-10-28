@@ -46,7 +46,7 @@ const outSource = read('src', 'lib', 'wp', 'sanitize.ts');
 const code = (text: string): string => text.replace(/\/\*[\s\S]*?\*\//g, '');
 // Slice 0 of the console redesign: the editor is a console component and its sheet is the
 // console kit, not the public site's control layer.
-const kit = code(read('src', 'app', 'console', 'console-kit.css'));
+const kit = code(read('src', 'app', '(console)', 'console', 'console-kit.css'));
 
 /** The first declaration block for a selector, exactly as `ui-primitives.test.ts` reads one. */
 function rule(source: string, selector: string): string {

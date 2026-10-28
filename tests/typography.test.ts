@@ -22,7 +22,7 @@ const globals = read('src/app/globals.css');
 // BK-240 split the token layer out of the site stylesheet; the families, the tracking
 // scale and the digit cell live here now, and both roots import this file.
 const tokens = read('src/styles/tokens.css');
-const consoleCss = read('src/app/console/console.css');
+const consoleCss = read('src/app/(console)/console/console.css');
 
 /** Every `.ts`/`.tsx` under `src`, so a stray import cannot hide in a file nobody reads. */
 function sourceFiles(dir = 'src', found: string[] = []): string[] {
@@ -59,7 +59,7 @@ function layerBlock(css: string, layer: string): string {
 
 const DOCUMENT_ROOTS = [
   'src/app/[lang]/layout.tsx',
-  'src/app/console/layout.tsx',
+  'src/app/(console)/console/layout.tsx',
   'src/components/pages/NotFoundDocument.tsx',
 ];
 

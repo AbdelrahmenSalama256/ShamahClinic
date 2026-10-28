@@ -475,6 +475,13 @@ const ar = {
   'seo.section.branches': 'الفروع',
   'seo.edit_hint': 'اضغط خارج الحقل للحفظ. الحقل الفارغ يعود للنص الموروث.',
   'seo.open': 'فتح الصفحة',
+  'state.not_found.title': 'الصفحة غير موجودة',
+  'state.not_found.body': 'الرابط الذي فتحته لا يطابق شاشة في اللوحة.',
+  'state.not_found.back': 'العودة إلى النظرة العامة',
+  'state.error.title': 'تعذّر فتح هذه الشاشة',
+  'state.error.body': 'حدث خطأ غير متوقع. أعد المحاولة، وإن تكرر أخبر المدير.',
+  'state.error.retry': 'إعادة المحاولة',
+  'state.loading': 'جارٍ التحميل…',
 } satisfies Record<string, string>;
 
 export type MessageKey = keyof typeof ar;
@@ -949,6 +956,13 @@ const en: Record<MessageKey, string> = {
   'seo.section.branches': 'Branches',
   'seo.edit_hint': 'Click outside a field to save. An empty field returns to the inherited copy.',
   'seo.open': 'Open the page',
+  'state.not_found.title': 'Page not found',
+  'state.not_found.body': 'The link you opened does not match a screen in the console.',
+  'state.not_found.back': 'Back to the overview',
+  'state.error.title': 'This screen could not open',
+  'state.error.body': 'Something unexpected went wrong. Try again, and tell the administrator if it keeps happening.',
+  'state.error.retry': 'Try again',
+  'state.loading': 'Loading…',
 };
 
 const catalog: Record<ConsoleLocale, Record<MessageKey, string>> = { ar, en };

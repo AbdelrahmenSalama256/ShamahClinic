@@ -32,7 +32,7 @@ const stripSource = (source: string): string =>
     .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' '))
     .replace(/(^|[^:'"`])\/\/[^\n]*/gm, '$1');
 
-const CONSOLE = 'src/app/console';
+const CONSOLE = 'src/app/(console)/console';
 const CONSOLE_SHEETS = [`${CONSOLE}/console.css`, `${CONSOLE}/console-kit.css`];
 const SITE_SHEETS = ['src/app/globals.css', 'src/components/ui/ui.css', 'src/styles/tokens.css'];
 const SITE_TOKEN_FILE = 'src/styles/tokens.css';

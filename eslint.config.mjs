@@ -11,6 +11,8 @@ const eslintConfig = defineConfig([
     ".next/**",
     // The deploy build writes here (NEXT_DIST_DIR); its types are generated, not ours.
     ".next-build/**",
+    // Scratch: logs, probes, and the unpacked deploy artifact (gitignored, never ours).
+    ".tmp/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

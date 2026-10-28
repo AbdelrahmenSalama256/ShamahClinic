@@ -35,7 +35,7 @@ const gallerySource = read('src', 'components', 'console', 'ImageGallery.tsx');
 const editorSource = read('src', 'components', 'console', 'ConsoleEditor.tsx');
 // Slice 0 moved the console's primitives out of the shared site sheet; the picker is
 // painted by the console kit now.
-const kit = read('src', 'app', 'console', 'console-kit.css');
+const kit = read('src', 'app', '(console)', 'console', 'console-kit.css');
 
 /** The first declaration block for a selector, exactly as `ui-primitives.test.ts` reads one. */
 function rule(source: string, selector: string): string {

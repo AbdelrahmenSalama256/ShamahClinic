@@ -53,7 +53,7 @@ let ownerId = '';
 let viewerId = '';
 let ipSeq = 0;
 
-const consoleDir = join(process.cwd(), 'src/app/console');
+const consoleDir = join(process.cwd(), 'src/app/(console)/console');
 
 /** The seed role's grants, as the sidebar sees them. */
 function grantsFor(name: RoleName): Grant[] {
@@ -376,8 +376,8 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // came back in two sheets in one week, so the sweep is every sheet at once, and it reads
     // the selector rather than the value: the number is a taste, the selector is the defect.
     const sheets = [
-      'src/app/console/console.css',
-      'src/app/console/console-kit.css',
+      'src/app/(console)/console/console.css',
+      'src/app/(console)/console/console-kit.css',
       'src/app/globals.css',
       'src/styles/tokens.css',
     ];

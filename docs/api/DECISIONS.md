@@ -118,7 +118,7 @@ that a WordPress field is "not real content".
 Language must be known on the server, not switched in the browser, so `<html lang>`, `dir`,
 canonical, hreflang, JSON-LD and the Arabic/English copy all render per URL.
 
-- `src/app/[lang]/…` holds every page; `generateStaticParams` on the root layout emits `ar` + `en`,
+- `src/app/[lang]/…` holds every page (the group is invisible in the URL); `generateStaticParams` on the root layout emits `ar` + `en`,
   so both languages are prerendered.
 - Arabic stays the **unprefixed** default: `src/proxy.ts` (Next 16's rename of `middleware.ts`)
   rewrites `/`, `/offers`, … onto `/ar/…` without changing the browser URL. `/en/…` and `/ar/…`
