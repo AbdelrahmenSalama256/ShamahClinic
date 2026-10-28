@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { siteConfig } from "@/config/site";
 import { SITE_URL } from "./site";
 import { getLocalizedHref, type Locale } from "./locale";
 import { routeLang } from "./route-lang";
 import { readSeoOverride } from "./content/seo";
+import { getBrandWords } from "./content/site";
 
 interface LocalizedText {
   ar: string;
@@ -44,7 +44,7 @@ export async function buildPageMetadata({
   const override = await readSeoOverride(path, lang);
   const heading = override?.title || title[lang] || title[other];
   const summary = override?.description || description[lang] || description[other];
-  const brand = siteConfig.brand.name[lang];
+  const brand = (await getBrandWords())[lang];
 
   const url = `${SITE_URL}${getLocalizedHref(path, lang)}`;
   // WordPress SEO titles often already carry the brand, so appending it again

@@ -32,6 +32,7 @@ import {
   getAllPages,
   getBranches,
   getBranchList,
+  getBrandWords,
   getCategories,
   getHeroPhotos,
   getHome,
@@ -157,7 +158,7 @@ const categoryId = randomUUID();
  * reader that only understood a test-shaped group would prove nothing — so the
  * suite writes them and deletes exactly them again.
  */
-const SETTING_KEYS = ['name', 'tagline', 'phone', 'whatsapp', 'email', 'hours'];
+const SETTING_KEYS = ['name', 'name.ar', 'name.en', 'tagline', 'phone', 'whatsapp', 'email', 'hours'];
 
 beforeAll(async () => {
   assertTestDb();
@@ -396,7 +397,8 @@ describe('the database rung', () => {
     // The two counted fields stay counted — they are not settings.
     expect(saved.branches).toBe((await getBranches()).length);
     expect(saved.currency).toBe(authored.currency);
-    // `lang` picks offers and branches, not the saved words — see the reader's note.
+    // One legacy `name` row answers for both languages, so an operator who saved it
+    // before the split keeps the name they typed on the Arabic site too.
     expect((await getSettings('ar')).name).toBe('شامه سي إم إس');
 
     // Clearing a field hands it back to the config file, one key at a time.
@@ -410,6 +412,29 @@ describe('the database rung', () => {
 
     await db.deleteFrom('settings').where('group_name', 'in', ['site', `${run}-settings`]).where('setting_key', 'in', SETTING_KEYS).execute();
     expect((await getSettings('en')).whatsapp).toBe(WHATSAPP);
+  });
+
+  it('splits the brand name per language, and the two rows beat the older single one', async () => {
+    await db
+      .insertInto('settings')
+      .values([
+        { group_name: 'site', setting_key: 'name', value: JSON.stringify('اسم قبل التقسيم'), default_value: null, is_secret: 0, version: 1 },
+        { group_name: 'site', setting_key: 'name.ar', value: JSON.stringify('شامه العربية'), default_value: null, is_secret: 0, version: 1 },
+        { group_name: 'site', setting_key: 'name.en', value: JSON.stringify('Shamah English'), default_value: null, is_secret: 0, version: 1 },
+      ])
+      .execute();
+
+    expect((await getSettings('ar')).name).toBe('شامه العربية');
+    expect((await getSettings('en')).name).toBe('Shamah English');
+    expect(await getBrandWords()).toEqual({ ar: 'شامه العربية', en: 'Shamah English' });
+
+    // Editing one language is that language's own edit: the other falls back one rung,
+    // to the older single row before it falls back to the config file.
+    await db.deleteFrom('settings').where('group_name', '=', 'site').where('setting_key', '=', 'name.en').execute();
+    expect(await getBrandWords()).toEqual({ ar: 'شامه العربية', en: 'اسم قبل التقسيم' });
+
+    await db.deleteFrom('settings').where('group_name', 'in', ['site', `${run}-settings`]).where('setting_key', 'in', SETTING_KEYS).execute();
+    expect(await getBrandWords()).toEqual({ ar: siteConfig.brand.name.ar, en: siteConfig.brand.name.en });
   });
 
   it('parses the homepage blocks out of the published home row, raw', async () => {

@@ -36,6 +36,14 @@ export const JournalArticleClient: React.FC<{
   // literal "→" in both label strings pointed the wrong way for English readers.
   const BackArrow = language === "ar" ? ArrowRight : ArrowLeft;
 
+  // An imported row can reach the page with no title in either language. The H1 is what
+  // the tab, a screen reader and a shared link announce, so a label beats an empty one.
+  const untitled = t("بلا عنوان", "Untitled");
+  const title =
+    article.title.ar || article.title.en
+      ? article.title
+      : { ar: untitled, en: untitled };
+
   // ── Build TOC from sections ──
   const toc = useMemo(
     () =>
@@ -64,7 +72,7 @@ export const JournalArticleClient: React.FC<{
   // ── Share ──
   const [copied, setCopied] = useState(false);
   const pageUrl = typeof window !== "undefined" ? window.location.href : "";
-  const shareText = language === "ar" ? article.title.ar : article.title.en;
+  const shareText = language === "ar" ? title.ar : title.en;
   const shareLinks = {
     whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText} ${pageUrl}`)}`,
     twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(pageUrl)}`,
@@ -101,7 +109,7 @@ export const JournalArticleClient: React.FC<{
 
       <PageHero
         variant="band"
-        title={article.title}
+        title={title}
         lead={article.excerpt}
         photo={article.image}
         breadcrumbs={[
@@ -109,7 +117,7 @@ export const JournalArticleClient: React.FC<{
           { href: "/blogs", label: { ar: "المدونة", en: "Blogs" } },
           {
             href: `/blogs/${article.slug}`,
-            label: { ar: article.title.ar, en: article.title.en },
+            label: title,
           },
         ]}
       />

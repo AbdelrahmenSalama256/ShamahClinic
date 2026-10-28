@@ -8,7 +8,7 @@ import { readBanners } from '@/lib/content/banners';
 import { readPageStates } from '@/lib/content/page-visibility';
 import { SEO_SETTING_GROUP, SITE_SETTING_GROUP } from '@/lib/content/settings-catalog';
 import { readSettings } from '@/lib/content/settings';
-import { getSettings } from '@/lib/content/site';
+import { getBrandWords, getSettings } from '@/lib/content/site';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,14 +28,16 @@ export default async function ConsoleSettingsPage() {
   const grants = auth.user.grants;
   if (!can(grants, 'setting', 'read', {})) return <Empty>{message('content.no_permission', prefs.locale)}</Empty>;
 
-  const [rows, pages, site, banners] = await Promise.all([
+  const [rows, pages, site, banners, brand] = await Promise.all([
     readSettings(),
     readPageStates(),
     getSettings(prefs.locale),
     readBanners(),
+    getBrandWords(),
   ]);
   const defaults: Record<string, string> = {
-    [`${SITE_SETTING_GROUP}.name`]: site.name,
+    [`${SITE_SETTING_GROUP}.name.ar`]: brand.ar,
+    [`${SITE_SETTING_GROUP}.name.en`]: brand.en,
     [`${SITE_SETTING_GROUP}.tagline`]: site.tagline,
     [`${SITE_SETTING_GROUP}.phone`]: site.phone,
     [`${SITE_SETTING_GROUP}.whatsapp`]: site.whatsapp,

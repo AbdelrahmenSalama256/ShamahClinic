@@ -43,7 +43,8 @@ export interface SettingField {
 
 /** The identity words the public site already reads from the `site` group. */
 export const SITE_SETTING_FIELDS: readonly SettingField[] = [
-  { group: SITE_SETTING_GROUP, key: 'name', label: { ar: 'اسم العيادة', en: 'Clinic name' } },
+  { group: SITE_SETTING_GROUP, key: 'name.ar', label: { ar: 'اسم العيادة (عربي)', en: 'Clinic name (Arabic)' } },
+  { group: SITE_SETTING_GROUP, key: 'name.en', label: { ar: 'اسم العيادة (إنجليزي)', en: 'Clinic name (English)' } },
   { group: SITE_SETTING_GROUP, key: 'tagline', label: { ar: 'الشعار', en: 'Tagline' }, multiline: true },
   { group: SITE_SETTING_GROUP, key: 'phone', label: { ar: 'الهاتف', en: 'Phone' }, placeholder: { ar: '+20…', en: '+20…' } },
   { group: SITE_SETTING_GROUP, key: 'whatsapp', label: { ar: 'واتساب', en: 'WhatsApp' }, placeholder: { ar: '+20…', en: '+20…' } },

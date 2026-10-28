@@ -48,7 +48,7 @@ export const ArticleCard: React.FC<{
           className="mt-2 text-sm sm:text-base lg:text-lg font-black leading-snug line-clamp-2 text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300"
           dir="auto"
         >
-          {t(article.title.ar, article.title.en)}
+          {t(article.title.ar, article.title.en) || t("بلا عنوان", "Untitled")}
         </h3>
         {t(article.excerpt.ar, article.excerpt.en) ? (
           <p className="mt-1.5 text-xs sm:text-sm text-[var(--text-secondary)] leading-relaxed line-clamp-2" dir="auto">

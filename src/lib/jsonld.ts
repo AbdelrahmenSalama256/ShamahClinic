@@ -1,6 +1,6 @@
 import { SITE_URL } from "./site";
 import { siteConfig } from "@/config/site";
-import { getClinicWords } from "./content/site";
+import { getClinicWords, getBrandWords, type BrandWords } from "./content/site";
 import type { BranchDetail } from "@/data/branches";
 import type { Treatment } from "@/data/treatments";
 import { faqData, type FaqItem } from "@/data/faq";
@@ -36,7 +36,8 @@ function names(label: { ar: string; en: string }, lang: Locale) {
  */
 export async function organizationJsonLd(): Promise<Json> {
   const lang = await routeLang();
-  const brand = names(siteConfig.brand.name, lang);
+  const brandName = await getBrandWords();
+  const brand = names(brandName, lang);
   const clinic = await getClinicWords();
   return {
     "@context": "https://schema.org",
@@ -53,7 +54,7 @@ export async function organizationJsonLd(): Promise<Json> {
       { "@type": "City", name: lang === "ar" ? "القاهرة" : "Cairo" },
       { "@type": "City", name: lang === "ar" ? "الجيزة" : "Giza" },
     ],
-    branch: (await getBranchList()).map((b) => branchNode(b, lang)),
+    branch: (await getBranchList()).map((b) => branchNode(b, lang, brandName)),
     availableService: (await getMergedTreatments()).map((t) => ({
       "@type": "MedicalProcedure",
       ...names(t.name, lang),
@@ -62,11 +63,11 @@ export async function organizationJsonLd(): Promise<Json> {
   };
 }
 
-function branchNode(branch: BranchDetail, lang: Locale): Json {
+function branchNode(branch: BranchDetail, lang: Locale, brand: BrandWords): Json {
   return {
     "@type": ["MedicalClinic", "LocalBusiness"],
     "@id": `${localized(`/branches/${branch.id}`, lang)}#clinic`,
-    name: `${siteConfig.brand.name[lang]} — ${branch.name[lang]}`,
+    name: `${brand[lang]} — ${branch.name[lang]}`,
     alternateName: branch.name[lang === "ar" ? "en" : "ar"],
     url: localized(`/branches/${branch.id}`, lang),
     image: `${SITE_URL}${branch.image.src}`,
@@ -86,7 +87,7 @@ function branchNode(branch: BranchDetail, lang: Locale): Json {
 export async function branchJsonLd(branch: BranchDetail): Promise<Json> {
   const lang = await routeLang();
   return {
-    ...branchNode(branch, lang),
+    ...branchNode(branch, lang, await getBrandWords()),
     "@context": "https://schema.org",
     description: branch.intro[lang],
   };
@@ -123,6 +124,7 @@ export async function faqJsonLd(items: FaqItem[] = faqData): Promise<Json> {
 
 export async function articleJsonLd(article: Article): Promise<Json> {
   const lang = await routeLang();
+  const brand = await getBrandWords();
   const path = `/blogs/${article.slug}`;
   return {
     "@context": "https://schema.org",
@@ -133,10 +135,10 @@ export async function articleJsonLd(article: Article): Promise<Json> {
     datePublished: article.isoDate,
     dateModified: article.modifiedIso || article.isoDate,
     inLanguage: OG_LOCALE[lang],
-    author: { "@type": "Organization", name: siteConfig.brand.name[lang] },
+    author: { "@type": "Organization", name: brand[lang] },
     publisher: {
       "@type": "Organization",
-      name: siteConfig.brand.name[lang],
+      name: brand[lang],
       logo: { "@type": "ImageObject", url: logoUrl },
     },
     mainEntityOfPage: localized(path, lang),
@@ -169,7 +171,7 @@ export async function webSiteJsonLd(): Promise<Json> {
     "@type": "WebSite",
     "@id": `${SITE_URL}/#website`,
     url: SITE_URL,
-    ...names(siteConfig.brand.name, lang),
+    ...names(await getBrandWords(), lang),
     inLanguage: ["ar-EG", "en-US"],
     publisher: { "@id": `${SITE_URL}/#organization` },
   };

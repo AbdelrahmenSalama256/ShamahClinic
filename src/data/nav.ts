@@ -44,6 +44,3 @@ export const navItems: NavItem[] = [
   { href: "/blogs", label: { ar: "المدونة", en: "Blogs" } },
   { href: "/contact", label: { ar: "تواصلي", en: "Contact" } },
 ];
-
-/** The header/footer booking button label. */
-export const bookCta: NavLink["label"] = { ar: "احجزي موعدك", en: "Book" };

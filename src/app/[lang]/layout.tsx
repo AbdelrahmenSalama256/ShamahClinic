@@ -9,7 +9,7 @@ import { SITE_URL } from "@/lib/site";
 import { siteConfig, siteTheme } from "@/config/site";
 import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
-import { getBranchList, getClinicWords, getNavList, getSiteMeta, getSpecialistList } from "@/lib/content/site";
+import { getBranchList, getBrandWords, getClinicWords, getNavList, getSiteMeta, getSpecialistList } from "@/lib/content/site";
 import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
 import { readCopy } from "@/lib/copy/store";
 import { getMergedTreatments } from "@/lib/wp/treatments";
@@ -39,6 +39,7 @@ export async function generateMetadata(props: {
   if (!lang) return {};
   const home = getLocalizedHref("", lang);
   const meta = await getSiteMeta(lang);
+  const brand = await getBrandWords();
   return {
     metadataBase: new URL(SITE_URL),
     title: {
@@ -48,7 +49,7 @@ export async function generateMetadata(props: {
     description: meta.description,
     verification: meta.verification ? { google: meta.verification } : undefined,
     keywords: [...siteConfig.metadata.keywords],
-    authors: [{ name: siteConfig.brand.name[lang] }],
+    authors: [{ name: brand[lang] }],
     robots: {
       index: true,
       follow: true,
@@ -71,7 +72,7 @@ export async function generateMetadata(props: {
       description:
         lang === "ar" ? siteConfig.metadata.openGraphDescription : siteConfig.metadata.openGraphDescriptionEn,
       url: `${SITE_URL}${home}`,
-      siteName: siteConfig.brand.name[lang],
+      siteName: brand[lang],
       locale: lang === "ar" ? siteConfig.metadata.locale : "en_US",
       alternateLocale: [lang === "ar" ? siteConfig.metadata.alternateLocale : "ar_EG"],
       type: "website",

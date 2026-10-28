@@ -13,7 +13,6 @@ import { useClinic } from "@/context/ClinicContext";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
 import type { NavItem } from "@/data/nav";
-import { bookCta } from "@/data/nav";
 import {
   Menu,
   X,
@@ -327,7 +326,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
             >
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">
-                {t(bookCta.ar, bookCta.en)}
+                {t("احجزي موعدك", "Book")}
               </span>
             </button>
 

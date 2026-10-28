@@ -595,8 +595,8 @@ export async function getFaqList(): Promise<FaqItem[]> {
 // navigation
 
 /**
- * The header and footer menu. `bookCta` is not part of it: the button's words are the
- * site's own, not a link a person adds or removes.
+ * The header and footer menu. The booking button is not a line in it: the button's
+ * words are the site's own, not a link a person adds or removes.
  */
 export async function getNavList(): Promise<NavItem[]> {
   return listRung(
@@ -871,10 +871,9 @@ const savedSettings = () => savedGroup(SETTING_GROUP);
  * stay counted — they are not settings, they are the offers and branches this same
  * read path just returned.
  *
- * `lang` still does not move `name` or `hours`: both are read as English whatever the
- * page's language, which is what the site has rendered since before this read path
- * existed. Changing it would change the homepage, so it belongs to BK-14's editable
- * elements, not to a row that moves a source.
+ * `lang` moves `name` — the two identity rows are one per language — but not `hours`,
+ * which no page renders today. A field with no surface is reported, not wired to a
+ * slot the owner never asked for.
  */
 export async function getSettings(lang: Lang = 'en'): Promise<Settings> {
   const [offers, branches, saved] = await Promise.all([
@@ -894,7 +893,7 @@ export async function getSettings(lang: Lang = 'en'): Promise<Settings> {
   ]);
   const field = (key: string, authored: string): string => saved.get(key) ?? authored;
   return {
-    name: field('name', siteConfig.brand.name.en),
+    name: brandFrom(saved)[lang],
     tagline: field('tagline', TAGLINE),
     currency: offers.items[0]?.currency || 'EGP',
     phone: field('phone', siteConfig.contact.phone),
@@ -939,6 +938,40 @@ export async function getClinicWords(): Promise<ClinicWords> {
     whatsapp,
     whatsappUrl: `https://wa.me/${whatsapp.replace(/\D/g, '')}`,
   };
+}
+
+export interface BrandWords {
+  ar: string;
+  en: string;
+}
+
+/** The rule both reads share: per-language row, then the older single row, then the file. */
+function brandFrom(saved: Map<string, string>): BrandWords {
+  const legacy = saved.get('name');
+  return {
+    ar: saved.get('name.ar') ?? legacy ?? siteConfig.brand.name.ar,
+    en: saved.get('name.en') ?? legacy ?? siteConfig.brand.name.en,
+  };
+}
+
+/**
+ * The clinic's own name, as the identity card saved it, in both languages at once.
+ *
+ * The brand had one row and no reader: the name in `<title>`, `og:site_name` and the
+ * JSON-LD `name` came from the config file, so the field that offered to change it
+ * wrote a row nothing rendered. It needs two rows because the name is not the same
+ * word in both languages — `name.ar` answers for the Arabic site, `name.en` for English.
+ *
+ * The single `name` row an operator may have saved before the split still answers for
+ * both, so a saved name is never silently handed back to the file.
+ */
+export async function getBrandWords(): Promise<BrandWords> {
+  try {
+    return brandFrom(await savedSettings());
+  } catch (err: unknown) {
+    note('snapshot', 'brand', reason(err));
+    return brandFrom(new Map());
+  }
 }
 
 export interface SiteMeta {

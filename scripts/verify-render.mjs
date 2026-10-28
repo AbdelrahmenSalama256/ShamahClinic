@@ -1,7 +1,9 @@
 /**
  * Asserts, over the rendered HTML of a running production build, that
- *   1. the header menu, the footer link group and the booking CTA come from
- *      `src/data/nav.ts` (same labels, same order, both languages), and
+ *   1. the header menu is the site's one menu — the footer repeats it, every line
+ *      reaches a page that answers, each label arrives in the served language, and a
+ *      dropdown adds no anchor to the served HTML — and that the header carries a
+ *      booking button with words of its own,
  *   2. no Home card section renders more than three cards, and a section carries a
  *      "View all" link to its full page exactly when records are left out,
  *   3. every service section page 696 publishes is rendered on /services in both
@@ -11,7 +13,8 @@
  *      dir>` the server chose, Arabic by default and English under `/en`, and a slug
  *      the CMS does not publish answers 404 with `noindex`, and
  *   5. /results paginates the posts whose own text names a result — nine per page,
- *      every card indexed, no authored before/after case presented as a result, and
+ *      every card indexed, no authored before/after case presented as a result, and no
+ *      card opening a pair it only has half of, and
  *   6. every image the WooCommerce Store API returns for a product renders — on its
  *      card and on its detail page (one product has one image, three have three),
  *      served from the local mirror and never hotlinked back to the CMS host.
@@ -29,37 +32,17 @@ const pass = [];
 const fail = [];
 const check = (cond, msg) => (cond ? pass : fail).push(`${cond ? "ok  " : "FAIL"} ${msg}`);
 
-// A commented-out menu line is not a menu line: `nav.ts` keeps the entries the site
-// deliberately does not link yet as comments, and they must not be counted.
-const navSrc = readFileSync(new URL("../src/data/nav.ts", import.meta.url), "utf8")
-  .split("\n")
-  .filter((line) => !line.trim().startsWith("//"))
-  .join("\n");
-
-/** Bracket depth just before a match: 1 = top level, 2 = a dropdown child. */
-function bracketLevel(src, index) {
-  let level = 0;
-  for (let i = 0; i < index; i++) {
-    if (src[i] === "[") level++;
-    else if (src[i] === "]") level--;
-  }
-  return level;
-}
-
-const menu = [
-  ...navSrc.matchAll(
-    /href:\s*"([^"]+)",\s*label:\s*\{\s*ar:\s*"([^"]*)",\s*en:\s*"([^"]*)"\s*\}/g,
-  ),
-].map((m) => ({ href: m[1], ar: m[2], en: m[3], level: bracketLevel(navSrc, m.index) }));
-
-const top = menu.filter((l) => l.level === 1);
-const children = menu.filter((l) => l.level === 2);
-const book = navSrc.match(/bookCta[^=]*=\s*\{\s*ar:\s*"([^"]*)",\s*en:\s*"([^"]*)"\s*\}/);
-
-if (!top.length || !book) {
-  console.error("could not read the menu out of src/data/nav.ts");
-  process.exit(1);
-}
+/**
+ * The menu is not a file any more. `getNavList()` serves the console's `nav` rows and
+ * reads `src/data/nav.ts` only while nothing in that list is published, so the expected
+ * labels cannot be taken from either source here: from the file they would pin the site
+ * to a fallback it has already left (which is how this script grew twelve stale
+ * failures), and from the database they would re-implement the row reader the site
+ * already owns. What a served document can prove without either is the wiring — one
+ * menu, repeated faithfully, every line a page, the dropdown closed until a cursor
+ * reaches it — and the browser proof of *this slice* adds what only a console write can
+ * show: that renaming or reordering a row moves the header with it.
+ */
 
 /** "/ar/offers" and "/offers" are the same menu line. */
 const stripLang = (href) => {
@@ -115,45 +98,74 @@ for (const lang of ["ar", "en"]) {
     continue;
   }
   const $ = cheerio.load(await res.text());
-  // ── 1. the menu is the authored file ──
+  // ── 1. one menu, and both places it appears ──
   const header = $("header nav")
     .find("a")
     .toArray()
     .map((a) => ({ href: stripLang($(a).attr("href")), label: text($(a)) }));
 
   check(
-    header.length === top.length,
-    `${lang}: header renders ${header.length} menu line(s); src/data/nav.ts has ${top.length}`,
+    header.length > 0 && header.every((l) => l.href && l.label),
+    `${lang}: the header renders ${header.length} menu line(s) from the console's nav list${
+      header.length ? ` — ${header.map((l) => l.label).join(" · ")}` : ""
+    }`,
   );
 
-  top.forEach((line, i) => {
-    const got = header[i];
-    check(
-      !!got && got.href === line.href && got.label === line[lang],
-      `${lang}: header #${i + 1} = "${line.href}" / "${line[lang]}"${
-        got ? ` (rendered "${got.href}" / "${got.label}")` : " (line missing)"
-      }`,
-    );
-  });
+  const repeated = header
+    .map((l) => l.href)
+    .filter((href, i, all) => href && all.indexOf(href) !== i);
+  check(
+    !repeated.length,
+    `${lang}: no menu line is linked twice (${[...new Set(repeated)].join(", ") || "none"})`,
+  );
+
+  // Each locale's column is picked on the server: an Arabic label served under `/en`
+  // would mean the row reached the page through the wrong field.
+  const offLanguage = header.filter((l) => /[؀-ۿ]/.test(l.label) !== (lang === "ar"));
+  check(
+    !offLanguage.length,
+    `${lang}: every menu label arrives in ${lang}${
+      offLanguage.length ? ` (off-language: ${offLanguage.map((l) => l.label).join(", ")})` : ""
+    }`,
+  );
 
   const footerHrefs = $("footer a").toArray().map((a) => stripLang($(a).attr("href")));
-  const missing = top.filter((l) => !footerHrefs.includes(l.href));
+  const absent = header.filter((l) => !footerHrefs.includes(l.href));
   check(
-    !missing.length,
-    `${lang}: footer link group lists every menu page${missing.length ? ` (missing ${missing.map((m) => m.href).join(", ")})` : ""}`,
+    !absent.length,
+    `${lang}: the footer link group repeats every header line${
+      absent.length ? ` (missing ${absent.map((l) => l.href).join(", ")})` : ""
+    }`,
   );
 
+  const cta = $("header button")
+    .toArray()
+    .find((b) => /احجزي|Book/.test($(b).attr("aria-label") || ""));
   check(
-    text($("header")).includes(book[lang === "ar" ? 1 : 2]),
-    `${lang}: booking CTA reads "${book[lang === "ar" ? 1 : 2]}" (src/data/nav.ts)`,
+    !!cta && text($(cta)).length > 0,
+    `${lang}: the header's booking button carries words (${
+      cta ? `"${text($(cta))}"` : "no such button"
+    })`,
   );
 
-  // The dropdown is hover-rendered, so its lines cannot be asserted from static
-  // HTML; assert the parent is the only entry point instead.
+  // The dropdown is hover-rendered, so its children cannot be asserted from static
+  // HTML; assert that it stays closed — one anchor per line, none added.
+  const lines = new Set(header.map((l) => l.href)).size;
   check(
-    children.length === 4 && $("header nav").find("a").length === top.length,
-    `${lang}: Services dropdown stays closed in HTML (authored children: ${children.map((c) => c.href).join(", ")})`,
+    header.length === lines,
+    `${lang}: a dropdown adds no anchor to the served HTML (${header.length} anchors for ${lines} line(s))`,
   );
+
+  // A menu line the owner points at a hidden or mistyped page is a dead link the
+  // console can publish, so every one of them has to answer here.
+  for (const line of header) {
+    const target = line.href === "/" ? `/${lang}` : `/${lang}${line.href}`;
+    const page = await fetch(`${ORIGIN}${target}`, { cache: "no-store", redirect: "manual" });
+    check(
+      page.status === 200,
+      `${lang}: menu line ${target} answers ${page.status}`,
+    );
+  }
 
   // ── 2. three cards per Home section, with a route to the rest ──
   // Arabic is the prefix-less locale, so detail links are matched by substring.
@@ -468,9 +480,24 @@ for (const { prefix, lang } of [
     ),
     `${lang}: no authored before/after case is presented as a result`,
   );
+
+  // Half a comparison is not one. The rule is structural, so it survives the clinic
+  // rewriting the page's prose — and the message names how many pair cards exist today,
+  // so a pass over none of them is visibly a pass over nothing.
+  const halves = $one("main article")
+    .toArray()
+    .map(
+      (card) =>
+        $one(card)
+          .find("button[aria-label]")
+          .toArray().filter((b) => /picture|صورة/.test($one(b).attr("aria-label") || ""))
+          .length,
+    );
   check(
-    /صور «قبل وبعد»|no before\/after photos/.test($one("main").text()),
-    `${lang}: the page says it shows no before/after imagery, because the CMS holds none`,
+    halves.every((n) => n === 2),
+    `${lang}: every card that opens a pair carries both halves (${
+      halves.length ? `pair cards: ${halves.join(", ")}` : "no pair card rendered today"
+    })`,
   );
 
   const two = await fetch(`${ORIGIN}${prefix}/results?page=2`, { cache: "no-store" });
