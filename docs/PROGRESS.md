@@ -3179,6 +3179,47 @@ here and run by the owner; no secret is asked for or stored.
       arithmetic and a built-CSS read, not pixels. Dark mode, RTL, the editor bar at 360px and the
       pager's lamp were not seen.
 
+- [x] S0.1 — deploy package for `new.shamahclinics.com`, numbered runbook, `--confirm-target` guard — `837670f`
+
+      **What was built.** `docs/DEPLOY-NEW-SUBDOMAIN.md`, written for the owner to run without
+      giving anyone SSH, root, a token or a password: shape A (the host builds: node 22,
+      `npm ci && npm run build`, `npm start`, one process) with shape B (standalone) named as the
+      fallback for a host under ~1 GB RAM and why it needs `output: 'standalone'`; the exact
+      `git archive` command; environment variable **names** with non-secret sample values and the
+      `SESSION_SECRET` generation command; the DNS row `A | new | 37.60.235.30 | DNS only`; the
+      nameserver/NXDOMAIN check with the "do not move nameservers" warning; cPanel subdomain and
+      document root; AutoSSL; database and user creation; upload and build; `db:server-setup`
+      dry-run then `--apply`; dump → restore dry-run → `--replace --confirm-target user_shamah_new
+      --apply` → `verify`; `owner:create` (never `owner:reset`); backup dry-run and the cron line;
+      a ten-step browser smoke test ending with the DB-down snapshot render. It opens with a
+      paragraph stating that nothing in it touches `shamahclinics.com`, its DNS, its nameservers or
+      the WordPress database, files or install.
+
+      **The guard the brief asked for did not exist.** `db:move-data` had no `--confirm-target` at
+      all. `assertConfirmedTarget` (`scripts/db/move-data.mjs`, exported through `.d.mts`) now runs
+      before any connection is opened: `restore --apply` refuses without the flag, and any run
+      refuses when the flag names a database other than the target env file's `DATABASE_NAME`.
+      Three tests in `tests/move-data.test.ts` cover both refusals and the two allowed cases.
+
+      **The package.** 438 files, 4.9 MB zipped / ~10 MB unpacked: `src` 296, `public/wp` 60,
+      `scripts` 27, `data/wp` 18, plus configs. No `.env*`, no `node_modules`, no `.next`, no real
+      uploads. Audited by expanding it, not by trusting the command. Build proof: expanded into a
+      clean directory, `npm ci` then `next build --webpack` with **no database configured** at all —
+      exit 0, 263/263 static pages, route table identical, every page rendering from the snapshot.
+      That is the same fallback the owner's host will see if the build runs before the database is
+      filled.
+
+      **Gates.** Typecheck clean, lint clean, full run **34 files / 702 passed, 0 failed**.
+
+      **What the owner should check by eye.** The DNS record stays grey-clouded until AutoSSL has
+      issued; the subdomain's document root must be the folder the artifact was expanded into; and
+      the first smoke-test step is the public home page from a phone, not the console.
+
+      **Not verified.** Nothing has been uploaded or run on the server. Whether the host's Node
+      image matches the previous one, whether `new` resolves once the DNS row exists, and whether
+      the host keeps `MEDIA_ROOT` outside the replaced folder can only be seen after the owner runs
+      the runbook.
+
 ## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
