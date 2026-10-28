@@ -3183,6 +3183,88 @@ here and run by the owner; no secret is asked for or stored.
       layout before any `error.tsx` can catch it — an owner-visible white page under that
       condition is a known limitation.
 
+- [x] S3 — integrations, the sheet outbox, and a history that is the audit trail — `d6bb8c5`
+
+      **The promise, in five slices.** S3a is the registry (`src/lib/tracking/providers.ts`):
+      nine providers — GTM, GA4, Google Ads conversion, Meta, TikTok, Snapchat, Microsoft
+      Clarity, Hotjar and Bing UET — each with its own ID pattern, an on/off flag and a label in
+      both languages. A saved ID is validated against that pattern on the way in and the screen
+      shows *empty / invalid / off / on*, so a typo is visible before the public site sees it.
+      There is no free-form script box anywhere: the document is `{provider: {id, label?,
+      enabled}}` and only these keys can be written. GTM wins over the direct Google tags — when
+      a container is on, GA4 and Ads are reported as `suppressed` and are not injected a second
+      time. S3b is the public side: `src/app/[lang]/layout.tsx` reads the document, passes
+      `hasTracking` down as `cookieSettings` to `SiteShell`/`Footer`, and `TrackingTags` injects
+      nothing until the visitor answers the banner. The three conversions (`lead_submitted`,
+      `phone_click`, `whatsapp_click`) are pushed to `dataLayer` under those fixed names with the
+      vendor-specific names mapped in `src/lib/tracking/events.ts`; the WhatsApp and tel handlers
+      are one delegated listener, so a new link does not need its own wiring.
+
+      **S3c — a failed delivery never loses a lead.** The lead row is written first; only then is
+      an outbox row queued, and the drain runs in `after()` so a slow or dead sheet never delays
+      the visitor's answer. A repeat submission is recognised before it reaches the sheet. The
+      queue retries with backoff, keeps the last 50 attempts for the screen, and "Resend failed"
+      is a manual pass over the same rows. The Apps Script is generated read-only with a Copy
+      button, four numbered steps, the header list with its own Copy, a URL that is validated and
+      stored masked, an optional token, on/off, "Send a test lead" and the last result. The URL
+      and token are never written to the audit trail or shown back in full.
+
+      **S3d — the screen.** `/console/tracking` is a fifth console screen built from the kit:
+      tags in five sections with a live plan preview, the consent explanation, the sheet card, the
+      delivery log and — S3e — the change history. The history is not a second log: it is a read
+      of `audit_log` rows whose `entity_type` is `integration` and whose id is `tracking.providers`,
+      `sheets`, `sheets.test`, `sheets.resend` or `sheets.drain`, loaded under `integration.read`
+      rather than `audit.read`. That is deliberate: the Marketer holds `integration` and no
+      `audit.*`, and who changed the tags is exactly the question this role asks. A tag row can be
+      restored; the restore writes the earlier document back as a *new* save (the old row stays),
+      and a sheet row says why it cannot be restored — its URL and token were never stored. The
+      restore itself is audited like any other update. The dev-only role matrix is unchanged
+      except that Admin gained `integration.update`; Marketer gained `integration.read/update`
+      and still has no `audit.read` (`tests/roles.test.ts`).
+
+      **What changed in the API and props.** `GET /api/console/tracking` now also returns
+      `history` (an array, newest first, capped at 30 by default and 100 at most); `POST` accepts
+      `{action:"revert", id}` beside `{action:"check"}`. `TrackingWorkspace` gained a `history`
+      prop. `SiteShell` and `Footer` gained an optional `cookieSettings` prop (default false) —
+      the S3b change the earlier rows owed a note for: the public layout passes it only when a
+      tag document exists, and it is what shows the "cookie settings" button in the footer. No
+      database column or table was added; the tag document lives in `settings` at
+      `('tracking','providers')` and the trail lives in the existing `audit_log`.
+
+      **Gates and evidence.** Typecheck clean; eslint clean on every changed file; full run
+      **38 files / 741 tests passed**, including 14 tracking, 9 delivery, 8 integration and the
+      added role cases. `next build --webpack` exit 0 (271 pages) into `.tmp/next-build-s3`, and
+      the S3 proof ran **49/49** checks against it — no vendor script before consent, exactly one
+      GTM loader after accept, a tel: click in `dataLayer`, a lead queued while the loopback Apps
+      Script answered 502 and delivered only after "Resend failed". The S3e proof ran **42/42**
+      against the same production server: the section renders, the row count matches the JSON,
+      only tag rows have a restore button, a save adds one row with the owner's email and the
+      exact ID, the UI repaints from `router.refresh()`, a restore empties the config and the
+      form, the trail grows by one and keeps the reverted row, a reload shows the same 20 rows,
+      and 390px has no horizontal overflow. Screenshots:
+      `.tmp/s3e-console-history.png`, `.tmp/s3e-console-history-section.png`,
+      `.tmp/s3e-console-history-390.png`.
+
+      **What the owner should check by eye.** Sign in as the Marketer, open Marketing & tracking:
+      each provider reads as a labelled field with an on/off switch, "Check installation" answers
+      beside the row after saving, and the same GTM ID is not also loaded as a direct GA4/Ads tag.
+      On the public site in a private window, no request leaves for a vendor before the banner is
+      answered; "Reject" leaves it that way and the footer offers "Cookie settings" to change the
+      answer. Paste the sheet URL from the generated script's deployment, press "Send a test
+      lead", then submit a real form and watch the row appear in the sheet. Finally change a tag,
+      restore the previous value from the history, and confirm the restored form is empty while
+      both rows remain.
+
+      **Not verified.** No real vendor account was used: tag IDs, consent mechanics and the
+      loopback Apps Script are the only evidence, so whether each vendor's console reports the
+      visit is still unproven (and the screen says so in its own note). No Marketer account exists
+      in the dev database, so the role path is covered by DB tests, not by a screen; the browser
+      proof ran as Owner. The proof deliberately leaves its two `integration` audit rows in the
+      dev database — the trail is append-only, and deleting a record to tidy a test would be the
+      one behaviour this slice promises never happens — while the tag settings row is restored.
+      Consent is a working UI gate, not legal sign-off; the wording should be reviewed by whoever
+      owns the clinic's policy.
+
 - [x] S6.1 — one painter: the kit draws every object, the surface only places it — `c6608a3`
 
       **What was wrong.** `console.css` (imported after the kit) re-painted `.console-btn`,
