@@ -934,9 +934,9 @@ pane. Still open in this plan, oldest first: BK-6 (6.3c), BK-7.5, then BK-14 →
 Reality to design against: the copy today sits in three places — database content rows (BK-6, BK-7.2), authored files
 (`src/data/nav.ts`, `treatments.ts`, home sections), and strings hard-coded inside components. This section moves the
 last two into the database so the team never needs a developer for a word.
-- [ ] 14.1 Element registry: an address per editable thing (`screen.element.field`, locale-aware), a type, a validator,
+- [x] 14.1 Element registry: an address per editable thing (`screen.element.field`, locale-aware), a type, a validator,
       and a default equal to today's hard-coded value — so the site renders byte-identical before the row exists.
-      One table, one reader, one permission-checked API.
+      One table, one reader, one permission-checked API. **Done below, with the address scheme changed.**
 - [ ] 14.2 The shell: nav labels, order and dropdown children, footer groups, branch strip, booking CTA labels,
       phone / WhatsApp / email / hours, brand, tagline, theme colour.
 - [ ] 14.3 Home, section by section: hero slides, intro prose, the three-card blocks and their "View all" labels,
@@ -1085,6 +1085,81 @@ last two into the database so the team never needs a developer for a word.
       mid-rewrite in this worktree (≈500 → ≈850 lines, reformatted under me while its assertions were being
       written), so committing it would attribute somebody else's unfinished screen to this row. `14a.3` = that
       screen's picker + the two source assertions over it.
+
+- [x] 14.1 Element registry: 220 sentences, one address each, editable in the console — `53b0fa2`
+      **The premise was backwards, and this row fixes that first.** A screen fed from `content_fields` alone lists
+      the sentences somebody has already changed and calls that "the site's text" — so an owner's first visit shows
+      an empty table and no way to know what exists. The rows now come from the components:
+      `scripts/copy-catalog.mjs` parses every `.tsx` under `src/components` and `src/app` with the TypeScript AST and
+      collects each `t("ar", "en")` whose two arguments are written out, and `npm run copy:catalog` writes them into
+      `src/lib/copy/catalog.ts` — **220 addresses from 119 files**, 31 of which hold the first copy of a pair, 26
+      pairs rendered by more than one component (one row edits all of them). Grouped by where the file lives: pages
+      93, booking 41, shell 34, home 22, cards 19, common 11. **103 data-driven calls** (`t(row.name.ar, row.name.en)`)
+      are skipped on purpose — those are console rows that already have an editor, not copy.
+      **An address is the words it was written against.** `copy.` + the first 12 hex of `sha256(ar + U+0000 + en)`.
+      Rewording either language in the code moves the address, so the override retires instead of silently repainting
+      a different sentence — the failure mode of a `screen.element.field` id, which stays put while the words under it
+      change. The cost is honest and stated on the screen: a developer rewording a sentence the owner has rewritten
+      orphans that rewrite, and the screen lists orphans apart with the only way to clear them (write the empty value).
+      **The site renders the same before a row exists.** `t()` falls back to its own arguments, so nothing changes
+      until somebody types over it — with one refactor: nine call sites built their sentence by interpolation
+      (`` t(`${total} نتيجة`, `${total} results`) ``), which is not one address but an unbounded family, so they now
+      say `t("{0} نتيجة", "{0} results", total)`. Slots are `{0}`/`{1}`, filled in order, extras ignored, and Arabic
+      may count in Eastern digits while English counts in Western (`{0}`/`{1}` in the same pair) — the words rendered
+      are the ones rendered before, and `ArticleCard` proves it with both.
+      **One table, one reader, one guarded API, no new grant.** Storage is `content_fields` under `copy.*` — no
+      migration, and no `copy` resource in the role catalog either: the words of a page are the act a `page` grant
+      already describes, so the write is `can(grants, 'page', 'update', {locales})` and the locale is read from
+      `?locale=` on the request line, never from the body, which is the scope rule every other write obeys. A role
+      that may read pages may open this screen; a role that may not update *this language* gets read-only fields.
+      `reset` nulls one language and soft-deletes the row when both are empty — nothing is dropped. The public read is
+      one `readCopy(locale)` in the `[lang]` layout feeding `LanguageContext`, which applies a bundle only when its
+      locale matches the page's.
+      **The build now refuses a stale catalog.** `npm run build` runs `copy-catalog --check` first: the generator's
+      own output must equal the committed file, so a new `t()` a person cannot edit fails the build instead of
+      shipping unaddressable. That is 14.6's gate, arrived early and cheaply because the catalog already exists.
+      **Evidence.** `tsc --noEmit` 0 errors · `eslint` 0 errors · full `vitest run` **788 passed in 41 files** (was
+      787/788 before this row: `tests/roles.test.ts`'s write-scan refused the new `copy/route.ts`, which is a thin
+      delegate — the `TRUSTED` map gained `@/lib/copy/api` with the reason written next to it, and that map asserts
+      the delegate itself reaches `guard()`, so an allowlist cannot hide an unguarded handler) · the copy suites are
+      **37** (`tests/copy.test.ts` addresses, slots, reader, screen data; `tests/copy-api.test.ts` the six-role
+      matrix, the refusal before the body, both languages, the reset) · `npm run build` + `npm run prove:no-wp`
+      **271 routes rendered, 0 failed, 0 requests to the WordPress origin** · and a real browser against a production
+      build on `http://127.0.0.1:3341`: **41/41 checks** — the screen lists 220 rows in six group headings; Arabic
+      chrome with English rows (the language is a URL parameter, so a shared link opens on the wording it names);
+      search narrows the table; the changed filter says "no matching sentence" in Arabic when nothing is changed; an
+      English footer override saves, badges, and the **visible text** of `/en` serves it while `/ar` still says what
+      the code says; a `{1} min read` row warns before saving that the owner typed around a slot; `/en/blogs/<slug>`
+      then literally renders `About {5} minutes …`, which is the warning being true rather than a defect; reset
+      returns "4 min read"; an Arabic override lands on `/` and the English one survives beside it; clearing both
+      brings the authored wording back and leaves **3 rows as history, 0 live**; a 390 × 844 phone keeps the table
+      inside its own scroll wrap; and an ephemeral Viewer (created for the run, deleted by it) finds every field
+      read-only and showing the site wording — the proof counted the 202 `<input>`s, the other 18 rows are textareas
+      because their authored sentence runs past 70 characters — no reset control at all, and `403 forbidden` from a
+      direct `POST /api/console/copy?locale=en` with its own CSRF header, 0 rows landed.
+      **A finding worth paying for:** the RSC flight payload serialises the dictionary *including each override's
+      authored pair* (`{"فروعنا في مصر␟Our Branches":"…"} `), so a raw-HTML grep finds the old wording even when the
+      page correctly shows the new one. Every visible-text assertion had to strip `<script>`/`<style>`/tags first. The
+      byte cost is one pair per changed sentence in the layout payload; 14.6 can trim it by keying on the hash alone.
+      **What the owner must check by eye:** the four screenshots read this pass (`.tmp/s14-texts-en-top.png`,
+      `s14-texts-en-changed-row.png`, `s14-texts-ar-changed-row.png`, `s14-texts-390.png`) show the green "معدَّلة"
+      badge, the "عودة لنص الموقع" button, the saved note, the "changed in the other language" hint and the row count
+      `2 من 220` — but the screen was driven by a script, so the feel of save-on-blur, the tab switch keeping
+      unsaved edits or discarding them, and the reading order of a long Arabic sentence across 32% of the column are
+      still a person's judgement.
+      **What could not be verified, and is not claimed:** `node scripts/verify-render.mjs` against this build reports
+      **235 passed, 16 failed**, and every failure predates this row — none of the files it names is in `53b0fa2`.
+      Twelve (six per language) are the header and footer comparing the rendered menu against `src/data/nav.ts` while
+      the site has moved to the `list_items` rows, which publish 8 entries with `/branches` absent and a Services row
+      carrying **no dropdown children**, so the four authored sub-links never reach the header. Two are `/blogs`
+      rendering one blank `<h3>` for an imported post whose Arabic title is empty; two are the results page,
+      which now holds a real before/after case and so no longer prints the "no before/after photos" note the script
+      still requires. That drift belongs to BK-7.5 and 14.2, and the script needs the same rewrite. Also unproven:
+      drafts — this write lands `status: 'published'` with the draft fields set to the same text, because a sentence
+      has no review step yet, and 14.5's enable/disable will be where a draft means anything.
+      **Not in this slice:** 14.2's shell (nav labels are rows, not copy — `bookCta` is still authored and reached
+      through `t(bookCta.ar, bookCta.en)`, so it is invisible to the catalog, and the theme colour has no address at
+      all), 14.3/14.4's per-page prose, 14.5's section control, and click-to-edit, which stays deferred by order.
 
 ## BK-15 — SEO center: the specialist's feature set, all local
 New tables: `seo_meta` (per entity per locale), `seo_templates`, `redirects`, `not_found_hits`, `crawl_issues`,
