@@ -34,9 +34,10 @@ const consoleCode = code(consoleCss);
 const consoleKit = code(consoleKitCss);
 
 function rule(source: string, selector: string): string {
-  const start = source.indexOf(`\n${selector} {`);
-  expect(start, `${selector} is styled`).toBeGreaterThan(-1);
-  return source.slice(start, source.indexOf('}', start));
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = new RegExp(`\\n\\s*${escaped} \\{`).exec(source);
+  expect(match, `${selector} is styled`).not.toBeNull();
+  return source.slice(match!.index, source.indexOf('}', match!.index));
 }
 
 /** Selector and body of every declaration block. The pattern cannot cross a brace, so an
@@ -370,7 +371,7 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
     // more. Its kit paints the same family from its own `--c-*` tokens, and the surface
     // sheet may place a field but never draw one.
     for (const selector of ['.console-field', '.console-control', '.console-check', '.console-field-error']) {
-      expect(consoleKit, `${selector} is painted by the kit`).toContain(`\n${selector}`);
+      expect(consoleKit, `${selector} is painted by the kit`).toMatch(new RegExp(`\\n\\s*${selector.replace('.', '\\.')}`));
     }
     expect(consoleCode, 'the console surface does not re-paint a field').not.toMatch(/\.console-control\b/);
     expect(consoleCode, 'no site class survives in the console sheet').not.toMatch(/\.ui-/);
@@ -510,7 +511,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
   it('leaves the console its own status shapes, painted by the console kit', () => {
     // Slice 0 gave the console a twin of the status family, painted from its own tokens.
     for (const selector of ['.console-badge', '.console-alert', '.console-note', '.console-empty', '.console-skeleton', '.console-mark']) {
-      expect(consoleKit, `${selector} is painted by the kit`).toContain(`\n${selector}`);
+      expect(consoleKit, `${selector} is painted by the kit`).toMatch(new RegExp(`\\n\\s*${selector.replace('.', '\\.')}`));
     }
     // The surface owns where a count sits, never a second pill: no fill, border or padding
     // of its own. `auto` in the bulk bar where it leads, zeroed in the pager where the

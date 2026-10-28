@@ -50,9 +50,10 @@ const kit = code(read('src', 'app', 'console', 'console-kit.css'));
 
 /** The first declaration block for a selector, exactly as `ui-primitives.test.ts` reads one. */
 function rule(source: string, selector: string): string {
-  const start = source.indexOf(`\n${selector} {`);
-  expect(start, `${selector} is styled`).toBeGreaterThan(-1);
-  return source.slice(start, source.indexOf('}', start));
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = new RegExp(`\\n\\s*${escaped} \\{`).exec(source);
+  expect(match, `${selector} is styled`).not.toBeNull();
+  return source.slice(match!.index, source.indexOf('}', match!.index));
 }
 
 describe('a paste keeps the words and loses the markup nobody allowed', () => {

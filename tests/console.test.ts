@@ -351,7 +351,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
 
     // Every control the list still paints itself takes `--c-tap` by name.
     for (const selector of ['.console-cards-head', '.console-editor-bar']) {
-      const start = css.indexOf(`\n${selector} {`);
+      const start = css.search(new RegExp(`\\n\\s*${selector.replace('.', '\\.')} \\{`));
       expect(start, `${selector} is styled`).toBeGreaterThan(-1);
       expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--c-tap\)/);
     }
@@ -361,7 +361,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // Nothing may still paint a field by hand. Anchored to the start of a line because
     // the comments in both files name the class they replaced — a rule is what must not
     // come back, and prose about the old one is the thing that keeps it from coming back.
-    expect(css).not.toMatch(/^\.console-field[ ,{]/m);
+    expect(css).not.toMatch(/^\s*\.console-field[ ,{]/m);
     for (const component of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
       const source = readFileSync(join(process.cwd(), 'src/components/console', `${component}.tsx`), 'utf8');
       expect(source, `${component} has no raw field markup`).not.toMatch(/<(input|textarea|select)\s/);
@@ -490,12 +490,14 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect(palette).toMatch(/className="console-tool"/);
     expect(css).toMatch(/\.console-account-site\s*\{/);
 
-    // One shape for all three: a `--c-tap` square, one radius, one stroke weight.
-    const tool = css.slice(css.indexOf('\n.console-tool {'));
+    // One shape for all three: a `--c-tap` square from this sheet, one skin from the kit.
+    const tool = css.slice(css.indexOf('.console-tool {'));
     const rule = tool.slice(0, tool.indexOf('}'));
     expect(rule).toMatch(/inline-size: var\(--c-tap\)/);
     expect(rule).toMatch(/block-size: var\(--c-tap\)/);
-    expect(rule).toMatch(/border-radius: var\(--c-r-pill\)/);
+    expect(rule, 'the tool paints no radius of its own').not.toMatch(/border-radius|background|border:/);
+    const kit = readFileSync(join(consoleDir, 'console-kit.css'), 'utf8');
+    expect(kit).toMatch(/border-radius: var\(--c-r-md\)/);
     expect(css).toMatch(/\.console-tool svg\s*\{[^}]*stroke-width: 1\.75;/);
 
     for (const key of ['shell.screens', 'shell.close', 'shell.view_site', 'shell.theme.light', 'shell.theme.dark', 'shell.locale.switch'] as MessageKey[]) {
@@ -866,7 +868,7 @@ describe('one row on its own page (BK-13.4, 240)', () => {
     const ui = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
     // The bar still owns its own floor; the controls inside it are the primitive's, so
     // their floor is proved in the file that paints them (19.3a) and not re-declared here.
-    expect(css.slice(css.indexOf('\n.console-editor-bar {'), css.indexOf('}', css.indexOf('\n.console-editor-bar {')))).toMatch(/var\(--c-tap\)/);
+    expect(css.slice(css.indexOf('.console-editor-bar {'), css.indexOf('}', css.indexOf('.console-editor-bar {')))).toMatch(/var\(--c-tap\)/);
     expect(ui).toMatch(/\.ui-button\s*\{[^}]*min-height: var\(--tap\);/);
     expect(editor).toContain('<Button');
     expect(editor).not.toContain('console-button');
