@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { trackEvent } from "@/lib/tracking/client";
+import { EVENT_NAMES } from "@/lib/tracking/events";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -187,6 +189,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         return false;
       }
       setErrors({});
+      trackEvent(EVENT_NAMES.leadSubmitted, { form: "booking", branch: currentBranch.name.en });
       return true;
     } catch {
       // Fail open: the clinic still receives the full brief on WhatsApp.

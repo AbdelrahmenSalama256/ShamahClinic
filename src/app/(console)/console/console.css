@@ -2505,7 +2505,232 @@
   }
 
   /* =========================================================================
-     12. RESPONSIVE (in breakpoint order)
+     12. TRACKING (the Marketing & tracking screen)
+     ========================================================================= */
+  .tracking-provider {
+    min-inline-size: 0;
+  }
+
+  .tracking-provider-fields {
+    display: grid;
+    gap: var(--c-gap-tight);
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+
+  .tracking-plan {
+    display: grid;
+    grid-template-columns: minmax(9rem, max-content) minmax(0, 1fr);
+    gap: var(--c-gap-tight) var(--c-gap);
+    margin: 0;
+  }
+
+  .tracking-plan dt {
+    color: var(--c-text-3);
+    font-size: var(--c-font-small);
+  }
+
+  .tracking-plan dd {
+    margin: 0;
+    min-inline-size: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .tracking-plan dd code {
+    font-family: var(--c-font-mono);
+    font-size: 0.8rem;
+  }
+
+  .tracking-plan-vendor + .tracking-plan-vendor::before {
+    content: " · ";
+    color: var(--c-text-3);
+  }
+
+  .tracking-consent {
+    margin: 0;
+    max-inline-size: 74ch;
+    color: var(--c-text-2);
+    line-height: 1.7;
+  }
+
+  .tracking-sheet-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight);
+    margin-block-end: var(--c-gap);
+  }
+
+  .tracking-steps {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0 0 var(--c-pad);
+    padding-inline-start: 1.35rem;
+    max-inline-size: 74ch;
+    color: var(--c-text-2);
+    line-height: 1.65;
+  }
+
+  .tracking-sheet-form {
+    display: grid;
+    gap: var(--c-gap);
+    max-inline-size: 46rem;
+  }
+
+  .tracking-token {
+    margin: 0;
+    padding-block-start: var(--c-gap);
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  .tracking-token summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .tracking-token[open] summary {
+    margin-block-end: var(--c-gap);
+  }
+
+  .tracking-script-block,
+  .tracking-headers-block {
+    margin-block-start: var(--c-pad);
+  }
+
+  .tracking-copy-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-gap-tight);
+    margin-block-end: var(--c-sp-2);
+  }
+
+  .tracking-copy-row .console-subheading {
+    margin: 0;
+  }
+
+  /* The script is read-only text: it scrolls sideways rather than wrapping, so a line a
+     person copies is the line the Apps Script editor receives. */
+  .tracking-script {
+    direction: ltr;
+    text-align: start;
+    margin: 0 0 var(--c-sp-2);
+    padding: var(--c-gap);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface-soft);
+    max-block-size: 22rem;
+    overflow: auto;
+    font-family: var(--c-font-mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+
+  .tracking-script code {
+    white-space: pre;
+  }
+
+  .tracking-headers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .tracking-header {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-pill);
+    background: var(--c-tint);
+    font-size: var(--c-font-micro);
+  }
+
+  .tracking-last-test {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight) var(--c-gap);
+    margin-block: var(--c-pad) var(--c-gap);
+  }
+
+  .tracking-log-title {
+    margin-block: 0 var(--c-sp-2);
+  }
+
+  .tracking-log {
+    margin-block-start: var(--c-gap);
+  }
+
+  .tracking-log td {
+    max-inline-size: 20rem;
+    overflow-wrap: anywhere;
+  }
+
+  .tracking-log-error {
+    color: var(--c-danger);
+    font-size: var(--c-font-small);
+  }
+
+  /* The history is a list of deltas, not a diff view: one line per value a person set,
+     so the row a person restores is chosen from what it will undo. */
+  .tracking-history {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tracking-history-row {
+    display: grid;
+    gap: 0.35rem;
+    padding-block: var(--c-gap);
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  .tracking-history-row:first-child {
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
+
+  .tracking-history-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight) var(--c-gap);
+  }
+
+  .tracking-history-head time {
+    color: var(--c-text-3);
+    font-size: var(--c-font-small);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tracking-history-actor {
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+    overflow-wrap: anywhere;
+  }
+
+  .tracking-history-head .console-btn {
+    margin-inline-start: auto;
+  }
+
+  .tracking-history-changes {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    padding-inline-start: 1.1rem;
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  /* =========================================================================
+     13. RESPONSIVE (in breakpoint order)
      ========================================================================= */
 
   /* >= 1024: the sidebar is a column */
@@ -2801,7 +3026,7 @@
   }
 
   /* =========================================================================
-     13. REDUCED MOTION (one block for the whole console)
+     14. REDUCED MOTION (one block for the whole console)
      ========================================================================= */
   @media (prefers-reduced-motion: reduce) {
     [data-surface="console"] *,

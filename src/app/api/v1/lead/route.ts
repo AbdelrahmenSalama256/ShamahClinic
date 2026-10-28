@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { recordLead } from "@/lib/leads/store";
+import { drainOutbox, enqueueSheetsLead } from "@/lib/integrations/delivery";
 import { CF7_FIELDS, CF7_FORM_ID, LEAD_MODE, WHATSAPP, WP_ORIGIN } from "@/lib/wp/config";
 
 export const runtime = "nodejs";
@@ -123,7 +124,7 @@ async function keepLead(input: LeadInput, ip: string, referer: string | null): P
     if (input[name]) fields[name] = input[name];
   }
   try {
-    await recordLead({
+    const saved = await recordLead({
       source: sourceOf(input),
       formId: 'site',
       name: input.name,
@@ -136,8 +137,24 @@ async function keepLead(input: LeadInput, ip: string, referer: string | null): P
       utm: context.utm,
       idempotencyKey: key,
     });
+    // The row exists before anything is queued, and a repeat submission adds nothing
+    // to the sheet. Delivery failures leave the row in the outbox to be retried.
+    if (!saved.duplicate) await enqueueSheetsLead(saved.id);
   } catch {
     console.error('[lead] submission was not recorded');
+  }
+}
+
+/** Send the queue after the visitor has their answer; never in their path. */
+function scheduleDrain(): void {
+  const drain = async () => {
+    await drainOutbox(5).catch(() => undefined);
+  };
+  try {
+    after(drain);
+  } catch {
+    // Called outside a request scope (a direct handler call in tests): run it anyway.
+    void drain();
   }
 }
 
@@ -170,6 +187,7 @@ export async function POST(req: Request) {
   // console page is the record of what the site actually received. WhatsApp and CF7
   // stay the delivery channels; this is the copy the clinic can work from.
   await keepLead({ ...input, name, phone }, ip, req.headers.get('referer'));
+  scheduleDrain();
 
   // Default mode: hand the user a prefilled WhatsApp deep link (no email sent).
   if (LEAD_MODE === "whatsapp") {

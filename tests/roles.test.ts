@@ -268,9 +268,13 @@ describe('what each level can do', () => {
     { role: 'Marketer', resource: 'lead', action: 'update', allowed: true, why: 'works the pipeline' },
     { role: 'Marketer', resource: 'lead', action: 'export', allowed: true, why: 'CSV and Sheets' },
     { role: 'Marketer', resource: 'cta', action: 'publish', allowed: true, why: 'owns CTAs' },
+    { role: 'Marketer', resource: 'integration', action: 'read', allowed: true, why: 'opens the marketing screen' },
+    { role: 'Marketer', resource: 'integration', action: 'update', allowed: true, why: 'owns the tags and the sheet connector' },
     { role: 'Marketer', resource: 'article', action: 'update', allowed: false, why: 'writes no content' },
     { role: 'Marketer', resource: 'setting', action: 'update', allowed: false, why: 'no site configuration' },
     { role: 'Marketer', resource: 'audit', action: 'read', allowed: false, why: 'not an auditor' },
+
+    { role: 'Editor', resource: 'integration', action: 'read', allowed: false, why: 'marketing is not content' },
 
     { role: 'Viewer', resource: 'lead', action: 'read', allowed: true, why: 'counts only, fields redacted' },
     { role: 'Viewer', resource: 'lead', action: 'update', allowed: false, why: 'reports, does not work' },
@@ -466,6 +470,9 @@ describe('no console route writes without guard()', () => {
     // Search appearance is one write shared by the SEO center and the panel inside every
     // entity page, so its route file stays a one-line delegate.
     ['@/lib/content/seo-api', 'src/lib/content/seo-api.ts'],
+    // Marketing and the sheet connector share one handler across two route files: the
+    // tracking PATCH and the sheets PATCH take different bodies but the same grant.
+    ['@/lib/integrations/api', 'src/lib/integrations/api.ts'],
   ]);
 
   function routeFiles(dir: string): string[] {

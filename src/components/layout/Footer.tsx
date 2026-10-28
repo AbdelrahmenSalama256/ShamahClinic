@@ -9,6 +9,7 @@ import type { BranchLite } from "@/data/branches";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
 import { socialLinks } from "@/lib/site";
+import { reopenConsent } from "@/lib/tracking/client";
 import type { NavItem } from "@/data/nav";
 import { Phone, Send, Check, MessageCircle } from "lucide-react";
 
@@ -41,11 +42,12 @@ const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-export const Footer: React.FC<{ branches: BranchLite[]; nav: NavItem[]; hiddenPaths: string[] }> = ({
-  branches,
-  nav,
-  hiddenPaths,
-}) => {
+export const Footer: React.FC<{
+  branches: BranchLite[];
+  nav: NavItem[];
+  hiddenPaths: string[];
+  cookieSettings?: boolean;
+}> = ({ branches, nav, hiddenPaths, cookieSettings = false }) => {
   const { language, t } = useLanguage();
   const clinic = useClinic();
   const visibleNavItems = nav.filter((item) => !hiddenPaths.includes(item.href));
@@ -237,12 +239,23 @@ export const Footer: React.FC<{ branches: BranchLite[]; nav: NavItem[]; hiddenPa
               "Shamah Clinics. All rights reserved.",
             )}
           </p>
-          <p className="text-[11px] text-gray-400">
-            {t(
-              "مدينة نصر • التجمع الخامس • الشيخ زايد",
-              "Nasr City • New Cairo • Sheikh Zayed",
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <p className="text-[11px] text-gray-400">
+              {t(
+                "مدينة نصر • التجمع الخامس • الشيخ زايد",
+                "Nasr City • New Cairo • Sheikh Zayed",
+              )}
+            </p>
+            {cookieSettings && (
+              <button
+                type="button"
+                onClick={reopenConsent}
+                className="cursor-pointer text-[11px] text-gray-400 underline decoration-white/30 underline-offset-4 transition-colors hover:text-white"
+              >
+                {t("إعدادات الكوكيز", "Cookie settings")}
+              </button>
             )}
-          </p>
+          </div>
         </div>
       </div>
     </footer>

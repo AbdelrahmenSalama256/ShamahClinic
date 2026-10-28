@@ -33,6 +33,7 @@ export const RESOURCE_LABELS: Readonly<Record<Resource, Words>> = {
   stat: { ar: 'الإحصارات', en: 'Statistics' },
   user: { ar: 'الحسابات', en: 'Accounts' },
   role: { ar: 'الأدوار', en: 'Roles' },
+  integration: { ar: 'التسويق والتكاملات', en: 'Marketing & integrations' },
   permission_request: { ar: 'طلبات الصلاحيات', en: 'Permission requests' },
   audit: { ar: 'سجل التغييرات', en: 'Audit log' },
 };

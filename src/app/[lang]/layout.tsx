@@ -13,6 +13,10 @@ import { getBranchList, getClinicWords, getNavList, getSiteMeta, getSpecialistLi
 import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 import { ClinicProvider } from "@/context/ClinicContext";
+import { TrackingTags } from "@/components/tracking/TrackingTags";
+import { ConsentBanner } from "@/components/tracking/ConsentBanner";
+import { planIsEmpty } from "@/lib/tracking/providers";
+import { getTrackingPlan } from "@/lib/tracking/server";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -85,14 +89,16 @@ export default async function RootLayout({
   const lang = normalizeLang(segment);
   if (!lang) notFound();
 
-  const [treatments, branches, pages, nav, specialists, clinic] = await Promise.all([
+  const [treatments, branches, pages, nav, specialists, clinic, tracking] = await Promise.all([
     getMergedTreatments(),
     getBranchList(),
     readPageStates(),
     getNavList(),
     getSpecialistList(),
     getClinicWords(),
+    getTrackingPlan(),
   ]);
+  const hasTracking = !planIsEmpty(tracking);
 
   return (
     <html
@@ -109,12 +115,15 @@ export default async function RootLayout({
       >
         <ClinicProvider value={clinic}>
           <JsonLd data={await Promise.all([organizationJsonLd(), webSiteJsonLd()])} />
+          <TrackingTags plan={tracking} />
+          <ConsentBanner lang={lang} hasTags={hasTracking} />
           <SiteShell
             branches={branches}
             treatments={treatments}
             nav={nav}
             specialists={specialists}
             hiddenPaths={hiddenPageHrefs(pages)}
+            cookieSettings={hasTracking}
           >
             {children}
           </SiteShell>

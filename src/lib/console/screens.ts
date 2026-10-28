@@ -33,7 +33,19 @@ export type EntityVocabulary = 'none' | 'locales' | 'lists';
 
 export interface ConsoleScreen {
   /** Doubles as the message key, so a screen with no label is a type error. */
-  key: 'overview' | 'leads' | 'articles' | 'offers' | 'pages' | 'lists' | 'seo' | 'settings' | 'users' | 'roles' | 'password';
+  key:
+    | 'overview'
+    | 'leads'
+    | 'articles'
+    | 'offers'
+    | 'pages'
+    | 'lists'
+    | 'seo'
+    | 'tracking'
+    | 'settings'
+    | 'users'
+    | 'roles'
+    | 'password';
   path: string;
   /** `null` is the landing screen: anyone with a session may open it. */
   resource: Resource | null;
@@ -67,6 +79,9 @@ export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   // after the content sections because the words come from those rows; the screen is a
   // second way to read the same site, not a separate content type.
   { key: 'seo', path: '/console/seo', resource: 'seo', action: 'read', entities: 'none' },
+  // The tags that watch the site and where a lead goes. A Marketer holds `integration`
+  // and nothing else here, so this is their screen; no other role has a reason to open it.
+  { key: 'tracking', path: '/console/tracking', resource: 'integration', action: 'read', entities: 'none' },
   // The site's configuration, in the order the owner named it: who may do what, who has
   // an account, and then the settings both of those roles share.
   // Only Owner and Admin hold `setting read`, so Settings is the one content screen a

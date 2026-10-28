@@ -13,6 +13,8 @@ import type { TreatmentOption } from "@/data/treatments";
 import { images } from "@/lib/images";
 import type { PhotoSlot } from "@/lib/images";
 import { motion, AnimatePresence } from "framer-motion";
+import { trackEvent } from "@/lib/tracking/client";
+import { EVENT_NAMES } from "@/lib/tracking/events";
 import {
   MessageCircle,
   Phone,
@@ -133,6 +135,7 @@ export const ContactClient: React.FC<{
       }
       if (data.whatsappUrl) setServerWaUrl(data.whatsappUrl);
       setSent(true);
+      trackEvent(EVENT_NAMES.leadSubmitted, { form: "contact" });
     } catch {
       setApiError(
         language === "ar"

@@ -24,6 +24,7 @@ export const RESOURCES = [
   'stat',
   'user',
   'role',
+  'integration',
   'permission_request',
   'audit',
 ] as const;

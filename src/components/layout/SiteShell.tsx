@@ -36,7 +36,9 @@ export const SiteShell: React.FC<{
   specialists: Specialist[];
   /** Top-level hrefs the owner has hidden; the header and footer stop linking to them. */
   hiddenPaths: string[];
-}> = ({ children, branches, treatments, nav, specialists, hiddenPaths }) => {
+  /** Show the footer's "Cookie settings" control; only when tags are configured to load. */
+  cookieSettings?: boolean;
+}> = ({ children, branches, treatments, nav, specialists, hiddenPaths, cookieSettings = false }) => {
   const pathname = usePathname();
   const reduce = useReducedMotion();
 
@@ -67,7 +69,7 @@ export const SiteShell: React.FC<{
               <div className="h-px bg-gold-gradient" />
 
               <div className="h-0.5 bg-gold-gradient" />
-              <Footer branches={branches} nav={nav} hiddenPaths={hiddenPaths} />
+              <Footer branches={branches} nav={nav} hiddenPaths={hiddenPaths} cookieSettings={cookieSettings} />
               <FloatingActions />
             </div>
           </BookingProvider>
