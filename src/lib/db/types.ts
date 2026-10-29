@@ -354,6 +354,8 @@ export interface LeadsTable extends Editable {
   utm_term: Generated<string>;
   utm_content: Generated<string>;
   city: Generated<string>;
+  /** 011: the Cairo calendar day, written at insert; NULL only on rows older than 011. */
+  day: string | null;
   session_hash: string | null;
   visitor_hash: string | null;
   referrer: Generated<string>;
@@ -465,6 +467,8 @@ export interface AuditLogTable {
 export interface StatsEventsTable {
   id: Generated<number>;
   day: string;
+  /** 011: the Cairo clock hour, so a day-by-hour heatmap needs no SQL timezone math. */
+  hour: number | null;
   event_type: Generated<string>;
   path: string;
   locale: Generated<string>;

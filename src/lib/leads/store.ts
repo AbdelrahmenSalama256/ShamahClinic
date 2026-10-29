@@ -17,6 +17,7 @@ import { db } from '../db';
 import { json } from '../db/json';
 import { likeOf } from '../db/like';
 import { isLeadStatus, LEAD_SOURCES, LEAD_STATUSES, type LeadSource, type LeadStatus } from './kinds';
+import { dayOf } from '../tracking/ingest';
 
 export { isLeadStatus, LEAD_SOURCES, LEAD_STATUSES, type LeadSource, type LeadStatus };
 
@@ -262,6 +263,7 @@ export async function recordLead(input: LeadRecordInput): Promise<{ id: string; 
         utm_term: (input.campaign?.term ?? '').slice(0, 191),
         utm_content: (input.campaign?.content ?? '').slice(0, 191),
         city: (input.city ?? '').slice(0, 96),
+        day: dayOf(),
         session_hash: input.sessionHash ?? null,
         visitor_hash: input.visitorHash ?? null,
         idempotency_key: key,

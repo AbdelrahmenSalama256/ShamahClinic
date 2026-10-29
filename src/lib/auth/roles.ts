@@ -81,6 +81,8 @@ export const ROLE_SEEDS: readonly RoleSeed[] = [
       { resource: 'redirect', actions: [...WRITE, 'publish'], scope: null },
       { resource: 'cta', actions: [...WRITE, 'publish'], scope: null },
       { resource: 'lead', actions: [...WRITE, 'export'], scope: null },
+      // Reads come from the `*` row above; this one is the statistics download.
+      { resource: 'stat', actions: ['export'], scope: null },
       { resource: 'setting', actions: ['update'], scope: null },
       { resource: 'integration', actions: ['update'], scope: null },
       { resource: 'audit', actions: ['export'], scope: null },
@@ -136,7 +138,7 @@ export const ROLE_SEEDS: readonly RoleSeed[] = [
       { resource: 'page', actions: ['read'], scope: null },
       { resource: 'seo', actions: ['read'], scope: null },
       { resource: 'redirect', actions: ['read'], scope: null },
-      { resource: 'stat', actions: ['read'], scope: null },
+      { resource: 'stat', actions: ['read', 'export'], scope: null },
       // The marketing screen is this role's home: the tags and the sheet connector.
       // Deliberately no `audit.read`: the log covers every resource, and this role is
       // not an auditor. Who changed the tags is answered on the tracking screen itself

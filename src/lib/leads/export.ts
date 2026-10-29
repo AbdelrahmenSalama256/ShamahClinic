@@ -66,8 +66,11 @@ type LeadColumn = (typeof LEAD_COLUMNS)[number];
 
 const GOOGLE_ADS_COLUMNS = ['Google Click ID', 'Conversion Name', 'Conversion Time', 'Conversion Value', 'Conversion Currency'] as const;
 
-/** RFC 4180: quote anything that could otherwise break a row, and double the quotes. */
-function cell(value: unknown): string {
+/**
+ * RFC 4180: quote anything that could otherwise break a row, and double the quotes.
+ * Exported because the Overview export writes the same kind of file for the same reason.
+ */
+export function csvCell(value: unknown): string {
   const text = value === null || value === undefined ? '' : String(value);
   // A leading =, +, - or @ is how a spreadsheet is told to evaluate a cell. Lead text is
   // visitor-written, so it is prefixed with an apostrophe rather than trusted.
@@ -165,7 +168,7 @@ export function leadCsvStream(filters: LeadExportFilters, grants: readonly Grant
       let chunk = '';
       for (const { lead } of rows) {
         const safe = redactLead(grants, lead);
-        chunk += `${LEAD_COLUMNS.map((column) => cell(valueOf(safe, column))).join(',')}\r\n`;
+        chunk += `${LEAD_COLUMNS.map((column) => csvCell(valueOf(safe, column))).join(',')}\r\n`;
       }
       yield chunk;
     }
@@ -180,7 +183,7 @@ export function googleAdsCsvStream(filters: LeadExportFilters): ReadableStream<U
       let chunk = '';
       for (const { lead } of rows) {
         chunk +=
-          [cell(lead.gclid), cell(GOOGLE_ADS_CONVERSION_NAME), cell(cairoTime(lead.createdAt)), cell(''), cell('')].join(',') + '\r\n';
+          [csvCell(lead.gclid), csvCell(GOOGLE_ADS_CONVERSION_NAME), csvCell(cairoTime(lead.createdAt)), csvCell(''), csvCell('')].join(',') + '\r\n';
       }
       yield chunk;
     }

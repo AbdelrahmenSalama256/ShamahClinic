@@ -23,9 +23,9 @@ describe('server-setup agrees with the TypeScript migration runner', () => {
     expect(fromScript.map((file) => ({ name: file.name, checksum: file.checksum }))).toEqual(
       files.map((file) => ({ name: file.name, checksum: file.checksum })),
     );
-    expect(fromScript.length).toBe(10);
+    expect(fromScript.length).toBe(11);
     expect(fromScript[0].name).toBe('001_auth.sql');
-    expect(fromScript.at(-1)?.name).toBe('010_tracking.sql');
+    expect(fromScript.at(-1)?.name).toBe('011_overview.sql');
   });
 
   it('splits every migration into exactly the statements the runner executes', () => {

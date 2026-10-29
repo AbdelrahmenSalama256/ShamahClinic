@@ -2326,6 +2326,780 @@
   }
 
   /* =========================================================================
+     10b. THE OVERVIEW
+     A dashboard of server aggregates: four KPI cards, a traffic plot with the
+     previous period behind it, and the small panels that answer "from where"
+     and "when". It is numbered after Leads because it sits beside it in the
+     frame; the periods, the panels and the print rules are the screen's own.
+     ========================================================================= */
+  .console-ov {
+    /* One palette for the donut and its slice list, so a colour is written once. */
+    --c-ov-1: var(--c-accent);
+    --c-ov-2: color-mix(in srgb, var(--c-accent) 65%, var(--c-text));
+    --c-ov-3: var(--c-success);
+    --c-ov-4: color-mix(in srgb, var(--c-success) 55%, var(--c-text));
+    --c-ov-5: var(--c-warn);
+    --c-ov-6: color-mix(in srgb, var(--c-text) 55%, var(--c-surface));
+    --c-ov-7: color-mix(in srgb, var(--c-danger) 70%, var(--c-text));
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+  }
+
+  .console-ov[data-busy] {
+    cursor: progress;
+  }
+
+  /* --- head ------------------------------------------------------------------ */
+  .console-ov-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--c-gap);
+  }
+
+  .console-ov-heading {
+    min-inline-size: 0;
+  }
+
+  .console-ov-stamp {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight) var(--c-sp-3);
+  }
+
+  .console-ov-span {
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+    color: var(--c-text-2);
+    letter-spacing: -0.01em;
+    unicode-bidi: isolate;
+  }
+
+  /* --- controls -------------------------------------------------------------- */
+  .console-ov-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-2);
+    min-inline-size: 0;
+  }
+
+  .console-ov-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--c-sp-2);
+    margin-inline-start: auto;
+  }
+
+  .console-ov-custom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--c-gap);
+    padding: var(--c-gap);
+    background: var(--c-surface-soft);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+  }
+
+  .console-ov-loading {
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+  }
+
+  /* --- KPI ------------------------------------------------------------------- */
+  .console-ov-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+    gap: var(--c-gap);
+  }
+
+  .console-ov-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-inline-size: 0;
+    padding: var(--c-pad);
+    background: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-lg);
+    box-shadow: var(--c-ring);
+  }
+
+  .console-ov-kpi-label {
+    margin: 0;
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+  }
+
+  .console-ov-kpi-value {
+    margin: 0;
+    font-size: 1.85rem;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-ov-kpi-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--c-gap-tight) var(--c-sp-2);
+    min-block-size: 1.2rem;
+  }
+
+  .console-ov-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-text-2);
+  }
+
+  .console-ov-delta[data-trend="up"] {
+    color: var(--c-success);
+  }
+
+  .console-ov-delta[data-trend="down"] {
+    color: var(--c-danger);
+  }
+
+  .console-ov-spark {
+    display: block;
+    inline-size: 100%;
+    block-size: 1.9rem;
+    margin-block-start: auto;
+    overflow: visible;
+  }
+
+  .console-ov-spark-area {
+    fill: var(--c-tint);
+  }
+
+  .console-ov-spark-line {
+    fill: none;
+    stroke: var(--c-accent);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  /* --- layout ---------------------------------------------------------------- */
+  .console-ov-main,
+  .console-ov-split,
+  .console-ov-trio {
+    display: grid;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+  }
+
+  .console-ov-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .console-ov-trio {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .console-ov-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+  }
+
+  /* --- a panel ---------------------------------------------------------------- */
+  .console-ov-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+  }
+
+  .console-ov-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-ov-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .console-ov-intro {
+    margin: 0.2rem 0 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-caption {
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+  }
+
+  /* --- charts ---------------------------------------------------------------- */
+  .console-ov-plot {
+    position: relative;
+    min-inline-size: 0;
+  }
+
+  .console-ov-chart {
+    display: block;
+    inline-size: 100%;
+    block-size: 9.5rem;
+    overflow: visible;
+  }
+
+  .console-ov-plot[data-pane="leads"] .console-ov-chart {
+    block-size: 5.5rem;
+  }
+
+  .console-ov-plot[data-pane="rate"] .console-ov-chart {
+    block-size: 4.5rem;
+  }
+
+  .console-ov-grid {
+    stroke: var(--c-line);
+    stroke-width: 1;
+  }
+
+  .console-ov-base {
+    stroke: var(--c-line-strong);
+    stroke-width: 1;
+  }
+
+  .console-ov-area {
+    fill: var(--c-tint);
+  }
+
+  .console-ov-line {
+    fill: none;
+    stroke: var(--c-accent);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  .console-ov-line[data-kind="previous"] {
+    stroke: var(--c-text-3);
+    stroke-width: 1.5;
+    stroke-dasharray: 5 4;
+  }
+
+  .console-ov-line[data-kind="submit"] {
+    stroke: var(--c-success);
+  }
+
+  .console-ov-line[data-kind="rate"] {
+    stroke: var(--c-success);
+  }
+
+  .console-ov-bar {
+    fill: color-mix(in srgb, var(--c-accent) 55%, transparent);
+  }
+
+  .console-ov-max {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
+  .console-ov-axis {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-ov-rate {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    margin-block-start: var(--c-gap-tight);
+    padding-block-start: var(--c-gap-tight);
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  /* --- legend ---------------------------------------------------------------- */
+  .console-ov-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-gap-tight) var(--c-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .console-ov-legend i {
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-accent);
+  }
+
+  .console-ov-legend li[data-kind="previous"] i {
+    background: var(--c-text-3);
+  }
+
+  .console-ov-legend li[data-kind="submit"] i,
+  .console-ov-legend li[data-kind="rate"] i {
+    background: var(--c-success);
+  }
+
+  .console-ov-legend li[data-kind="leads"] i {
+    background: color-mix(in srgb, var(--c-accent) 55%, transparent);
+  }
+
+  /* --- donut ----------------------------------------------------------------- */
+  .console-ov-donut-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap);
+  }
+
+  .console-ov-donut {
+    position: relative;
+    flex: none;
+    inline-size: 9rem;
+    aspect-ratio: 1;
+  }
+
+  .console-ov-donut svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+  }
+
+  .console-ov-donut-track,
+  .console-ov-donut-seg {
+    fill: none;
+    stroke-width: 12;
+  }
+
+  .console-ov-donut-track {
+    stroke: var(--c-fill);
+  }
+
+  .console-ov-donut-seg {
+    stroke: var(--c-ov-c, var(--c-accent));
+  }
+
+  .console-ov-donut-seg[data-index="0"],
+  .console-ov-slices i[data-index="0"] {
+    --c-ov-c: var(--c-ov-1);
+  }
+  .console-ov-donut-seg[data-index="1"],
+  .console-ov-slices i[data-index="1"] {
+    --c-ov-c: var(--c-ov-2);
+  }
+  .console-ov-donut-seg[data-index="2"],
+  .console-ov-slices i[data-index="2"] {
+    --c-ov-c: var(--c-ov-3);
+  }
+  .console-ov-donut-seg[data-index="3"],
+  .console-ov-slices i[data-index="3"] {
+    --c-ov-c: var(--c-ov-4);
+  }
+  .console-ov-donut-seg[data-index="4"],
+  .console-ov-slices i[data-index="4"] {
+    --c-ov-c: var(--c-ov-5);
+  }
+  .console-ov-donut-seg[data-index="5"],
+  .console-ov-slices i[data-index="5"] {
+    --c-ov-c: var(--c-ov-6);
+  }
+  .console-ov-donut-seg[data-index="6"],
+  .console-ov-slices i[data-index="6"] {
+    --c-ov-c: var(--c-ov-7);
+  }
+
+  .console-ov-donut-total {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .console-ov-donut-total b {
+    font-size: 1.45rem;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-ov-donut-total small {
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-slices {
+    flex: 1 1 9rem;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-ov-slices li {
+    display: grid;
+    grid-template-columns: 0.6rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--c-sp-2);
+    min-inline-size: 0;
+    font-size: var(--c-font-small);
+  }
+
+  .console-ov-slices i {
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-ov-c, var(--c-accent));
+  }
+
+  .console-ov-slice-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .console-ov-slices b {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- horizontal bars (funnel, campaigns, devices) -------------------------- */
+  .console-ov-bars {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-bars li {
+    display: grid;
+    grid-template-columns: minmax(4.5rem, 38%) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--c-sp-2);
+    min-inline-size: 0;
+    font-size: var(--c-font-small);
+  }
+
+  .console-ov-bar-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--c-text-2);
+  }
+
+  .console-ov-bar-track {
+    display: block;
+    block-size: 0.45rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-fill);
+    overflow: hidden;
+  }
+
+  .console-ov-bar-track i {
+    display: block;
+    block-size: 100%;
+    border-radius: inherit;
+    background: var(--c-accent);
+  }
+
+  .console-ov-bars[data-kind="funnel"] .console-ov-bar-track i {
+    background: var(--c-success);
+  }
+
+  .console-ov-bar-value {
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+    white-space: nowrap;
+  }
+
+  .console-ov-bar-value small {
+    display: block;
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  /* --- heatmap ---------------------------------------------------------------- */
+  .console-ov-heat-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-inline-size: 0;
+  }
+
+  .console-ov-heat {
+    display: grid;
+    grid-template-columns: 3.1rem repeat(24, minmax(0.7rem, 1fr));
+    gap: 2px;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .console-ov-heat-row {
+    display: contents;
+  }
+
+  .console-ov-heat-hour {
+    color: var(--c-text-3);
+    font-size: 0.6rem;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-ov-heat-day {
+    padding-inline-end: 0.4rem;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+    text-align: end;
+    white-space: nowrap;
+  }
+
+  .console-ov-heat-cell {
+    display: block;
+    aspect-ratio: 1;
+    min-block-size: 0.7rem;
+    border-radius: 2px;
+    background: var(--c-fill);
+  }
+
+  .console-ov-heat-cell[data-level="1"] {
+    background: color-mix(in srgb, var(--c-accent) 24%, transparent);
+  }
+
+  .console-ov-heat-cell[data-level="2"] {
+    background: color-mix(in srgb, var(--c-accent) 42%, transparent);
+  }
+
+  .console-ov-heat-cell[data-level="3"] {
+    background: color-mix(in srgb, var(--c-accent) 62%, transparent);
+  }
+
+  .console-ov-heat-cell[data-level="4"] {
+    background: color-mix(in srgb, var(--c-accent) 85%, transparent);
+  }
+
+  .console-ov-note {
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+  }
+
+  /* --- ranked lists ----------------------------------------------------------- */
+  .console-ov-ranked {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-ranked li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--c-sp-3);
+    padding-block: 0.5rem;
+    border-block-end: 1px solid var(--c-line);
+    min-inline-size: 0;
+  }
+
+  .console-ov-ranked li:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .console-ov-rank-name {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    font-size: var(--c-font-small);
+  }
+
+  .console-ov-rank-name bdi {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .console-ov-rank-name small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-rank-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex: none;
+    font-size: var(--c-font-small);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+
+  /* --- latest leads ----------------------------------------------------------- */
+  .console-ov-recent {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-recent li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+    padding-block: 0.55rem;
+    border-block-end: 1px solid var(--c-line);
+    min-inline-size: 0;
+  }
+
+  .console-ov-recent li:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .console-ov-recent-who {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    font-size: var(--c-font-small);
+  }
+
+  .console-ov-recent-who b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .console-ov-recent-who small {
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-recent-status {
+    inline-size: 9rem;
+    flex: none;
+  }
+
+  /* --- needs attention -------------------------------------------------------- */
+  .console-ov-attention {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-attention a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+    padding-block: 0.5rem;
+    border-block-end: 1px solid var(--c-line);
+    color: inherit;
+    font-size: var(--c-font-small);
+    text-decoration: none;
+  }
+
+  .console-ov-attention li:last-child a {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .console-ov-attention a:hover {
+    color: var(--c-accent);
+  }
+
+  .console-ov-attention a:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+    border-radius: var(--c-r-xs);
+  }
+
+  .console-ov-attention b {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- the content library ---------------------------------------------------- */
+  .console-ov-library {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    gap: var(--c-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-library li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface-soft);
+  }
+
+  .console-ov-library span {
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-library b {
+    font-size: 1.2rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* =========================================================================
      11. SETTINGS
      ========================================================================= */
   .settings-workspace {
@@ -3084,6 +3858,10 @@
     .console-leads-split {
       grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem);
     }
+    /* The plot keeps the width; the donut and the attention list sit beside it. */
+    .console-ov-main {
+      grid-template-columns: minmax(0, 1.6fr) minmax(18rem, 1fr);
+    }
     .console-lead-list {
       max-block-size: var(--c-list-h);
     }
@@ -3161,6 +3939,10 @@
 
   /* <= 900: list bar stacks */
   @media (max-width: 900px) {
+    /* Three panels across 900px is three columns of captions; stack them instead. */
+    .console-ov-trio {
+      grid-template-columns: minmax(0, 1fr);
+    }
     .console-list-bar {
       gap: 0.65rem;
     }
@@ -3185,6 +3967,24 @@
 
   /* <= 700: editor bar */
   @media (max-width: 700px) {
+    /* Two plots side by side at this width are two columns of noise. */
+    .console-ov-split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .console-ov-head {
+      align-items: flex-start;
+    }
+    .console-ov-stamp {
+      inline-size: 100%;
+      justify-content: space-between;
+    }
+    .console-ov-controls {
+      align-items: stretch;
+    }
+    .console-ov-actions {
+      inline-size: 100%;
+      margin-inline-start: 0;
+    }
     .console-editor-bar {
       gap: 0.5rem;
       padding: 0.75rem;
@@ -3288,6 +4088,19 @@
 
   /* <= 560: pager */
   @media (max-width: 560px) {
+    .console-ov-kpis {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .console-ov-custom {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .console-ov-donut {
+      inline-size: 8rem;
+    }
+    .console-ov-recent-status {
+      inline-size: 100%;
+    }
     .console-pager {
       flex-wrap: wrap;
       gap: 0.75rem;
@@ -3369,6 +4182,137 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
+    }
+  }
+
+  /* =========================================================================
+     15. PRINT (the Overview's "Print / PDF")
+     A print job is a document, not a screen: the frame collapses to one column,
+     the chrome that only exists to be clicked is gone, and the period, the
+     timestamp and every panel stay. Paper is white in either theme, so the
+     dark palette is answered with the light values rather than left to print
+     light text on a white page. Charts keep their colour (`print-color-adjust`)
+     because a grey donut conveys nothing, and a panel is never cut in half.
+     ========================================================================= */
+  @media print {
+    [data-surface="console"] {
+      --c-bg: #ffffff;
+      --c-bg-alt: #ffffff;
+      --c-canvas: #ffffff;
+      --c-surface: #ffffff;
+      --c-surface-soft: #ffffff;
+      --c-hover: transparent;
+      --c-active: transparent;
+      --c-sheen: transparent;
+      --c-lift: none;
+      --c-lift-sm: none;
+      --c-lift-lg: none;
+      --c-bar-shadow: none;
+      --c-bar-shadow-hover: none;
+      --c-backdrop: transparent;
+    }
+
+    /* Same selector as the dark palette, so its specificity is answered. */
+    [data-surface="console"][data-theme="dark"] {
+      --c-bg: #ffffff;
+      --c-bg-alt: #ffffff;
+      --c-canvas: #ffffff;
+      --c-surface: #ffffff;
+      --c-surface-soft: #ffffff;
+      --c-text: #1b1714;
+      --c-text-2: #3b342e;
+      --c-text-3: #4a423a;
+      --c-accent: #6b500c;
+      --c-success: #0a6636;
+      --c-danger: #8f1d17;
+      --c-warn: #6f4a12;
+      --c-warn-bg: #fbf1dc;
+      --c-warn-line: #c9b183;
+      --c-line: rgba(20, 14, 10, 0.2);
+      --c-line-strong: rgba(20, 14, 10, 0.34);
+      --c-focus: #6b500c;
+      --c-hover: transparent;
+      --c-active: transparent;
+      --c-sheen: transparent;
+      --c-lift: none;
+      --c-lift-sm: none;
+      --c-lift-lg: none;
+      --c-bar-shadow: none;
+      --c-bar-shadow-hover: none;
+    }
+
+    .console-frame {
+      display: block;
+      min-height: 0;
+    }
+
+    .console-main {
+      padding: 0;
+      min-height: 0;
+    }
+
+    .console-content {
+      max-width: none;
+    }
+
+    /* Only clickable on a screen; the printed page has no pointer. */
+    .console-topbar,
+    .console-toggle,
+    .console-side,
+    .console-scrim,
+    .console-ov-controls,
+    .console-ov-custom,
+    .console-ov-quick,
+    .console-ov-loading,
+    .console-ov-stamp .console-btn {
+      display: none;
+    }
+
+    .console-ov {
+      gap: 0.75rem;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .console-ov-head {
+      break-after: avoid;
+      border-block-end: 1px solid var(--c-line);
+      padding-block-end: 0.5rem;
+    }
+
+    .console-ov-card,
+    .console-ov-kpi,
+    .console-ov-recent li,
+    .console-ov-heat,
+    .console-ov-ranked li {
+      break-inside: avoid;
+    }
+
+    .console-ov-card,
+    .console-ov-kpi {
+      box-shadow: none;
+    }
+
+    /* The printed page is 794px wide at A4: the tablet grids would stack the
+       overview into a scroll of single cards. Two columns keep the comparison
+       (traffic beside sources) that is the point of the screen. */
+    .console-ov-kpis {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .console-ov-main,
+    .console-ov-split {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .console-ov-trio {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    /* An SVG that stretches to the page height is a blob; a fixed plot keeps
+       the shape the reader is meant to read. */
+    .console-ov-plot {
+      height: 8rem;
     }
   }
 }

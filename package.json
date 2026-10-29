@@ -17,6 +17,7 @@
     "db:local:provision": "node scripts/db/provision-local.mjs",
     "db:migrate": "tsx scripts/db/migrate.ts",
     "db:seed": "tsx scripts/db/seed.ts",
+    "db:demo": "tsx scripts/db/demo-data.ts",
     "owner:create": "tsx scripts/db/owner-create.ts",
     "owner:reset": "tsx scripts/db/owner-reset.ts",
     "doctor": "tsx scripts/doctor.ts",

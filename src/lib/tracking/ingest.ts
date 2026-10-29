@@ -64,6 +64,13 @@ export function dayOf(date: Date = new Date()): string {
   }).format(date);
 }
 
+/** The clinic's clock hour, 0–23, for the heatmap. */
+export function hourOf(date: Date = new Date()): number {
+  return Number(
+    new Intl.DateTimeFormat('en-GB', { timeZone: TRACK_TIME_ZONE, hour: '2-digit', hourCycle: 'h23' }).format(date),
+  );
+}
+
 /** The first proxy header that names a city; '' when none does. */
 export function cityOf(headers: Headers): string {
   for (const name of ['cf-ipcity', 'x-vercel-ip-city', 'x-geo-city', 'x-appengine-city', 'x-city']) {
@@ -131,6 +138,7 @@ export interface TrackContext {
   ip: string;
   city: string;
   day: string;
+  hour: number;
 }
 
 /** Only a path this app could serve; a query string is dropped, not stored. */
@@ -147,6 +155,7 @@ export function readTrackContext(headers: Headers, now: Date = new Date()): Trac
     ip: headers.get('x-forwarded-for')?.split(',')[0].trim() || headers.get('x-real-ip')?.trim() || '',
     city: cityOf(headers),
     day: dayOf(now),
+    hour: hourOf(now),
   };
 }
 
@@ -166,6 +175,7 @@ export async function recordEvent(input: TrackInput, ctx: TrackContext): Promise
     .insertInto('stats_events')
     .values({
       day: ctx.day,
+      hour: ctx.hour,
       event_type: event,
       path: pathOnly(input.path),
       locale: input.locale === 'ar' || input.locale === 'en' ? input.locale : '',
