@@ -384,6 +384,12 @@
     overflow-wrap: normal;
   }
 
+  /* One row can carry two flags — its state and what it still owes the site. A list's
+     link is a block, so nothing between two inline pills spaces them by itself. */
+  .console-badge + .console-badge {
+    margin-inline-start: var(--c-sp-1);
+  }
+
   /* A badge inside a field's label names a state in passing, so it is smaller than a
      badge standing on its own. */
   .console-doc-label > .console-badge {

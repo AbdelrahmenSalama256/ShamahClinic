@@ -216,6 +216,26 @@ const RESULTS: ListSchema = {
       max: 300,
     },
     {
+      type: 'text',
+      stem: 'area',
+      label: { ar: 'المنطقة التي عُولجت', en: 'Area treated' },
+      hint: {
+        ar: 'مثال: الوجه، الرقبة، الذراعان. تظهر كوسم بجانب الصورتين وفي العرض المكبّر.',
+        en: 'For example: face, neck, arms. A chip beside the pictures and in the enlarged view.',
+      },
+      max: 120,
+    },
+    {
+      type: 'text',
+      stem: 'sessions',
+      label: { ar: 'عدد الجلسات', en: 'Sessions' },
+      hint: {
+        ar: 'مثال: ٣ جلسات. وسم بالتقويم بجانب الوسم، ولا وعد فيها — ما تتفاوت النتيجة من بشرة لأخرى.',
+        en: 'For example: 3 sessions. A calendar chip beside the area one; it states what was done, not what anyone is promised.',
+      },
+      max: 120,
+    },
+    {
       type: 'image',
       stem: 'before',
       label: { ar: 'صورة قبل الجلسة', en: 'Picture before the session' },
@@ -225,21 +245,31 @@ const RESULTS: ListSchema = {
       },
     },
     {
+      type: 'text',
+      stem: 'beforeAlt',
+      label: { ar: 'وصف صورة قبل', en: 'Before picture description' },
+      hint: {
+        ar: 'جملة تقرأها قارئات الشاشة لمن لا يرى صورة قبل.',
+        en: 'Read aloud to people who cannot see the before picture.',
+      },
+      max: 300,
+    },
+    {
       type: 'image',
       stem: 'after',
       label: { ar: 'صورة بعد الجلسة', en: 'Picture after the session' },
       hint: {
-        ar: 'الصورتان تظهران معًا: ما لم ترفعي الاثنتين لا تظهر مقارنة.',
-        en: 'The two show together: unless both are uploaded, no comparison shows.',
+        ar: 'الصورتان تظهران معًا: ما لم ترفعي الاثنتين لا تظهر مقارنة، ويظهر في القائمة وسم «تحتاج الصورة الأخرى».',
+        en: 'The two show together: unless both are uploaded no comparison shows, and the list marks the row "Needs the other photo".',
       },
     },
     {
       type: 'text',
-      stem: 'alt',
-      label: { ar: 'وصف الصورتين', en: 'Description of the two pictures' },
+      stem: 'afterAlt',
+      label: { ar: 'وصف صورة بعد', en: 'After picture description' },
       hint: {
-        ar: 'جملة تقرأها قارئات الشاشة لمن لا يرى الصورتين.',
-        en: 'Read aloud to people who cannot see the pictures.',
+        ar: 'جملة تقرأها قارئات الشاشة لمن لا يرى صورة بعد.',
+        en: 'Read aloud to people who cannot see the after picture.',
       },
       max: 300,
     },
@@ -624,6 +654,20 @@ export function listDocIntro(schema: ListSchema, doc: Record<string, unknown>, l
 }
 
 /**
+ * One text field, named by its stem, for a preview that knows which fields it draws.
+ *
+ * `listDocIntro` picks a teaser by trying stems in order, which is right for a card that
+ * has one line under its title and wrong for a before/after case: there the area and the
+ * session count are two chips of their own, and neither is a teaser. Same cross-language
+ * borrow as the title, so an Arabic row previewed in English still says something.
+ */
+export function listDocText(schema: ListSchema, doc: Record<string, unknown>, stem: string, locale: ContentLocale): string {
+  const field = schema.fields.find((candidate) => candidate.stem === stem && (candidate.type === 'text' || candidate.type === 'href'));
+  if (!field) return '';
+  return readBi(doc, stem, 'plain').value[locale];
+}
+
+/**
  * The picture a document carries, wherever the schema keeps it.
  *
  * `stem` names one field when the caller knows which picture it wants: a result story has a
@@ -638,6 +682,18 @@ export function listDocImage(schema: ListSchema, doc: Record<string, unknown>, s
     if (typeof source === 'string' && source.trim()) return source.trim();
   }
   return null;
+}
+
+/**
+ * Whether a case has one picture and not the other.
+ *
+ * The rule the whole feature rests on: two pictures are a comparison and one is not, so the
+ * site drops the pair in data, and the list says which half is still owed. It takes the two
+ * values rather than a document because the list reads a saved row and the editor's preview
+ * reads a form nobody has saved yet — and both must reach the same answer about the same case.
+ */
+export function needsOtherPhoto(before: string, after: string): boolean {
+  return (before.trim() === '') !== (after.trim() === '');
 }
 
 function recordOf(value: unknown): Record<string, string | boolean> {

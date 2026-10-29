@@ -536,6 +536,7 @@ export function ConsoleList({
                       <RowKey>{row.key}</RowKey>
                     </span>
                     <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
+                    {row.needsPhoto && <Badge tone="warn">{labels['content.result.needs-photo']}</Badge>}
                   </Link>
                   {/* Cards are the phone drawing of the same list, so the order moves here too. */}
                   {sorts.includes('position') && orderCell(row, index)}
@@ -583,6 +584,7 @@ export function ConsoleList({
                     </td>
                     <td>
                       <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
+                      {row.needsPhoto && <Badge tone="warn">{labels['content.result.needs-photo']}</Badge>}
                     </td>
                     <td className="console-cell-date">
                       <bdi>{row.updatedAt.slice(0, 10)}</bdi>

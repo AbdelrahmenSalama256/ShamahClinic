@@ -271,9 +271,12 @@ export function ConsoleEditor({
   }, [autosaveStopped, busy, canEditRow, dirty, invalid, pendingNav, save]);
 
   useEffect(() => {
-    const timer = setTimeout(() => setPreviewSrc(previewDocument(previewModel(kind, shown, locale, row?.listKey ?? null), locale)), PREVIEW_MS);
+    const timer = setTimeout(
+      () => setPreviewSrc(previewDocument(previewModel(kind, shown, locale, row?.listKey ?? null, referenceOptions), locale, labels)),
+      PREVIEW_MS,
+    );
     return () => clearTimeout(timer);
-  }, [kind, locale, row?.listKey, shown]);
+  }, [kind, locale, row?.listKey, shown, referenceOptions, labels]);
 
   async function publish(): Promise<void> {
     if (!row) return;

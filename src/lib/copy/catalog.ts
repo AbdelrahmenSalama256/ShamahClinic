@@ -5,7 +5,7 @@
  * console writes and the default the site falls back to. `npm run copy:catalog` rewrites
  * this file; `npm run build` fails when it is stale.
  *
- * 222 entries from 119 components. Data-driven calls
+ * 216 entries from 119 components. Data-driven calls
  * (`t(row.name.ar, row.name.en)`) are console rows, not copy, and are not listed here.
  */
 export interface CopyEntry {
@@ -30,7 +30,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "View {1} after treatment",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 93,
+    line: 218,
     uses: 1,
   },
   {
@@ -246,7 +246,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Before",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 239,
+    line: 331,
     uses: 1,
   },
   {
@@ -379,9 +379,9 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     key: "copy.2fd03dafa618",
     ar: "افتحي مقال النتيجة",
     en: "Open the result's article",
-    area: "pages",
-    file: "src/components/pages/ResultsClient.tsx",
-    line: 286,
+    area: "cards",
+    file: "src/components/cards/ResultCaseCard.tsx",
+    line: 387,
     uses: 1,
   },
   {
@@ -444,7 +444,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Close gallery",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 198,
+    line: 297,
     uses: 1,
   },
   {
@@ -588,7 +588,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Next page",
     area: "pages",
     file: "src/components/pages/ResultsClient.tsx",
-    line: 191,
+    line: 159,
     uses: 1,
   },
   {
@@ -598,15 +598,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "pages",
     file: "src/components/pages/FaqClient.tsx",
     line: 65,
-    uses: 1,
-  },
-  {
-    key: "copy.4ff9dc31fe28",
-    ar: "تكبير",
-    en: "Enlarge",
-    area: "pages",
-    file: "src/components/pages/ResultsClient.tsx",
-    line: 427,
     uses: 1,
   },
   {
@@ -634,7 +625,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
     line: 934,
-    uses: 4,
+    uses: 3,
   },
   {
     key: "copy.529d69c6d666",
@@ -652,15 +643,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "common",
     file: "src/components/ui/FloatingActions.tsx",
     line: 65,
-    uses: 1,
-  },
-  {
-    key: "copy.5863acf1efd4",
-    ar: "النتيجة مكبّرة",
-    en: "Enlarged result",
-    area: "pages",
-    file: "src/components/pages/ResultsClient.tsx",
-    line: 214,
     uses: 1,
   },
   {
@@ -705,7 +687,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Browse treatments",
     area: "pages",
     file: "src/components/pages/ResultsClient.tsx",
-    line: 199,
+    line: 167,
     uses: 1,
   },
   {
@@ -723,7 +705,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Result stories",
     area: "pages",
     file: "src/components/pages/ResultsClient.tsx",
-    line: 130,
+    line: 98,
     uses: 1,
   },
   {
@@ -772,15 +754,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
-    key: "copy.67f1e5589b1f",
-    ar: "بلا مقال",
-    en: "No article",
-    area: "pages",
-    file: "src/components/pages/ResultsClient.tsx",
-    line: 418,
-    uses: 1,
-  },
-  {
     key: "copy.68012d7b9a02",
     ar: "العرض",
     en: "Offer",
@@ -822,8 +795,8 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Previous result",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 252,
-    uses: 3,
+    line: 342,
+    uses: 2,
   },
   {
     key: "copy.6acc9e99d424",
@@ -930,7 +903,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "No result has been published yet. The clinic adds one from the console: it uploads a before and an after, writes the title and the line under the pictures, and picks an article only if it wants one.",
     area: "pages",
     file: "src/components/pages/ResultsClient.tsx",
-    line: 136,
+    line: 104,
     uses: 1,
   },
   {
@@ -952,22 +925,13 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
-    key: "copy.75ec4eeebeee",
-    ar: "تكبير صورة {0}",
-    en: "Enlarge the {0} picture",
-    area: "pages",
-    file: "src/components/pages/ResultsClient.tsx",
-    line: 357,
-    uses: 1,
-  },
-  {
     key: "copy.76bf4d691694",
     ar: "السابق",
     en: "Prev",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 326,
-    uses: 2,
+    line: 404,
+    uses: 1,
   },
   {
     key: "copy.76f78bb3fe57",
@@ -1074,7 +1038,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "After",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 240,
+    line: 331,
     uses: 1,
   },
   {
@@ -1173,7 +1137,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "A before/after pair shows only when the clinic uploads both halves for the same result: half a comparison is not one. A result stands on its own title and pictures, with no article needed; while the two halves are incomplete the card stays its text, or its article's photo. Pictures are uploaded from the doctor's own device, never replaced with a stock photo and never hidden because a case was unsatisfying — and a result varies with skin type, concern depth and adherence to the plan.",
     area: "pages",
     file: "src/components/pages/ResultsClient.tsx",
-    line: 122,
+    line: 90,
     uses: 1,
   },
   {
@@ -1218,7 +1182,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "View {1} result",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 87,
+    line: 212,
     uses: 1,
   },
   {
@@ -1543,7 +1507,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
     line: 400,
-    uses: 3,
+    uses: 2,
   },
   {
     key: "copy.bfa6b1ab56d6",
@@ -1561,15 +1525,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "pages",
     file: "src/components/pages/JournalArticleClient.tsx",
     line: 387,
-    uses: 1,
-  },
-  {
-    key: "copy.c09fdc67ad0b",
-    ar: "افتحي المقال",
-    en: "Open the article",
-    area: "pages",
-    file: "src/components/pages/ResultsClient.tsx",
-    line: 414,
     uses: 1,
   },
   {
@@ -1660,15 +1615,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
     line: 691,
-    uses: 1,
-  },
-  {
-    key: "copy.d2d1404da044",
-    ar: "معرض النتائج",
-    en: "Results gallery",
-    area: "cards",
-    file: "src/components/cards/ResultCaseCard.tsx",
-    line: 187,
     uses: 1,
   },
   {
@@ -1803,7 +1749,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Before and after gallery",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 177,
+    line: 279,
     uses: 1,
   },
   {
@@ -1821,7 +1767,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "{0} results",
     area: "pages",
     file: "src/components/pages/ResultsClient.tsx",
-    line: 159,
+    line: 127,
     uses: 1,
   },
   {
@@ -1857,8 +1803,8 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Next result",
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
-    line: 264,
-    uses: 3,
+    line: 350,
+    uses: 2,
   },
   {
     key: "copy.eea1f571b8e0",

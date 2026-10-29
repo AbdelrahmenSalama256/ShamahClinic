@@ -672,7 +672,11 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
  * card that showed one picture labelled "after" would promise a before the owner never
  * took. So the half pair is dropped here, in the data, rather than hidden in a stylesheet —
  * every reader of this shape then draws either a real before/after or what the row holds,
- * and never a half of either.
+ * and never a half of either. Each half carries the description written for it, because the
+ * two pictures show different things and one sentence cannot name both.
+ *
+ * `area` and `sessions` are the two chips beside the pictures: what was treated, and how many
+ * visits it took. Both state what the clinic did, never what a visitor is promised.
  *
  * A row the import wrote holds only the phrases that made it a story, so every other field
  * here is empty for it. Nothing is invented to fill a gap the dashboard did not publish.
@@ -683,9 +687,11 @@ export interface ResultStory {
   phrases: string[];
   /** the owner's headline, already fallen back to the article's own title. */
   headline: Bi;
-  pair: { before: string; after: string } | null;
-  /** one description for both halves; the pair is one statement about one face. */
-  alt: Bi;
+  pair: { before: string; after: string; beforeAlt: Bi; afterAlt: Bi } | null;
+  /** the body part that was treated, as the owner names it. */
+  area: Bi;
+  /** how many sessions the case took, as free text — "٤ جلسات", "after 6 sessions". */
+  sessions: Bi;
   caption: Bi;
   /** the longer text, shown only in the enlarged view. */
   note: Bi;
@@ -693,8 +699,23 @@ export interface ResultStory {
   service: { name: Bi; href: Bi } | null;
 }
 
-/** Everything a row states before its article has been found. */
-type ResultDetail = Omit<ResultStory, 'card' | 'phrases' | 'key'>;
+/**
+ * Everything a row states before its article has been found.
+ *
+ * This is `ResultStory` one step earlier, with one extra: the single description older rows
+ * hold for the pair. The console now writes a description per picture, and the imported rows
+ * and the residue an operator edited by hand wrote one for both — so the shared one is what
+ * a half with no words of its own falls back to, before the headline falls back to itself.
+ */
+interface ResultDetail {
+  headline: Bi;
+  pair: { before: string; after: string; beforeAlt: Bi; afterAlt: Bi; alt: Bi } | null;
+  area: Bi;
+  sessions: Bi;
+  caption: Bi;
+  note: Bi;
+  service: { name: Bi; href: Bi } | null;
+}
 
 interface ResultSelection {
   key: string;
@@ -715,13 +736,22 @@ function resultSelectionOf(row: PublicRow, services: Map<string, ServiceCard>): 
     phrases: docStringPairs(doc, 'phrases').en,
     detail: {
       headline: docBi(doc, 'title'),
-      pair: before && after ? { before, after } : null,
-      alt: docBi(doc, 'alt'),
+      pair:
+        before && after
+          ? { before, after, beforeAlt: docBi(doc, 'beforeAlt'), afterAlt: docBi(doc, 'afterAlt'), alt: docBi(doc, 'alt') }
+          : null,
+      area: docBi(doc, 'area'),
+      sessions: docBi(doc, 'sessions'),
       caption: docBi(doc, 'caption'),
       note: docBi(doc, 'note'),
       service: service ? { name: service.title, href: service.href } : null,
     },
   };
+}
+
+/** The first of these that says anything, whole: a per-picture description, the shared one, the name. */
+function wordsOf(...candidates: Bi[]): Bi {
+  return candidates.find((candidate) => candidate.ar !== '' || candidate.en !== '') ?? { ar: '', en: '' };
 }
 
 /**
@@ -750,7 +780,15 @@ async function resultSelections(): Promise<ResultSelection[]> {
         key: String(id),
         pointer: String(id),
         phrases,
-        detail: { headline: { ar: '', en: '' }, pair: null, alt: { ar: '', en: '' }, caption: { ar: '', en: '' }, note: { ar: '', en: '' }, service: null },
+        detail: {
+          headline: { ar: '', en: '' },
+          pair: null,
+          area: { ar: '', en: '' },
+          sessions: { ar: '', en: '' },
+          caption: { ar: '', en: '' },
+          note: { ar: '', en: '' },
+          service: null,
+        },
       })),
   );
 }
@@ -795,10 +833,17 @@ export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory
       card,
       phrases: selection.phrases,
       ...typed,
-      // A headline the owner never typed is the article's own, and a pair with no written
-      // description is read out as what it is a picture of.
+      // A headline the owner never typed is the article's own, and a picture nobody described
+      // is read out as whatever the case is titled — the screen reader still gets a sentence.
       headline,
-      alt: typed.alt.ar || typed.alt.en ? typed.alt : headline,
+      pair: typed.pair
+        ? {
+            before: typed.pair.before,
+            after: typed.pair.after,
+            beforeAlt: wordsOf(typed.pair.beforeAlt, typed.pair.alt, headline),
+            afterAlt: wordsOf(typed.pair.afterAlt, typed.pair.alt, headline),
+          }
+        : null,
     });
   }
   return wp.paginate(stories, q.page, q.perPage);

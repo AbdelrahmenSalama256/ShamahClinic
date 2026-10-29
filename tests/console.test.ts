@@ -376,8 +376,13 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // every component: it outranks a named list, it moves layout properties a person is
     // reading, and it survives `prefers-reduced-motion` only until someone answers it with
     // `!important` — at which point the reduced-motion block loses too. The same four lines
-    // came back in two sheets in one week, so the sweep is every sheet at once, and it reads
-    // the selector rather than the value: the number is a taste, the selector is the defect.
+    // came back in two sheets in one week, so the sweep is every sheet at once.
+    //
+    // The selector alone is not the defect: the site's own hover polish names eleven
+    // elements, and it is fine because it lists six properties instead of `all`. So the
+    // sweep asks both questions of every rule — is any selector in the list bare, and does
+    // the value say `all`? — and fails only on the pair. Reading the list as one string
+    // let one `[role="button"]` vouch for nine bare names, which is how the rule returned.
     const sheets = [
       'src/app/(console)/console/console.css',
       'src/app/(console)/console/console-kit.css',
@@ -388,15 +393,23 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
       const text = readFileSync(join(process.cwd(), ...sheet.split('/')), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
       expect(text, `${sheet} forces a transition`).not.toMatch(/transition:[^;]*!important/);
       for (const [, selector, body] of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-        if (!/transition\s*:/.test(body ?? '')) continue;
-        // No class, attribute, id, pseudo-class, at-rule or universal: a bare element list.
-        expect(/[.\[#@:*]/.test(selector ?? ''), `${sheet} transitions ${selector?.replace(/\s+/g, ' ').trim()}`).toBe(true);
+        if (!/transition(-property)?\s*:/.test(body ?? '')) continue;
+        const wide = /transition(-property)?\s*:[^;]*\ball\b/.test(body ?? '');
+        // Commas inside parentheses stay put: `:where(a, button)` is scoped by the `:where`.
+        for (const one of (selector ?? '').replace(/\([^)]*\)/g, '').split(',')) {
+          const name = one.replace(/\s+/g, ' ').trim();
+          if (name === '') continue;
+          expect(!wide || /[.\[#@:*]/.test(name), `${sheet} transitions every property of ${name}`).toBe(true);
+        }
       }
     }
     // What the console does keep is the scoped default in its own reset: a named list of the
     // properties that actually change, on the elements a finger hits.
     expect(css).toMatch(/:where\(a, button, input, select, textarea, summary\)/);
     expect(css).toMatch(/transition-property:/);
+    // And so does the site: the same eleven names, six properties, no `all`.
+    const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+    expect(globals).toMatch(/\n\[tabindex\] \{\n\s+transition:\n\s+color var\(--dur-base\)/);
   });
 
   it('lets the drawer become visible in the frame it opens, not one later', () => {

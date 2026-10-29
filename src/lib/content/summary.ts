@@ -22,7 +22,7 @@ import { db } from '../db';
 import { likeOf } from '../db/like';
 import { readStored, type FieldFormat } from './format';
 import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
-import { listDocTitle, listSchemaOf, type ListSchema as TypedList } from './list-schema';
+import { listDocTitle, listSchemaOf, needsOtherPhoto, type ListSchema as TypedList } from './list-schema';
 import { resultStoryPointer } from './list-docs';
 import { listIdForKey } from './store';
 import type { ListFilter, ListSort, ListView } from './list-view';
@@ -44,6 +44,8 @@ export interface ListSummary {
   publishedAt: string | null;
   /** the first authored image, so a list can show what the card will show */
   image: string | null;
+  /** a before/after case holding one picture and not the other, so the list can name what is owed */
+  needsPhoto: boolean;
   /** the kind's own columns, keyed by field name: a price, a flag, a list item's key */
   cells: Record<string, string | number | boolean | null>;
 }
@@ -459,6 +461,10 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
       updatedAt: toIso(row.updated_at),
       publishedAt: row.published_at === null || row.published_at === undefined ? null : toIso(row.published_at),
       image: doc ? imageOfItem(doc) : imageOfDocument(spec, row),
+      // A row that uploaded one half owes the other, and the list says so: the site will not
+      // draw a comparison out of one picture, and an owner staring at a card with no pair has
+      // no way to know which of the two slots is the empty one.
+      needsPhoto: doc ? needsOtherPhoto(asText(doc.before), asText(doc.after)) : false,
       cells: cellsOf(spec, row, columns),
     };
   });

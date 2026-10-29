@@ -41,6 +41,7 @@ import {
   listDocFromForm,
   listDocImage,
   listDocIntro,
+  listDocText,
   listSchemaOf,
   listSchemas,
   schemaStems,
@@ -260,11 +261,17 @@ describe('what the typed list form really paints (BK-20 F)', () => {
       story: 'fractional-laser-face',
       title_ar: 'بعد أربع جلسات',
       title_en: 'After four sessions',
+      area_ar: 'الوجه',
+      area_en: 'The face',
+      sessions_ar: '٤ جلسات',
+      sessions_en: '4 sessions',
       service: ['peeling'],
       before: '/uploads/202610/before.webp',
       after: '/uploads/202610/after.webp',
-      alt_ar: 'بشرة قبل الليزر وبعد أربع جلسات',
-      alt_en: 'Skin before laser and after four sessions',
+      beforeAlt_ar: 'بشرة قبل الليزر',
+      beforeAlt_en: 'Skin before the laser',
+      afterAlt_ar: 'بشرة بعد أربع جلسات',
+      afterAlt_en: 'Skin after four sessions',
       caption_ar: 'الليزر الجزئي للوجه',
       caption_en: 'Fractional laser for the face',
       note_ar: 'ثلاث جلسات على مدى شهرين.',
@@ -295,11 +302,19 @@ describe('what the typed list form really paints (BK-20 F)', () => {
     expect(markup).toContain('<img src="/uploads/202610/after.webp"');
     expect(markup).not.toMatch(/value="\/uploads\//);
 
-    // The words that go with the pair: a line under it, a longer text for the enlarged
-    // view, and one description for a screen reader.
+    // The words that go with the pair: a line under it, a longer text for the enlarged view,
+    // and a description of its own for each picture. One sentence for both halves is what the
+    // older form could type, and it is the wrong thing to keep asking for — a face before a
+    // peel and the same face after it are not the same picture.
     expect(tagFor(markup, 'list-field-caption-ar')).toContain('<input');
     expect(tagFor(markup, 'list-field-note-ar')).toContain('<textarea');
-    expect(tagFor(markup, 'list-field-alt-ar')).not.toBe('');
+    expect(tagFor(markup, 'list-field-beforeAlt-ar')).toContain('value="بشرة قبل الليزر"');
+    expect(tagFor(markup, 'list-field-afterAlt-ar')).toContain('value="بشرة بعد أربع جلسات"');
+    // and the two chips the card shows beside the pictures.
+    expect(tagFor(markup, 'list-field-area-ar')).toContain('value="الوجه"');
+    expect(tagFor(markup, 'list-field-sessions-ar')).toContain('value="٤ جلسات"');
+    // The field the split replaced is gone: no box left to type the shared sentence into.
+    expect(tagFor(markup, 'list-field-alt-ar')).toBe('');
     expect(markup).not.toContain('&quot;');
   });
 
@@ -310,6 +325,10 @@ describe('what the typed list form really paints (BK-20 F)', () => {
       title_ar: 'بعد أربع جلسات',
       before: '/uploads/202610/before.webp',
       after: '/uploads/202610/after.webp',
+      beforeAlt_ar: 'بشرة قبل الليزر',
+      afterAlt_en: 'Skin after four sessions',
+      area_ar: 'الوجه',
+      sessions_ar: '٤ جلسات',
       caption_ar: 'الليزر الجزئي للوجه',
       phrases: ['result'],
     };
@@ -320,10 +339,23 @@ describe('what the typed list form really paints (BK-20 F)', () => {
     expect(parsed.doc.after).toBe('/uploads/202610/after.webp');
     expect(parsed.doc.phrases).toEqual(['result']);
     // The card shows what the session produced, not whichever picture field the schema
-    // happens to list first — and the caption is the line under it.
+    // happens to list first.
     expect(listDocImage(results, parsed.doc, 'after')).toBe('/uploads/202610/after.webp');
     expect(listDocImage(results, parsed.doc, 'before')).toBe('/uploads/202610/before.webp');
-    expect(listDocIntro(results, parsed.doc, 'ar')).toBe('الليزر الجزئي للوجه');
+    // The sentence under the two pictures is `caption`, read by its own stem. The generic
+    // teaser reader is not what a case is drawn from: it walks its preferred stems in order
+    // and answers here with the area, which is a chip beside the pictures rather than the
+    // line below them. Asserted, so the two disagreeing readers stay visible.
+    expect(listDocText(results, parsed.doc, 'caption', 'ar')).toBe('الليزر الجزئي للوجه');
+    expect(listDocIntro(results, parsed.doc, 'ar')).toBe('الوجه');
+    // Each half keeps the description written for it, and the two chips keep their words.
+    expect(listDocText(results, parsed.doc, 'beforeAlt', 'ar')).toBe('بشرة قبل الليزر');
+    expect(listDocText(results, parsed.doc, 'afterAlt', 'en')).toBe('Skin after four sessions');
+    expect(listDocText(results, parsed.doc, 'area', 'ar')).toBe('الوجه');
+    expect(listDocText(results, parsed.doc, 'sessions', 'ar')).toBe('٤ جلسات');
+    // A `results` row has no single shared description to read: the field the split replaced
+    // is not in its schema, so the generic reader answers with nothing and the site asks each
+    // half by its own stem.
     expect(listDocAlt(results, parsed.doc)).toEqual({ ar: '', en: '' });
     // A row that names no article is a valid document, and stays saveable: the imported rows
     // attach by their WordPress id, and a result the owner titled and photographed needs

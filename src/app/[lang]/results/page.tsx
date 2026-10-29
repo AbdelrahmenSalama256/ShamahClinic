@@ -33,6 +33,8 @@ function pageHref(page: number, lang: "ar" | "en"): string {
  * this page, and both halves of a pair are made into slots together or not at all — the read
  * path already dropped a half pair, so a card here either shows a comparison or shows what the
  * row itself holds. A row with no article draws the same card with `article` left null.
+ * Each half keeps the description written for it, so a screen reader names what it is looking
+ * at rather than the same sentence twice.
  */
 function storyView(story: ResultStory): ResultStoryView {
   return {
@@ -40,8 +42,10 @@ function storyView(story: ResultStory): ResultStoryView {
     article: story.card ? { ...cardToUIArticle(story.card), title: story.headline } : null,
     headline: story.headline,
     pair: story.pair
-      ? { before: toPhotoSlot(story.pair.before, story.alt), after: toPhotoSlot(story.pair.after, story.alt) }
+      ? { before: toPhotoSlot(story.pair.before, story.pair.beforeAlt), after: toPhotoSlot(story.pair.after, story.pair.afterAlt) }
       : null,
+    area: story.area,
+    sessions: story.sessions,
     caption: story.caption,
     note: story.note,
     service: story.service ? { label: story.service.name, href: story.service.href } : null,

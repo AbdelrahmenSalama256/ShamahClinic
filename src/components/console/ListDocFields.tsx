@@ -143,6 +143,19 @@ function textOf(form: Form, key: string): string {
   return String(form[key] ?? '');
 }
 
+/**
+ * The description that travels with one picture into the media library.
+ *
+ * A list with a single image names it `alt`. A before/after case has two pictures and one
+ * description each, so the schema names `beforeAlt` and `afterAlt` — and the upload has to
+ * carry the right one, or the after picture gets saved with the before picture's words.
+ */
+function altOf(form: Form, stem: string): { ar: string; en: string } {
+  const own = `${stem}Alt`;
+  const source = `${own}_ar` in form || `${own}_en` in form ? own : 'alt';
+  return { ar: textOf(form, `${source}_ar`), en: textOf(form, `${source}_en`) };
+}
+
 function SchemaField({
   field,
   form,
@@ -452,7 +465,7 @@ function SchemaField({
           value={textOf(form, field.stem)}
           disabled={disabled}
           inputId={id}
-          alt={{ ar: textOf(form, 'alt_ar'), en: textOf(form, 'alt_en') }}
+          alt={altOf(form, field.stem)}
           onChange={(next) => onChange(field.stem, next)}
         />
       </Field>

@@ -414,11 +414,12 @@ describe('the preview pane', () => {
       image: null,
       bullets: [],
       fields: [],
+      resultCase: null,
     });
   });
 
   it('escapes everything the pane prints itself, and nothing the author wrote', () => {
-    const doc = previewDocument(previewModel('article', { title: '<img src=x onerror=alert(1)>', excerpt: 'a & b', content: '<p>real & true</p>' }, 'en'), 'en');
+    const doc = previewDocument(previewModel('article', { title: '<img src=x onerror=alert(1)>', excerpt: 'a & b', content: '<p>real & true</p>' }, 'en'), 'en', labelsEn);
     expect(doc).toContain('&lt;img src=x onerror=alert(1)&gt;');
     expect(doc).not.toContain('<img src=x');
     expect(doc).toContain('a &amp; b');
@@ -426,7 +427,7 @@ describe('the preview pane', () => {
     expect(doc).toContain('<p>real & true</p>');
     expect(doc.startsWith('<!doctype html>')).toBe(true);
     expect(doc).toContain('lang="en" dir="ltr"');
-    expect(previewDocument(previewModel('article', { title: 'رحمة' }, 'ar'), 'ar')).toContain('lang="ar" dir="rtl"');
+    expect(previewDocument(previewModel('article', { title: 'رحمة' }, 'ar'), 'ar', labels)).toContain('lang="ar" dir="rtl"');
   });
 
   it('is handed to a frame that cannot run it', () => {
@@ -505,6 +506,13 @@ describe('the catalog carries every key in both languages', () => {
     'content.result.nameless',
     'content.result.pair',
     'content.result.picture',
+    // the before/after case: what a half row is marked by, and the two drawings of its preview.
+    'content.result.needs-photo',
+    'content.result.before',
+    'content.result.after',
+    'content.preview.card',
+    'content.preview.zoom',
+    'content.preview.missing',
   ];
 
   for (const key of editorKeys) {

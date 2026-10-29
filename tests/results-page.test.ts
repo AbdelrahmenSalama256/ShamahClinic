@@ -17,10 +17,18 @@
  * What is still dropped: the hidden row, the row with neither an article nor a title (it has
  * no name to draw), and a second row claiming an article another row already took.
  *
+ * The before/after slice then split one field into two. A pair used to carry a single
+ * description for both halves; each half now carries the sentence written for it, and a case
+ * also states the area it treated and how many sessions it took. The 57 imported rows and the
+ * one row an operator edited by hand still hold the shared sentence, so the fallback that reads
+ * it is checked here rather than assumed — a description that reaches only one of the two
+ * pictures is a screen reader naming a "before" with the word "after".
+ *
  * The screen half renders `ResultsClient` for real. What a static render cannot show — the
- * enlarged view, which opens on a click — is asserted two ways: the note is provably absent
- * from the list markup, and the dialog is read off the source as walking only the stories
- * that carry a pair. The pixels themselves are unverified until a browser pass.
+ * enlarged view, which opens on a click and is built in a portal the server skips — is asserted
+ * two ways: the note is provably absent from the list markup, and the dialog is read off the
+ * card's source as walking only the stories that carry a pair. The pixels themselves are
+ * unverified until a browser pass.
  */
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
@@ -148,8 +156,27 @@ async function everyStory(): Promise<ResultStory[]> {
 
 const typedHeadline = { ar: 'عنوان كتبته العيادة', en: 'A headline the clinic typed' };
 const standaloneHeadline = { ar: 'نتيجة بلا مقال', en: 'A result with no article behind it' };
-const pairAlt = { ar: 'وصف الصورتين', en: 'The description of the two pictures' };
+const oldDescHeadline = { ar: 'حالة قديمة', en: 'A case written before the split' };
+const beforeAltText = { ar: 'وصف صورة قبل', en: 'What the before photo shows' };
+const afterAltText = { ar: 'وصف صورة بعد', en: 'What the after photo shows' };
+/** the one sentence a row written before the split holds for both halves. */
+const sharedAltText = { ar: 'وصف الصورتين معًا', en: 'The one sentence both halves shared' };
+const areaText = { ar: 'الوجه', en: 'The face' };
+const sessionsText = { ar: '٤ جلسات', en: '4 sessions' };
 const noteText = { ar: 'نص التكبير', en: 'The text only the enlarged view shows' };
+
+/**
+ * Write a document straight into a row's two JSON columns.
+ *
+ * The typed form refuses a key its schema does not list, which is right for an operator and
+ * useless for a test: the shape this checks is the one the WordPress import left behind, and no
+ * form can produce it any more. So the row is created and published through the store, and only
+ * its document is replaced afterwards — the same way the seed for a WordPress post id works.
+ */
+async function writeDoc(uid: string, doc: Record<string, unknown>): Promise<void> {
+  const json = JSON.stringify(doc);
+  await db.updateTable('list_items').set({ draft: json, published: json }).where('uid', '=', uid).execute();
+}
 
 beforeAll(async () => {
   assertTestDb();
@@ -176,7 +203,10 @@ beforeAll(async () => {
     service: [key('svc')],
     before: '/uploads/before-a.jpg',
     after: '/uploads/after-a.jpg',
-    alt: pairAlt,
+    beforeAlt: beforeAltText,
+    afterAlt: afterAltText,
+    area: areaText,
+    sessions: sessionsText,
     caption: { ar: 'بعد أربع جلسات', en: 'After four sessions' },
     note: noteText,
   }, { position: 1 });
@@ -190,10 +220,29 @@ beforeAll(async () => {
     service: [key('svc')],
     before: '/uploads/before-alone.jpg',
     after: '/uploads/after-alone.jpg',
-    alt: pairAlt,
+    beforeAlt: beforeAltText,
+    afterAlt: afterAltText,
     caption: { ar: 'بعد جلستين', en: 'After two sessions' },
     note: noteText,
   }, { position: 3 });
+  // One row in the shape the site's own data still holds: both halves and a single description
+  // written for the pair, because that is all the older form could type.
+  await seedItem('results', key('olddesc'), {
+    title: oldDescHeadline,
+    before: '/uploads/before-old.jpg',
+    after: '/uploads/after-old.jpg',
+    caption: { ar: 'سطر', en: 'A line' },
+  }, { position: 8 });
+  await writeDoc(key('olddesc'), {
+    title_ar: oldDescHeadline.ar,
+    title_en: oldDescHeadline.en,
+    before: '/uploads/before-old.jpg',
+    after: '/uploads/after-old.jpg',
+    alt_ar: sharedAltText.ar,
+    alt_en: sharedAltText.en,
+    caption_ar: 'سطر',
+    caption_en: 'A line',
+  });
   await seedItem('results', key('hidden'), { story: key('c') }, { position: 4, enabled: false });
   await seedItem('results', key('orphan'), { story: key('missing-article') }, { position: 5 });
   await seedItem('results', key('dupe'), { story: key('a') }, { position: 6 });
@@ -213,7 +262,7 @@ describe('a result row reaches the page', () => {
     expect(alone).toBeDefined();
     expect(alone?.card).toBeNull();
     expect(alone?.headline).toEqual(standaloneHeadline);
-    expect(alone?.pair).toEqual({ before: '/uploads/before-alone.jpg', after: '/uploads/after-alone.jpg' });
+    expect(alone?.pair).toEqual({ before: '/uploads/before-alone.jpg', after: '/uploads/after-alone.jpg', beforeAlt: beforeAltText, afterAlt: afterAltText });
     expect(alone?.caption.en).toBe('After two sessions');
     expect(alone?.service?.name.en).toBe('Laser hair removal');
     // The story it never had: no phrases, because nothing was imported into it.
@@ -222,33 +271,47 @@ describe('a result row reaches the page', () => {
 
   it('joins by the slug it names, and by the post id when that is all it has', async () => {
     const stories = await everyStory();
-    expect(stories.map(named)).toEqual([key('b'), key('a'), key('d'), key('standalone')]);
+    expect(stories.map(named)).toEqual([key('b'), key('a'), key('d'), key('standalone'), key('olddesc')]);
   });
 
   it('keeps the order the console set, which is not the order the rows were written', async () => {
     const paged = await getResultStories({ page: 1, perPage: 30 });
     // uid order would read the legacy number before the `results-…` keys, and date order is a
     // tie the list would then settle by uid. Either way it is not the order the owner picked.
-    expect(paged.items.map(named)).toEqual([key('b'), key('a'), key('d'), key('standalone')]);
-    expect(paged.total).toBe(4);
+    expect(paged.items.map(named)).toEqual([key('b'), key('a'), key('d'), key('standalone'), key('olddesc')]);
+    expect(paged.total).toBe(5);
   });
 
-  it('draws the case a row typed: both halves, the headline, the alt, the caption, the note', async () => {
+  it('draws the case a row typed: both halves, each with its own words, and the two chips', async () => {
     const full = (await everyStory()).find((story) => story.key === key('full'));
     expect(full).toBeDefined();
     expect(full?.headline).toEqual(typedHeadline);
-    expect(full?.pair).toEqual({ before: '/uploads/before-a.jpg', after: '/uploads/after-a.jpg' });
-    expect(full?.alt).toEqual(pairAlt);
+    // One sentence cannot name both pictures: a face before a peel and the same face after it
+    // are two things, and the alt a screen reader hears is per side.
+    expect(full?.pair).toEqual({ before: '/uploads/before-a.jpg', after: '/uploads/after-a.jpg', beforeAlt: beforeAltText, afterAlt: afterAltText });
+    expect(full?.area).toEqual(areaText);
+    expect(full?.sessions).toEqual(sessionsText);
     expect(full?.caption.en).toBe('After four sessions');
     expect(full?.note.en).toBe('The text only the enlarged view shows');
     expect(full?.service?.name.en).toBe('Laser hair removal');
   });
 
-  it('leaves the headline and the description as the article wrote them when the row typed none', async () => {
+  it('reads the one shared description onto both halves for a row written before the split', async () => {
+    const old = (await everyStory()).find((story) => story.key === key('olddesc'));
+    expect(old?.pair?.before).toBe('/uploads/before-old.jpg');
+    expect(old?.pair?.beforeAlt).toEqual(sharedAltText);
+    expect(old?.pair?.afterAlt).toEqual(sharedAltText);
+    // Fields the older row never had stay empty rather than being invented: no chip is drawn
+    // for an area nobody named.
+    expect(old?.area).toEqual({ ar: '', en: '' });
+    expect(old?.sessions).toEqual({ ar: '', en: '' });
+  });
+
+  it('leaves the headline as the article wrote it when the row typed none', async () => {
     const half = (await everyStory()).find((story) => story.key === key('half'));
     expect(half?.headline).toEqual({ ar: 'مقال الثانية', en: 'Article B' });
-    // An alt that was never written still has to say what the two pictures are of.
-    expect(half?.alt).toEqual(half?.headline);
+    // One picture is not a comparison, so it has no halves to describe.
+    expect(half?.pair).toBeNull();
     expect(half?.service).toBeNull();
 
     // The row the import wrote says nothing but its phrases, and is still a real card.
@@ -286,9 +349,12 @@ describe('a result row reaches the page', () => {
       const gone = (await everyStory()).find((story) => story.key === key('gone'));
       expect(gone?.card).toBeNull();
       expect(gone?.headline).toEqual({ ar: 'بقيت', en: 'Still here' });
-      // No article to describe the pair, so the headline says what the pictures are of.
-      expect(gone?.alt).toEqual({ ar: 'بقيت', en: 'Still here' });
-      expect(gone?.pair).toEqual({ before: '/uploads/before-gone.jpg', after: '/uploads/after-gone.jpg' });
+      // No article and no typed description for either half, so each is read out as whatever
+      // the case is titled — a picture with no words still says what it is a picture of.
+      expect(gone?.pair?.beforeAlt).toEqual({ ar: 'بقيت', en: 'Still here' });
+      expect(gone?.pair?.afterAlt).toEqual({ ar: 'بقيت', en: 'Still here' });
+      expect(gone?.pair?.before).toBe('/uploads/before-gone.jpg');
+      expect(gone?.pair?.after).toBe('/uploads/after-gone.jpg');
     } finally {
       await db.deleteFrom('list_items').where('uid', '=', key('gone')).execute();
     }
@@ -349,10 +415,12 @@ function view(slug: string, pair: { before: string; after: string } | null, stan
     headline,
     pair: pair
       ? {
-          before: { src: pair.before, alt: pairAlt, width: 1200, height: 800, focal: '50% 50%' },
-          after: { src: pair.after, alt: pairAlt, width: 1200, height: 800, focal: '50% 50%' },
+          before: { src: pair.before, alt: beforeAltText, width: 1200, height: 800, focal: '50% 50%' },
+          after: { src: pair.after, alt: afterAltText, width: 1200, height: 800, focal: '50% 50%' },
         }
       : null,
+    area: areaText,
+    sessions: sessionsText,
     caption: { ar: 'سطر', en: 'After four sessions' },
     note: noteText,
     service: { label: { ar: 'ليزر', en: 'Laser hair removal' }, href: { ar: '/ar/services', en: '/services' } },
@@ -371,21 +439,33 @@ function render(stories: ResultStoryView[], language: 'ar' | 'en' = 'en'): strin
 }
 
 const clientSource = readFileSync(join(process.cwd(), 'src', 'components', 'pages', 'ResultsClient.tsx'), 'utf8');
+const cardSource = readFileSync(join(process.cwd(), 'src', 'components', 'cards', 'ResultCaseCard.tsx'), 'utf8');
 
 describe('the results screen draws what the row says', () => {
   it('shows both halves, and neither, for a story with only one', () => {
     const paired = render([view('one-pair', { before: '/uploads/before-a.jpg', after: '/uploads/after-a.jpg' })]);
-    expect(paired).toContain('Before');
-    expect(paired).toContain('After');
+    expect(paired).toContain('>Before<');
+    expect(paired).toContain('>After<');
     // `next/image` rewrites the address into `/_next/image?url=…`, so the file the picker
     // returned is read in the form a browser would actually request it.
     expect(paired).toContain('url=%2Fuploads%2Fbefore-a.jpg');
     expect(paired).toContain('url=%2Fuploads%2Fafter-a.jpg');
     expect(paired).toContain('After four sessions');
 
+    // Each half is described by the sentence written for it, so a screen reader never hears
+    // the same words over two different pictures.
+    expect(paired).toContain(`alt="${beforeAltText.en}"`);
+    expect(paired).toContain(`alt="${afterAltText.en}"`);
+
+    // The two chips the case states beside its pictures.
+    expect(paired).toContain(areaText.en);
+    expect(paired).toContain(sessionsText.en);
+
     const alone = render([view('no-pair', null)]);
     expect(alone).not.toContain('>Before<');
-    expect(alone).not.toContain('aria-label="Enlarge');
+    // Nothing to enlarge: the two press targets are only drawn over a pair.
+    expect(alone).not.toContain('View Headline of no-pair result');
+    expect(alone).not.toContain('cursor-zoom-in');
     expect(alone).toContain('Headline of no-pair');
   });
 
@@ -393,13 +473,30 @@ describe('the results screen draws what the row says', () => {
     const html = render([view('one-pair', { before: '/uploads/before-a.jpg', after: '/uploads/after-a.jpg' })]);
     expect(html).not.toContain(noteText.en);
 
-    // The enlarged view opens on a press, so a static render cannot reach it. What it is
-    // built from is checked where the decision is made.
+    // The enlarged view opens on a press, and it is built inside a portal the server render
+    // skips, so a static string cannot reach it. What it is built from is read where the
+    // decision is made: the gallery it walks, and the two halves and the note it draws.
     expect(clientSource).toMatch(/stories\.filter\(\(story\)[\s\S]*story\.pair !== null/);
-    expect(clientSource).toContain('shown.pair.before');
-    expect(clientSource).toContain('shown.pair.after');
-    expect(clientSource).toContain('t(shown.note.ar, shown.note.en)');
-    expect(clientSource).toContain('aria-modal="true"');
+    expect(cardSource).toMatch(/activeResult\.pair \? \[activeResult\.pair\.before, activeResult\.pair\.after\]/);
+    expect(cardSource).toContain('t(activeResult.note.ar, activeResult.note.en)');
+    expect(cardSource).toContain('aria-modal="true"');
+    // A case with no pair cannot open the dialog at all — the portal is drawn only for a pair.
+    expect(cardSource).toMatch(/\{story\.pair && typeof document !== "undefined" &&/);
+  });
+
+  it('walks the cases in one order, whichever way the page reads', () => {
+    // The counter counts the order of the cases, the words on the controls say what they do,
+    // and the keyboard steps by one. The card this was ported from mirrored the *step* for
+    // Arabic as well as the icon, so in RTL "the next result" jumped to the last case and
+    // counted backwards: two controls, two answers. Onward is `+1` in both directions now, and
+    // the icons and the slide still flip with the direction.
+    expect(cardSource).toMatch(/onClick=\{\(\) => move\(-1\)\}/);
+    expect(cardSource).toMatch(/onClick=\{\(\) => move\(1\)\}/);
+    expect(cardSource).not.toMatch(/move\(rtl/);
+    expect(cardSource).toMatch(/rtl \? <ChevronRight className="h-5 w-5" \/> : <ChevronLeft className="h-5 w-5" \/>/);
+    // Escape closes, so it takes the same path the close button takes and hands focus back.
+    expect(cardSource).toMatch(/if \(event\.key === "Escape"\) closeGallery\(\);/);
+    expect(cardSource).toMatch(/triggerRef\.current\?\.focus\(\);/);
   });
 
   it('says what to do when nothing has been published', () => {
@@ -430,20 +527,33 @@ describe('the results screen draws what the row says', () => {
     expect(html).toContain('/services');
     // Nothing was invented to fill the article that is not there: no dead link, no promise.
     expect(html).not.toContain('/blogs/');
-    expect(html).not.toContain('Open the article');
   });
 
   it('says so in Arabic when a standalone result has no pictures either', () => {
     const html = render([view('standalone-two', null, true)], 'ar');
     expect(html).toContain('نتيجة بلا مقال');
     expect(html).not.toContain('/blogs/');
-    expect(html).not.toContain('aria-label="تكبير');
+    expect(html).not.toContain('cursor-zoom-in');
   });
 
-  it('is read by a screen reader in Arabic, with the same two halves', () => {
+  it('is read by a screen reader in Arabic, with each half named by itself', () => {
     const arabic = render([view('one-pair', { before: '/uploads/before-a.jpg', after: '/uploads/after-a.jpg' })], 'ar');
-    expect(arabic).toContain('قبل');
-    expect(arabic).toContain('بعد');
-    expect(arabic).toContain('وصف الصورتين');
+    expect(arabic).toContain('>قبل<');
+    expect(arabic).toContain('>بعد<');
+    expect(arabic).toContain(`alt="${beforeAltText.ar}"`);
+    expect(arabic).toContain(`alt="${afterAltText.ar}"`);
+    expect(arabic).toContain(areaText.ar);
+  });
+
+  it('omits a chip the row left empty, rather than drawing an empty one', () => {
+    // An unnamed area is not a chip that says "—": the card shows only what the row states.
+    const bare = view('no-chips', { before: '/uploads/before-a.jpg', after: '/uploads/after-a.jpg' });
+    const html = render([{ ...bare, area: { ar: '', en: '' }, sessions: { ar: '', en: '' }, service: null }]);
+    expect(html).not.toContain(areaText.en);
+    expect(html).not.toContain(sessionsText.en);
+    expect(html).not.toContain('Laser hair removal');
+    // and the case is still a card, with its pictures and its caption.
+    expect(html).toContain('>Before<');
+    expect(html).toContain('After four sessions');
   });
 });
