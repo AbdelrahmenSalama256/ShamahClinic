@@ -3591,6 +3591,102 @@ here and run by the owner; no secret is asked for or stored.
       the host keeps `MEDIA_ROOT` outside the replaced folder can only be seen after the owner runs
       the runbook.
 
+- [x] BA — the before/after case, ported from the original site onto `/results` and into the console — `3d6525b`
+
+      **What was built.** The pair card and its zoom gallery, copied from `D:\shamah` and wired
+      to database rows: `src/components/cards/ResultCaseCard.tsx` (428 lines) is the card the
+      owner approved by name, and `src/components/pages/ResultsClient.tsx:116` renders it per case.
+      The drag-slider the original ships but never renders was not ported, and `/results` only —
+      the owner said no home section. The model stays one entity per case with typed fields and no
+      JSON, no slug and no required article: `area` and `sessions` are new text stems and the single
+      shared picture description became two, `beforeAlt` and `afterAlt`, so each upload carries its
+      own words into the media library (`src/lib/content/list-schema.ts:220,230,249,268`,
+      `src/components/console/ListDocFields.tsx:153` and its one call at `:468`). `story` stayed
+      **optional** and is labelled "مقال ذو صلة / Related article" — it was not dropped, because
+      55 imported rows already point at a real article and dropping the field would have thrown
+      those links away. Nothing was invented for the two fields the original card does not show:
+      no duration, no disclaimer column.
+
+      **One picture is not a comparison, and the rule lives in the data.** `needsOtherPhoto()`
+      (`src/lib/content/list-schema.ts:695`) is the XOR of the two slots, and three places ask it
+      the same question: the read path builds `pair: null` unless both halves exist
+      (`src/lib/content/site.ts:740-744`), so the card cannot draw half a pair; the list summary
+      carries `needsPhoto` (`src/lib/content/summary.ts:467`) so both the card and the table of the
+      results list print the warn badge "تحتاج الصورة الأخرى / Needs the other photo"
+      (`src/components/console/ConsoleList.tsx:539,587`, with one spacing rule in the kit at
+      `src/app/(console)/console/console-kit.css:387-392` because a row can now carry two badges);
+      and the editor's preview asks it of unsaved words. The empty state the brief asked for is on
+      the page — `ResultsClient.tsx:105-106` says in both languages how a case is added — and
+      `tests/result-case-console.test.ts` (new, 335 lines) pins the badge, the two drawings and the
+      per-half alt text.
+
+      **The live preview draws both views.** `previewModel` now returns a `resultCase`
+      (`src/lib/console/preview.ts:72,180`) and `previewDocument` replaces the generic card dump
+      with `caseHtml` (`:275`) plus its own `CASE_CSS` (`:316`): the results card first, then the
+      enlarged view under it, each with the two squares, the corner words, the service/area/sessions
+      chips, the caption, and the long text only in the second drawing. An empty slot is drawn as a
+      named gap ("لم تُرفع") rather than a broken image. Nothing was copied out of the original's
+      global CSS: the site's own classes stayed with the component, the console's one new rule is
+      in the kit sheet, and the preview's styles live inside the sandboxed document they paint.
+
+      **Two behaviour fixes came with the port, and both are pinned.** In the original, the RTL
+      arrows mirrored the index step, so the counter and the button words disagreed about which
+      way was forward — here the step is always `index + 1` and only the icons and the slide offset
+      flip. And Escape closed the gallery without giving focus back, which left a keyboard user on
+      `body` — `closeGallery()` now returns focus to the picture that opened it. Both are asserted
+      against the source in `tests/results-page.test.ts` ("walks the cases in one order, whichever
+      way the page reads"), because a rendered page cannot show the difference in a test run.
+
+      **Browser proof, on a production build.** `.tmp/ba6-proof.mjs` → **74/74 checks passed**
+      against two servers from one build (`.tmp/next-build-ba2`): `:3347` on `shamah_cms_test`
+      seeded with five marked rows (two complete pairs, one half case, one legacy shared-alt row,
+      one row with nothing in it), and `:3346` on the dev database for the console. What it looked
+      at: the two halves arrive as two pictures with their own alt text; the corner word sits
+      bottom-right in Arabic and bottom-left in English; one arrow moves both halves; the counter
+      reads ١/٣ → ٢/٣ → ١/٣ by button and by keyboard alike; the long text appears only enlarged;
+      Escape hands focus back and clears `body.style.overflow`; the half case draws no zoom target;
+      the site page loads no console stylesheet; every `/uploads/` picture answered 200 and no
+      request failed. Then `.tmp/ba7-today.mjs` → **10/10** against the clinic's own data: `/ar`
+      and `/en` each still list the 9 imported result articles, draw no half-built pair and offer
+      no zoom for a pair that is not there, do not scroll sideways at 390 px, and log no page or
+      console error. The proof rows were removed afterwards (`removed 5 proof rows, 0 left`); the
+      dev database was never written by the proof.
+
+      **Gates.** Typecheck clean, lint clean, `copy:check` **216 entries current; 92 data-driven
+      calls skipped**, full run **42 files / 814 passed, 0 failed**.
+
+      **A blanket transition crept into the site sheet, and the guard let it through.** The tree
+      carried `div, a, button, input, select, textarea, summary, label, [role="button"],
+      [role="link"], [tabindex] { transition: 0.3s all … }` at the end of `globals.css` — the same
+      order R5 removed at `9f409f9`. It slipped past `tests/console.test.ts` because the sweep read
+      the selector list as one string, so one `[role="button"]` vouched for nine bare element names.
+      It is gone, and nothing in this slice used it: the card moves with framer-motion and its own
+      classes, and the 74 checks above were re-run after the deletion, on a rebuild, with the same
+      result. The guard now asks both questions of every rule — is any selector in the list bare,
+      and does the value say `all` — and fails only on the pair, which keeps the site's own
+      deliberate rule (`globals.css:41-57`: the same eleven names, six named properties) and
+      rejects the one that was removed. Verified both ways: green on the tree, and red with the
+      deleted block pasted back (`transitions every property of div`).
+
+      **What the owner should check by eye.** Upload one real pair in the console and watch the
+      card appear on `/results` — before that, the page looks exactly as it did, because the pair
+      card is additive and only rows carrying both pictures get one. Then look at the corner words
+      in both languages, the Arabic counter in the enlarged view, the long text that only appears
+      when a case is enlarged, and the badge leaving row 1040 the moment its second photo arrives.
+
+      **Not verified, and what could not be seen.** Every pair in the browser was test data: the
+      owner's decision was "build the UI, seed nothing", so the clinic's own photographs have never
+      been through this card, and the four illustrative stock pairs that used to stand in for them
+      are deleted (`src/data/results.ts`, 67 lines) — `images.skin.before` is now unreferenced while
+      `images.skin.after` still backs the results banner. The console preview pane was read as DOM
+      plus a scaled screenshot, so its fine type at a narrow split is not judged. The never-rendered
+      drag slider is not here by decision, not by omission. No Lighthouse numbers for `/results`
+      yet — that is item 7. Two rough edges were left named rather than fixed: one seeded dev row
+      (1040) still carries the legacy shared `alt`, which the site folds into both halves
+      (`site.ts:843-844`) and the console lists as a removable key, but which also prints a second
+      time as an unnamed danger alert at `ConsoleEditor.tsx:399`; and the two language tabs of a
+      text field still share one accessible name, which is 14.x work, not this card's.
+
 ## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
