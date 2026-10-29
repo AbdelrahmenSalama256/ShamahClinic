@@ -4039,6 +4039,141 @@ six.
       `npm run db:migrate -- --apply` (already applied to dev and test here). No new
       dependency, no new environment variable (`SESSION_SECRET` is already required).
 
+## OV — the console Overview (the console brief, stage 3 of six — `16bd3a3`)
+
+Same rules as stages 1 and 2: audit first, keep what works, never invent a number. Before this
+stage `/console` was a heading, a lede and a grid of row counts from `overviewRows()` — the same
+numbers the content screens already print — under a "coming soon" note. It had no date range, no
+comparison, no traffic panel and no download, and the six statistics tables stage 2 had been
+writing for a fortnight were read by nothing. This stage makes the screen a marketer can open
+every morning. One commit, because the two new columns, the aggregate, the API, the screen and
+the export share one shape; the rows below record the parts.
+
+- [x] OV-1 — audit the screen and the read path it was missing
+
+      `overviewRows()` counted rows per resource and stopped there. `stats_events`, `stats_daily`,
+      `stats_referrers_daily`, `stats_sources_daily`, `stats_geo_daily` and `stats_named_daily`
+      existed with data in them; no console code selected from any of them. A day-by-hour panel
+      was impossible: `stats_events` had no hour and `leads` had no Cairo day, and a timezone
+      expression in SQL cannot use an index.
+
+- [x] OV-2 — the Cairo day and hour that make a range cheap (`011_overview.sql`)
+
+      Adds nullable `leads.day` (with `leads_day`) and `stats_events.hour` (with
+      `stats_events_hour`); `dayOf()` and `hourOf()` in `src/lib/tracking/ingest.ts` are the only
+      writers, so every row is stamped by the same `Africa/Cairo` formatter the rest of the
+      numbers use. `recordLead()` writes the day and the ingest writes the hour. Nothing is
+      back-filled: a read falls back to `DATE(created_at)` for a lead older than the migration
+      and omits an event with no hour from the heatmap rather than inventing a time for it. The
+      migration is additive — `schema.test.ts` now names both files in its "no DROP, no UPDATE"
+      rule.
+
+- [x] OV-3 — one aggregate, sixteen panels, a sixty-second cache (`src/lib/console/overview.ts`)
+
+      `parseOverviewSearch()` reads `range` / `from` / `to` / `compare` and returns the period and
+      its equal-length previous period, or the list of issues; `overviewData()` then runs a dozen
+      grouped SQL selects — never a table load — for KPIs, per-day traffic, sources, funnel,
+      campaigns, services, branches, the weekday × hour heatmap, top pages, most-read articles,
+      lead-bringing pages, devices, cities, the latest leads, needs-attention counts and the
+      library. The cache key is the query plus the caller's grants, so a Viewer never reads an
+      Owner's cached row; it holds sixty seconds, and `?refresh=1` is the one request allowed
+      past it. Lead blocks are `null` without `lead.read` rather than zero-filled, and the
+      needs-attention and library panels deliberately ignore the range: they answer "right now".
+
+- [x] OV-4 — `GET /api/console/overview` under `stat.read`
+
+      `src/app/api/console/overview/route.ts` + `src/lib/console/overview-api.ts`, through the one
+      guard path. A malformed range is a 400 with the issues and writes no audit row; the read
+      itself needs no audit row because nothing changed.
+
+- [x] OV-5 — the screen (`OverviewScreen.tsx`)
+
+      Range chips, a compare toggle and a custom-date panel, all mirrored into the URL, so a link
+      reopens the same report. Charts are inline SVG — no chart library, no new dependency — with
+      the previous period drawn as a second polyline. Deltas are relative percentages for counts
+      and points for the conversion rate, since "conversion +27%" would read as a different
+      claim. Arabic and English copy lives in `src/lib/console/messages.ts` with plain-language
+      hints; every control is a real button or a labeled select, and the panels have empty states
+      that say what is missing instead of showing a zero.
+
+- [x] OV-6 — CSV, print, and demo data nobody can confuse with real traffic
+
+      `/api/console/overview/export` is the same read under a new `stat.export` grant — Admin and
+      Marketer have it, Viewer and Editor do not, because a file leaves the building. `cell()` in
+      `src/lib/leads/export.ts` became the shared `csvCell()`, so the Overview inherits the BOM,
+      the CRLF and the leading-`= + - @` guard instead of re-implementing them; the audit row
+      names the range and the row count, never the numbers. Print is `window.print()` with a
+      print stylesheet, not a PDF library. `scripts/db/demo-data.ts` (`npm run db:demo`) writes
+      185 days of `demo-`-marked events and leads for local proof only: it refuses a production
+      `NODE_ENV`, a database named "prod", and any non-loopback host without `--apply` plus
+      `--allow-remote`, defaults to dry-run, and `--purge --apply` deletes exactly the marked rows.
+
+- [x] OV-7 — gates, a browser proof on the production build, and this record
+
+      **Gates.** `npm run typecheck` exit 0, `npm run lint` exit 0, `npm run copy:check` current
+      (223 entries; the regeneration moved the component count to 123), `npm run build` exit 0,
+      full suite **45 files / 864 tests passed** — `tests/overview.test.ts` contributes 25 DB-level
+      tests. `npm run prove:no-wp` **5 checks passed, 0 failed** (277 routes rendered, 0 failed, 0
+      requests to the WordPress origin). `node scripts/verify-render.mjs` against the same build on
+      `127.0.0.1:3342` **253 checks passed, 0 failed**. `npm run db:migrate` reports 011 already
+      applied on `shamah_cms` and `npm run db:seed` dry-run reports every role already matching the
+      catalog, so an existing database needs `npm run db:migrate -- --apply` then
+      `npm run db:seed -- --apply` to hand out `stat.export`.
+
+      **The browser proof** ran the built artifact on `:3345` against `shamah_cms_test`
+      (`.tmp/ov-proof-seed.ts`, `.tmp/ov-proof-clean.ts`, `.tmp/ov-probe.ts`, all gitignored). Demo
+      data plus three `ov-proof-article-*` rows were seeded because the most-read panel titles a
+      read by looking its slug up in `articles`, and an empty `articles` table showed the honest
+      answer — "لا بيانات في هذه الفترة" — over 58 real views. After the seed the panel named
+      each article, its path and its views. A real Owner signed in at `/console/login` and the
+      Arabic screen filled: 30 days 1,731 زائر / 2,924 مشاهدة / 68 lead / 3.9%; the 7d chip
+      re-read to 398/668/16/4.0% with `?range=7d`; 90d to 4,931 (+26.5%) / 8,419 (+27.5%) / 212
+      (+32.5%) / 4.3% (+0.2 نقطة) with «السابقة» values and the previous-period polylines drawn;
+      `?range=custom&from=2019-01-01&to=2019-01-02` emptied every range panel with its own Arabic
+      or English "no data" line and the KPIs to 0 with "No previous period to compare", while the
+      needs-attention and library panels kept reporting right-now counts as designed; a custom pair
+      with `from` after `to` was refused with the named inline alert before any request left. The
+      download button — present only for a role the API would honour — issued
+      `GET /api/console/overview/export` → 200 `text/csv; charset=utf-8`,
+      `attachment; filename="overview-2026-10-05-2026-10-12.csv"`, `no-store`, 7,760 bytes, leading
+      `EF BB BF`, CRLF, 266 lines, `section,label,metric,value,detail` and the fifteen sections
+      (`kpi`, `daily`, `previous_daily`, `engagement`, `sources`, `campaigns`, `services`,
+      `branches`, `funnel`, `heatmap`, `top_pages`, `top_articles`, `devices`, `cities`,
+      `attention`, `library`), with negative cells written `'-1.2` and no phone number anywhere.
+      Three `stat.export` audit rows landed in `audit_log` naming the range and the row count.
+      The same URL as a Viewer answered `403 {"error":"forbidden","action":"stat.export"}` with no
+      button offered first, its Overview answered 200 with the lead panels redacted
+      (`contact_hidden:true`, blank name/phone/email) and **zero** status selects. One status
+      change as Owner moved the real row `demo-lead-2026-10-29-0` to `contacted` and re-totalled the
+      funnel; the toggle to English re-rendered `dir=ltr lang=en` with all sixteen panel headings and
+      chips in English and the download still absent.
+
+      **Cleanup.** `npm run db:demo -- --purge --apply` removed 16,969 demo events and 380 demo
+      leads; `.tmp/ov-proof-clean.ts` deleted both proof accounts (with their sessions, roles, login
+      attempts and audit rows) and the three proof articles. The final probe read `users like
+      'ov-proof%'` = 0, `articles like 'ov-proof%'` = 0, `leads like 'demo-%'` = 0 and
+      `stats_events` with a demo hash = 0. The server on `:3345` and the verification server on
+      `:3342` were stopped. **One thing the proof left visible in the log, noted not hidden:** a
+      `lead.update` audit row's `after_json` carries the lead's phone — pre-existing guard behaviour
+      from BK-3, not introduced here, and worth a decision before an export of the audit log.
+
+      **What the browser could not show.** The in-app automation viewport is fixed near 510 × 425
+      and hidden, so `take_screenshot` returns `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE`: the desktop
+      two-column grid, the 900 px and 640 px wraps, the print dialog and the download shelf were
+      not seen as pixels. The panel contents, the URL state, the response bytes and the database
+      rows were all measured, but nobody has yet looked at the Overview on a real monitor.
+
+      **Files.** `src/lib/db/migrations/011_overview.sql`, `src/lib/tracking/ingest.ts` (`hourOf`),
+      `src/lib/leads/store.ts` (writes `day`), `src/lib/console/overview.ts`,
+      `src/lib/console/overview-api.ts`, `src/lib/console/overview-export.ts`,
+      `src/app/api/console/overview/{route,export/route}.ts`,
+      `src/components/console/OverviewScreen.tsx`,
+      `src/app/(console)/console/(workspace)/page.tsx`, `src/app/(console)/console/console.css`,
+      `src/lib/console/messages.ts`, `src/lib/auth/roles.ts`, `src/lib/leads/export.ts`
+      (`cell` → `csvCell`), `src/lib/db/types.ts`, `src/lib/db/schema.test.ts`,
+      `src/lib/copy/catalog.ts`, `scripts/db/demo-data.ts`, `package.json` (`db:demo`),
+      `tests/overview.test.ts`, `tests/server-setup.test.ts`. No new dependency.
+
 ## Known gaps / notes
 
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
