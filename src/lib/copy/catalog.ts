@@ -5,7 +5,7 @@
  * console writes and the default the site falls back to. `npm run copy:catalog` rewrites
  * this file; `npm run build` fails when it is stale.
  *
- * 216 entries from 119 components. Data-driven calls
+ * 223 entries from 121 components. Data-driven calls
  * (`t(row.name.ar, row.name.en)`) are console rows, not copy, and are not listed here.
  */
 export interface CopyEntry {
@@ -58,6 +58,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
     line: 329,
+    uses: 1,
+  },
+  {
+    key: "copy.064f1c07578a",
+    ar: "إيقاف العرض",
+    en: "Pause slideshow",
+    area: "home",
+    file: "src/components/home/HomeHero.tsx",
+    line: 284,
     uses: 1,
   },
   {
@@ -403,6 +412,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.3390c343ab37",
+    ar: "الصورة {0}",
+    en: "Slide {0}",
+    area: "home",
+    file: "src/components/home/HomeHero.tsx",
+    line: 319,
+    uses: 1,
+  },
+  {
     key: "copy.33db12bfd42a",
     ar: "اللغة الحالية",
     en: "Current language",
@@ -480,7 +498,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "honest care",
     area: "home",
     file: "src/components/home/HomeHero.tsx",
-    line: 115,
+    line: 375,
     uses: 1,
   },
   {
@@ -615,7 +633,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Shamah Clinics · Cairo & Giza",
     area: "home",
     file: "src/components/home/HomeHero.tsx",
-    line: 97,
+    line: 353,
     uses: 1,
   },
   {
@@ -634,6 +652,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "common",
     file: "src/components/ui/Swiper.tsx",
     line: 167,
+    uses: 1,
+  },
+  {
+    key: "copy.541660e07dfc",
+    ar: "الصورة السابقة",
+    en: "Previous slide",
+    area: "home",
+    file: "src/components/home/HomeHero.tsx",
+    line: 296,
     uses: 1,
   },
   {
@@ -889,6 +916,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.72a2358d5451",
+    ar: "الصورة {0} من {1}",
+    en: "Slide {0} of {1}",
+    area: "home",
+    file: "src/components/home/HomeHero.tsx",
+    line: 340,
+    uses: 1,
+  },
+  {
     key: "copy.7410cb77bac0",
     ar: "الرجوع إلى المدونة",
     en: "Back to all blogs",
@@ -1024,6 +1060,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.7f95b58632e8",
+    ar: "صور العيادة",
+    en: "Clinic photographs",
+    area: "home",
+    file: "src/components/home/HomeHero.tsx",
+    line: 219,
+    uses: 1,
+  },
+  {
     key: "copy.80527c103c06",
     ar: "عيادات شامه للتجميل والليزر. جميع الحقوق محفوظة.",
     en: "Shamah Clinics. All rights reserved.",
@@ -1119,7 +1164,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: ", in expert female hands",
     area: "home",
     file: "src/components/home/HomeHero.tsx",
-    line: 117,
+    line: 377,
     uses: 1,
   },
   {
@@ -1254,7 +1299,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Skin that deserves ",
     area: "home",
     file: "src/components/home/HomeHero.tsx",
-    line: 113,
+    line: 373,
     uses: 1,
   },
   {
@@ -1327,6 +1372,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
     line: 891,
+    uses: 1,
+  },
+  {
+    key: "copy.a3ae87f3c688",
+    ar: "الصورة التالية",
+    en: "Next slide",
+    area: "home",
+    file: "src/components/home/HomeHero.tsx",
+    line: 304,
     uses: 1,
   },
   {
@@ -1623,7 +1677,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Female staff",
     area: "home",
     file: "src/components/home/HomeHero.tsx",
-    line: 178,
+    line: 448,
     uses: 2,
   },
   {
@@ -1672,6 +1726,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.db97d35cce31",
+    ar: "تشغيل العرض",
+    en: "Play slideshow",
+    area: "home",
+    file: "src/components/home/HomeHero.tsx",
+    line: 284,
+    uses: 1,
+  },
+  {
     key: "copy.dc47cb0559ca",
     ar: "إغلاق والعودة للموقع",
     en: "Close and Return to Site",
@@ -1713,7 +1776,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Treatments",
     area: "home",
     file: "src/components/home/HomeHero.tsx",
-    line: 170,
+    line: 440,
     uses: 1,
   },
   {
@@ -1731,7 +1794,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branches",
     area: "home",
     file: "src/components/home/HomeHero.tsx",
-    line: 159,
+    line: 432,
     uses: 1,
   },
   {
@@ -1821,7 +1884,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Every case starts with a clear consultation and analysis, using modern devices and authentic products, with an all-female medical team and full privacy across three branches.",
     area: "home",
     file: "src/components/home/HomeHero.tsx",
-    line: 130,
+    line: 394,
     uses: 1,
   },
   {

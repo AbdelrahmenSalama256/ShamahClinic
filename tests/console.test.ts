@@ -269,7 +269,8 @@ describe('the sidebar registry', () => {
     // workspace screen, so it comes before the content group; Marketer has no `list`
     // grant and only Owner/Admin can read `setting`, so those rows are the proof the
     // sidebar is filtered by the catalog rather than hardcoded.
-    const content = ['articles', 'offers', 'pages'];
+    // The hero slider is a `page` surface: every role that may read the home page sees it.
+    const content = ['articles', 'offers', 'pages', 'hero'];
     // `texts` is the site's own wording, addressed through the `page` grant, so every role
     // that reads pages sees the row — six of six here.
     const expected: Record<RoleName, string[]> = {
@@ -580,6 +581,7 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
       'articles',
       'offers',
       'pages',
+      'hero',
       ...LIST_KEYS,
       'texts',
       'seo',

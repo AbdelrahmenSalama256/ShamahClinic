@@ -485,6 +485,45 @@ export interface StatsRollupStateTable {
   last_run_at: Date | null;
   updated_at: Generated<Date>;
 }
+/** 009: one frame of the homepage slider. No draft/pub pair: `active` and a schedule replace publishing. */
+export interface HeroSlidesTable extends Editable {
+  id: string;
+  position: Generated<number>;
+  active: Generated<0 | 1>;
+  image: string;
+  image_mobile: string | null;
+  alt_ar: Generated<string>;
+  alt_en: Generated<string>;
+  heading_ar: string | null;
+  heading_en: string | null;
+  sub_ar: string | null;
+  sub_en: string | null;
+  cta_label_ar: string | null;
+  cta_label_en: string | null;
+  cta_href_ar: string | null;
+  cta_href_en: string | null;
+  starts_at: Date | null;
+  ends_at: Date | null;
+}
+/** 009: the slider's behaviour. One row, id = 1. */
+/**
+ * 009: the settings row. Unlike every other stamped row it has no `created_at` — the row
+ * is seeded by the migration itself, so the moment of creation is the migration's, and a
+ * second timestamp nothing reads would only be one more column to keep in sync.
+ */
+export interface HeroSettingsTable {
+  id: number;
+  autoplay: Generated<0 | 1>;
+  interval_ms: Generated<number>;
+  fade_ms: Generated<number>;
+  pause_on_hover: Generated<0 | 1>;
+  dots: Generated<0 | 1>;
+  arrows: Generated<0 | 1>;
+  looping: Generated<0 | 1>;
+  updated_by: string | null;
+  updated_at: Generated<Date>;
+  version: Generated<number>;
+}
 /** 007: one person's saved list filter — a name on the query string that drew it. */
 export interface ConsoleViewsTable {
   id: string;
@@ -541,6 +580,8 @@ export interface Database {
   stats_referrers_daily: StatsReferrersDailyTable;
   stats_cta_daily: StatsCtaDailyTable;
   stats_rollup_state: StatsRollupStateTable;
+  hero_slides: HeroSlidesTable;
+  hero_settings: HeroSettingsTable;
   console_views: ConsoleViewsTable;
 }
 

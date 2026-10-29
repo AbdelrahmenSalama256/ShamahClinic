@@ -2772,6 +2772,273 @@
   }
 
   /* =========================================================================
+     12b. THE HERO SLIDER (the rail of slides and the slide being edited)
+     ========================================================================= */
+  .hero-workspace {
+    display: grid;
+    grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+    gap: var(--c-gap);
+    align-items: start;
+  }
+
+  .hero-rail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-inline-size: 0;
+  }
+
+  .hero-rail-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+  }
+
+  .hero-rail-head .console-note {
+    margin: 0;
+  }
+
+  .hero-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hero-slide-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--c-sp-2);
+    padding: 0.5rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-sm);
+    background: var(--c-surface);
+    cursor: grab;
+  }
+
+  .hero-slide-row[data-selected] {
+    box-shadow: 0 0 0 1.5px var(--c-accent);
+  }
+
+  /* Where the row would land while it is being dragged over. */
+  .hero-slide-row[data-over] {
+    box-shadow: inset 0 3px 0 var(--c-accent);
+  }
+
+  .hero-slide-row[data-dragging] {
+    cursor: grabbing;
+    opacity: 0.6;
+  }
+
+  .hero-slide-row[data-inactive] .hero-slide-thumb,
+  .hero-slide-row[data-inactive] .hero-slide-name {
+    opacity: 0.6;
+  }
+
+  .hero-slide-select {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.6rem;
+    min-inline-size: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .hero-slide-thumb {
+    display: grid;
+    place-items: center;
+    inline-size: 4.5rem;
+    block-size: 3rem;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--c-bg-alt);
+    color: var(--c-text-3);
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+  }
+
+  .hero-slide-photo {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .hero-slide-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-inline-size: 0;
+  }
+
+  .hero-slide-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .hero-slide-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+  }
+
+  .hero-slide-window {
+    color: var(--c-text-3);
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+  }
+
+  .hero-slide-tools {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .hero-detail,
+  .hero-detail-empty {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+    padding: var(--c-gap);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface);
+  }
+
+  .hero-detail-empty {
+    align-items: center;
+    justify-content: center;
+    min-block-size: 16rem;
+  }
+
+  .hero-detail-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+  }
+
+  .hero-detail-head .console-subheading {
+    margin: 0;
+  }
+
+  /* The selected slide, drawn the way the site draws it: photograph, dark foot, copy. */
+  .hero-preview {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--c-r-sm);
+    background: var(--c-bg-alt);
+    aspect-ratio: 16 / 7;
+  }
+
+  .hero-preview-photo {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .hero-preview-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgb(0 0 0 / 0.85), rgb(0 0 0 / 0.55) 45%, rgb(0 0 0 / 0.3));
+  }
+
+  .hero-preview-copy {
+    position: absolute;
+    inset-block-end: 1rem;
+    inset-inline: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    color: #fff;
+  }
+
+  .hero-preview-heading {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .hero-preview-authored {
+    margin: 0;
+    color: rgb(255 255 255 / 0.75);
+    font-size: 0.8125rem;
+    font-style: italic;
+  }
+
+  .hero-preview-sub {
+    max-inline-size: 36rem;
+    margin: 0;
+    color: rgb(255 255 255 / 0.85);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .hero-preview-cta {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.9rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-accent);
+    color: var(--c-on-fill);
+    font-size: var(--c-font-small);
+    font-weight: 700;
+  }
+
+  .hero-image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--c-gap);
+  }
+
+  .hero-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-inline-size: 0;
+  }
+
+  .hero-field-group .console-note {
+    margin: 0;
+  }
+
+  .hero-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--c-gap);
+    align-items: start;
+  }
+
+  .hero-toggle {
+    display: flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    padding-inline: 0.25rem;
+  }
+
+  .hero-issue-list {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    padding-inline-start: 1.1rem;
+  }
+
+  /* =========================================================================
      13. RESPONSIVE (in breakpoint order)
      ========================================================================= */
 
@@ -2834,6 +3101,11 @@
 
   /* < 1024: drawer scrim + lead detail as a sheet */
   @media (max-width: 1023.98px) {
+    /* The slide rail sits above the editor once there is no room beside it. */
+    .hero-workspace {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
     .console-frame[data-nav="open"] .console-scrim,
     .console-side:target ~ .console-scrim {
       display: block;
@@ -2994,6 +3266,10 @@
     /* A phone thumb reaches the section's own save without aiming. */
     .settings-section-foot > .console-btn {
       inline-size: 100%;
+    }
+
+    .hero-preview {
+      aspect-ratio: 4 / 3;
     }
   }
 

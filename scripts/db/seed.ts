@@ -14,6 +14,8 @@ loadEnv();
 import { destroyDb, readDbConfig } from '../../src/lib/db/index';
 import { LIST_KEYS, ROLE_SEEDS, syncRoles } from '../../src/lib/auth/roles';
 import { syncLists } from '../../src/lib/content/lists';
+import { getHeroPhotos } from '../../src/lib/content/site';
+import { seedHeroFromPhotos } from '../../src/lib/hero/store';
 import { db } from '../../src/lib/db';
 
 async function main(): Promise<void> {
@@ -60,6 +62,21 @@ async function main(): Promise<void> {
     console.log(`DRY RUN — ${missing.length} list(s) would be created.`);
   } else {
     console.log(`Seeded ${missing.length} list(s).`);
+  }
+
+  // The hero becomes an editable slide list without changing a pixel: the seed writes the
+  // photographs the homepage already draws as the first rows, and only when none exist.
+  console.log('\nHero slider');
+  const photos = await getHeroPhotos();
+  const hero = await seedHeroFromPhotos(photos, null, { dryRun: !apply });
+  if (hero.skipped > 0) {
+    console.log(`  ${hero.skipped} slide(s) already in the database — nothing to convert.`);
+  } else if (hero.created === 0) {
+    console.log('  The imported page publishes no hero photograph — nothing to convert.');
+  } else if (!apply) {
+    console.log(`  DRY RUN — ${hero.created} slide(s) would be created from the current hero.`);
+  } else {
+    console.log(`  Seeded ${hero.created} slide(s) from the current hero.`);
   }
 
   const users = await db.selectFrom('users').select('id').where('deleted_at', 'is', null).execute();

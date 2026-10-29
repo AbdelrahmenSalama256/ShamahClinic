@@ -26,6 +26,8 @@ import type { BranchView, PageCard, Query, WithSeo } from '../wp';
 import { arabicRatio, hrefPair } from '../wp/lang';
 import { decodeEntities, firstParagraph, htmlToText, sanitizeHtmlBody } from '../wp/sanitize';
 import { heroPhotos } from '../wp/hero';
+import { readPublicHero } from '../hero/store';
+import { HERO_DEFAULTS, type HeroDocument } from '../hero/types';
 import { storyPhraseIndex } from '../wp/result-stories';
 import { parseHomeProse, splitHomeProse, type BilingualHomeBlock } from '../wp/home-prose';
 import { homeIntroFallback } from '../../data/about';
@@ -1084,6 +1086,23 @@ async function rawHomeBodies(): Promise<{ en: string; ar: string }> {
 /** Homepage hero backgrounds: the slider the page publishes, or the authored photo. */
 export async function getHeroPhotos(): Promise<PhotoSlot[]> {
   return heroPhotos((await rawHomeBodies()).en);
+}
+
+/**
+ * The slider the console edits, with the schedule already applied.
+ *
+ * An empty result is not an error: `hero_slides` starts empty on a database that has
+ * never been seeded, and the homepage then draws the photographs the imported page
+ * carries — exactly what it drew before this table existed. A database that cannot be
+ * reached answers the same way, because a marketing table must not be able to take the
+ * homepage down.
+ */
+export async function getHomeHero(): Promise<HeroDocument> {
+  try {
+    return await readPublicHero();
+  } catch {
+    return { slides: [], settings: { ...HERO_DEFAULTS } };
+  }
 }
 
 /** The homepage's own prose rows, read from the un-sanitized builder body. */

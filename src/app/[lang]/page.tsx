@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeBody } from "@/components/home/HomeBody";
-import { getHeroPhotos, getHome, getHomeIntro, getPageTitle } from "@/lib/content/site";
+import { getHeroPhotos, getHome, getHomeHero, getHomeIntro, getPageTitle } from "@/lib/content/site";
 import { getBannerOverride } from "@/lib/content/banners";
 import { getMergedTreatments, getFeaturedServices } from "@/lib/wp/treatments";
 import { routeLang } from "@/lib/route-lang";
@@ -22,10 +22,11 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   await guardPage('home');
   const lang = await routeLang();
-  const [home, treatments, hero, intro, services, servicesTitle, banner] = await Promise.all([
+  const [home, treatments, hero, heroSlides, intro, services, servicesTitle, banner] = await Promise.all([
     getHome({ offers: 4, articles: 4, lang }),
     getMergedTreatments(),
     getHeroPhotos(),
+    getHomeHero(),
     getHomeIntro(),
     getFeaturedServices(3),
     getPageTitle("our-services", {
@@ -38,10 +39,12 @@ export default async function HomePage() {
   return (
     <>
       <HomeHero
-        // A saved banner replaces the WordPress slider rather than joining it: the
-        // operator who picked one photo asked for that photo, not for it to lead a
-        // slideshow of ones they did not choose.
+        // A saved banner replaces the slider rather than joining it: the operator who
+        // picked one photo asked for that photo, not for it to lead a slideshow of ones
+        // they did not choose.
         photos={banner ? [banner] : hero}
+        slides={banner ? [] : heroSlides.slides}
+        settings={heroSlides.settings}
         branchCount={home.settings.branches}
         treatmentCount={treatments.length}
       />

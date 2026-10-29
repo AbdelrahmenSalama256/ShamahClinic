@@ -39,6 +39,7 @@ export interface ConsoleScreen {
     | 'articles'
     | 'offers'
     | 'pages'
+    | 'hero'
     | 'lists'
     | 'texts'
     | 'seo'
@@ -73,6 +74,9 @@ export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   { key: 'articles', path: '/console/articles', resource: 'article', action: 'read', entities: 'locales' },
   { key: 'offers', path: '/console/offers', resource: 'offer', action: 'read', entities: 'locales' },
   { key: 'pages', path: '/console/pages', resource: 'page', action: 'read', entities: 'locales' },
+  // The homepage's own photographs and headline. It is a page surface, not a new content
+  // type: the grant is `page`, so a role that may rewrite that page may change its slider.
+  { key: 'hero', path: '/console/hero', resource: 'page', action: 'read', entities: 'none' },
   // Each named list is its own section, so the aggregate row is never rendered; the
   // screen stays here because the page file and the `list read` grant still exist.
   { key: 'lists', path: '/console/lists', resource: 'list', action: 'read', entities: 'lists' },
