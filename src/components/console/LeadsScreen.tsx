@@ -31,12 +31,13 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
 } from "react";
-import { ChevronLeft, ChevronRight, Mail, Phone } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Mail, Phone } from "lucide-react";
 import { consoleCall, consoleRead } from "./client-api";
 import {
   Alert,
   Badge,
   Button,
+  ButtonLink,
   Card,
   Chip,
   ChipRow,
@@ -110,6 +111,15 @@ function queryOf(view: LeadsView): string {
   return line ? `?${line}` : "";
 }
 
+/** A download is the same filters as the screen, without the paging the file ignores. */
+function exportHref(view: LeadsView, format: "csv" | "google-ads"): string {
+  const params = new URLSearchParams({ format });
+  if (view.status) params.set("status", view.status);
+  if (view.source) params.set("source", view.source);
+  if (view.q) params.set("q", view.q);
+  return `/api/console/leads/export?${params.toString()}`;
+}
+
 /** A stable, timezone-proof stamp: the server and the browser must agree on this text. */
 function stamp(iso: string): string {
   return iso ? `${iso.slice(0, 10)} ${iso.slice(11, 16)}` : "";
@@ -126,6 +136,17 @@ function timeOf(iso: string): string {
 function sourceName(source: string, labels: Labels): string {
   const key = SOURCE_KEY[source];
   return key ? labels[key] : source;
+}
+
+const DEVICE_KEY: Record<string, MessageKey> = {
+  mobile: "leads.device.mobile",
+  tablet: "leads.device.tablet",
+  desktop: "leads.device.desktop",
+};
+
+function deviceName(device: string, labels: Labels): string {
+  const key = DEVICE_KEY[device];
+  return key ? labels[key] : "";
 }
 
 function valueOf(value: unknown): string {
@@ -500,6 +521,21 @@ export function LeadsScreen({
             ))}
           </Select>
         </label>
+        {initial.canExport && (
+          <div className="console-leads-export" title={labels["leads.export.hint"]}>
+            <ButtonLink size="sm" href={exportHref(view, "csv")} leading={<Download size={15} aria-hidden="true" />}>
+              {labels["leads.export.csv"]}
+            </ButtonLink>
+            <ButtonLink
+              size="sm"
+              variant="ghost"
+              href={exportHref(view, "google-ads")}
+              leading={<Download size={15} aria-hidden="true" />}
+            >
+              {labels["leads.export.google_ads"]}
+            </ButtonLink>
+          </div>
+        )}
       </div>
 
       <div className="console-leads-split">
@@ -835,6 +871,22 @@ export function LeadsScreen({
                     <>
                       <dt>{labels["leads.field.campaign"]}</dt>
                       <dd>{Object.values(detail.utm).join(" · ")}</dd>
+                    </>
+                  )}
+                  {detail.landingPage && detail.landingPage !== detail.pagePath && (
+                    <>
+                      <dt>{labels["leads.field.landing"]}</dt>
+                      <dd>{detail.landingPage}</dd>
+                    </>
+                  )}
+                  {(deviceName(detail.device, labels) || detail.city) && (
+                    <>
+                      <dt>{labels["leads.field.device"]}</dt>
+                      <dd>
+                        {[deviceName(detail.device, labels), detail.city]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </dd>
                     </>
                   )}
                 </dl>

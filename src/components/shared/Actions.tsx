@@ -62,6 +62,7 @@ export const BookButton: React.FC<BookButtonProps> = ({
   return (
     <button
       onClick={() => openBooking({ treatmentId, specialistId })}
+      data-cta={treatmentId ? "book-service" : specialistId ? "book-specialist" : "book"}
       className={`inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${pad} ${className}`}
     >
       <Calendar className="w-4 h-4" />

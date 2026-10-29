@@ -1833,6 +1833,15 @@
     background: var(--c-lead-c);
   }
 
+  /* The downloads sit at the far edge of the filter bar, a step quieter than it. */
+  .console-leads-export {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-inline-start: auto;
+  }
+
   /* Layout */
   .console-leads-split {
     display: grid;
@@ -3166,6 +3175,10 @@
     .console-list-bar .console-controls {
       flex: 1 1 100%;
       justify-content: flex-start;
+      margin-inline-start: 0;
+    }
+    .console-list-bar .console-leads-export {
+      flex: 1 1 100%;
       margin-inline-start: 0;
     }
   }

@@ -2,6 +2,16 @@ import { createHash } from "node:crypto";
 import { after, NextResponse } from "next/server";
 import { recordLead } from "@/lib/leads/store";
 import { drainOutbox, enqueueSheetsLead } from "@/lib/integrations/delivery";
+import { sanitizeAttribution } from "@/lib/tracking/attribution";
+import {
+  deviceOf,
+  isBot,
+  privacyRefused,
+  readTrackContext,
+  recordEvent,
+  sessionHash,
+  visitorHash,
+} from "@/lib/tracking/ingest";
 import { CF7_FIELDS, CF7_FORM_ID, LEAD_MODE, WHATSAPP, WP_ORIGIN } from "@/lib/wp/config";
 
 export const runtime = "nodejs";
@@ -18,6 +28,10 @@ interface LeadInput {
   lang?: string;
   /** `document.referrer` from the page that held the form; empty on a direct visit. */
   referrer?: string;
+  /** The first-party attribution the page had stored, read by `leadAttribution()`. */
+  attribution?: unknown;
+  /** The tab's random id; the server keeps only its hash. */
+  session?: string;
   _website?: string; // honeypot
 }
 
@@ -111,9 +125,29 @@ function sourceOf(input: LeadInput): string {
  * Persist the submission before answering. A visitor's WhatsApp deep link must survive a
  * database outage, so a failed insert is swallowed here: the console page is a record of
  * what the clinic was told, not the channel that tells it.
+ *
+ * Attribution arrives from the page (`leadAttribution()`), not from guesswork here: the
+ * browser knows the first campaign of the 400-day window, the landing page and the click
+ * ids. The referer header is only the fallback for a client with no JavaScript, and the
+ * legacy `utm` JSON is kept filled from the same values so the console row, the Sheets
+ * row and the new columns cannot disagree.
  */
-async function keepLead(input: LeadInput, ip: string, referer: string | null): Promise<void> {
-  const context = pageContext(referer);
+async function keepLead(input: LeadInput, ip: string, headers: Headers): Promise<void> {
+  const context = pageContext(headers.get('referer'));
+  const ctx = readTrackContext(headers);
+  const touch = sanitizeAttribution(input.attribution);
+
+  const utm: Record<string, string> = {};
+  for (const [key, value] of Object.entries({
+    utm_source: touch.source,
+    utm_medium: touch.medium,
+    utm_campaign: touch.campaign,
+    utm_term: touch.term,
+    utm_content: touch.content,
+  })) {
+    if (value) utm[key] = value;
+  }
+
   // Five-minute bucket: a double tap is one lead, two real enquiries are two.
   const bucket = Math.floor(Date.now() / 300_000);
   const key = createHash('sha256')
@@ -132,14 +166,47 @@ async function keepLead(input: LeadInput, ip: string, referer: string | null): P
       message: input.message ?? null,
       fields: Object.keys(fields).length > 0 ? fields : null,
       locale: input.lang === 'en' ? 'en' : 'ar',
-      pagePath: context.pagePath,
+      pagePath: context.pagePath || touch.landing,
       referrer: (input.referrer ?? '').slice(0, 512),
-      utm: context.utm,
+      utm: Object.keys(utm).length > 0 ? utm : context.utm,
+      landingPage: touch.landing,
+      firstReferrer: touch.referrer,
+      gclid: touch.gclid,
+      fbclid: touch.fbclid,
+      device: deviceOf(ctx.userAgent),
+      city: ctx.city,
+      campaign: {
+        source: touch.source,
+        medium: touch.medium,
+        campaign: touch.campaign,
+        term: touch.term,
+        content: touch.content,
+      },
+      sessionHash: input.session ? sessionHash(input.session) : null,
+      visitorHash: isBot(ctx.userAgent) ? null : visitorHash(ip, ctx.userAgent, ctx.day),
       idempotencyKey: key,
     });
     // The row exists before anything is queued, and a repeat submission adds nothing
     // to the sheet. Delivery failures leave the row in the outbox to be retried.
-    if (!saved.duplicate) await enqueueSheetsLead(saved.id);
+    if (!saved.duplicate) {
+      await enqueueSheetsLead(saved.id);
+      // Recorded here, not in the browser, so one submission is one conversion even
+      // when the form posts twice or the visitor reloads the confirmation step.
+      if (!privacyRefused(headers)) {
+        await recordEvent(
+          {
+            event: 'form_submit',
+            path: context.pagePath || touch.landing || '/',
+            locale: input.lang,
+            referrer: input.referrer,
+            attribution: touch,
+            session: input.session,
+            meta: { form: sourceOf(input) },
+          },
+          ctx,
+        ).catch(() => undefined);
+      }
+    }
   } catch {
     console.error('[lead] submission was not recorded');
   }
@@ -186,7 +253,7 @@ export async function POST(req: Request) {
   // Every submission lands in the leads table before the visitor is answered, so the
   // console page is the record of what the site actually received. WhatsApp and CF7
   // stay the delivery channels; this is the copy the clinic can work from.
-  await keepLead({ ...input, name, phone }, ip, req.headers.get('referer'));
+  await keepLead({ ...input, name, phone }, ip, req.headers);
   scheduleDrain();
 
   // Default mode: hand the user a prefilled WhatsApp deep link (no email sent).

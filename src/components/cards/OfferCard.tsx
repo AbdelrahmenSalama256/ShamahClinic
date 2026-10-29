@@ -118,6 +118,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
           <div className="mt-4 flex flex-col sm:flex-row gap-2">
             <button
               onClick={() => openBooking({ offerName: offer.title })}
+              data-cta="offer-card"
               className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-sm py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
             >
               <Calendar className="w-4 h-4" />

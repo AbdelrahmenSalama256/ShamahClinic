@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
@@ -8,6 +8,7 @@ import { Photo } from "@/components/ui/Photo";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { WhatsAppButton } from "@/components/shared/Actions";
 import type { Offer as UIOffer } from "@/data/offers";
+import { track } from "@/lib/tracking/first-party";
 
 interface OfferDetailClientProps {
   offer: UIOffer;
@@ -23,6 +24,9 @@ export const OfferDetailClient: React.FC<OfferDetailClientProps> = ({
   const { t, language } = useLanguage();
   const gallery = offer.images;
   const [shown, setShown] = useState(0);
+  useEffect(() => {
+    track("offer_view", { offer: slug });
+  }, [slug]);
   // A store row can lose its images between syncs, so the index is clamped to
   // what is actually here rather than trusting it.
   const active = gallery.length ? Math.min(shown, gallery.length - 1) : 0;

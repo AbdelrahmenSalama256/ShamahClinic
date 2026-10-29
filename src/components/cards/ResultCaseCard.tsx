@@ -33,6 +33,7 @@ import { getLocalizedHref } from "@/lib/locale";
 import type { Locale } from "@/lib/locale";
 import type { PhotoSlot } from "@/lib/images";
 import { CalendarDays, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
+import { track } from "@/lib/tracking/first-party";
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -178,6 +179,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
     setActiveIndex(Math.max(0, gallery.findIndex((item) => item.key === story.key)));
     setSlideDir(1);
     setIsOpen(true);
+    track("story_view", { story: story.key });
   };
 
   const xIn = (dir: number) => (rtl ? -40 * dir : 40 * dir);

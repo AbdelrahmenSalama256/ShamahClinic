@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
 import type { FaqItem } from "@/data/faq";
 import { Plus, Minus } from "lucide-react";
+import { track } from "@/lib/tracking/first-party";
 
 export const FaqAccordion: React.FC<{ items: FaqItem[] }> = ({ items }) => {
   const { t, language, formatNumber } = useLanguage();
@@ -21,7 +22,11 @@ export const FaqAccordion: React.FC<{ items: FaqItem[] }> = ({ items }) => {
             className="border-b border-[var(--border-control)]"
           >
             <button
-              onClick={() => setOpen(isOpen ? null : item.id)}
+              onClick={() => {
+                const next = isOpen ? null : item.id;
+                setOpen(next);
+                if (next) track("faq_open", { question: t(item.question.ar, item.question.en) });
+              }}
               aria-expanded={isOpen}
               className="group w-full flex items-start gap-4 sm:gap-6 py-6 sm:py-7 text-start cursor-pointer"
             >

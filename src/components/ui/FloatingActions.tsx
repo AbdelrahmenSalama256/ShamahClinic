@@ -59,6 +59,7 @@ export const FloatingActions: React.FC = () => {
         </a>
         <button
           onClick={() => openBooking()}
+          data-cta="floating-bar"
           className="flex-[2] bg-gold-gradient font-bold text-xs py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
         >
           <Calendar className="w-4 h-4" />

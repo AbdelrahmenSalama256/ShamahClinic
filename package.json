@@ -26,7 +26,8 @@
     "db:repair-plain": "tsx scripts/db/repair-plain.ts",
     "db:server-setup": "node scripts/db/server-setup.mjs",
     "db:move-data": "node scripts/db/move-data.mjs",
-    "backup": "node scripts/backup/run.mjs"
+    "backup": "node scripts/backup/run.mjs",
+    "track:maintain": "tsx scripts/tracking-maintain.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

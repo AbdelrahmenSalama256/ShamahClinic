@@ -16,6 +16,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingActions } from "@/components/ui/FloatingActions";
 import { CtaBand } from "@/components/ui/CtaBand";
+import { PageViewTracker } from "@/components/tracking/PageViewTracker";
 import type { BranchLite } from "@/data/branches";
 import type { NavItem } from "@/data/nav";
 import type { Specialist } from "@/data/specialists";
@@ -51,6 +52,7 @@ export const SiteShell: React.FC<{
         <ThemeProvider>
           <SpecialistsProvider specialists={specialists}>
             <BookingProvider branches={branches} treatments={treatments} specialists={specialists}>
+            <PageViewTracker />
             <div className="min-h-screen flex flex-col bg-[var(--bg-primary)] text-[var(--text-primary)]">
               <Navbar nav={nav} hiddenPaths={hiddenPaths} />
 

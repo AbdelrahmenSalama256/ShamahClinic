@@ -321,6 +321,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
 
             <button
               onClick={() => openBooking()}
+              data-cta="navbar"
               aria-label={t("احجزي موعدك", "Book appointment")}
               className="bg-gold-gradient font-medium text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] flex items-center gap-2 cursor-pointer"
             >
@@ -497,6 +498,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                       openMenu({ mobile: false });
                       openBooking();
                     }}
+                    data-cta="nav-menu"
                     className="w-full bg-gold-gradient font-medium py-3 rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer"
                   >
                     <Calendar className="w-4 h-4" />

@@ -342,6 +342,20 @@ export interface LeadsTable extends Editable {
   assignee_id: string | null;
   locale: Generated<string>;
   page_path: Generated<string>;
+  /** 010: where the visit that produced the lead started, and the first page it saw. */
+  landing_page: Generated<string>;
+  first_referrer: Generated<string>;
+  gclid: Generated<string>;
+  fbclid: Generated<string>;
+  device: Generated<string>;
+  utm_source: Generated<string>;
+  utm_medium: Generated<string>;
+  utm_campaign: Generated<string>;
+  utm_term: Generated<string>;
+  utm_content: Generated<string>;
+  city: Generated<string>;
+  session_hash: string | null;
+  visitor_hash: string | null;
   referrer: Generated<string>;
   utm: JsonOr<Record<string, string>>;
   idempotency_key: Generated<string>;
@@ -455,6 +469,18 @@ export interface StatsEventsTable {
   path: string;
   locale: Generated<string>;
   referrer_host: Generated<string>;
+  /** 010: the campaign this page view arrived on, and the landing page of the visit. */
+  utm_source: Generated<string>;
+  utm_medium: Generated<string>;
+  utm_campaign: Generated<string>;
+  utm_term: Generated<string>;
+  utm_content: Generated<string>;
+  gclid: Generated<string>;
+  fbclid: Generated<string>;
+  landing: Generated<string>;
+  session_hash: string | null;
+  city: Generated<string>;
+  meta: JsonOr<Record<string, string>>;
   device: Generated<string>;
   cta_key: Generated<string>;
   visitor_hash: string | null;
@@ -478,6 +504,29 @@ export interface StatsCtaDailyTable {
   day: string;
   cta_key: string;
   clicks: Generated<number>;
+}
+/** 010: named events per day, with distinct sessions beside the count. */
+export interface StatsNamedDailyTable {
+  day: string;
+  event_type: string;
+  events: Generated<number>;
+  sessions: Generated<number>;
+}
+/** 010: campaign traffic per day; '' in every source column is Direct. */
+export interface StatsSourcesDailyTable {
+  day: string;
+  source: Generated<string>;
+  medium: Generated<string>;
+  campaign: Generated<string>;
+  views: Generated<number>;
+  visitors: Generated<number>;
+}
+/** 010: city per day, filled only when a trusted proxy names one. */
+export interface StatsGeoDailyTable {
+  day: string;
+  city: Generated<string>;
+  views: Generated<number>;
+  visitors: Generated<number>;
 }
 export interface StatsRollupStateTable {
   id: number;
@@ -579,6 +628,9 @@ export interface Database {
   stats_daily: StatsDailyTable;
   stats_referrers_daily: StatsReferrersDailyTable;
   stats_cta_daily: StatsCtaDailyTable;
+  stats_named_daily: StatsNamedDailyTable;
+  stats_sources_daily: StatsSourcesDailyTable;
+  stats_geo_daily: StatsGeoDailyTable;
   stats_rollup_state: StatsRollupStateTable;
   hero_slides: HeroSlidesTable;
   hero_settings: HeroSettingsTable;

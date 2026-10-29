@@ -11,9 +11,10 @@
  *     quietly returning nothing.
  *  2. **structure**: a source scan, because the behaviour half can only catch a call
  *     that some test happens to reach. No `fetch(` may appear anywhere under
- *     `src/lib`, and `src/lib/wp/http.ts` — the live REST/Store-API client with its
- *     timeout and concurrency cap — must stay deleted. Something re-pointing the read
- *     path at the client's production host has to fail here, not in production.
+ *     `src/lib` apart from the first-party tracker's same-origin `/api/track` post,
+ *     and `src/lib/wp/http.ts` — the live REST/Store-API client with its timeout and
+ *     concurrency cap — must stay deleted. Something re-pointing the read path at the
+ *     client's production host has to fail here, not in production.
  *
  * The one live WordPress call left in the app is the Contact Form 7 forward in
  * `/api/v1/lead`, gated behind `LEAD_MODE=cf7` (the default is `whatsapp`). It is a
@@ -126,9 +127,19 @@ describe('the live WordPress client is gone', () => {
     expect(existsSync(join(ROOT, 'src/lib/wp/http.ts'))).toBe(false);
   });
 
-  it('keeps src/lib free of any fetch', () => {
-    const offenders = sources(join(ROOT, 'src/lib')).filter((file) => readFileSync(file, 'utf8').includes('fetch('));
+  it('keeps src/lib free of any network fetch, apart from the first-party tracker', () => {
+    const tracker = join('src', 'lib', 'tracking', 'first-party.ts');
+    const offenders = sources(join(ROOT, 'src/lib'))
+      .filter((file) => readFileSync(file, 'utf8').includes('fetch('))
+      .filter((file) => relative(ROOT, file) !== tracker)
+      .map((file) => relative(ROOT, file));
     expect(offenders).toEqual([]);
+
+    // The one exception may only speak to this app's own endpoint, never to a host.
+    const source = readFileSync(join(ROOT, tracker), 'utf8');
+    const targets = [...source.matchAll(/(?:fetch|sendBeacon)\(\s*(['"`])([^'"`]*)\1/g)].map((match) => match[2]);
+    expect(targets.length).toBeGreaterThan(0);
+    expect(targets).toEqual(targets.map(() => '/api/track'));
   });
 
   it('leaves the CF7 lead forward as the only live call in the app, and off by default', () => {

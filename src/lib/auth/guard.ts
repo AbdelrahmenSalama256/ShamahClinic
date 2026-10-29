@@ -31,6 +31,11 @@ export interface AuditPatch {
 export interface GuardResult<R> {
   status?: number;
   data: R;
+  /**
+   * A body that is not JSON — a CSV or XLSX download. The audit row still uses `data`,
+   * so an export is recorded by what it contained, not by the bytes it returned.
+   */
+  response?: Response;
   audit?: AuditPatch;
 }
 
@@ -145,6 +150,11 @@ export async function guard<I, R>(
       ipHash,
       requestId,
     });
+  }
+
+  if (result.response) {
+    for (const [name, value] of Object.entries(trace)) result.response.headers.set(name, value);
+    return result.response;
   }
 
   return new Response(JSON.stringify(result.data), {

@@ -278,11 +278,17 @@ describe('what a grant may see (BK-17a)', () => {
       leadRow(actors.Scoped.grants, {
         id: 'a', source: 'booking', formId: '', name: 'A', phone: '1', email: '', message: null, fields: null,
         status: 'new', assigneeId: null, locale: 'ar', pagePath: '', referrer: '', utm: null,
+        landingPage: '', firstReferrer: '', gclid: '', fbclid: '', device: 'unknown', city: '',
+        campaign: { source: '', medium: '', campaign: '', term: '', content: '' },
+        sessionHash: null, visitorHash: null,
         createdAt: '', updatedAt: '', spam: false,
       }),
       leadRow(actors.Scoped.grants, {
         id: 'b', source: 'contact-form', formId: '', name: 'B', phone: '2', email: '', message: null, fields: null,
         status: 'new', assigneeId: null, locale: 'ar', pagePath: '', referrer: '', utm: null,
+        landingPage: '', firstReferrer: '', gclid: '', fbclid: '', device: 'unknown', city: '',
+        campaign: { source: '', medium: '', campaign: '', term: '', content: '' },
+        sessionHash: null, visitorHash: null,
         createdAt: '', updatedAt: '', spam: false,
       }),
     ];

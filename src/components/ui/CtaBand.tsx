@@ -85,6 +85,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
             >
               <button
                 onClick={() => openBooking()}
+                data-cta="cta-band"
                 className="bg-gold-gradient font-bold text-sm px-4 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Calendar className="w-4 h-4" />

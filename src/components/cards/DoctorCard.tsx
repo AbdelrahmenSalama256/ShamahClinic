@@ -57,6 +57,7 @@ export const DoctorCard: React.FC<{
         </p>
         <button
           onClick={() => openBooking({ specialistId: doctor.id })}
+          data-cta="doctor-card"
           className="mt-3 sm:mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-xs sm:text-sm py-2.5 sm:py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
         >
           <Calendar className="w-4 h-4" />

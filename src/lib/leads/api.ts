@@ -17,6 +17,7 @@
 import { z } from 'zod';
 import { guard, jsonError, type GuardResult } from '../auth/guard';
 import { leadContactVisible } from '../auth/redaction';
+import { countGoogleAdsRows, countLeadRows, googleAdsCsvStream, leadCsvStream } from './export';
 import {
   addLeadNote,
   getLead,
@@ -165,3 +166,58 @@ export async function leadsHandler(req: Request): Promise<Response> {
 }
 
 export type { LeadNote, LeadRecord };
+
+/**
+ * `GET /api/console/leads/export?format=csv|google-ads&from=&to=&source=&status=&q=`
+ *
+ * A download is a read of every contact detail the clinic has, which is why it is its
+ * own action (`lead.export`), not `lead.read`. The response is streamed from batches so a
+ * year of leads never sits in memory, and the audit row is written before the first byte
+ * leaves — an export that is aborted halfway still happened.
+ */
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+function dayParam(req: Request, name: string): string {
+  const value = param(req, name);
+  return DAY.test(value) ? value : '';
+}
+
+export async function leadExportHandler(req: Request): Promise<Response> {
+  if (req.method !== 'GET') return jsonError(405, 'method_not_allowed');
+  return guard(req, { resource: 'lead', action: 'export', target: (request) => ({ leadSources: sourceOf(request) }) }, async (ctx) => {
+    const format = param(req, 'format') === 'google-ads' ? 'google-ads' : 'csv';
+    const status = param(req, 'status');
+    const filters = {
+      from: dayParam(req, 'from'),
+      to: dayParam(req, 'to'),
+      source: sourceOf(req),
+      status: isLeadStatus(status) ? status : null,
+      q: param(req, 'q').slice(0, 120),
+    };
+    const rows = format === 'google-ads' ? await countGoogleAdsRows(filters) : await countLeadRows(filters);
+    // Counts and filters only: the audit log must not become a second copy of the leads.
+    const summary = {
+      format,
+      from: filters.from,
+      to: filters.to,
+      source: filters.source,
+      status: filters.status,
+      filtered: Boolean(filters.q),
+      rows,
+    };
+    const body = format === 'google-ads' ? googleAdsCsvStream(filters) : leadCsvStream(filters, ctx.auth.user.grants);
+    const name = `${format === 'google-ads' ? 'google-ads-offline' : 'leads'}-${new Date().toISOString().slice(0, 10)}.csv`;
+    return {
+      data: summary,
+      audit: { entityType: 'lead', after: summary },
+      response: new Response(body, {
+        headers: {
+          'Content-Type': 'text/csv; charset=utf-8',
+          'Content-Disposition': `attachment; filename="${name}"`,
+          'Cache-Control': 'no-store',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      }),
+    };
+  });
+}

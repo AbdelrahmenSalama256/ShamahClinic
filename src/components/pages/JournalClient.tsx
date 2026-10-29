@@ -11,6 +11,7 @@ import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
 import type { ArticleCard as WpArticleCard, CategoryTerm } from "@/lib/wp/types";
 import type { PhotoSlot } from "@/lib/images";
+import { track } from "@/lib/tracking/first-party";
 
 interface Paged {
   items: WpArticleCard[];
@@ -130,6 +131,10 @@ export const JournalClient: React.FC<Props> = ({
     if (activeCategory) params.set("category", activeCategory);
     if (searchInput.trim()) params.set("search", searchInput.trim());
     const qs = params.toString();
+    // The question itself, because the gap between what people search and what is
+    // published is a content decision; a searched phrase that finds nothing is the
+    // article somebody should write.
+    if (searchInput.trim()) track("search_query", { q: searchInput.trim(), scope: "journal", hits: articles.length });
     router.push(`${blogBase}${qs ? `?${qs}` : ""}`, { scroll: false });
   };
 

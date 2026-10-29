@@ -69,6 +69,8 @@ export interface LeadsScreenData {
   counts: LeadPage['counts'];
   /** at least one status move or note is possible somewhere on this screen */
   writable: boolean;
+  /** a download is allowed by a grant that covers at least one source on this page */
+  canExport: boolean;
 }
 
 export async function leadsScreenData(input: {
@@ -90,6 +92,11 @@ export async function leadsScreenData(input: {
     per: page.per,
     counts: page.counts,
     writable: rows.some((row) => row.editable) || can(grants, 'lead', 'update', {}),
+    // An unscoped grant covers every source; a scoped one covers a download only when
+    // the page actually shows a lead from that source — otherwise the button would 403.
+    canExport:
+      can(grants, 'lead', 'export', {}) ||
+      rows.some((row) => can(grants, 'lead', 'export', { leadSources: row.source })),
   };
 }
 

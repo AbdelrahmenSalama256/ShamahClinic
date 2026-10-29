@@ -33,6 +33,23 @@ export interface LeadRecordInput {
   pagePath?: string;
   referrer?: string;
   utm?: Record<string, string> | null;
+  /** The page the visitor first landed on; empty when the browser sent no attribution. */
+  landingPage?: string;
+  /** The first external referrer of the 400-day window, not this page's. */
+  firstReferrer?: string;
+  gclid?: string;
+  fbclid?: string;
+  device?: string;
+  city?: string;
+  campaign?: {
+    source: string;
+    medium: string;
+    campaign: string;
+    term: string;
+    content: string;
+  } | null;
+  sessionHash?: string | null;
+  visitorHash?: string | null;
   /** A client-supplied key; omitted, a deterministic one is used so a double tap is one row. */
   idempotencyKey?: string;
 }
@@ -53,6 +70,22 @@ export interface LeadRecord {
   pagePath: string;
   referrer: string;
   utm: Record<string, string> | null;
+  landingPage: string;
+  firstReferrer: string;
+  gclid: string;
+  fbclid: string;
+  device: string;
+  campaign: {
+    source: string;
+    medium: string;
+    campaign: string;
+    term: string;
+    content: string;
+  };
+  city: string;
+  /** One-way; null when the browser sent no session id or the insert predates 010. */
+  sessionHash: string | null;
+  visitorHash: string | null;
   createdAt: string;
   updatedAt: string;
   spam: boolean;
@@ -139,6 +172,19 @@ interface LeadRowShape {
   page_path: unknown;
   referrer: unknown;
   utm: unknown;
+  landing_page: unknown;
+  first_referrer: unknown;
+  gclid: unknown;
+  fbclid: unknown;
+  device: unknown;
+  utm_source: unknown;
+  utm_medium: unknown;
+  utm_campaign: unknown;
+  utm_term: unknown;
+  utm_content: unknown;
+  city: unknown;
+  session_hash: unknown;
+  visitor_hash: unknown;
   created_at: unknown;
   updated_at: unknown;
   spam: unknown;
@@ -160,6 +206,21 @@ function mapLead(row: LeadRowShape): LeadRecord {
     pagePath: text(row.page_path),
     referrer: text(row.referrer),
     utm: asJson<Record<string, string>>(row.utm),
+    landingPage: text(row.landing_page),
+    firstReferrer: text(row.first_referrer),
+    gclid: text(row.gclid),
+    fbclid: text(row.fbclid),
+    device: text(row.device) || 'unknown',
+    campaign: {
+      source: text(row.utm_source),
+      medium: text(row.utm_medium),
+      campaign: text(row.utm_campaign),
+      term: text(row.utm_term),
+      content: text(row.utm_content),
+    },
+    city: text(row.city),
+    sessionHash: row.session_hash === null || row.session_hash === undefined ? null : String(row.session_hash),
+    visitorHash: row.visitor_hash === null || row.visitor_hash === undefined ? null : String(row.visitor_hash),
     createdAt: toIso(row.created_at),
     updatedAt: toIso(row.updated_at),
     spam: Number(row.spam ?? 0) === 1,
@@ -190,6 +251,19 @@ export async function recordLead(input: LeadRecordInput): Promise<{ id: string; 
         page_path: (input.pagePath ?? '').slice(0, 512),
         referrer: (input.referrer ?? '').slice(0, 512),
         utm: input.utm && Object.keys(input.utm).length > 0 ? json(input.utm) : null,
+        landing_page: (input.landingPage ?? '').slice(0, 512),
+        first_referrer: (input.firstReferrer ?? '').slice(0, 512),
+        gclid: (input.gclid ?? '').slice(0, 255),
+        fbclid: (input.fbclid ?? '').slice(0, 255),
+        device: (input.device ?? 'unknown').slice(0, 16),
+        utm_source: (input.campaign?.source ?? '').slice(0, 191),
+        utm_medium: (input.campaign?.medium ?? '').slice(0, 191),
+        utm_campaign: (input.campaign?.campaign ?? '').slice(0, 191),
+        utm_term: (input.campaign?.term ?? '').slice(0, 191),
+        utm_content: (input.campaign?.content ?? '').slice(0, 191),
+        city: (input.city ?? '').slice(0, 96),
+        session_hash: input.sessionHash ?? null,
+        visitor_hash: input.visitorHash ?? null,
         idempotency_key: key,
       })
       .execute();
@@ -216,6 +290,19 @@ const COLUMNS = [
   'page_path',
   'referrer',
   'utm',
+  'landing_page',
+  'first_referrer',
+  'gclid',
+  'fbclid',
+  'device',
+  'utm_source',
+  'utm_medium',
+  'utm_campaign',
+  'utm_term',
+  'utm_content',
+  'city',
+  'session_hash',
+  'visitor_hash',
   'created_at',
   'updated_at',
   'spam',
@@ -292,6 +379,115 @@ export async function listLeads(query: LeadQuery): Promise<LeadPage> {
     per,
     counts,
   };
+}
+
+/** What an export may narrow by. `from`/`to` are calendar days (`YYYY-MM-DD`), inclusive. */
+export interface LeadExportFilters {
+  from: string;
+  to: string;
+  source: string | null;
+  status: LeadStatus | null;
+  q: string;
+}
+
+/**
+ * Where a batch stopped. `createdAt` is the database's own `DATE_FORMAT` text, not a JS
+ * date: the column is DATETIME(3) and the driver's Date parsing would shift it by the
+ * process timezone, so handing it straight back keeps the comparison inside the server.
+ */
+export interface LeadExportCursor {
+  createdAt: string;
+  id: string;
+}
+
+export interface LeadExportRow {
+  lead: LeadRecord;
+  cursor: LeadExportCursor;
+}
+
+export const EXPORT_BATCH = 500;
+
+function nextDay(day: string): string {
+  const date = new Date(`${day}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function exportFiltersOf(filters: LeadExportFilters): RawBuilder<SqlBool>[] {
+  const where = filtersOf({ source: filters.source, q: filters.q });
+  if (filters.status) where.push(sql<SqlBool>`${sql.ref('status')} = ${filters.status}`);
+  if (filters.from) where.push(sql<SqlBool>`${sql.ref('created_at')} >= ${filters.from}`);
+  if (filters.to) where.push(sql<SqlBool>`${sql.ref('created_at')} < ${nextDay(filters.to)}`);
+  return where;
+}
+
+async function exportBatch(where: RawBuilder<SqlBool>[], cursor: LeadExportCursor | null, limit: number): Promise<LeadExportRow[]> {
+  const all = [...where];
+  if (cursor) {
+    all.push(
+      sql<SqlBool>`(${sql.ref('created_at')} < ${cursor.createdAt} OR (${sql.ref('created_at')} = ${cursor.createdAt} AND ${sql.ref('id')} < ${cursor.id}))`,
+    );
+  }
+  const rows = await db
+    .selectFrom('leads')
+    .select([...COLUMNS, sql<string>`DATE_FORMAT(${sql.ref('created_at')}, '%Y-%m-%d %H:%i:%s.%f')`.as('export_cursor')])
+    .where(sql<SqlBool>`(${sql.join(all, sql` AND `)})`)
+    .orderBy(sql.ref('created_at'), 'desc')
+    .orderBy(sql.ref('id'), 'desc')
+    .limit(Math.min(EXPORT_BATCH, Math.max(1, limit)))
+    .execute();
+  return rows.map((raw) => {
+    const row = raw as unknown as LeadRowShape & { export_cursor?: unknown };
+    return { lead: mapLead(row), cursor: { createdAt: text(row.export_cursor), id: text(row.id) } };
+  });
+}
+
+/** One batch of leads for an export, newest first, or fewer than `limit` at the end. */
+export async function leadExportBatch(
+  filters: LeadExportFilters,
+  cursor: LeadExportCursor | null,
+  limit = EXPORT_BATCH,
+): Promise<LeadExportRow[]> {
+  return exportBatch(exportFiltersOf(filters), cursor, limit);
+}
+
+export async function countLeadExport(filters: LeadExportFilters): Promise<number> {
+  const row = await db
+    .selectFrom('leads')
+    .select(sql<number>`COUNT(*)`.as('total'))
+    .where(sql<SqlBool>`(${sql.join(exportFiltersOf(filters), sql` AND `)})`)
+    .executeTakeFirst();
+  return Number(row?.total ?? 0);
+}
+
+/**
+ * The rows Google Ads will accept as an offline conversion: a click id, a lead that
+ * reached the appointment (booked/done), and not spam. A lead still at `new` has not
+ * happened yet, and sending it would teach Ads to bid for browsers instead of patients.
+ */
+function offlineWhere(filters: LeadExportFilters): RawBuilder<SqlBool>[] {
+  const where = exportFiltersOf({ ...filters, status: null });
+  where.push(sql<SqlBool>`${sql.ref('status')} IN ('booked', 'done')`);
+  where.push(sql<SqlBool>`${sql.ref('gclid')} <> ''`);
+  where.push(sql<SqlBool>`${sql.ref('spam')} = 0`);
+  return where;
+}
+
+export async function leadOfflineBatch(
+  filters: LeadExportFilters,
+  cursor: LeadExportCursor | null,
+  limit = EXPORT_BATCH,
+): Promise<LeadExportRow[]> {
+  return exportBatch(offlineWhere(filters), cursor, limit);
+}
+
+export async function countLeadOffline(filters: LeadExportFilters): Promise<number> {
+  const row = await db
+    .selectFrom('leads')
+    .select(sql<number>`COUNT(*)`.as('total'))
+    .where(sql<SqlBool>`(${sql.join(offlineWhere(filters), sql` AND `)})`)
+    .executeTakeFirst();
+  return Number(row?.total ?? 0);
 }
 
 /** Move a lead along the pipeline. Returns the row as it now stands, or null if it is gone. */

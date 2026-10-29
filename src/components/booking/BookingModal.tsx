@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { DatePicker } from "@/components/ui/DatePicker";
 import { trackEvent } from "@/lib/tracking/client";
 import { EVENT_NAMES } from "@/lib/tracking/events";
+import { leadAttribution, trackOnce } from "@/lib/tracking/first-party";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -170,6 +171,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       message: notes.trim() || undefined,
       lang: language,
       referrer: document.referrer,
+      ...leadAttribution(),
     };
     try {
       const res = await fetch("/api/v1/lead", {
@@ -694,6 +696,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       type="text"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
+                      onFocus={() => trackOnce("form_start", "form_start:booking", { form: "booking" })}
                       placeholder={t(
                         "مثال: سارة أحمد محمود",
                         "e.g. Sarah Ahmed",

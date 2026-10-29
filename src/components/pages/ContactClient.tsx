@@ -15,6 +15,7 @@ import type { PhotoSlot } from "@/lib/images";
 import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/tracking/client";
 import { EVENT_NAMES } from "@/lib/tracking/events";
+import { leadAttribution, trackOnce } from "@/lib/tracking/first-party";
 import {
   MessageCircle,
   Phone,
@@ -120,6 +121,7 @@ export const ContactClient: React.FC<{
           message: form.message.trim() || undefined,
           lang: language,
           referrer: document.referrer,
+          ...leadAttribution(),
           _website: honeypot,
         }),
       });
@@ -295,7 +297,12 @@ export const ContactClient: React.FC<{
                   </div>
                 </Reveal>
               ) : (
-                <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+                <form
+                  onSubmit={handleSubmit}
+                  onFocus={() => trackOnce("form_start", "form_start:contact", { form: "contact" })}
+                  className="space-y-5"
+                  noValidate
+                >
                   {/* Honeypot — humans never see or fill this; bots do. */}
                   <input
                     type="text"
@@ -569,6 +576,7 @@ export const ContactClient: React.FC<{
                     <button
                       type="button"
                       onClick={() => openBooking()}
+                      data-cta="contact-form"
                       className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--gold-end)] font-bold text-sm py-3.5 hover:bg-[var(--blush-light)] transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
                     >
                       <Calendar className="w-4 h-4" />

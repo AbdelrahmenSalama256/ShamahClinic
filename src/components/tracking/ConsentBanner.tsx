@@ -11,7 +11,10 @@ import {
 } from "@/lib/tracking/consent";
 
 /**
- * One question, asked once, before any measurement script reaches the page.
+ * One question, asked once, before any third-party script reaches the page.
+ *
+ * Our own statistics run regardless: they set no cookie, store no address, and obey
+ * DNT/GPC before anything is sent, so this choice governs the vendors only.
  *
  * "Reject" is as easy to press as "Accept" and is remembered the same way: a banner
  * whose refusal takes more clicks is a dark pattern, and a choice that is not stored
@@ -60,8 +63,8 @@ export function ConsentBanner({ lang, hasTags }: { lang: Locale; hasTags: boolea
       >
         <p className="flex-1 text-sm leading-relaxed text-[var(--text-secondary)]">
           {ar
-            ? "نستخدم أدوات قياس لمعرفة الصفحات الأكثر زيارة وتحسين الموقع. لا تُحمَّل قبل موافقتك، ولا نبيع بياناتك. "
-            : "We use measurement tools to see which pages are visited and to improve the site. They load only after you agree, and we do not sell your data. "}
+            ? "نُبقي إحصاءات مجهولة على موقعنا (بدون ملفات تعريف ارتباط وبدون بيانات شخصية) لنعرف الصفحات الأكثر زيارة. أدوات الطرف الثالث مثل Google لا تُحمَّل قبل موافقتك، ولا نبيع بياناتك. "
+            : "We keep anonymous, cookie-free statistics on our own site to see which pages are visited. Third-party tools such as Google load only after you agree, and we do not sell your data. "}
           <Link
             href={getLocalizedHref("/privacy", lang)}
             className="font-bold text-[var(--text-primary)] underline decoration-[var(--gold)] underline-offset-4"

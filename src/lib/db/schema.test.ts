@@ -206,9 +206,11 @@ describe('schema <-> types', () => {
   });
 
   it('splits every migration into statements that each end in a complete sentence', () => {
+    // ALTER is additive by rule (010 only adds columns, indexes and tables): a statement
+    // that started with DROP or UPDATE would be a rewrite, not a migration.
     for (const file of migrationFiles()) {
       for (const statement of splitStatements(file.contents)) {
-        expect(statement, file.name).toMatch(/^(CREATE|INSERT)/i);
+        expect(statement, file.name).toMatch(/^(CREATE|INSERT|ALTER)/i);
       }
     }
   });
