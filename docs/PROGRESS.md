@@ -3821,7 +3821,227 @@ parts, and the hash is on all four.
       `src/lib/copy/catalog.ts`, and the five test files named above. Migration to run on any
       other database: `npm run db:migrate -- --apply` (already applied to dev and test here).
 
-## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
+## TR — first-party tracking and lead attribution (the console brief, stage 2 of six — `36d450a`)
+
+Same rules as stage 1: audit first, keep what works, never invent a number. Before this stage
+the site had `utm` JSON and `page_path` on a lead and a `tracking` module of third-party
+vendors; the six tables from migration `006_stats.sql` existed and nothing wrote them, and the
+two campaign click ids, the landing page, the device and the city had nowhere to go. So a
+Google Ads booking and a walk-in were the same row to every report. This stage adds the
+missing columns, writes the events the site already knew how to observe, and makes the leads
+page able to hand a marketer the file they need — without a third-party script, a cookie or a
+stored address. It is one commit (`36d450a`) because the migration, the ingest endpoint, the
+client and the export share one shape; the rows below record the parts, and the hash is on all
+six.
+
+- [x] TR-1 — the columns a lead needs to say where it came from, and the aggregates that make it readable — `36d450a`
+
+      **What existed.** `leads` had `utm` (JSON), `referrer` and `page_path` since `004`;
+      `006_stats.sql` had created `stats_events`, `stats_daily`, `stats_referrers_daily`,
+      `stats_cta_daily` and the rollup watermark, but no code read or wrote them. There was
+      no column for a Google click id, a Facebook click id, the landing page, the device or
+      the city, so the reports this stage exists for could not be built without one.
+
+      **The migration.** `src/lib/db/migrations/010_tracking.sql` adds `landing_page`,
+      `first_referrer`, `gclid`, `fbclid`, `device`, the five `utm_*` columns, `city`,
+      `session_hash` and `visitor_hash` to `leads`; adds the campaign columns, both click
+      ids, `landing`, `session_hash`, `city` and a capped `meta` JSON to `stats_events`; and
+      creates `stats_named_daily` (one row per day and event, with `sessions`), 
+      `stats_sources_daily` (day × source × medium × campaign) and `stats_geo_daily`
+      (day × city). Indexes: `leads_campaign (utm_source, created_at)`, `leads_gclid`,
+      `stats_events_source (day, utm_source)`, `stats_events_session (session_hash)`. Every
+      new column is `NOT NULL DEFAULT ''` except the two hashes, which are nullable because
+      a visitor we refused to hash is a row with no visitor — not a fake one.
+
+      **Nothing is backfilled.** A lead written before this migration has empty campaign
+      columns and an empty `referrer`, and every read calls that **Direct / Unknown** rather
+      than guessing from the path. The migration says so in its header because inventing a
+      source for a historical lead would be worse than admitting there was one.
+
+      **The types.** `src/lib/db/types.ts` gains the columns and tables with the exact shapes
+      the drift test compares, and the two tests that count migrations (`schema.test.ts`,
+      `server-setup.test.ts`) move to 10 / `010_tracking.sql`.
+
+- [x] TR-2 — `POST /api/track`: a closed list of events, a refusal for DNT, bots flagged and never hashed — `36d450a`
+
+      **The endpoint.** `src/app/api/track/route.ts` is public by design (a visitor is not
+      signed in), so validation is the gate and there is no way to make it a free-form log.
+      In order: a same-origin `Origin` check when one is present; a **204 and nothing
+      written** for `DNT: 1` or `Sec-GPC: 1`; a 413 over 8 KB; a per-instance rate limit of
+      120 requests a minute keyed on the forwarded address (falling back to the host when
+      there is none); a JSON parse; then `trackSchema`, whose `event` is
+      `z.enum(TRACK_EVENTS)` and whose body has no field for a name, phone, email or free
+      text beyond a `meta` map capped at 8 keys × 120 characters. A failed insert is logged
+      and still answered 204: tracking must not be able to fail a page.
+
+      **The twelve names.** `src/lib/tracking/names.ts` is the contract — `page_view`,
+      `whatsapp_click`, `call_click`, `directions_click`, `form_start`, `form_submit`,
+      `cta_click`, `nav_click`, `faq_open`, `search_query`, `story_view`, `offer_view` — with
+      no imports, so the client can use it without dragging the database along.
+
+      **What is never stored.** `src/lib/tracking/ingest.ts` derives everything from the
+      request: a bot is recorded with `bot = 1` and **no** visitor hash (the row stays, so a
+      scraping spike is visible, and every aggregate filters it out); the IP is used for the
+      rate limit and a visitor hash `HMAC(SESSION_SECRET, day|ip|ua)` and stored for neither;
+      the tab's id is stored only as `sha256`; the city comes from a proxy header
+      (`cf-ipcity`, `x-vercel-ip-city`, …) and is `''` with no proxy; the referrer is stored
+      as a host, never a URL; the path loses its query string. The day is **Cairo's**, via
+      `Intl` with `Africa/Cairo`, because a UTC boundary would move three evening hours into
+      the wrong column every night. Retention is 400 days.
+
+      **Opportunistic maintenance.** The route schedules `maintain()` through `after()`, at
+      most once per 30 minutes per instance, with the same `try { after(run) } catch { void
+      run() }` fallback the lead route already uses, because `after()` throws outside a
+      request scope. A host with cron can run the same work with `npm run track:maintain`.
+
+- [x] TR-3 — the browser keeps a first touch and a tab id, in storage, and no third-party script got added — `36d450a`
+
+      **The client.** `src/lib/tracking/first-party.ts` and `attribution.ts` are pure enough
+      to test without a window: the first campaign of a 400-day window lives in
+      `localStorage`, the tab's random id and the campaign it entered on live in
+      `sessionStorage`, and private-mode failures fall back to a page-lifetime memory copy
+      instead of throwing into a component. `captureTouch()` only overwrites the session
+      touch with a non-direct arrival, so a visitor who lands on a campaign, browses
+      internally and then opens a direct page is still the campaign's lead. `track()` prefers
+      `sendBeacon` (a WhatsApp click unloads the page) and falls back to a keepalive `fetch`;
+      it is fire-and-forget, because the event it loses is worth less than the page it
+      would block. `privacyAllows()` checks `doNotTrack`, `msDoNotTrack` and
+      `globalPrivacyControl` before anything is sent.
+
+      **One page view per path per tab.** `src/components/tracking/PageViewTracker.tsx`
+      renders nothing, takes the pathname from `usePathname()`, and de-duplicates through the
+      tab's seen-list — the App Router keeps the component mounted across navigations, so the
+      path is the thing that changes. It is mounted once in `SiteShell`, the boundary every
+      public page already shares.
+
+      **Consent does not gate first-party measurement, and the banner now says so.** The
+      cookie choice governs the vendors only; our half sets no cookie, stores no address and
+      honours DNT before it sends anything. `ConsentBanner` and `TrackingTags` were reworded
+      and extended accordingly: every phone, WhatsApp and maps link is counted even with no
+      vendor configured, and the vendor conversions fire only when `planIsEmpty(plan)` is
+      false. The existing GA/Ads snippet path is untouched.
+
+- [x] TR-4 — every lead carries the campaign, the landing page and the click ids; the named events are wired — `36d450a`
+
+      **The lead.** `BookingModal` and `ContactClient` attach `leadAttribution()` — the
+      effective touch plus the tab id — to their own request. `src/app/api/v1/lead/route.ts`
+      sanitises it server-side (`sanitizeAttribution`), fills the five `utm_*` columns, both
+      click ids, `landing_page`, `first_referrer`, `device` and `city`, keeps the legacy
+      `utm` JSON consistent with those values for the console row and the Sheets row, and
+      derives the session/visitor hashes the same way the event endpoint does. A duplicate
+      submission still adds nothing to the sheet **and** records no second `form_submit`:
+      the conversion is written server-side after a successful insert, not by the browser, so
+      a double tap or a reload of the confirmation step is one conversion. A request that
+      sends DNT is stored as a lead (the clinic must still call the person) but writes no
+      event.
+
+      **The events.** `TrackingTags`' single click listener now also emits `call_click`,
+      `whatsapp_click` (both with `location` `chrome`/`page` and a 60-character label),
+      `directions_click` and `nav_click` (header/footer internal links only); a
+      `data-cta="…"` attribute on Navbar, booking, CtaBand, FloatingActions, DoctorCard,
+      OfferCard and the contact form emits `cta_click` with a stable key. Form focus emits
+      `form_start` once per tab per form (`trackOnce`); the journal search emits
+      `search_query` with the scope and hit count; a result story emits `story_view`; an
+      offer page emits `offer_view`; opening an FAQ emits `faq_open` with the question. All
+      of it goes through the same closed list, and none of it names a person.
+
+- [x] TR-5 — a lead export a marketer can open, a per-day rollup that is safe to re-run, and 400-day retention — `36d450a`
+
+      **The export reader.** `src/lib/leads/store.ts` gains `leadExportBatch`,
+      `countLeadExport`, `leadOfflineBatch` and `countLeadOffline`: a keyset cursor on
+      `(created_at, id)` using the database's own `DATE_FORMAT(…, '%Y-%m-%d %H:%i:%s.%f')`
+      text, 500 rows at a time, newest first. The cursor is text on purpose — a JS `Date`
+      would drift through mysql2's parsing and silently skip or repeat a row at a batch
+      boundary. The filters are the same ones the screen uses (from/to/source/status/q).
+
+      **The files.** `src/lib/leads/export.ts` streams two CSVs. The lead file has a stable
+      English header (`id, created_at, name, phone, …, utm_source, …, gclid, fbclid, device,
+      city, message, fields`) so a saved formula survives a locale switch, a UTF-8 BOM so
+      Excel reads Arabic as Arabic, RFC 4180 quoting, and an apostrophe prefix on any cell
+      starting `= + - @` so a submitted message is read, not executed. Contact fields go
+      through the existing `redactLead`, so an export can never show more than the caller's
+      grant. The Google Ads file is the offline-conversion format
+      (`Google Click ID,Conversion Name,Conversion Time,Conversion Value,Conversion
+      Currency`), only `booked`/`done`/non-spam rows with a `gclid`, in Cairo time with an
+      explicit offset, and value/currency left empty because nothing on the site knows them.
+
+      **Through the one enforcement path.** `leadExportHandler` runs inside `guard({ resource:
+      'lead', action: 'export' })`; `GuardResult` gained an optional `response`, so a
+      download still writes the `lead.export` audit row (filters + row count only, never
+      contact data) and still receives `x-request-id`. A Viewer gets 403. The leads screen
+      shows the two buttons only when `canExport` is true — an unscoped grant, or a grant
+      that covers a source actually on the page — and both hrefs carry the current status,
+      source and search, so the file matches what the person is looking at. Labels are in
+      both languages; the buttons wrap to their own row under 900 px.
+
+      **The rollup.** `src/lib/tracking/rollup.ts` rebuilds a day with DELETE+INSERT from
+      `stats_events WHERE bot = 0`, so running it twice gives the same numbers. `maintain()`
+      rebuilds only the distinct days that received events since the watermark (a whole-span
+      recompute would wipe days whose raw events were pruned past 400 days and report zero
+      traffic for real history), then prunes, then advances the watermark to the `MAX(id)` of
+      closed days so today's events are picked up tomorrow. `pruneEvents()` deletes raw rows
+      older than the window and leaves the daily counts. `scripts/tracking-maintain.ts`
+      (`npm run track:maintain`) is the cron entry point and prints either the rebuilt range
+      or "No closed day had new events."
+
+- [x] TR-6 — gates, a browser proof on the production build, and this record — `36d450a`
+
+      **Gates.** `npm run typecheck` clean, `npm run lint` clean (0 errors, 0 warnings),
+      `npm run copy:check` current (the catalog regeneration moved line numbers and the
+      component count only), `npm run build` exit 0, full suite **44 files / 839 tests
+      passed**. The new `tests/tracking-pipeline.test.ts` contributes 13 DB-level tests:
+      DNT is 204 and writes nothing; an attributed row stores `instagram`/`www.instagram.com`/
+      `mobile`/`Cairo` and a 64-hex visitor hash while the query string and the raw address
+      are absent; a bot is `bot = 1` with a null visitor hash; an unknown event is 400; the
+      limiter allows 120 and refuses 121; a rollup counts 2 views / 2 visitors with the bot
+      excluded, is idempotent, advances the watermark and prunes a 2020 row; the CSV starts
+      with `EF BB BF`, carries the attribution columns, `google,cpc,autumn,filler,ad-1`,
+      `'=1+1` and `""quoted""`; a Viewer is 403; the Google Ads file is exactly two lines
+      with `G-TRK-123` and a Cairo offset; and the audit row names `google-ads` without the
+      phone number. `tests/no-wp-network.test.ts`'s "no `fetch(` under `src/lib`" rule was
+      narrowed to permit exactly one call — the tracker's — and now also asserts that every
+      `fetch`/`sendBeacon` target in that file is the literal `/api/track`, so the exception
+      cannot quietly become a request to another host.
+
+      **The browser proof** ran the built artifact on `:3345` against `shamah_cms_test`
+      (`.tmp/tr-proof-seed.ts` and `.tmp/tr-proof-clean.ts`, both gitignored; the marker rows
+      and the proof accounts were removed afterwards). A real Owner signed in through
+      `/console/login`; `/console/leads` showed both seeded leads, the status counts and the
+      two export buttons in Arabic. Clicking **«تنزيل CSV»** issued
+      `GET /api/console/leads/export?format=csv` → 200 `text/csv; charset=utf-8`,
+      `attachment; filename="leads-2026-10-29.csv"`, `no-store`, and an `x-request-id`; the
+      body began `EF BB BF`, the header carried `utm_source`/`landing_page`/`gclid`, and the
+      file held the Instagram referrer, the campaign tuple and the guarded `'=1+1` cell.
+      Typing `quoted` in the search narrowed the list to one row and both button hrefs became
+      `…?format=…&q=quoted`; the Google Ads download then held exactly one conversion,
+      `G-PROOF-777,Appointment booked,2026-10-29 15:41:09+03:00,,`. The database held three
+      `lead.export` audit rows with the filter summary and row counts, and none contained
+      the phone number. Signing out and back in as a Viewer removed both buttons and returned
+      `403 {"error":"forbidden","action":"lead.export"}` for the same URL.
+
+      **What the browser could not show.** The in-app automation viewport is fixed at
+      510 × 425, so the desktop layout, the ≤ 900 px wrap of the export buttons and the
+      download shelf itself (the file was inspected through the page's own authenticated
+      fetch and the network log, not through a saved file) were not seen as pixels. The
+      scheduled maintenance never ran during the proof because it needs 30 minutes or a
+      cron; its behaviour is covered by the DB-level test. Those remain for the owner's eye.
+
+      **Files.** `src/lib/db/migrations/010_tracking.sql`, `src/lib/tracking/{attribution,
+      names,first-party,ingest,rollup}.ts`, `src/app/api/track/route.ts`,
+      `src/components/tracking/{PageViewTracker,TrackingTags,ConsentBanner}.tsx`,
+      `src/lib/leads/{store,export,api,view}.ts`,
+      `src/app/api/console/leads/export/route.ts`, `src/components/console/LeadsScreen.tsx`,
+      `src/app/api/v1/lead/route.ts`, `src/lib/auth/guard.ts` (`GuardResult.response`), the
+      eleven components carrying a `data-cta` or a named event, `src/lib/db/types.ts`,
+      `src/lib/console/messages.ts`, `src/app/(console)/console/console.css`,
+      `src/lib/copy/catalog.ts`, `scripts/tracking-maintain.ts`, `package.json`, and the four
+      test files named above. Migration to run on any other database:
+      `npm run db:migrate -- --apply` (already applied to dev and test here). No new
+      dependency, no new environment variable (`SESSION_SECRET` is already required).
+
+## Known gaps / notes
+
+- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
 - **A byte-for-byte HTML comparison is only stable on some routes.** `/` hashes the same across cold renders of the
