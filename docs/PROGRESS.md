@@ -3687,6 +3687,140 @@ here and run by the owner; no secret is asked for or stored.
       time as an unnamed danger alert at `ConsoleEditor.tsx:399`; and the two language tabs of a
       text field still share one accessible name, which is 14.x work, not this card's.
 
+## HS — the hero slider (the console brief of 2026-10-29, stage 1 of six)
+
+The brief's order is fixed: (1) hero slider, (2) tracking + leads attribution, (3) overview,
+(4) reports center, (5) SEO center, (6) section insights — "Do not stop between stages unless
+blocked." This section is stage 1. The governing rule for every stage: audit first; keep what
+works, build what is missing, never fake data. The stage lands as one commit (`dace7cf`)
+because its four rows share one migration and one document shape; the rows below record the
+parts, and the hash is on all four.
+
+- [x] HS-1 — `hero_slides` + `hero_settings`, the typed document, and the seed that changes nothing — `dace7cf`
+
+      **What existed.** The homepage hero was `heroPhotos()` scraping `rs-slide` markup out of
+      the imported WordPress home-page body (`src/lib/wp/hero.ts`, read by `getHeroPhotos` in
+      `src/lib/content/site.ts`). It could not be reordered, captioned, scheduled or seen; the
+      console had no screen for it. There was a single-photo banner override, which stays.
+
+      **The schema.** `src/lib/db/migrations/009_hero.sql` adds `hero_slides` (one row per
+      slide: `position`, `active`, `image`, optional `image_mobile`, per-language
+      `alt`/`heading`/`sub`/CTA label+href, optional `starts_at`/`ends_at`, `version`, soft
+      `deleted_at`) and a one-row `hero_settings` seeded with the behaviour the site already
+      had: autoplay on, 7 000 ms, 1 200 ms fade, pause on hover, loop, dots and arrows off.
+      There is deliberately **no draft/publish pair**: a slide is a photograph plus optional
+      copy, so `active` + an optional schedule *is* the draft. `alt` is `NOT NULL DEFAULT ''`
+      — "nobody wrote one" — because the console refuses to activate such a slide and the
+      public component then hides it from assistive tech rather than inventing a description.
+      `looping` is spelled that way because `loop` is a MariaDB stored-program keyword.
+
+      **The types.** `src/lib/hero/types.ts` holds `HERO_DEFAULTS`, `HERO_LIMITS` (2 000–20 000
+      ms interval, 200–4 000 ms fade, 50 slides), `HERO_ISSUE` codes, `normalizeHeroDocument`,
+      `validateHero` (active slide needs image and alt; href must be rooted or `https`, never
+      `javascript:`; schedule must end after it starts; ids unique), `isSafeHref`,
+      `slideInWindow` and `visibleSlides`. The store (`src/lib/hero/store.ts`) reads both tables,
+      writes the whole document in **one transaction** (known ids are reused, unknown ids are
+      new rows, a soft-deleted id is never resurrected), and `seedHeroFromPhotos` converts the
+      current photographs into slides once, only when the table is empty.
+
+      **The seed changes nothing visible.** `scripts/db/seed.ts` calls `seedHeroFromPhotos`
+      after the lists and prints a dry-run line without `--apply`. On the dev database the
+      homepage draws the same photographs it drew before; the only difference is that they now
+      have rows. The type file also had to stop claiming `created_at` on `hero_settings`: it is
+      the one stamped-looking table without one, and `tests/schema.test.ts`'s drift check
+      compares every column, so the interface now names `updated_at` explicitly.
+
+- [x] HS-2 — the public hero draws DB slides, falls back to the old photographs, and stays one static frame when there is one — `dace7cf`
+
+      **What is new.** `getHomeHero()` (`src/lib/content/site.ts`) reads `readPublicHero()` and
+      catches every failure into `{slides: [], settings: HERO_DEFAULTS}`, so a fresh database or
+      an unreachable one still draws the imported photographs instead of a 500. The home page
+      passes `slides` and `settings` only when no banner override exists — a saved banner still
+      replaces the slider rather than leading it.
+
+      **The component.** `src/components/home/HomeHero.tsx` stacks frames absolutely and
+      crossfades opacity, so nothing reflows (no CLS). The first frame is `priority`/eager and
+      the rest are lazy; each slide's mobile image is art-directed through `<picture>` with
+      `sizes` that never downloads both. One slide means `multiple === false`: no timer, no
+      controls, no live region. Reduced motion (`useReducedMotion`) removes the fade and the
+      entrance motion. `role="region"` + `aria-roledescription="carousel"`, the pause button
+      with `aria-pressed`, arrows and dots with names, `aria-live="polite"` only when autoplay
+      is off, keyboard arrows on the focusable region, visible focus rings, touch swipe with a
+      direction-aware threshold, pause when the tab is hidden, RTL mirroring of the arrow glyphs
+      while the index step stays forward.
+
+      **The fallback is the untouched site.** `getHomeHero()` has one job and one failure path:
+      an empty table, or a database that cannot be reached, returns `{slides: [], settings:
+      HERO_DEFAULTS}` and the page then draws `getHeroPhotos()` exactly as before this table
+      existed. The browser proof below ran against seeded slides, so the fallback was reasoned
+      from that code path, not observed on a screen; a fresh deploy before seeding is the case
+      it protects.
+
+- [x] HS-3 — `/console/hero`: one screen, one document, one guarded save — `dace7cf`
+
+      **The screen.** `src/components/console/HeroScreen.tsx` lists the slides with a thumbnail,
+      active toggle, per-language alt/heading/sub/CTA, optional mobile image, optional schedule,
+      drag handle **and** up/down arrows (the arrows are the keyboard path), a live preview of
+      the selected slide, and the playback settings. New slides take a picture from the existing
+      media-library picker. Removed slides leave the list immediately and are only soft-deleted
+      when the person saves. `src/app/(console)/console/(workspace)/hero/page.tsx` is the route
+      and the screen is registered as `hero` in `CONSOLE_SCREENS` behind the **`page`** grant —
+      it is that page's own presentation, not a new content type — and sits after `pages` in
+      the nav (`tests/console.test.ts`).
+
+      **The API.** `src/app/api/console/hero/route.ts` delegates to `heroHandler`
+      (`src/lib/hero/api.ts`): `GET` under `page.read`, `PATCH|PUT` under `page.update`, zod caps
+      the array at 50, validation failures return **422 with `issues`** in the handler data, the
+      save is audited as `page/home.hero` with before and after, and `revalidatePath('/[lang]',
+      'layout')` is called so the homepage is fresh on the next request. The route file is three
+      verbs and a delegate so no transaction can begin before `guard()` has run; that shape is
+      now an allowed entry in `tests/roles.test.ts`'s TRUSTED map.
+
+      **Why the console tests moved.** The screen list, nav order, migration count (9, last
+      `009_hero.sql`), the copy catalog and the bare-element CSS guard all had to learn about the
+      new screen. The stylesheet's new section (`12b`) scopes both `<img>` rules to
+      `.hero-slide-photo` / `.hero-preview-photo` because `tests/console.test.ts` rejects bare
+      element selectors.
+
+- [x] HS-4 — gates, a browser proof on the production build, and this record — `dace7cf`
+
+      **Gates.** `npm run typecheck` clean, `npm run lint` clean, `npm run copy:check` current
+      (catalog regenerated), `npm run build` exit 0, full suite **43 files / 826 tests passed**
+      (12 of them `tests/hero.test.ts`: document normalisation, every validation rule, the
+      visibility window, one-transaction save with soft delete, the one-time seed, and the
+      screen's grant).
+
+      **The browser proof** ran the built artifact on `:3345` against `shamah_cms_test`
+      (`.tmp/hs-seed-test.ts` → `.tmp/hs-probe.mjs`, both gitignored). A real Owner logged in
+      through `/console/login`, and the proof did what a marketer would: opened `/console/hero`
+      and saw both seeded slides with every field; tried to activate a blank slide and was
+      stopped (`Check the marked fields.` + `An active slide needs a picture.` + `An active slide
+      needs alt text.`); added a slide, picked a library image, typed alt and a heading, saved
+      (`Slider saved.`); dragged and arrow-moved it, saved again. The database then held three
+      rows in the saved order (`hero-proof-1` at 0, the new row at 1, `hero-proof-2` at 2),
+      `hero_settings` version 3 written by the proof Owner, and two `page.update` audits for
+      `home.hero`. `/en` and `/ar` returned three layers with the console's heading and alt text,
+      the counter reading "Slide 1 of 3" / "الصورة 1 من 3", and a pause/play control; server HTML
+      carried **only the first layer**, eager, with `aria-live="off"`; the hydrated DOM held three
+      stacked layers at opacity 1/0/0 with eager/lazy/lazy images. Autoplay advanced after 8 s;
+      the pause button froze the index for 8 s and flipped `aria-pressed`; ArrowRight advanced in
+      EN and ArrowLeft advanced in RTL. Deactivating two slides produced exactly **one layer and
+      no pause/play control** on the public page; all three were restored afterwards.
+
+      **What the browser could not show.** The in-app automation viewport is fixed at 510 × 425,
+      so no true desktop or 390 px mobile layouts were rendered; reduced-motion and tab-hidden
+      behaviour were reasoned from the code and not seen; the pause button's visual placement was
+      confirmed in the DOM and by its effect, not by a screenshot. Those remain for the owner's
+      eye on a real browser.
+
+      **Files.** `src/lib/db/migrations/009_hero.sql`, `src/lib/hero/{types,store,api}.ts`,
+      `src/app/api/console/hero/route.ts`, `src/app/(console)/console/(workspace)/hero/page.tsx`,
+      `src/components/console/HeroScreen.tsx`, `src/components/home/HomeHero.tsx`,
+      `src/app/[lang]/page.tsx`, `src/lib/content/site.ts`, `src/lib/console/{screens,messages}.ts`,
+      `src/app/(console)/console/console.css`, `src/lib/db/types.ts`, `scripts/db/seed.ts`,
+      `src/lib/copy/catalog.ts`, and the five test files named above. Migration to run on any
+      other database: `npm run db:migrate -- --apply` (already applied to dev and test here).
+
 ## Known gaps / notes- `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
   use it. `.env.example` documents what this stack actually reads.
