@@ -4174,6 +4174,41 @@ the export share one shape; the rows below record the parts.
       `src/lib/copy/catalog.ts`, `scripts/db/demo-data.ts`, `package.json` (`db:demo`),
       `tests/overview.test.ts`, `tests/server-setup.test.ts`. No new dependency.
 
+## Job A — the Home before/after band from real CMS data (the owner's brief of 2026-10-31)
+
+The brief's audit-first rule applied to A1–A5. Before this work: the band was a dead
+`BeforeAfterSection` with two hard-coded paths to files that did not exist; a result row could
+not ask for the home page; the console had no way to say "hidden" beyond a checkbox whose
+wording read as a publish state; a legacy row's single shared picture description arrived in
+the editor as an unnamed error it could only delete; bilingual boxes were both announced as
+"Arabic"/"English" with no field name; and `src/data/images.ts` had no importer. Everything the
+brief asked for was missing or partial, so each item was implemented — nothing was declared
+"not possible". The full record, including counts, screenshot paths (since removed) and what
+remains unverified, is **`docs/JOB-A-EVIDENCE.md`**; the code and that record are one commit.
+
+- [x] A — band from published results rows (`showOnHome`, both pictures, shared slider with
+      pointer/touch/keyboard/RTL/aria/reduced motion and reserved height), order and visibility
+      controls, one-click legacy shared-alt move with named notice and counts, field-qualified
+      accessible names, Lighthouse + console-preview + real-console upload proofs, SEO/isolation
+      checks, evidence manifest, and the A5 dead-code sweep (`BeforeAfterSection.tsx` and
+      `src/data/images.ts` deleted; catalog regenerated, 224 current) — `14f109f`
+
+      **Gates on the cleaned state (2026-10-31).** `npm run typecheck` clean, `npm run lint`
+      clean, `npm run copy:check` 224 current, `npm test` **47 files / 913 tests passed**,
+      `npm run build` exit 0, `npm run prove:no-wp` **5 checks passed** (277 routes, 0 failed,
+      0 WordPress requests), `node scripts/verify-render.mjs` **259 checks passed, 0 failed**.
+      Browser proofs on the production build: A4.3 real-console upload workflow **56/56**,
+      A4.4 SEO/isolation **142/142**, band stability **12/12** with zero shifts sourced inside
+      `#before-after`. Lighthouse A11y/BP/SEO were ≥ 97 / 100 / 100 on all four URLs in both
+      forms; mobile Performance (63–81) is recorded, not hidden.
+
+      **Cleanup.** All proof rows, users, sessions, login attempts, roles, media rows and audit
+      entries were deleted from `shamah_cms_test` (verified 0), and every `.tmp/` Job A artifact
+      was removed. Upload files seen by the proof are real dev content and were kept. The
+      owner's three questions (real photos, consent wording, disclaimer field) are recorded in
+      the evidence manifest and were deliberately not decided here; synthetic proof pictures
+      were used, and no patient image or consent text was published.
+
 ## Known gaps / notes
 
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
