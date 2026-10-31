@@ -42,7 +42,8 @@ import { assertTestDb } from '../src/lib/db/guard';
 import { createRow, getRow, saveDraft, type StoreResult } from '../src/lib/content/store';
 import { publishRow } from '../src/lib/content/publish';
 import type { ContentLocale } from '../src/lib/content/kinds';
-import { getResultStories, type ResultStory } from '../src/lib/content/site';
+import { getHomeResultCases, getResultStories, type ResultStory } from '../src/lib/content/site';
+import { moveRow } from '../src/lib/content/order';
 import { linkedArticleTitle, listSummaries } from '../src/lib/content/summary';
 import { defaultViewFor } from '../src/lib/content/list-view';
 import type { Article } from '../src/data/journal';
@@ -358,6 +359,146 @@ describe('a result row reaches the page', () => {
     } finally {
       await db.deleteFrom('list_items').where('uid', '=', key('gone')).execute();
     }
+  });
+});
+
+// --- the home comparison reads the same order and the same visibility ----------
+
+/**
+ * A2: what the console's two controls are claims to do, checked where the site decides.
+ *
+ * The arrows write the `position` column (proved in `tests/list-order.test.ts` and
+ * `tests/content.test.ts`); the visibility box writes the `enabled` one. Neither claim means
+ * anything until a reader agrees, and the home band reads through a third condition the owner
+ * only ticks inside the row — so all three are checked together here:
+ *
+ *   - **Home takes its cases in the owner's order**, the same `position` the results page
+ *     reads, so a row moved up is a row shown first in both places.
+ *   - **asking is not enough**: a half case and a row nobody named both stay off Home, and the
+ *     half one keeps its place on `/results`, which is what the field's own hint promises.
+ *   - **a move changes nothing but the order**: after pressing up, the moving row is still
+ *     visible, still asked for Home, still holds both pictures, and its document is the same
+ *     text it was before — reordering cannot quietly edit a case.
+ *   - **hiding takes it out of both reads and deletes nothing**: every field in the row's two
+ *     JSON columns comes back the same, and switching it back returns the case with its pair
+ *     and its headline exactly as they were.
+ */
+describe('the home comparison follows the console order and the console visibility', () => {
+  const homeHeadline = (name: string): { ar: string; en: string } => ({ ar: `حالة ${name}`, en: `Case ${name}` });
+  const homePair = (name: string): { before: string; after: string } => ({ before: `/uploads/before-${name}.jpg`, after: `/uploads/after-${name}.jpg` });
+
+  /** the row's two document columns, as stored: the test for "hiding deletes nothing". */
+  async function docOf(uid: string): Promise<unknown> {
+    const row = await db.selectFrom('list_items').select(['draft', 'published']).where('uid', '=', uid).executeTakeFirst();
+    if (!row) throw new Error(`${uid} is not in the list`);
+    // Read as objects: MariaDB hands a JSON column back as text or as a value depending on the
+    // driver's path, and what has to be identical here is the case's content, not its key order.
+    const asValue = (value: unknown): unknown => (typeof value === 'string' ? JSON.parse(value) : value);
+    return { draft: asValue(row.draft), published: asValue(row.published) };
+  }
+
+  async function idOf(uid: string): Promise<string> {
+    const row = await db.selectFrom('list_items').select('id').where('uid', '=', uid).executeTakeFirst();
+    if (!row) throw new Error(`${uid} is not in the list`);
+    return String(row.id);
+  }
+
+  /** Hide or show a row the way the editor does: the whole form saved through the store. */
+  async function setShow(uid: string, visible: boolean): Promise<void> {
+    const id = await idOf(uid);
+    const current = await getRow('list_item', id);
+    if (!current) throw new Error(`${uid} disappeared`);
+    const data = current.fields.data;
+    if (data.kind !== 'json' || data.draftJson === undefined) throw new Error(`${uid} holds no document`);
+    unwrap(
+      await saveDraft('list_item', { id, locale: 'en', fields: { data: data.draftJson, enabled: visible }, expectedVersion: current.version, actorId: actor.id }),
+      `show ${uid}`,
+    );
+  }
+
+  beforeAll(async () => {
+    // Positions past every row the section above asserts on, so a move that renumbers the whole
+    // list cannot shuffle the rows whose order those tests are about.
+    const pairDoc = (name: string, ask = true): Record<string, unknown> => ({
+      title: homeHeadline(name),
+      ...homePair(name),
+      beforeAlt: beforeAltText,
+      afterAlt: afterAltText,
+      showOnHome: ask,
+    });
+    await seedItem('results', key('h1'), pairDoc('one'), { position: 20 });
+    await seedItem('results', key('h2'), pairDoc('two'), { position: 21 });
+    // Asks for Home with one picture: the eligibility the row cannot grant itself.
+    await seedItem('results', key('hhalf'), { title: homeHeadline('half'), before: '/uploads/before-half.jpg', showOnHome: true }, { position: 22 });
+    // Asks for Home, holds a pair, and is hidden.
+    await seedItem('results', key('hhidden'), pairDoc('hidden'), { position: 23, enabled: false });
+    // A complete, visible case nobody invited to the home page.
+    await seedItem('results', key('hplain'), { ...pairDoc('plain'), showOnHome: false }, { position: 24 });
+  });
+
+  afterAll(async () => {
+    // Named, not patterned: `h%` would take the `half` and `hidden` rows the section above
+    // seeded and another test still reads.
+    const uids = ['h1', 'h2', 'hhalf', 'hhidden', 'hplain'].map((name) => `results-${run}-${name}`);
+    const ids = await db.selectFrom('list_items').select('id').where('uid', 'in', uids).execute();
+    await db.deleteFrom('list_items').where('uid', 'in', uids).execute();
+    if (ids.length > 0) await db.deleteFrom('revisions').where('entity_id', 'in', ids.map((row) => row.id)).execute();
+  });
+
+  it('takes its cases in the order the owner set, and only those that asked', async () => {
+    const cases = await getHomeResultCases();
+    expect(cases.map((story) => story.key)).toEqual([key('h1'), key('h2')]);
+    // The half case and the hidden one are absent, and for different reasons: one is not a
+    // comparison, the other is not on the site. Neither is drawn, and neither is invented.
+    expect(cases.map((story) => story.key)).not.toContain(key('hhalf'));
+    expect(cases.map((story) => story.key)).not.toContain(key('hhidden'));
+    expect(cases.map((story) => story.key)).not.toContain(key('hplain'));
+    // Both halves reach the band, each with the words written for it.
+    expect(cases[0]?.pair).toEqual({ before: '/uploads/before-one.jpg', after: '/uploads/after-one.jpg', beforeAlt: beforeAltText, afterAlt: afterAltText });
+  });
+
+  it('keeps a case that is not eligible on the results page, where it is not a comparison', async () => {
+    const keys = (await everyStory()).map((story) => story.key);
+    expect(keys).toContain(key('hhalf'));
+    expect(keys).toContain(key('hplain'));
+    // Hidden is the one state that leaves the site, and it leaves both reads at once.
+    expect(keys).not.toContain(key('hhidden'));
+  });
+
+  it('moves a case to the front of Home without touching what it holds', async () => {
+    const before = await docOf(key('h2'));
+    const moved = await moveRow('list_item', { id: await idOf(key('h2')), direction: 'up', listKey: 'results', actorId: actor.id });
+    expect(moved.ok).toBe(true);
+
+    const cases = await getHomeResultCases();
+    expect(cases.map((story) => story.key)).toEqual([key('h2'), key('h1')]);
+    const movedStory = cases.find((story) => story.key === key('h2'));
+    expect(movedStory?.showOnHome).toBe(true);
+    expect(movedStory?.pair?.after).toBe('/uploads/after-two.jpg');
+    // The move wrote numbers and nothing else: the case's own document came back unchanged, so
+    // reordering a list cannot edit, hide or un-home a row.
+    expect(await docOf(key('h2'))).toEqual(before);
+
+    // Put it back for the claim below, which reads the list in the order it was written.
+    expect((await moveRow('list_item', { id: await idOf(key('h2')), direction: 'down', listKey: 'results', actorId: actor.id })).ok).toBe(true);
+    expect((await getHomeResultCases()).map((story) => story.key)).toEqual([key('h1'), key('h2')]);
+  });
+
+  it('hides a case from both reads and gives it back with nothing lost', async () => {
+    const doc = await docOf(key('h1'));
+    await setShow(key('h1'), false);
+
+    expect((await getHomeResultCases()).map((story) => story.key)).toEqual([key('h2')]);
+    expect((await everyStory()).map((story) => story.key)).not.toContain(key('h1'));
+    // The row is off the site, and its pictures, headline and descriptions are still the values
+    // they were — hiding is a column, not a delete.
+    expect(await docOf(key('h1'))).toEqual(doc);
+
+    await setShow(key('h1'), true);
+    const back = (await getHomeResultCases()).find((story) => story.key === key('h1'));
+    expect(back?.headline).toEqual(homeHeadline('one'));
+    expect(back?.pair?.before).toBe('/uploads/before-one.jpg');
+    expect(await docOf(key('h1'))).toEqual(doc);
   });
 });
 

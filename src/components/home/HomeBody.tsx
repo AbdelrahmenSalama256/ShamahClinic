@@ -11,6 +11,7 @@ import { GoldLink, useWhatsappHref } from "@/components/shared/Actions";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { TreatmentCard } from "@/components/cards/TreatmentCard";
+import { ResultCompareSection, type HomeCompareCase } from "./ResultCompareSection";
 import { getLocalizedHref } from "@/lib/locale";
 import { toPhotoSlot } from "@/lib/wp/ui-helpers";
 import type { Offer as UIOffer } from "@/data/offers";
@@ -41,6 +42,8 @@ interface HomeBodyProps {
   servicesTotal: number;
   /** Page 696's own title, used as this section's heading. */
   servicesTitle: Localized;
+  /** The cases the owner asked to compare on Home, already narrowed to those with both pictures. */
+  cases: HomeCompareCase[];
   offers: UIOffer[];
   articles: UIArticle[];
   branches: HomeBranch[];
@@ -69,6 +72,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   services,
   servicesTotal,
   servicesTitle,
+  cases,
   offers,
   articles,
   branches,
@@ -76,6 +80,21 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   const { t, language, formatNumber } = useLanguage();
   const waHref = useWhatsappHref();
   const hasIntro = !!(intro.title.ar || intro.title.en);
+  const hasServices = !!services.length;
+  // The numerals count the bands that actually paint. They used to be written into the page,
+  // so a Home with no introduction opened at "02" — and a comparison band, which is there or
+  // not there on its own data, would have moved every number after it. This list is the paint
+  // order; a band's number is its place in it.
+  const paintedBands = [
+    hasIntro && "intro",
+    hasServices && "services",
+    !!cases.length && "compare",
+    !!offers.length && "offers",
+    !!branches.length && "branches",
+    !!articles.length && "articles",
+  ].filter(Boolean);
+  const numeralOf = (band: string): string =>
+    String(paintedBands.indexOf(band) + 1).padStart(2, "0");
 
   return (
     <>
@@ -83,23 +102,23 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
           introduction row and the three services page 696 leads with. The block the
           authored reasons list occupied is now the services cards (docs/HOME-PRIORITY.md),
           so Home keeps four bands and does not grow. */}
-      {(hasIntro || !!services.length) && (
+      {(hasIntro || hasServices) && (
         <Section className="bg-[var(--bg-primary)]">
           <div className="mt-4 grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {hasIntro && (
               <div className="lg:col-span-4 min-w-0">
-                <SectionHeading index="01" title={intro.title} lead={intro.lead} />
+                <SectionHeading index={numeralOf("intro")} title={intro.title} lead={intro.lead} />
                 <GoldLink href="/about" withArrow size="sm" className="mt-5">
                   {t("لماذا تختار شامه", "Why clients choose Shamah")}
                 </GoldLink>
               </div>
             )}
 
-            {!!services.length && (
+            {hasServices && (
               <div className={`${hasIntro ? "lg:col-span-8" : "lg:col-span-12"} min-w-0`}>
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <SectionHeading
-                    index="02"
+                    index={numeralOf("services")}
                     title={servicesTitle}
                     lead={{
                       ar: "كل خدمة تبدأ بتقييم وخطة مكتوبة، والجلسات تُعرض بوضوح بدل الوعود.",
@@ -142,12 +161,16 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
         </Section>
       )}
 
-      {/* 03 — Seasonal offers (console, else the WooCommerce snapshot, max 3) */}
+      {/* 03 — Before/after comparison, only from cases the owner put on Home and photographed
+          twice. The band draws nothing when no case qualifies, and takes no numeral either. */}
+      {!!cases.length && <ResultCompareSection cases={cases} index={numeralOf("compare")} />}
+
+      {/* 04 — Seasonal offers (console, else the WooCommerce snapshot, max 3) */}
       {!!offers.length && (
         <Section id="offers" className="bg-[var(--bg-secondary)]/60">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
-              index="03"
+              index={numeralOf("offers")}
               title={{ ar: "باقات الموسم", en: "Seasonal packages" }}
               lead={{
                 ar: "باقات تجمع أكثر من جلسة بتوفير حقيقي، سارية في الفروع الثلاثة.",
@@ -170,12 +193,12 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
         </Section>
       )}
 
-      {/* 04 — Compact branches strip (call / WhatsApp) */}
+      {/* 05 — Compact branches strip (call / WhatsApp) */}
       {!!branches.length && (
         <Section id="branches" className="bg-[var(--bg-primary)]">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
-              index="04"
+              index={numeralOf("branches")}
               title={{ ar: "فروعنا الثلاثة", en: "Our three branches" }}
               lead={{
                 ar: "اختاري الفرع الأقرب واتصلي مباشرة أو راسلينا على واتساب.",
@@ -260,12 +283,12 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
         </Section>
       )}
 
-      {/* 05 — Latest journal (console, else the snapshot, max 3) */}
+      {/* 06 — Latest journal (console, else the snapshot, max 3) */}
       {!!articles.length && (
         <Section id="blogs" className="bg-[var(--bg-secondary)]/60">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <SectionHeading
-              index="05"
+              index={numeralOf("articles")}
               title={{ ar: "من مدونة شامه", en: "From the Shamah blog" }}
               lead={{
                 ar: "مقالات طبية مبسطة تصحح المفاهيم الشائعة وتشرح روتين العناية.",

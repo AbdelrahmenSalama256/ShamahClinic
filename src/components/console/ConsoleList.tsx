@@ -33,6 +33,8 @@ import { Alert, Badge, Empty, Mark, Note, Skeleton, type Tone } from '@/componen
 import { Card, RowKey, RowTitle } from '@/components/console/kit';
 import { Chip, ChipRemove, ChipRow, ChipTag } from '@/components/console/kit';
 import { contentStateTone } from '@/lib/console/editor-form';
+import { sharedAltApplies } from '@/lib/content/alt-migration';
+import { listSchemaOf } from '@/lib/content/list-schema';
 import { contentDetailPath } from '@/lib/console/paths';
 import type { ContentAbilities } from '@/lib/console/content-screen';
 import type { ContentKind, ContentLocale } from '@/lib/content/kinds';
@@ -56,6 +58,13 @@ interface SavedViewRow {
   id: string;
   name: string;
   query: string;
+}
+
+/** What one pass over the selected rows actually did, as the server reported it. */
+interface AltCounts {
+  migrated: string[];
+  skipped: { id: string; reason: string }[];
+  failed: { id: string; code: string }[];
 }
 
 export interface ConsoleListProps {
@@ -105,6 +114,16 @@ function stateOf(row: ListSummary): MessageKey {
   if (row.trashed) return 'content.state.trashed';
   if (row.publishedAt && (row.pendingAr || row.pendingEn)) return 'content.state.pending';
   return row.status === 'published' || row.status === 'changed' ? 'content.state.published' : 'content.state.draft';
+}
+
+/**
+ * A row the owner hid. `enabled` is a column and not a document key, so it reaches the screen
+ * through `cells` and never through a list's sampled columns — which left a hidden row printing
+ * the same chips as a visible one, with no sign that the site was not showing it. Whether the
+ * row is published is a different question, so this chip stands beside that one.
+ */
+function isHidden(row: ListSummary): boolean {
+  return row.cells.enabled === false;
 }
 
 /**
@@ -166,7 +185,7 @@ export function ConsoleList({
   const [saving, setSaving] = useState(false);
   const [newName, setNewName] = useState('');
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState<{ tone: Tone; key: MessageKey } | null>(null);
+  const [notice, setNotice] = useState<{ tone: Tone; key: MessageKey; counts?: AltCounts } | null>(null);
 
   // The URL is the state. Scope comes first so the line reads like the navigation.
   const query = useMemo(() => listViewQuery(view, scope, kind), [view, scope, kind]);
@@ -309,6 +328,41 @@ export function ConsoleList({
     }
   }
 
+  /**
+   * Sort out the legacy shared picture description on every selected row.
+   *
+   * The counts are the message, because most rows in this list never held the shared key: a
+   * flat "done" over 24 rows that needed nothing and one that did would read as though the
+   * work happened where it did not. A row whose two boxes already say something else is
+   * skipped by the server rather than written over, and says so in the same numbers.
+   */
+  async function migrateAlt(): Promise<void> {
+    const ids = [...checked];
+    if (ids.length === 0) return;
+    setBusy(true);
+    const result = await consoleCall<AltCounts>(`${api}/bulk/migrate-alt${scopeQuery}`, 'POST', { ids });
+    setBusy(false);
+    if (result.error) {
+      const mapped = `content.error.${result.error}` as MessageKey;
+      setNotice({ tone: 'danger', key: labels[mapped] ? mapped : 'content.error.save' });
+      return;
+    }
+    const counts = result.data;
+    // Nothing came back, so nothing is known: say the save failed rather than reprint the
+    // counts the browser made up.
+    if (!counts) {
+      setNotice({ tone: 'danger', key: 'content.error.save' });
+      return;
+    }
+    setNotice({
+      tone: counts.failed.length > 0 ? 'danger' : 'ok',
+      key: counts.migrated.length > 0 ? 'content.alt.moved' : 'content.alt.none',
+      counts,
+    });
+    setChecked(new Set());
+    await load(query);
+  }
+
   async function moveTo(row: ListSummary, direction: 'up' | 'down'): Promise<void> {
     setBusy(true);
     const result = await consoleCall<{ ids?: string[] }>(`${api}/${row.id}/move${scopeQuery}`, 'POST', { direction });
@@ -379,11 +433,21 @@ export function ConsoleList({
     setView(withView(view, { sort: 'position', dir: 'asc', filter: 'all', q: '' }));
   }
 
-  const bulkable = (verb: 'publish' | 'trash' | 'restore'): boolean => {
+  const bulkable = (verb: 'publish' | 'trash' | 'restore' | 'migrate-alt'): boolean => {
     const scopeKey: string = scope.listKey ?? locale;
     if (verb === 'publish') return abilities.publish.includes(scopeKey);
+    if (verb === 'migrate-alt') return abilities.update.includes(scopeKey);
     return verb === 'trash' ? abilities.remove.includes(scopeKey) : abilities.update.includes(scopeKey);
   };
+
+  /**
+   * Whether this list has a shared description to move, read off its own schema.
+   *
+   * Not `listKey === 'results'`: the answer is "does this form have two picture boxes and no
+   * shared one", so a list that gains the split gains the action and one that has its own
+   * `alt` field — services, specialists — never offers a button that would move the wrong key.
+   */
+  const migratable = kind === 'list_item' && !scope.trash && sharedAltApplies(listSchemaOf(scope.listKey));
 
   /** A column header, sortable when the kind honours that order. */
   const sortable = (sort: ListSort, className?: string): ReactNode => (
@@ -497,6 +561,11 @@ export function ConsoleList({
                   {labels['content.bulk.trash']}
                 </Button>
               )}
+          {migratable && bulkable('migrate-alt') && (
+            <Button disabled={busy} onClick={() => void migrateAlt()}>
+              {labels['content.alt.move']}
+            </Button>
+          )}
         </div>
       )}
 
@@ -536,6 +605,7 @@ export function ConsoleList({
                       <RowKey>{row.key}</RowKey>
                     </span>
                     <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
+                    {isHidden(row) && <Badge tone="neutral">{labels['content.state.hidden']}</Badge>}
                     {row.needsPhoto && <Badge tone="warn">{labels['content.result.needs-photo']}</Badge>}
                   </Link>
                   {/* Cards are the phone drawing of the same list, so the order moves here too. */}
@@ -584,6 +654,7 @@ export function ConsoleList({
                     </td>
                     <td>
                       <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
+                      {isHidden(row) && <Badge tone="neutral">{labels['content.state.hidden']}</Badge>}
                       {row.needsPhoto && <Badge tone="warn">{labels['content.result.needs-photo']}</Badge>}
                     </td>
                     <td className="console-cell-date">
@@ -627,7 +698,18 @@ export function ConsoleList({
         )}
       </div>
 
-      {notice && <Alert tone={notice.tone}>{labels[notice.key]}</Alert>}
+      {notice && (
+        <Alert tone={notice.tone}>
+          {labels[notice.key]}
+          {notice.counts ? (
+            <>
+              {' '}
+              {labels['content.alt.migrated']} <bdi>{notice.counts.migrated.length}</bdi> · {labels['content.alt.skipped']}{' '}
+              <bdi>{notice.counts.skipped.length}</bdi> · {labels['content.alt.failed']} <bdi>{notice.counts.failed.length}</bdi>
+            </>
+          ) : null}
+        </Alert>
+      )}
     </div>
   );
 }

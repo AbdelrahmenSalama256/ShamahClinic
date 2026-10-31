@@ -8,7 +8,7 @@
  * bilingual field, an Add/Remove pair for every repeatable one, and no box anywhere that
  * accepts a document by hand.
  *
- * Two controls deserve a note:
+ * Three things deserve a note:
  *
  * **A picture is an upload, never a path.** The schema's `image` field draws `ImagePicker`,
  * which is the same control the article editor uses; the value it writes is the address the
@@ -18,8 +18,13 @@
  * in a hidden form key and this block lists them one by one with a Remove button, because
  * the server refuses a document with unknown keys and silently deleting somebody's data is
  * worse than asking.
+ *
+ * **A bilingual box is named after its field, in the voice's copy of the label.** Each pair
+ * keeps the short language word on screen and puts `Field — Language` in front of it for a
+ * screen reader, so a person hearing the row one control at a time knows which field either
+ * box belongs to. See `pairName`.
  */
-import { Badge, Button, Checkbox, Field, Input, Note, Select, Textarea } from '@/components/console/kit';
+import { Badge, Button, Checkbox, Field, Input, Note, Select, Textarea, pairName } from '@/components/console/kit';
 import { ImagePicker } from './ImagePicker';
 import { RichEditor } from './RichEditor';
 import type { Form } from '@/lib/console/editor-form';
@@ -236,7 +241,7 @@ function SchemaField({
             </>
           ) : (
             <>
-              <Field label={labels['content.locale.ar']} htmlFor={`${id}-ar`}>
+              <Field label={pairName(label, labels['content.locale.ar'])} htmlFor={`${id}-ar`}>
                 {field.multiline ? (
                   <Textarea
                     id={`${id}-ar`}
@@ -260,7 +265,7 @@ function SchemaField({
                   />
                 )}
               </Field>
-              <Field label={labels['content.locale.en']} htmlFor={`${id}-en`}>
+              <Field label={pairName(label, labels['content.locale.en'])} htmlFor={`${id}-en`}>
                 {field.multiline ? (
                   <Textarea
                     id={`${id}-en`}
@@ -303,7 +308,7 @@ function SchemaField({
         <div className="console-doc-rows">
           {rows.map((index) => (
             <div className="console-doc-row" key={index}>
-              <Field label={labels['content.locale.ar']} htmlFor={`${id}-ar-${index}`}>
+              <Field label={pairName(`${label} ${index + 1}`, labels['content.locale.ar'])} htmlFor={`${id}-ar-${index}`}>
                 <Input
                   id={`${id}-ar-${index}`}
                   dir="rtl"
@@ -312,7 +317,7 @@ function SchemaField({
                   onChange={(event) => onChange(`${field.stem}_ar.${index}`, event.target.value)}
                 />
               </Field>
-              <Field label={labels['content.locale.en']} htmlFor={`${id}-en-${index}`}>
+              <Field label={pairName(`${label} ${index + 1}`, labels['content.locale.en'])} htmlFor={`${id}-en-${index}`}>
                 <Input
                   id={`${id}-en-${index}`}
                   dir="ltr"

@@ -29,6 +29,8 @@ import { listRevisions, publishRow, rollbackToRevision } from './publish';
 import { listSummaries } from './summary';
 import { moveRow } from './order';
 import { parseListView, parseListScope } from './list-view';
+import { listSchemaOf } from './list-schema';
+import { moveSharedAltInDoc, sharedAltApplies } from './alt-migration';
 import { readSettings, writeSetting } from './settings';
 
 const fieldValues = z.record(z.string(), z.unknown());
@@ -62,8 +64,8 @@ const bulkSchema = z.object({ ids: z.array(z.string().min(1).max(64)).min(1).max
 
 type RowAction = 'publish' | 'restore' | 'rollback' | 'revisions' | 'move';
 /** The bulk verbs, named in the path so permission is decided before the body is read. */
-type Bulk = 'publish' | 'trash' | 'restore';
-const BULK_ACTIONS: readonly Bulk[] = ['publish', 'trash', 'restore'];
+type Bulk = 'publish' | 'trash' | 'restore' | 'migrate-alt';
+const BULK_ACTIONS: readonly Bulk[] = ['publish', 'trash', 'restore', 'migrate-alt'];
 
 interface Route {
   kind: ContentKind;
@@ -72,7 +74,7 @@ interface Route {
   bulk: Bulk | null;
 }
 
-/** `/api/console/content/<kind>[/<id>[/<action>]]`, or `…/<kind>/bulk/<publish|trash|restore>` */
+/** `/api/console/content/<kind>[/<id>[/<action>]]`, or `…/<kind>/bulk/<publish|trash|restore|migrate-alt>` */
 function parseRoute(url: string): Route | null {
   const segments = new URL(url).pathname.split('/').filter(Boolean);
   const offset = segments.indexOf('content');
@@ -346,6 +348,82 @@ async function bulkHandler(req: Request, spec: KindSpec, kind: ContentKind, bulk
   );
 }
 
+/**
+ * Split every selected row's shared picture description onto its two per-picture ones.
+ *
+ * The write goes through `saveDraft()`, the same version-locked, field-cleaned, never-publishes
+ * path the Save button uses, so this is not a second way to write content — only a second way
+ * to fill the same two boxes. It publishes nothing: a description that reaches a visitor
+ * because somebody pressed a migration button would be the loudest surprise this console has
+ * ever produced.
+ *
+ * `skipped` is a first-class answer and not a failure. Most rows in this list never held the
+ * shared key, and one row holds it beside two descriptions of its own that say something
+ * different — copying there would overwrite, and deleting it would discard. A pass that called
+ * either of those a failure would hide the row that genuinely needs the click, so the counts
+ * come back as the person left them: migrated, skipped, failed.
+ */
+async function migrateAltHandler(req: Request, spec: KindSpec, kind: ContentKind): Promise<Response> {
+  return guard<z.output<typeof bulkSchema>, Body>(
+    req,
+    { resource: spec.resource, action: 'update', schema: bulkSchema, target: (r) => scopeOf(r, spec) },
+    async (ctx): Promise<GuardResult<Body>> => {
+      const listKey = spec.scope === 'lists' ? param(req, 'list') : null;
+      if (spec.scope === 'lists' && !listKey) return { status: 400, data: { error: 'list_required' } };
+      const locale = localeFor(req, spec);
+      if (!locale) return { status: 400, data: { error: 'locale_required' } };
+      // Refused before a single row is read: a list whose form has no before/after split has no
+      // shared description to move, and its own `alt` field means something else entirely.
+      if (!sharedAltApplies(listSchemaOf(listKey))) return { status: 400, data: { error: 'alt_migration_not_applicable' } };
+
+      const migrated: string[] = [];
+      const skipped: { id: string; reason: string }[] = [];
+      const failed: { id: string; code: string }[] = [];
+      for (const id of ctx.input.ids) {
+        if (listKey && (await listKeyOfItem(id)) !== listKey) {
+          failed.push({ id, code: 'out_of_scope' });
+          continue;
+        }
+        const row = await getRow(kind, id);
+        if (!row) {
+          failed.push({ id, code: 'not_found' });
+          continue;
+        }
+        if (row.trashed) {
+          skipped.push({ id, reason: 'in_trash' });
+          continue;
+        }
+        const draft = row.fields.data?.draftJson;
+        if (draft === null || typeof draft !== 'object' || Array.isArray(draft)) {
+          skipped.push({ id, reason: 'no_document' });
+          continue;
+        }
+        const moved = moveSharedAltInDoc(draft as Record<string, unknown>);
+        if (moved.status !== 'moved') {
+          skipped.push({ id, reason: moved.status });
+          continue;
+        }
+        const saved = await saveDraft(kind, { id, locale, fields: { data: moved.doc }, expectedVersion: row.version, actorId: ctx.auth.user.id });
+        if (!saved.ok) {
+          failed.push({ id, code: saved.code });
+          continue;
+        }
+        migrated.push(id);
+      }
+
+      // A pass that moved nothing still answers 200 with its counts: every row in the request
+      // was read and reported, which is the opposite of the bulk 409 for a verb that applied
+      // nothing. `guard()` then files the request with these counts as its `after`, so the
+      // audit line says what was looked at and that nothing was written.
+      if (migrated.length === 0) return { data: { migrated, skipped, failed } };
+      return {
+        data: { migrated, skipped, failed },
+        audit: { entityType: kind, entityId: 'bulk.migrate-alt', after: { action: 'migrate-alt', migrated, skipped, failed } },
+      };
+    },
+  );
+}
+
 /** `GET/POST /api/console/content/<kind>` */
 export async function contentCollectionHandler(req: Request): Promise<Response> {
   const route = parseRoute(req.url);
@@ -372,7 +450,12 @@ export async function contentActionHandler(req: Request): Promise<Response> {
   const route = parseRoute(req.url);
   if (!route) return jsonError(404, 'unknown_route');
   const spec = kindSpec(route.kind);
-  if (route.bulk) return req.method === 'POST' ? bulkHandler(req, spec, route.kind, route.bulk) : jsonError(405, 'method_not_allowed');
+  if (route.bulk) {
+    if (req.method !== 'POST') return jsonError(405, 'method_not_allowed');
+    // Its own handler, because its answer is three counts rather than the ids that moved: a
+    // row with nothing to migrate is a row that is already right, not a row that failed.
+    return route.bulk === 'migrate-alt' ? migrateAltHandler(req, spec, route.kind) : bulkHandler(req, spec, route.kind, route.bulk);
+  }
   if (!route.id || !route.action) return jsonError(404, 'unknown_route');
   const { id, kind } = route;
 

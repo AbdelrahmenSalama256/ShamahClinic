@@ -284,6 +284,15 @@ const RESULTS: ListSchema = {
       max: 300,
     },
     {
+      type: 'flag',
+      stem: 'showOnHome',
+      label: { ar: 'تظهر في مقارنة الصفحة الرئيسية', en: 'Show in the home comparison' },
+      hint: {
+        ar: 'تظهر الحالة في شريط قبل/بعد في الرئيسية، مع بقائها في صفحة النتائج. يشترط أن تكون الصورتان مرفوعتين والنتيجة مُفعّلة: بحال صورة واحدة لا تظهر في الرئيسية مهما كان هذا الخيار.',
+        en: 'Puts the case in the before/after comparison on the home page, and it stays on the results page too. Needs both pictures uploaded and the result enabled: with one picture it never reaches the home page, whatever this says.',
+      },
+    },
+    {
       type: 'refs',
       stem: 'service',
       source: 'services',

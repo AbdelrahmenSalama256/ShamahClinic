@@ -96,7 +96,10 @@ export function groupIssues(labels: Record<MessageKey, string>, issues: FieldIss
     const name = fieldOf(issue.path);
     const text = issueText(labels, issue);
     if (!known.has(name)) {
-      if (!other.includes(text)) other.push(text);
+      // Every unknown key produces the same sentence, so without the key the banner says
+      // nothing about which one it means. The key is the only name the person can act on.
+      const line = issue.message === 'unknown field' && name ? `${name} — ${text}` : text;
+      if (!other.includes(line)) other.push(line);
       continue;
     }
     const list = (byField[name] ??= []);

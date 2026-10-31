@@ -43,7 +43,7 @@ import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue }
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
 import { SEO_SETTING_GROUP } from './settings-catalog';
-import { branchOfDoc, docBi, docBiAny, docStringPairs, docStrings, docStr, faqOfDoc, navOfDoc, resultStoryPointer, specialistOfDoc } from './list-docs';
+import { branchOfDoc, docBi, docBiAny, docBool, docStringPairs, docStrings, docStr, faqOfDoc, navOfDoc, resultStoryPointer, specialistOfDoc } from './list-docs';
 import { faqData, type FaqItem } from '../../data/faq';
 import { navItems, type NavItem } from '../../data/nav';
 import { specialistsData, type Specialist } from '../../data/specialists';
@@ -680,6 +680,10 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
  * `area` and `sessions` are the two chips beside the pictures: what was treated, and how many
  * visits it took. Both state what the clinic did, never what a visitor is promised.
  *
+ * `showOnHome` is the owner's invitation to the home page. It asks for one thing the row cannot
+ * do on its own — `pair` must exist — which is why the home reader checks both and `/results`
+ * checks neither.
+ *
  * A row the import wrote holds only the phrases that made it a story, so every other field
  * here is empty for it. Nothing is invented to fill a gap the dashboard did not publish.
  */
@@ -699,6 +703,8 @@ export interface ResultStory {
   note: Bi;
   /** the service the row names, by its live name and link. */
   service: { name: Bi; href: Bi } | null;
+  /** whether the owner asked for this case on the home page. */
+  showOnHome: boolean;
 }
 
 /**
@@ -717,6 +723,7 @@ interface ResultDetail {
   caption: Bi;
   note: Bi;
   service: { name: Bi; href: Bi } | null;
+  showOnHome: boolean;
 }
 
 interface ResultSelection {
@@ -747,6 +754,7 @@ function resultSelectionOf(row: PublicRow, services: Map<string, ServiceCard>): 
       caption: docBi(doc, 'caption'),
       note: docBi(doc, 'note'),
       service: service ? { name: service.title, href: service.href } : null,
+      showOnHome: docBool(doc, 'showOnHome'),
     },
   };
 }
@@ -790,6 +798,7 @@ async function resultSelections(): Promise<ResultSelection[]> {
           caption: { ar: '', en: '' },
           note: { ar: '', en: '' },
           service: null,
+          showOnHome: false,
         },
       })),
   );
@@ -808,7 +817,7 @@ async function resultSelections(): Promise<ResultSelection[]> {
  * A row with neither an article nor a headline is the one thing dropped: it has no name, and
  * a card cannot say "here is a result" about nothing.
  */
-export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory>> {
+async function buildResultStories(): Promise<ResultStory[]> {
   const [selections, cards] = await Promise.all([resultSelections(), getAllArticles()]);
   const bySlug = new Map(cards.map((card) => [card.slug, card]));
   const byLegacyId = new Map(cards.map((card) => [String(card.id), card]));
@@ -848,7 +857,31 @@ export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory
         : null,
     });
   }
-  return wp.paginate(stories, q.page, q.perPage);
+  return stories;
+}
+
+export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory>> {
+  return wp.paginate(await buildResultStories(), q.page, q.perPage);
+}
+
+/**
+ * The cases the home page is allowed to compare.
+ *
+ * Two conditions, and only one of them is something the owner can tick: the row must ask for
+ * the home page, and it must actually hold a pair. The second is not a courtesy — one picture
+ * dragged over itself is a fake result, and the site would be publishing a transformation
+ * nobody took a photograph of. A case that asks for Home with a half pair therefore appears on
+ * `/results` and never on the home page, which is what the editor's hint promises.
+ *
+ * Order is the console's own: the same `position` the results page reads, so moving a case up
+ * moves it up in both places. At most `HOME_CASE_LIMIT` of them travel — the band is a taster,
+ * and `/results` is where the rest of the file lives.
+ */
+const HOME_CASE_LIMIT = 6;
+
+export async function getHomeResultCases(): Promise<ResultStory[]> {
+  const stories = await buildResultStories();
+  return stories.filter((story) => story.showOnHome && story.pair !== null).slice(0, HOME_CASE_LIMIT);
 }
 
 // --- settings -----------------------------------------------------------------

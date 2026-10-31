@@ -165,6 +165,28 @@ export function Field({ label, htmlFor, errors = [], note, children, className }
   );
 }
 
+/**
+ * The name a voice reads for one box of a bilingual pair.
+ *
+ * The eye knows which box is which: the two sit side by side under the field's own heading, and
+ * the short word above each one tells it where. Read alone, that word is the same sentence in
+ * every row of the screen — a person using a screen reader hears "Arabic", then "English", with
+ * no idea which field either belongs to. So the field's name rides in front of the language for
+ * the voice and stays hidden from the eye.
+ *
+ * The words go inside the `<label>` rather than into an `aria-label` on the control, so the text
+ * a person sees is text a person hears: dictation and magnification both address the label by the
+ * words printed on it, and an override would break that for a name nobody can say out loud.
+ */
+export function pairName(field: string, language: string): ReactNode {
+  return (
+    <>
+      <span className="console-sr-only">{`${field} — `}</span>
+      {language}
+    </>
+  );
+}
+
 /* --- status ---------------------------------------------------------------- */
 
 interface ToneShape {

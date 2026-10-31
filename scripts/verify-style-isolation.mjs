@@ -18,7 +18,7 @@ const args = process.argv.slice(2);
 const baseArg = args.indexOf('--base');
 const BASE = (baseArg >= 0 ? args[baseArg + 1] : 'http://127.0.0.1:3211').replace(/\/$/, '');
 
-const SITE_ROUTES = ['/ar', '/en/services', '/ar/blogs'];
+const SITE_ROUTES = ['/ar', '/en', '/en/services', '/ar/blogs', '/en/results', '/ar/results'];
 const CONSOLE_ROUTES = ['/console/login'];
 
 function kindOf(css) {

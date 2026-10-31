@@ -110,6 +110,7 @@ export const docBi = bi;
 export const docBiAny = biAny;
 export const docStrings = strings;
 export const docStringPairs = bothStrings;
+export const docBool = bool;
 
 /**
  * Which article a result row claims.

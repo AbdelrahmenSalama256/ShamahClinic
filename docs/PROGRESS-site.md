@@ -122,6 +122,9 @@ work: the brief asks for the audit script and its before/after report.
 Also reported, not deleted: `src/components/home/BeforeAfterSection.tsx` has no importer anywhere in
 `src` (WIRING §16). It is a Home component holding authored before/after claims the sweep proved
 WordPress does not publish; deleting a component is a design change, so it waits for the client.
+*(Resolved when the client asked for the band back as CMS data: the component is deleted and
+`src/components/home/ResultCompareSection.tsx` draws the same comparison from a published results
+row. WIRING §16 carries the current state.)*
 
 ## Task E (2026-10-14) — the branded 404
 

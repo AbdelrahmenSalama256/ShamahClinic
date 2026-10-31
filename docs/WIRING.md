@@ -354,9 +354,9 @@ cart/checkout/my-account/shop duplicates.
 
 | file / branch | why it is dead | action |
 |---|---|---|
-| `src/components/home/BeforeAfterSection.tsx` | no importer anywhere in `src` (only its own definition at `:9`) | reported, not deleted — deleting a component is a design change; listed for the client's decision |
-| `src/data/images.ts` | imported only by that component (`BeforeAfterSection.tsx:6`) | same |
-| `ArticleCard.tsx:57-64` "By <author>" and `JournalArticleClient.tsx:134-144` + `:281-299` author box | `apiCardToUI` hard-codes `authorId: ""` (`src/lib/wp/ui-helpers.ts:40`) because WP gives no author mapping; `getSpecialist("")` → `undefined` | same; `images.doctors.doctor1-3` are reachable only through these branches |
+| `src/components/home/BeforeAfterSection.tsx` | no importer anywhere in `src` (only its own definition at `:9`) | **deleted** — the client's decision came: the band was rebuilt as `src/components/home/ResultCompareSection.tsx`, which takes its two pictures from a published results row instead of a hard-coded pair |
+| `src/data/images.ts` | imported only by that component (`BeforeAfterSection.tsx:6`) | **deleted** in the A5 dead-code sweep — with the component gone the map had no importer at all. Its `hero`/`treatments`/`doctors` entries pointed at `/images/*.svg` placeholders that the site stopped rendering when those files came from the database |
+| `ArticleCard.tsx:57-64` "By <author>" and `JournalArticleClient.tsx:134-144` + `:281-299` author box | `apiCardToUI` hard-codes `authorId: ""` (`src/lib/wp/ui-helpers.ts:40`) because WP gives no author mapping; `getSpecialist("")` → `undefined` | same; the only branches that ever named `images.doctors.doctor1-3`, and that map was deleted in A5 |
 | `OfferCard.tsx:84-88` validity line | `src/lib/wp/ui.ts:116` always sets `validUntil` to `""` (Store API has no expiry field) | same |
 
 ## 17. Where an empty WordPress value silently yields authored copy

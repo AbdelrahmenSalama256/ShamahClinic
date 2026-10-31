@@ -1428,6 +1428,88 @@
     box-shadow: var(--c-ring), var(--c-lift);
   }
 
+  /* --- the comparison the editor drags --------------------------------------------------- */
+  /* The sandboxed frame cannot host this: it runs no scripts, which is what makes it safe to
+     hand it HTML exactly as typed. The two pictures and the divide are painted here instead,
+     over the same files the site loads. Where the line sits is decided by `useCompareSlider`,
+     the one implementation the home band calls too — nothing below invents a second geometry. */
+  .console-compare-frame {
+    position: relative;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--c-r-md);
+    background: var(--c-bg-alt);
+    cursor: ew-resize;
+  }
+
+  .console-compare-img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .console-compare-clip {
+    position: absolute;
+    inset: 0;
+  }
+
+  .console-compare-line {
+    position: absolute;
+    inset-block: 0;
+    inline-size: 2px;
+    background: var(--c-surface);
+    box-shadow: 0 0 10px var(--c-overlay);
+    pointer-events: none;
+  }
+
+  .console-compare-handle {
+    position: absolute;
+    inset-block-start: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: var(--c-tap);
+    block-size: var(--c-tap);
+    border: 2px solid var(--c-surface);
+    border-radius: var(--c-r-pill);
+    background: var(--c-accent);
+    color: var(--c-on-fill);
+    box-shadow: var(--c-lift-sm);
+    outline: none;
+    cursor: ew-resize;
+  }
+
+  .console-compare-handle:focus-visible {
+    box-shadow: 0 0 0 3px var(--c-focus);
+  }
+
+  .console-compare-glyph {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
+  }
+
+  .console-compare-corner {
+    position: absolute;
+    inset-block-end: 0.4rem;
+    inset-inline-start: 0.4rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-overlay);
+    color: var(--c-on-fill);
+    font-size: var(--c-font-micro);
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  .console-compare-corner.is-after {
+    inset-inline-start: auto;
+    inset-inline-end: 0.4rem;
+  }
+
   .console-preview h3,
   .console-seo h3 {
     margin: 0 0 0.5rem;

@@ -5,7 +5,7 @@
  * console writes and the default the site falls back to. `npm run copy:catalog` rewrites
  * this file; `npm run build` fails when it is stale.
  *
- * 223 entries from 123 components. Data-driven calls
+ * 224 entries from 124 components. Data-driven calls
  * (`t(row.name.ar, row.name.en)`) are console rows, not copy, and are not listed here.
  */
 export interface CopyEntry {
@@ -24,6 +24,15 @@ export interface CopyEntry {
 }
 
 export const COPY_CATALOG: readonly CopyEntry[] = [
+  {
+    key: "copy.00dc2980ff29",
+    ar: "اسحبي المقبض، أو اضغطي عليه ثم استخدمي الأسهم، لتحريك الخط بين الصورتين.",
+    en: "Drag the handle, or focus it and use the arrow keys, to move the line between the two pictures.",
+    area: "home",
+    file: "src/components/home/ResultCompareSection.tsx",
+    line: 141,
+    uses: 1,
+  },
   {
     key: "copy.0193087b1201",
     ar: "عرض نتيجة {0} بعد الخدمة",
@@ -256,7 +265,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
     line: 333,
-    uses: 1,
+    uses: 2,
   },
   {
     key: "copy.2115b8f082fa",
@@ -376,15 +385,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
-    key: "copy.2dfd3f1560fe",
-    ar: "نتائج حقيقية ملموسة",
-    en: "Real Aesthetic Results",
-    area: "home",
-    file: "src/components/home/BeforeAfterSection.tsx",
-    line: 55,
-    uses: 1,
-  },
-  {
     key: "copy.2fd03dafa618",
     ar: "افتحي مقال النتيجة",
     en: "Open the result's article",
@@ -475,12 +475,21 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
-    key: "copy.3bb9cc395e01",
-    ar: "قبل الجلسة",
-    en: "Before",
+    key: "copy.39df4a54a576",
+    ar: "اعرض حالة: {0}",
+    en: "Show case: {0}",
     area: "home",
-    file: "src/components/home/BeforeAfterSection.tsx",
-    line: 122,
+    file: "src/components/home/ResultCompareSection.tsx",
+    line: 204,
+    uses: 1,
+  },
+  {
+    key: "copy.3bb0ec0ca06a",
+    ar: "الحالة السابقة",
+    en: "Previous case",
+    area: "home",
+    file: "src/components/home/ResultCompareSection.tsx",
+    line: 150,
     uses: 1,
   },
   {
@@ -570,7 +579,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All services",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 111,
+    line: 130,
     uses: 1,
   },
   {
@@ -682,6 +691,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.5af52a92c69b",
+    ar: "كل النتائج",
+    en: "All results",
+    area: "home",
+    file: "src/components/home/ResultCompareSection.tsx",
+    line: 81,
+    uses: 1,
+  },
+  {
     key: "copy.5b93376ff724",
     ar: "يمكنكِ اختيار خدمة واحدة أو أكثر من الجلسات التجميلية المتخصصة لدينا",
     en: "Select one or more of our specialized treatments",
@@ -736,21 +754,12 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
-    key: "copy.627c64f360e7",
-    ar: "بعد الجلسة ✦ توهج ونضارة",
-    en: "After ✦ Radiant Glow",
-    area: "home",
-    file: "src/components/home/BeforeAfterSection.tsx",
-    line: 101,
-    uses: 1,
-  },
-  {
     key: "copy.62bfec0e64f4",
     ar: "لماذا تختار شامه",
     en: "Why clients choose Shamah",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 93,
+    line: 112,
     uses: 1,
   },
   {
@@ -759,7 +768,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All blogs",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 277,
+    line: 300,
     uses: 2,
   },
   {
@@ -859,6 +868,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "shell",
     file: "src/components/layout/Footer.tsx",
     line: 115,
+    uses: 1,
+  },
+  {
+    key: "copy.6bfb0a1c28c9",
+    ar: "{0}٪ من صورة قبل",
+    en: "{0}% of the before picture",
+    area: "home",
+    file: "src/components/home/ResultCompareSection.tsx",
+    line: 130,
     uses: 1,
   },
   {
@@ -997,6 +1015,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.7823283ca2b1",
+    ar: "الحالة {0} من {1}",
+    en: "Case {0} of {1}",
+    area: "home",
+    file: "src/components/home/ResultCompareSection.tsx",
+    line: 156,
+    uses: 1,
+  },
+  {
     key: "copy.788d2ad4f942",
     ar: "رسالتكِ",
     en: "Your message",
@@ -1084,7 +1111,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "cards",
     file: "src/components/cards/ResultCaseCard.tsx",
     line: 333,
-    uses: 1,
+    uses: 2,
   },
   {
     key: "copy.82563506864c",
@@ -1093,15 +1120,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "cards",
     file: "src/components/cards/BranchCard.tsx",
     line: 46,
-    uses: 1,
-  },
-  {
-    key: "copy.829cc2c630d5",
-    ar: "الفرق يتحدث عن",
-    en: "The Transformation Speaks",
-    area: "home",
-    file: "src/components/home/BeforeAfterSection.tsx",
-    line: 59,
     uses: 1,
   },
   {
@@ -1146,7 +1164,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "WhatsApp",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 252,
+    line: 275,
     uses: 4,
   },
   {
@@ -1335,7 +1353,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All offers",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 159,
+    line: 182,
     uses: 1,
   },
   {
@@ -1425,7 +1443,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branch details",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 187,
+    line: 210,
     uses: 1,
   },
   {
@@ -1564,15 +1582,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 2,
   },
   {
-    key: "copy.bfa6b1ab56d6",
-    ar: "نؤمن في عيادات شامه بأن أجمل النتائج هي الأكثر طبيعية. شاهدي الفرق الملموس في نضارة وشد البشرة قبل وبعد الجلسات المتخصصة.",
-    en: "We believe true aesthetic mastery lies in natural enhancement. Witness the radiant change in skin firmness, luminosity, and texture before and after treatment.",
-    area: "home",
-    file: "src/components/home/BeforeAfterSection.tsx",
-    line: 64,
-    uses: 1,
-  },
-  {
     key: "copy.c0256ba10e32",
     ar: "خطة علاجية مناسبة لبشرتكِ مع طبيبة متخصصة.",
     en: "A treatment plan tailored to your skin with a specialist doctor.",
@@ -1598,15 +1607,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     file: "src/components/pages/OfferDetailClient.tsx",
     line: 119,
     uses: 2,
-  },
-  {
-    key: "copy.c5e2d67f74e1",
-    ar: "اسحبي المقبض يميناً ويساراً لمقارنة النتيجة بوضوح",
-    en: "Drag the handle left or right to compare results",
-    area: "home",
-    file: "src/components/home/BeforeAfterSection.tsx",
-    line: 142,
-    uses: 1,
   },
   {
     key: "copy.c9165cef2015",
@@ -1641,7 +1641,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branch",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 215,
+    line: 238,
     uses: 1,
   },
   {
@@ -1690,21 +1690,21 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
-    key: "copy.d719d9876acb",
-    ar: "نفسه بوضوح",
-    en: "For Itself",
-    area: "home",
-    file: "src/components/home/BeforeAfterSection.tsx",
-    line: 60,
-    uses: 1,
-  },
-  {
     key: "copy.d788a3dda3a2",
     ar: "العودة للرئيسية",
     en: "Back to Home",
     area: "pages",
     file: "src/components/pages/NotFoundClient.tsx",
     line: 118,
+    uses: 1,
+  },
+  {
+    key: "copy.d79b84d98e32",
+    ar: "اسحبي لمقارنة صورة قبل بصورة بعد",
+    en: "Drag to compare the before picture with the after picture",
+    area: "home",
+    file: "src/components/home/ResultCompareSection.tsx",
+    line: 129,
     uses: 1,
   },
   {
@@ -1732,6 +1732,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "home",
     file: "src/components/home/HomeHero.tsx",
     line: 284,
+    uses: 1,
+  },
+  {
+    key: "copy.dbf8b6875b9b",
+    ar: "الحالة التالية",
+    en: "Next case",
+    area: "home",
+    file: "src/components/home/ResultCompareSection.tsx",
+    line: 161,
     uses: 1,
   },
   {

@@ -175,6 +175,14 @@ describe('issues reach the field they belong to', () => {
     expect(grouped.other).toEqual([]);
   });
 
+  it('names the unknown key in the notice line', () => {
+    // Every unknown key answers with the same sentence, so the bare sentence leaves the
+    // person hunting: `stray_note — …` is the only line they can act on.
+    const grouped = groupIssues(labels, [{ path: 'stray_note', message: 'unknown field' }], names);
+    expect(grouped.byField).toEqual({});
+    expect(grouped.other).toEqual([`stray_note — ${labels['content.issue.unknown']}`]);
+  });
+
   it('retires a server sentence once its value is gone from the box', () => {
     // Found by typing over a refused currency: the write had been rejected for nine
     // letters, the box now held three, and the field still read `أطول من 8 حرفًا.`.

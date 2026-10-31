@@ -37,6 +37,7 @@ import {
   Field,
   Input,
   Note,
+  pairName,
   type Tone,
 } from "@/components/console/kit";
 import type { MessageKey } from "@/lib/console/messages";
@@ -563,7 +564,7 @@ export function HeroScreen({
               <div className="hero-field-group">
                 <p className="console-doc-label">{labels["hero.alt"]}</p>
                 <div className="console-doc-pair">
-                  <Field label={labels["content.locale.ar"]} htmlFor={`${uid}-alt-ar`} errors={errorsFor("alt")}>
+                  <Field label={pairName(labels["hero.alt"], labels["content.locale.ar"])} htmlFor={`${uid}-alt-ar`} errors={errorsFor("alt")}>
                     <Input
                       id={`${uid}-alt-ar`}
                       dir="rtl"
@@ -573,7 +574,7 @@ export function HeroScreen({
                       onChange={(event) => setAlt("ar", event.target.value)}
                     />
                   </Field>
-                  <Field label={labels["content.locale.en"]} htmlFor={`${uid}-alt-en`}>
+                  <Field label={pairName(labels["hero.alt"], labels["content.locale.en"])} htmlFor={`${uid}-alt-en`}>
                     <Input
                       id={`${uid}-alt-en`}
                       dir="ltr"
@@ -590,7 +591,7 @@ export function HeroScreen({
               <div className="hero-field-group">
                 <p className="console-doc-label">{labels["hero.heading"]}</p>
                 <div className="console-doc-pair">
-                  <Field label={labels["content.locale.ar"]} htmlFor={`${uid}-heading-ar`}>
+                  <Field label={pairName(labels["hero.heading"], labels["content.locale.ar"])} htmlFor={`${uid}-heading-ar`}>
                     <Input
                       id={`${uid}-heading-ar`}
                       dir="rtl"
@@ -600,7 +601,7 @@ export function HeroScreen({
                       onChange={(event) => setLine("heading", "ar", event.target.value)}
                     />
                   </Field>
-                  <Field label={labels["content.locale.en"]} htmlFor={`${uid}-heading-en`}>
+                  <Field label={pairName(labels["hero.heading"], labels["content.locale.en"])} htmlFor={`${uid}-heading-en`}>
                     <Input
                       id={`${uid}-heading-en`}
                       dir="ltr"
@@ -617,7 +618,7 @@ export function HeroScreen({
               <div className="hero-field-group">
                 <p className="console-doc-label">{labels["hero.sub"]}</p>
                 <div className="console-doc-pair">
-                  <Field label={labels["content.locale.ar"]} htmlFor={`${uid}-sub-ar`}>
+                  <Field label={pairName(labels["hero.sub"], labels["content.locale.ar"])} htmlFor={`${uid}-sub-ar`}>
                     <Input
                       id={`${uid}-sub-ar`}
                       dir="rtl"
@@ -627,7 +628,7 @@ export function HeroScreen({
                       onChange={(event) => setLine("sub", "ar", event.target.value)}
                     />
                   </Field>
-                  <Field label={labels["content.locale.en"]} htmlFor={`${uid}-sub-en`}>
+                  <Field label={pairName(labels["hero.sub"], labels["content.locale.en"])} htmlFor={`${uid}-sub-en`}>
                     <Input
                       id={`${uid}-sub-en`}
                       dir="ltr"
@@ -643,7 +644,7 @@ export function HeroScreen({
               <div className="hero-field-group">
                 <p className="console-doc-label">{labels["hero.cta_label"]}</p>
                 <div className="console-doc-pair">
-                  <Field label={labels["content.locale.ar"]} htmlFor={`${uid}-cta-label-ar`}>
+                  <Field label={pairName(labels["hero.cta_label"], labels["content.locale.ar"])} htmlFor={`${uid}-cta-label-ar`}>
                     <Input
                       id={`${uid}-cta-label-ar`}
                       dir="rtl"
@@ -653,7 +654,7 @@ export function HeroScreen({
                       onChange={(event) => setCtaLabel("ar", event.target.value)}
                     />
                   </Field>
-                  <Field label={labels["content.locale.en"]} htmlFor={`${uid}-cta-label-en`}>
+                  <Field label={pairName(labels["hero.cta_label"], labels["content.locale.en"])} htmlFor={`${uid}-cta-label-en`}>
                     <Input
                       id={`${uid}-cta-label-en`}
                       dir="ltr"
@@ -669,7 +670,7 @@ export function HeroScreen({
               <div className="hero-field-group">
                 <p className="console-doc-label">{labels["hero.cta_href"]}</p>
                 <div className="console-doc-pair">
-                  <Field label={labels["content.locale.ar"]} htmlFor={`${uid}-cta-href-ar`} errors={errorsFor("cta")}>
+                  <Field label={pairName(labels["hero.cta_href"], labels["content.locale.ar"])} htmlFor={`${uid}-cta-href-ar`} errors={errorsFor("cta")}>
                     <Input
                       id={`${uid}-cta-href-ar`}
                       dir="ltr"
@@ -680,7 +681,7 @@ export function HeroScreen({
                       onChange={(event) => setCtaHref("ar", event.target.value)}
                     />
                   </Field>
-                  <Field label={labels["content.locale.en"]} htmlFor={`${uid}-cta-href-en`}>
+                  <Field label={pairName(labels["hero.cta_href"], labels["content.locale.en"])} htmlFor={`${uid}-cta-href-en`}>
                     <Input
                       id={`${uid}-cta-href-en`}
                       dir="ltr"

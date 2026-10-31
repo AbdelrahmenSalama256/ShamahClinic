@@ -112,8 +112,11 @@ journalTitle/journalLead` + `posts` collection (published, recent-by-date).
 `39c7c30` removed, from the pre-`pre-payload` `HomeBody.tsx`: long editorial intro +
 **four differentiators** block, featured-treatment showcase w/ index rows, mid-page
 `CtaBand`, results-preview `Swiper`, doctors strip, single featured offer, FAQ
-accordion. Two survivors now orphaned: `components/home/BeforeAfterSection.tsx`
-(dead since `2fff8b1`, no importer) and `data/images.ts` before/after pairs.
+accordion. Of the two survivors `2fff8b1` left orphaned, one is resolved:
+`components/home/BeforeAfterSection.tsx` (dead since then, no importer) was deleted and
+rebuilt as `components/home/ResultCompareSection.tsx`, driven by published results rows.
+`data/images.ts`, which lost its last importer with that deletion, was removed in the A5
+dead-code sweep; its `/images/*.svg` placeholders never resolved to real files.
 
 **Four "why Shamah" differentiators — explicitly EXCLUDED per brief.** They moved to
 `/about` (`AboutClient.tsx:25-54`, STATIC); `PAYLOAD-PLAN.md` marks them "removed as

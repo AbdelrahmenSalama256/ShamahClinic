@@ -12,9 +12,10 @@
  *   4. an unknown URL answers HTTP 404 with the branded page and the `<html lang
  *      dir>` the server chose, Arabic by default and English under `/en`, and a slug
  *      the CMS does not publish answers 404 with `noindex`, and
- *   5. /results paginates the posts whose own text names a result — nine per page,
- *      every card indexed, no authored before/after case presented as a result, and no
- *      card opening a pair it only has half of, and
+ *   5. /results draws the case list the console publishes — the grid matches the tally
+ *      the page prints (nine per page), every comparison card carries both halves, the
+ *      next link appears exactly when a further page exists, and an out-of-range page
+ *      clamps to the last real one, and
  *   6. every image the WooCommerce Store API returns for a product renders — on its
  *      card and on its detail page (one product has one image, three have three),
  *      served from the local mirror and never hotlinked back to the CMS host.
@@ -438,85 +439,119 @@ for (const [path, expected] of [
   );
 }
 
-// ── 6. /results lists the posts whose own text names a result ──
+// ── 6. /results draws the case list the console publishes, nine per page ──
 /**
- * The membership rule lives in the snapshot (`data/wp/result-stories.json`, written
- * by `collectResultStories()` during `npm run sync:wp`), so the expectation is
- * checked against that index rather than against a hand-written count.
+ * The page no longer paginates WordPress posts; it draws the result cases the console
+ * writes — a headline, a before/after pair, and an article only when the owner attached
+ * one. There is no public endpoint for that list, so the expected counts are read off
+ * the page itself (the tally under the grid) rather than a hand-written number that
+ * drifts. What is asserted is the contract that would otherwise break silently: the grid
+ * holds what the tally says, every comparison card carries both halves, the next link
+ * exists exactly when a further page does, and an out-of-range page clamps to the last
+ * real one instead of publishing a second page 1 under its own canonical.
  */
 const PER_PAGE = 9;
-const storyIndex = JSON.parse(
-  readFileSync(new URL("../data/wp/result-stories.json", import.meta.url), "utf8"),
-);
-const storySlugs = new Set(storyIndex.map((s) => s.slug));
-const storySlugsOf = ($) =>
-  $("main a[href*='/blogs/']")
+const printedTotal = ($) => {
+  const hit = $("main").text().match(/(\d+)\s*(?:نتيجة|results?)/);
+  return hit ? Number(hit[1]) : null;
+};
+const canonicalOf = ($) => {
+  const href = $("link[rel='canonical']").attr("href") || "";
+  try {
+    const url = new URL(href);
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return href;
+  }
+};
+const headlines = ($) =>
+  $("main h3")
     .toArray()
-    .map((a) => $(a).attr("href").split("?")[0].split("/").filter(Boolean).pop());
+    .map((h) => $(h).text().replace(/\s+/g, " ").trim());
+/** Each comparison card draws one two-column grid; its two buttons are the halves. */
+const pairGrids = ($) =>
+  $("main div.mt-3.grid.grid-cols-2")
+    .toArray()
+    .map((grid) =>
+      $(grid)
+        .find("button")
+        .toArray()
+        .map((b) => $(b).attr("aria-label") || ""),
+    );
 
 for (const { prefix, lang } of [
   { prefix: "", lang: "ar" },
   { prefix: "/en", lang: "en" },
 ]) {
-  const one = await fetch(`${ORIGIN}${prefix}/results`, { cache: "no-store" });
+  const base = `${prefix}/results`;
+  const one = await fetch(`${ORIGIN}${base}`, { cache: "no-store" });
   const $one = cheerio.load(await one.text());
   check(one.ok, `${lang}: /results returned ${one.status}`);
+  check(
+    Boolean($one("main h1").first().text().trim()),
+    `${lang}: /results carries its own heading`,
+  );
 
-  const first = storySlugsOf($one);
+  const total = printedTotal($one);
+  const firstHeadlines = headlines($one);
+  const first = firstHeadlines.length;
   check(
-    first.length === Math.min(PER_PAGE, storyIndex.length),
-    `${lang}: /results page 1 renders ${first.length} story card(s); ${storyIndex.length} posts qualify`,
-  );
-  const foreign = first.filter((s) => !storySlugs.has(s));
-  check(
-    !foreign.length,
-    `${lang}: every /results card is a post the dashboard's own text frames as a result${
-      foreign.length ? ` (not indexed: ${foreign.join(", ")})` : ""
-    }`,
-  );
-  check(
-    !/Acne skincare course|Melasma and pigmentation plan|كورس العناية بالبشرة الحبية|خطة الكلف/.test(
-      $one("main").text(),
-    ),
-    `${lang}: no authored before/after case is presented as a result`,
+    total !== null && first === Math.min(PER_PAGE, total),
+    `${lang}: page 1 draws ${first} case card(s) with the page's tally at ${total} (nine at most)`,
   );
 
   // Half a comparison is not one. The rule is structural, so it survives the clinic
   // rewriting the page's prose — and the message names how many pair cards exist today,
   // so a pass over none of them is visibly a pass over nothing.
-  const halves = $one("main article")
-    .toArray()
-    .map(
-      (card) =>
-        $one(card)
-          .find("button[aria-label]")
-          .toArray().filter((b) => /picture|صورة/.test($one(b).attr("aria-label") || ""))
-          .length,
-    );
+  const grids = pairGrids($one);
   check(
-    halves.every((n) => n === 2),
-    `${lang}: every card that opens a pair carries both halves (${
-      halves.length ? `pair cards: ${halves.join(", ")}` : "no pair card rendered today"
+    grids.every((labels) => labels.length === 2 && new Set(labels).size === 2),
+    `${lang}: every comparison card carries both halves (${
+      grids.length ? `pair cards: ${grids.map((g) => g.length).join(", ")}` : "no pair card rendered today"
     })`,
   );
 
-  const two = await fetch(`${ORIGIN}${prefix}/results?page=2`, { cache: "no-store" });
-  const $two = cheerio.load(await two.text());
-  const second = storySlugsOf($two);
-  check(two.ok, `${lang}: /results?page=2 returned ${two.status}`);
+  // A further page exists exactly when the list runs past one page.
+  const lastPage = Math.max(1, Math.ceil((total ?? 0) / PER_PAGE));
+  const nextHref = $one("link[rel=next]").attr("href") || "";
   check(
-    second.length > 0 && !second.some((s) => first.includes(s)),
-    `${lang}: ?page=2 renders the next ${second.length} stories, not page 1 again`,
+    Boolean(nextHref) === lastPage > 1,
+    `${lang}: the next link appears exactly when a second page exists (${
+      nextHref ? "present" : "absent"
+    }; ${lastPage} page(s) for ${total ?? "?"} case(s))`,
   );
 
+  if (nextHref && lastPage > 1) {
+    const nextUrl = new URL(nextHref, ORIGIN);
+    const two = await fetch(`${ORIGIN}${nextUrl.pathname}${nextUrl.search}`, { cache: "no-store" });
+    const $two = cheerio.load(await two.text());
+    const second = headlines($two);
+    const expected = Math.min(PER_PAGE, (total ?? 0) - PER_PAGE);
+    check(two.ok, `${lang}: the next link leads to page 2 (${two.status})`);
+    check(
+      second.length === expected && !second.some((h) => firstHeadlines.includes(h)),
+      `${lang}: page 2 draws the next ${second.length} case(s), not page 1 again`,
+    );
+  }
+
   // An out-of-range page clamps to the last real page, exactly as /blogs does, so
-  // it cannot publish a second page-1 under its own canonical.
-  const lastPage = Math.ceil(storyIndex.length / PER_PAGE);
-  const out = await fetch(`${ORIGIN}${prefix}/results?page=999`, { cache: "no-store" });
+  // it cannot publish a second page 1 under its own canonical.
+  const out = await fetch(`${ORIGIN}${base}?page=999`, { cache: "no-store" });
   const $out = cheerio.load(await out.text());
+  const wantPath = lastPage > 1 ? `${base}?page=${lastPage}` : base;
   check(
-    ($out("link[rel='canonical']").attr("href") || "").includes(`page=${lastPage}`),
-    `${lang}: ?page=999 canonicalizes to the last real page (${lastPage})`,
+    out.ok && canonicalOf($out) === wantPath,
+    `${lang}: ?page=999 canonicalizes to ${wantPath} (got ${canonicalOf($out)})`,
+  );
+  check(
+    headlines($out).length === (total ?? 0) - (lastPage - 1) * PER_PAGE,
+    `${lang}: ?page=999 draws the last page's ${
+      (total ?? 0) - (lastPage - 1) * PER_PAGE
+    } case(s)`,
+  );
+  check(
+    !($out("link[rel=next]").attr("href") || ""),
+    `${lang}: the clamped page claims no page after it`,
   );
 }
 

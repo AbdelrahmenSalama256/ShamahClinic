@@ -20,6 +20,13 @@ import type { MessageKey } from './messages';
 import type { FieldIssue } from './issues';
 import { plainText } from '../content/format';
 import { isOrderedKind, type ContentLocale } from '../content/kinds';
+import {
+  ALT_TARGET_KEYS,
+  moveSharedAltInDoc,
+  sharedAltApplies,
+  sharedAltKeysOf,
+  type AltStatus,
+} from '../content/alt-migration';
 import type { ContentRow, FieldView } from '../content/store';
 import {
   listDocForm,
@@ -156,6 +163,40 @@ export function displayForm(row: ContentRow, form: Form): Form {
     out[name] = storedValue(field, form[name]);
   }
   return out;
+}
+
+/**
+ * One row's answer to the click that moves a legacy shared description.
+ *
+ * `moveSharedAltInDoc()` works on a stored document; the person is looking at a form, where
+ * the two descriptions they may already have typed live in their own boxes and the stale key
+ * rides in the hidden `__unknown` entry. This is the same three rules with the boxes read from
+ * where the editor keeps them, and it hands back a form the ordinary save path then writes —
+ * so a failed save is reported by the save, not by a second copy of that logic here.
+ *
+ * `status: 'kept'` deliberately changes nothing: the shared sentence says something neither
+ * half says, and the notice has to say that instead of deleting it.
+ */
+export function sharedAltMove(schema: ListSchema | null | undefined, form: Form): { form: Form; status: AltStatus; copied: string[] } {
+  const unknown = unknownOf(form);
+  if (!sharedAltApplies(schema) || sharedAltKeysOf(unknown).length === 0) return { form, status: 'nothing', copied: [] };
+
+  const seeded: Record<string, unknown> = { ...unknown };
+  for (const key of ALT_TARGET_KEYS) seeded[key] = String(form[key] ?? '');
+
+  const moved = moveSharedAltInDoc(seeded);
+  if (moved.status !== 'moved') return { form, status: moved.status, copied: moved.copied };
+
+  const next: Form = { ...form };
+  const rest: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(moved.doc)) {
+    if (ALT_TARGET_KEYS.includes(key)) next[key] = String(value ?? '');
+    else rest[key] = value;
+  }
+  // The hidden entry keeps whatever else the row holds that the form cannot draw, minus the
+  // legacy key this just moved. Re-serialising it is what unblocks the save.
+  next[UNKNOWN_FORM_KEY] = JSON.stringify(rest);
+  return { form: next, status: moved.status, copied: moved.copied };
 }
 
 /**

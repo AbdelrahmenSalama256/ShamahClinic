@@ -85,11 +85,13 @@ from `public/images`, not a client of Shamah:
 | `laser-hair-removal-course` | Laser hair removal, forearms, 6 sessions | the live site prices and plans laser per consultation; a fixed 6-session course is our number |
 | `melasma-course` | "Melasma and pigmentation plan", forehead and cheeks, 3 sessions | no melasma service or plan is published by the dashboard |
 
-They are listed here as **unverified** and no longer rendered. `src/data/results.ts` and
-`src/components/cards/ResultCaseCard.tsx` stay in the tree unreferenced — the same
-treatment `src/components/home/BeforeAfterSection.tsx` got: removing a designed component
-is the client's call, not ours. If the clinic ever uploads real consent-given pairs, that
-component is where they land.
+They are listed here as **unverified** and no longer rendered. `src/data/results.ts` is gone and
+`src/components/cards/ResultCaseCard.tsx` is not — the results page renders it through
+`ResultsClient.tsx`, from rows the console publishes. The home page's band that used to sit beside
+them, `src/components/home/BeforeAfterSection.tsx`, was deleted rather than left orphaned: it held
+the hard-coded pair below, and `src/components/home/ResultCompareSection.tsx` now draws the same
+comparison from a published row. If the clinic ever uploads real consent-given pairs, they land in
+the console and reach both places with no code change.
 
 ## Evidence table — the 56 result stories
 

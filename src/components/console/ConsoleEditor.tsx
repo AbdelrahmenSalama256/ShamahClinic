@@ -48,12 +48,15 @@ import {
   listSchemaOfRow,
   resultNotices,
   sameForm,
+  sharedAltMove,
   storedValue,
   type Form,
 } from '@/lib/console/editor-form';
+import { isSharedAltKey } from '@/lib/content/alt-migration';
 import { listDocFromForm, listDocImage, schemaStems } from '@/lib/content/list-schema';
 import { ListDocFields, type ReferenceChoice } from './ListDocFields';
-import { previewDocument, previewModel } from '@/lib/console/preview';
+import { CaseComparePreview } from './CaseComparePreview';
+import { previewDocument, previewModel, type ResultCasePreview } from '@/lib/console/preview';
 import { localizedPath } from '@/lib/content/paths';
 import { writeScopeQuery } from '@/lib/content/list-view';
 import { Button, ButtonLink } from '@/components/console/kit';
@@ -149,6 +152,9 @@ export function ConsoleEditor({
   const [autosaveStopped, setAutosaveStopped] = useState(false);
   const [history, setHistory] = useState<{ id: string; revisions: RevisionView[] } | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');
+  /** The case the same form draws its comparison from, kept beside the frame because the
+   *  frame runs no scripts and a slider needs them. */
+  const [previewCase, setPreviewCase] = useState<ResultCasePreview | null>(null);
 
   const tag = rowId === null ? '' : `${rowId}#${nonce}`;
   /** A reply to the row someone switched away from must not draw over the one they are on,
@@ -195,6 +201,17 @@ export function ConsoleEditor({
   const parsed = useMemo(() => (row ? fieldsFromForm(row, form) : { fields: {}, issues: [] }), [row, form]);
   /** The typed form a list item gets; `null` for a bilingual kind or an older list. */
   const listSchema = row ? listSchemaOfRow(row) : null;
+  /**
+   * The row's legacy shared picture description, and the form that has already moved it.
+   *
+   * Pure, so this is the same object the notice's button hands to the save. `nothing` means
+   * there is no such key — or the list has no such split to move onto.
+   */
+  const altMove = useMemo(() => sharedAltMove(listSchema, form), [form, listSchema]);
+  const altOwned = altMove.status !== 'nothing';
+  // The notice warns only while the move is still on offer. A row whose two descriptions are
+  // already written needs no colour shouted at it, so the same box goes quiet.
+  const altTone: Tone = altMove.status === 'moved' ? 'warn' : 'neutral';
   // What the pane shows on the right is the cleaned document, not the raw keystrokes:
   // an imported `<p>` in a plain box must not become a visible tag in the preview or a
   // `<p>` counted into the SEO description's length.
@@ -206,12 +223,15 @@ export function ConsoleEditor({
     () =>
       groupIssues(
         labels,
-        [...parsed.issues, ...liveIssues(serverIssues, form)],
+        // The shared description is said once, by the notice that fixes it — not also as an
+        // unnamed error underneath. Every other message keeps its own route to the field it
+        // belongs to, because a notice about one key is not a licence to hide the rest.
+        [...parsed.issues, ...liveIssues(serverIssues, form)].filter((issue) => !altOwned || !isSharedAltKey(issue.path)),
         // A list document's messages are named by the schema's stems (`name`, `benefits`),
         // not by the row's single `data` field, so the message lands under its own box.
         listSchema ? schemaStems(listSchema) : Object.keys(row?.fields ?? {}),
       ),
-    [form, labels, listSchema, parsed, row, serverIssues],
+    [altOwned, form, labels, listSchema, parsed, row, serverIssues],
   );
   // Only the browser's own complaints grey the buttons: a server message is often about
   // something the client cannot recompute — a taken slug, a moved version — and needs a retry.
@@ -231,37 +251,55 @@ export function ConsoleEditor({
     [labels],
   );
 
-  /** The draft only. `mode` decides how loud a failure is allowed to be. */
-  const save = useCallback(async (mode: 'manual' | 'auto' | 'nav'): Promise<boolean> => {
-    if (!row) return false;
-    const posted = form;
-    if (invalid) {
-      if (mode !== 'auto') setNotice({ tone: 'danger', key: 'content.error.invalid_input' });
-      return false;
-    }
-    setBusy(true);
-    const result = await consoleCall<{ row?: ContentRow }>(`${api}/${row.id}${query}`, 'PATCH', { fields: parsed.fields, version: row.version });
-    setBusy(false);
-    if (result.error) {
-      setServerIssues(result.issues.map((issue) => ({ ...issue, was: formValueOf(posted, fieldOf(issue.path)) })));
-      if (result.error === 'stale_row') setAutosaveStopped(true);
-      if (mode === 'auto') setNotice(result.error === 'stale_row' ? { tone: 'danger', key: 'content.autosave_stopped' } : null);
-      else tell(result, 'content.saved');
-      return false;
-    }
-    setServerIssues([]);
-    setSavedForm(posted);
-    if (result.data?.row) setDoc({ tag, row: result.data.row });
-    if (mode === 'auto') setAutosavedAt(Date.now());
-    else {
-      setNotice({ tone: 'ok', key: 'content.saved' });
-      // An explicit save is the moment to ask the screen behind the editor for its dates
-      // and state chip again. Autosave stays inside the form; re-rendering the page every
-      // two seconds would undo more than it refreshes.
-      onChanged();
-    }
-    return true;
-  }, [api, form, invalid, onChanged, parsed, query, row, tag, tell]);
+  /**
+   * The draft only. `mode` decides how loud a failure is allowed to be, and `next` saves a
+   * form the person has not typed into the boxes — the one-click move's own result.
+   *
+   * Both go through this one path so the version lock, the field messages and the failure
+   * reporting stay one behaviour: a move that the database refused has to be reported as a
+   * failed save, because its words are still only in the browser.
+   */
+  const save = useCallback(
+    async (mode: 'manual' | 'auto' | 'nav', next?: Form): Promise<boolean> => {
+      if (!row) return false;
+      const posted = next ?? form;
+      const target = next ? fieldsFromForm(row, next) : parsed;
+      if (target.issues.length > 0) {
+        if (mode !== 'auto') setNotice({ tone: 'danger', key: 'content.error.invalid_input' });
+        return false;
+      }
+      setBusy(true);
+      const result = await consoleCall<{ row?: ContentRow }>(`${api}/${row.id}${query}`, 'PATCH', { fields: target.fields, version: row.version });
+      setBusy(false);
+      if (result.error) {
+        setServerIssues(result.issues.map((issue) => ({ ...issue, was: formValueOf(posted, fieldOf(issue.path)) })));
+        if (result.error === 'stale_row') setAutosaveStopped(true);
+        if (mode === 'auto') setNotice(result.error === 'stale_row' ? { tone: 'danger', key: 'content.autosave_stopped' } : null);
+        else tell(result, 'content.saved');
+        return false;
+      }
+      setServerIssues([]);
+      setSavedForm(posted);
+      if (result.data?.row) setDoc({ tag, row: result.data.row });
+      if (mode === 'auto') setAutosavedAt(Date.now());
+      else {
+        setNotice({ tone: 'ok', key: 'content.saved' });
+        // An explicit save is the moment to ask the screen behind the editor for its dates
+        // and state chip again. Autosave stays inside the form; re-rendering the page every
+        // two seconds would undo more than it refreshes.
+        onChanged();
+      }
+      return true;
+    },
+    [api, form, onChanged, parsed, query, row, tag, tell],
+  );
+
+  /** One click: split the shared description, then let the ordinary save report the write. */
+  async function moveSharedAlt(): Promise<void> {
+    if (!canEditRow || altMove.status !== 'moved') return;
+    setForm(altMove.form);
+    if (await save('manual', altMove.form)) setNotice({ tone: 'ok', key: 'content.alt.moved' });
+  }
 
   // The debounce is the whole design: one write per pause, and a keystroke cancels it.
   useEffect(() => {
@@ -271,10 +309,11 @@ export function ConsoleEditor({
   }, [autosaveStopped, busy, canEditRow, dirty, invalid, pendingNav, save]);
 
   useEffect(() => {
-    const timer = setTimeout(
-      () => setPreviewSrc(previewDocument(previewModel(kind, shown, locale, row?.listKey ?? null, referenceOptions), locale, labels)),
-      PREVIEW_MS,
-    );
+    const timer = setTimeout(() => {
+      const model = previewModel(kind, shown, locale, row?.listKey ?? null, referenceOptions);
+      setPreviewSrc(previewDocument(model, locale, labels));
+      setPreviewCase(model.resultCase);
+    }, PREVIEW_MS);
     return () => clearTimeout(timer);
   }, [kind, locale, row?.listKey, shown, referenceOptions, labels]);
 
@@ -396,7 +435,30 @@ export function ConsoleEditor({
           <Alert>{labels[abilities.update.length === 0 ? 'content.readonly' : 'content.locale_locked']}</Alert>
         ) : null}
 
-        {issues.other.length > 0 && <Alert tone="danger">{issues.other.join(' · ')}</Alert>}
+        {/* One row, one shared sentence: the notice that names it is the one that fixes it.
+            Before this, the key arrived as an unnamed red box reading "that field is not part
+            of this kind", with no action except a Remove that threw the words away — so the
+            row could not be saved and its description could not be kept. Anything else the
+            document holds still reaches the block below, unchanged. */}
+        {altOwned && row ? (
+          <Alert tone={altTone}>
+            {labels[altMove.status === 'moved' ? 'content.alt.can_move' : 'content.alt.both_filled']}
+            {altMove.status === 'moved' ? (
+              <>
+                {' '}
+                <Button size="sm" disabled={!canEditRow || busy} onClick={() => void moveSharedAlt()}>
+                  {labels['content.alt.move']}
+                </Button>
+              </>
+            ) : null}
+          </Alert>
+        ) : null}
+
+        {issues.other.length > 0 && (
+          <Alert tone="danger">
+            <strong>{labels['content.issues.other']}</strong> {issues.other.join(' · ')}
+          </Alert>
+        )}
 
         {/* A result row is the one list item that is really something else — a journal article
             — and two of its states look fine while changing nothing on the site. Said out loud
@@ -550,6 +612,7 @@ export function ConsoleEditor({
       </div>
 
       <aside className="console-editor-side">
+        {previewCase && <CaseComparePreview model={previewCase} locale={locale} labels={labels} />}
         <Card as="section" className="console-panel console-preview">
           <h3>{labels['content.preview']}</h3>
           <Note>{labels['content.preview.draft']}</Note>
@@ -604,15 +667,19 @@ function FieldRow({
   const invalid = errors.length > 0;
 
   if (field.kind === 'flag') {
+    // A checkbox reads the same at a glance whether it is on or off; the words do not. The one
+    // box that decides whether a visitor sees the row says so in those terms, and says what
+    // pressing it does not do — an owner who hides a result to try a layout must be able to
+    // trust that its pictures and its text are still there.
+    const words = name === 'enabled' ? (value ? labels['content.visibility.on'] : labels['content.visibility.off']) : value ? labels['content.flag.on'] : labels['content.flag.off'];
     return (
       <div className="console-field">
         {/* The box and its words are one target: `Checkbox` renders the label around the
             input, which is what gives a flag the 44px row the list's checkboxes already had
             and this one did not. */}
         <Checkbox id={id} label={label} checked={Boolean(value)} disabled={disabled} onChange={(event) => onChange(event.target.checked)} />
-        {/* A checkbox reads the same at a glance whether it is on or off; the words do not. */}
         <Note>
-          {value ? labels['content.flag.on'] : labels['content.flag.off']}
+          {words}
           {field.immediate ? ` · ${labels['content.immediate']}` : ''}
         </Note>
       </div>

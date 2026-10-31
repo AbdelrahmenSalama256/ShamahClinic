@@ -257,6 +257,7 @@ export default async function PreviewMissingFieldsPage() {
           services={[]}
           servicesTotal={0}
           servicesTitle={{ ar: "", en: "" }}
+          cases={[]}
           offers={[]}
           articles={[]}
           branches={[]}
@@ -272,6 +273,7 @@ export default async function PreviewMissingFieldsPage() {
           services={[1, 2, 3, 4].map((n) => treatment({ id: `f-h-${n}`, name: { ar: `خدمة ${n}`, en: `Service ${n}` } }))}
           servicesTotal={12}
           servicesTitle={{ ar: "خدماتنا", en: "Our services" }}
+          cases={[]}
           offers={[1, 2, 3, 4].map((n) => offer({ id: `f-ho-${n}`, title: { ar: `باقة ${n}`, en: `Package ${n}` } }))}
           articles={[1, 2, 3, 4].map((n) => article({ slug: `f-ha-${n}`, title: { ar: `مقال ${n}`, en: `Article ${n}` } }))}
           branches={[1, 2, 3, 4].map((n) =>
@@ -296,6 +298,7 @@ export default async function PreviewMissingFieldsPage() {
           services={[treatment({ id: "f-hb-svc" })]}
           servicesTotal={1}
           servicesTitle={{ ar: "خدماتنا", en: "Our services" }}
+          cases={[]}
           offers={[]}
           articles={[]}
           branches={[

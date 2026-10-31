@@ -19,6 +19,10 @@
  *   - **a key the form does not describe is shown, and its value is nowhere editable.** The
  *     server refuses unknown fields; the screen has to say so without handing over a box to
  *     type them into.
+ *   - **a box of one language says which field it belongs to.** The eye has the two halves
+ *     side by side under the field's heading and needs only the language word; the voice hears
+ *     one control at a time and gets `Field — Language`. A row of five benefits read aloud as
+ *     "Arabic, English, Arabic, English" is the same form with the labels gone missing.
  *
  * Slice R adds one field type to that contract, because a result may open with a journal
  * article behind it: `story` names the one it opens, and may name none. The suite checks the
@@ -83,6 +87,44 @@ function tagFor(markup: string, id: string): string {
 }
 
 const countOf = (markup: string, id: string): number => (markup.match(new RegExp(`id="${id}"`, 'g')) ?? []).length;
+
+/** HTML entities React escapes in a label, back to the characters a voice reads. */
+function unscape(html: string): string {
+  return html
+    .replace(/&#x27;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
+/** Every `<label for>` on the page, with what the voice reads and what the eye reads. */
+function labelNodes(markup: string): { id: string; spoken: string; visible: string }[] {
+  return [...markup.matchAll(/<label for="([^"]+)"[^>]*>([\s\S]*?)<\/label>/g)].map(([, id, body]) => ({
+    id,
+    spoken: unscape(body.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim(),
+    visible: unscape(body.replace(/<span class="console-sr-only">[\s\S]*?<\/span>/g, '').replace(/<[^>]*>/g, ' '))
+      .replace(/\s+/g, ' ')
+      .trim(),
+  }));
+}
+
+/**
+ * How many boxes of a list's form hold one language of one field.
+ *
+ * The count is what turns "every named box reads well" into "no box was left unnamed": a pair
+ * drawn without its field in front of the language drops out of the sample below, and the
+ * expectation on the total says so.
+ */
+function bilingualBoxes(schema: ListSchema): number {
+  let boxes = 0;
+  for (const field of schema.fields) {
+    if (field.type === 'text' && !field.mono) boxes += field.html ? 0 : 2;
+    if (field.type === 'list') boxes += 2;
+    if (field.type === 'children') boxes += 2 * field.row.filter((cell) => cell.type === 'text').length;
+  }
+  return boxes;
+}
 
 /**
  * A document that names every field of a list, so each one has a row on screen.
@@ -185,6 +227,45 @@ describe('what the typed list form really paints (BK-20 F)', () => {
         expect(tagFor(markup, id), `${schema.key}.${field.stem} is a control`).not.toBe('');
       }
     }
+  });
+
+  it('names every bilingual box with the field it belongs to', () => {
+    const languages = [labels['content.locale.ar'], labels['content.locale.en']];
+    const pattern = / — (العربية|English)$/;
+
+    for (const schema of listSchemas()) {
+      const markup = renderForm(schema, listDocForm(schema, sampleDoc(schema)));
+      // A box whose only visible word is a language is a box a voice cannot place in the form.
+      const pairs = labelNodes(markup).filter((node) => languages.some((word) => node.visible.endsWith(word)));
+
+      expect(pairs.length, `${schema.key} labels every bilingual box`).toBe(bilingualBoxes(schema));
+      for (const node of pairs) {
+        expect(node.spoken, `${schema.key}.${node.id} says which field it is`).toMatch(pattern);
+        expect(node.spoken.replace(pattern, ''), `${schema.key}.${node.id} names the field`).not.toBe('');
+        // The words on the screen did not move: the field's name went in front of the language
+        // for the voice alone, so a person looking at the row still reads one short word.
+        expect(languages.some((word) => node.visible.endsWith(word)), `${schema.key}.${node.id} keeps its language`).toBe(true);
+      }
+
+      // The boxes a `<label>` cannot reach: a contenteditable surface takes its name from
+      // `aria-label`, and it has to carry the same words.
+      const surfaces = [...markup.matchAll(/role="textbox"[^>]*aria-label="([^"]+)"/g)].map(([, title]) => unscape(title));
+      const htmlFields = schema.fields.filter((field) => field.type === 'text' && field.html && !field.mono);
+      expect(surfaces.length, `${schema.key} names every rich surface`).toBe(2 * htmlFields.length);
+      for (const title of surfaces) expect(title, `${schema.key} rich surface`).toMatch(pattern);
+    }
+
+    // One list read by name, so the shape of the words is on the page and not only inside a loop.
+    const results = listSchemaOf('results')!;
+    const drawn = labelNodes(renderForm(results, listDocForm(results, sampleDoc(results))));
+    expect(drawn.find((node) => node.id === 'list-field-title-ar')).toMatchObject({
+      spoken: 'عنوان النتيجة — العربية',
+      visible: 'العربية',
+    });
+    expect(drawn.find((node) => node.id === 'list-field-afterAlt-en')).toMatchObject({
+      spoken: 'وصف صورة بعد — English',
+      visible: 'English',
+    });
   });
 
   it('holds the fields a list names, and no document', () => {
