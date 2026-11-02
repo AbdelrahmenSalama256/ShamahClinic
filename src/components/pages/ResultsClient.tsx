@@ -7,7 +7,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { ArticleCard } from "@/components/cards/ArticleCard";
 import { ResultCaseCard } from "@/components/cards/ResultCaseCard";
 import { GoldLink } from "@/components/shared/Actions";
 import { getLocalizedHref } from "@/lib/locale";
@@ -112,11 +111,7 @@ export const ResultsClient: React.FC<{
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
               {stories.map((story, i) => (
                 <Reveal key={story.key} delay={Math.min(i, 8) * 0.08} className="h-full">
-                  {story.pair || !story.article ? (
-                    <ResultCaseCard story={story} gallery={gallery} priority={i < 2} />
-                  ) : (
-                    <ArticleCard article={story.article} priority={i < 2} />
-                  )}
+                  <ResultCaseCard story={story} gallery={gallery} priority={i < 2} />
                 </Reveal>
               ))}
             </div>
