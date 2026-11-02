@@ -3,13 +3,14 @@ import type { ServiceCard } from "./types";
 // Both inputs of the merge come from the site's read path, so a treatment page can
 // never pair a database page with a snapshot service list.
 import { getPage, getServiceCards, getSourceServiceCards } from "../content/site";
-import { htmlToText } from "./sanitize";
+import { htmlToText, sanitizeHtmlBody } from "./sanitize";
 import { toPhotoSlot } from "./ui-helpers";
 import { arabicRatio } from "./lang";
 import { treatmentsData, type Treatment } from "@/data/treatments";
 import { featuredServiceSlugs } from "@/config/home";
 import { hasPublished, publicRows } from "../content/published";
-import { treatmentOfDoc } from "../content/list-docs";
+import { serviceDocOf, treatmentOfDoc } from "../content/list-docs";
+import { serviceOfDoc, type ServiceContent } from "../content/service-doc";
 
 /**
  * The service cards WordPress publishes (pages/696) are the naming authority:
@@ -118,32 +119,74 @@ function fromServiceCard(card: ServiceCard): Treatment {
  * the database or wholly from the snapshot, never half of each. The import that fills
  * it (`npm run db:import-lists`) reads the snapshot's own cards, so the first database
  * answer is the seven services the page already showed.
+ *
+ * The rows are read once per render and returned as the documents their authors wrote,
+ * because two readers need the same rows: `treatmentOfDoc`, which gives the cards, the
+ * booking pickers and the home band the fourteen fields they have always drawn, and
+ * `serviceOfDoc`, which gives the detail page every field the console added since. One
+ * read is what keeps those two from disagreeing about which rows are enabled.
  */
+const serviceRecords = cache(
+  async (): Promise<{ key: string; doc: Record<string, unknown> }[] | null> => {
+    try {
+      if (!(await hasPublished('list_item', { listKey: 'services' }))) return null;
+      const rows = await publicRows('list_item', { listKey: 'services' });
+      const records = rows
+        .filter((row) => {
+          const enabled = row.values.enabled;
+          return enabled?.kind === 'flag' && enabled.value;
+        })
+        .map((row) => {
+          const data = row.values.data;
+          if (!data || data.kind !== 'json' || data.value === null || typeof data.value !== 'object') return null;
+          return { key: row.key, doc: data.value as Record<string, unknown> };
+        })
+        .filter((record): record is { key: string; doc: Record<string, unknown> } => record !== null);
+      return records.length ? records : null;
+    } catch {
+      return null;
+    }
+  },
+);
+
 async function treatmentsFromDb(): Promise<Treatment[] | null> {
-  try {
-    if (!(await hasPublished('list_item', { listKey: 'services' }))) return null;
-    const rows = await publicRows('list_item', { listKey: 'services' });
-    const list = rows
-      .filter((row) => {
-        const enabled = row.values.enabled;
-        return enabled?.kind === 'flag' && enabled.value;
-      })
-      .map((row) => {
-        const data = row.values.data;
-        if (!data || data.kind !== 'json' || data.value === null || typeof data.value !== 'object') return null;
-        return treatmentOfDoc(data.value as Record<string, unknown>, row.key);
-      })
-      .filter((treatment): treatment is Treatment => treatment !== null);
-    return list.length ? list : null;
-  } catch {
-    return null;
-  }
+  const records = await serviceRecords();
+  if (!records) return null;
+  const list = records
+    .map(({ key, doc }) => treatmentOfDoc(doc, key))
+    .filter((treatment): treatment is Treatment => treatment !== null);
+  return list.length ? list : null;
+}
+
+/**
+ * The same rows as the typed service document, or null when the list is not in the database.
+ *
+ * A row with no name is skipped here for the same reason the list itself refuses to publish it,
+ * and nothing else is dropped: every field the row does not hold simply comes back empty, which
+ * is what the page draws no heading for.
+ */
+async function contentsFromDb(): Promise<ServiceContent[] | null> {
+  const records = await serviceRecords();
+  if (!records) return null;
+  const list = records
+    .map(({ key, doc }) => serviceOfDoc(doc, key))
+    .filter((content): content is ServiceContent => content !== null);
+  return list.length ? list : null;
 }
 
 export const getMergedTreatments = cache(async function getMergedTreatments(): Promise<Treatment[]> {
-  const fromDb = await treatmentsFromDb();
-  if (fromDb) return fromDb;
-  return treatmentsFromSite();
+  return (await treatmentsFromDb()) ?? [];
+});
+
+/**
+ * Every service page's typed content, from whichever rung answers the list.
+ *
+ * The snapshot rung converts the authored card through the document the import writes it from,
+ * so one service answers the same way whichever rung serves it — and the relations a snapshot
+ * card cannot carry (offers, questions, the team) stay empty rather than gaining a guess.
+ */
+export const getMergedServices = cache(async function getMergedServices(): Promise<ServiceContent[]> {
+  return (await contentsFromDb()) ?? [];
 });
 
 /**
@@ -235,6 +278,32 @@ export async function getFeaturedServices(limit = 3): Promise<Treatment[]> {
   return picked;
 }
 
+/**
+ * The long-form page the dashboard publishes for this section, when it made one.
+ *
+ * WordPress gives a section its own page only when the data team creates one: page 885
+ * (`botox-injections`) is the treatment page in `/wp/v2/pages` today, so the botox detail
+ * shows the dashboard's long-form body and the others keep the authored description. A
+ * card that came from WordPress alone is looked up under its own section slug, so a page
+ * the team publishes later is used with no code change.
+ */
+async function snapshotBody(pageSlug: string): Promise<{ ar: string; en: string } | null> {
+  let html: { ar: string; en: string } | null = null;
+  try {
+    html = (await getPage(pageSlug))?.item.html ?? null;
+  } catch {
+    html = null;
+  }
+  if (!html?.en) return null;
+  // The Arabic subsite stores 885 in English (its REST body has no Arabic characters at
+  // all), so Arabic keeps showing the authored description rather than an untranslated
+  // block. Recorded in docs/WIRING.md.
+  return { ar: arabicRatio(htmlToText(html.ar)) > 0.3 ? html.ar : "", en: html.en };
+}
+
+/** The dashboard page a service's long-form body would live under. */
+const bodyPageOf = (key: string): string => SECTION_SLUG[key] || key;
+
 export const getMergedTreatment = cache(async function getMergedTreatment(slug: string): Promise<Treatment | null> {
   const all = await getMergedTreatments();
   const treatment = all.find((t) => t.id === slug);
@@ -243,28 +312,53 @@ export const getMergedTreatment = cache(async function getMergedTreatment(slug: 
   // by the snapshot the import first copied it from.
   if (treatment.body?.en || treatment.body?.ar) return treatment;
 
-  // WordPress gives a section its own page only when the data team creates one:
-  // page 885 (`botox-injections`) is the treatment page in `/wp/v2/pages` today,
-  // so the botox detail shows the dashboard's long-form body and the others keep
-  // the authored description. A card that came from WordPress alone is looked up
-  // under its own section slug, so a page the team publishes later is used with
-  // no code change.
-  const pageSlug = SECTION_SLUG[treatment.id] || treatment.id;
-  let html: { ar: string; en: string } | null = null;
-  try {
-    html = (await getPage(pageSlug))?.item.html ?? null;
-  } catch {
-    html = null;
-  }
-  if (!html?.en) return treatment;
-  return {
-    ...treatment,
-    body: {
-      // The Arabic subsite stores 885 in English (its REST body has no Arabic
-      // characters at all), so Arabic keeps showing the authored description
-      // rather than an untranslated block. Recorded in docs/WIRING.md.
-      ar: arabicRatio(htmlToText(html.ar)) > 0.3 ? html.ar : "",
-      en: html.en,
-    },
-  };
+  const body = await snapshotBody(bodyPageOf(treatment.id));
+  return body ? { ...treatment, body } : treatment;
 });
+
+/**
+ * The last two doors every service page passes through, whichever rung wrote it.
+ *
+ * The two fields printed as markup — the full description and the extra body — are filtered
+ * here on the way out, which is the second door `../content/rich.ts` describes: a save is
+ * filtered going in, and a render is filtered going out, so a row restored from a dump
+ * cannot print what the console would have refused. A row that carries no long-form body of
+ * its own is offered the dashboard's, which is the one thing the snapshot still adds to a
+ * page. The preview reads a draft through the same pair, so what an owner sees is what
+ * publishing that row would serve.
+ */
+async function withPublishedBody(content: ServiceContent): Promise<ServiceContent> {
+  const body = content.body.ar || content.body.en ? content.body : ((await snapshotBody(bodyPageOf(content.key))) ?? content.body);
+  return {
+    ...content,
+    description: { ar: sanitizeHtmlBody(content.description.ar), en: sanitizeHtmlBody(content.description.en) },
+    body: { ar: sanitizeHtmlBody(body.ar), en: sanitizeHtmlBody(body.en) },
+  };
+}
+
+/**
+ * One service page as its author wrote it, with the dashboard's long-form body filled in
+ * when the row holds none of its own.
+ *
+ * This is what the public detail reads: every field the console edits, plus the relations
+ * `./service-page.ts` resolves onto it. `getMergedTreatment` stays the card-shaped reader
+ * the listing, the home band and the booking pickers use.
+ */
+export const getMergedService = cache(async function getMergedService(slug: string): Promise<ServiceContent | null> {
+  const content = (await getMergedServices()).find((c) => c.key === slug);
+  if (!content) return null;
+  return withPublishedBody(content);
+});
+
+/**
+ * One unsaved document, read as the page that document would publish.
+ *
+ * `key` is the row's own key, not a slug the caller guessed: the page links its related
+ * services by key and leaves the row out of its own strip by the same key, so a preview
+ * handed a different key would draw a different page.
+ */
+export async function serviceDraftOfDoc(doc: Record<string, unknown>, key: string): Promise<ServiceContent | null> {
+  const content = serviceOfDoc(doc, key);
+  return content ? withPublishedBody(content) : null;
+}
+

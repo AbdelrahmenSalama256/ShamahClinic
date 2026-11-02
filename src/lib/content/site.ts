@@ -40,6 +40,7 @@ import { getLocalizedHref } from '../locale';
 import { siteConfig } from '../../config/site';
 import { WHATSAPP } from '../wp/config';
 import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
+import { offerLiveOn } from './offer-services';
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
 import { SEO_SETTING_GROUP } from './settings-catalog';
@@ -349,11 +350,35 @@ function offer(row: PublicRow, index: number): Offer {
     images,
     image: images[0]?.src ?? null,
     imageAlt: images[0]?.alt ?? { ar: '', en: '' },
+    // The stored document, handed on as it was written: a reader asks
+    // `offerServiceScope()` rather than re-deriving the meaning of an array here, so the
+    // console, this page and the lead endpoint cannot drift apart. `null` is the column
+    // being NULL — never configured — which is not the same answer as `[]`.
+    services: arrayOfStrings(json(row, 'applicableServices')),
+    validFrom: text(row, 'startsAt'),
+    validUntil: text(row, 'endsAt'),
     // Both languages carry the same unprefixed path because that is how the snapshot
     // spells an offer link (`../wp/mappers.ts`), and `decideRoute()` renders an Arabic
     // page for it either way. The prefix is the one thing the two rungs must agree on.
     href: { ar: publicPathOf('offer', row.key)!, en: publicPathOf('offer', row.key)! },
   };
+}
+
+/** A JSON column as a list of strings, or null when it is not one — see ./offer-services.ts. */
+function arrayOfStrings(value: unknown): string[] | null {
+  return Array.isArray(value) && value.every((item) => typeof item === 'string') ? (value as string[]) : null;
+}
+
+/**
+ * Whether a published, enabled offer may be shown today.
+ *
+ * `enabled` is the owner's switch and the window is the offer's own dates: a row whose
+ * `ends_at` passed yesterday is invisible on the site even though it still sits in the
+ * console, because a patient who books what the clinic stopped running loses an
+ * appointment on the phone. Both ends are inclusive and a missing end never expires.
+ */
+function offerIsLive(row: PublicRow): boolean {
+  return flag(row, 'enabled') && offerLiveOn(text(row, 'startsAt'), text(row, 'endsAt'));
 }
 
 /**
@@ -364,7 +389,7 @@ function offer(row: PublicRow, index: number): Offer {
 export async function getAllOffers(lang: Lang = 'en'): Promise<Offer[]> {
   return rung(
     'offer',
-    async () => (await publicRows('offer')).filter((row) => flag(row, 'enabled')).map(offer),
+    async () => (await publicRows('offer')).filter(offerIsLive).map(offer),
     () => wp.getAllOffers(lang),
   );
 }
@@ -382,7 +407,7 @@ export async function getOffer(slug: string, lang: Lang = 'en'): Promise<WithSeo
     'offer',
     async () => {
       const row = await publicRow('offer', lookupKey(slug));
-      if (!row || !flag(row, 'enabled')) return null;
+      if (!row || !offerIsLive(row)) return null;
       const detail = { ...offer(row, 0), html: body(row, 'body') };
       return { item: detail, seo: publicSeo('offer', detail.slug, detail.name, detail.excerpt, detail.image) };
     },
@@ -656,7 +681,7 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
         .filter((row) => flag(row, 'enabled'))
         .map(serviceCardOf)
         .filter((card): card is ServiceCard => card !== null),
-    getSourceServiceCards,
+    () => Promise.resolve<ServiceCard[]>([]),
   );
 }
 
@@ -862,6 +887,16 @@ async function buildResultStories(): Promise<ResultStory[]> {
 
 export async function getResultStories(q: Query = {}): Promise<Paged<ResultStory>> {
   return wp.paginate(await buildResultStories(), q.page, q.perPage);
+}
+
+/**
+ * Every story the rows claim, in the console's order, unpaged.
+ *
+ * `/results` paginates because a visitor walks a list; a page that resolves a *relationship*
+ * needs the whole file, because the case a service names may sit on any page of it.
+ */
+export async function getAllResultStories(): Promise<ResultStory[]> {
+  return buildResultStories();
 }
 
 /**
