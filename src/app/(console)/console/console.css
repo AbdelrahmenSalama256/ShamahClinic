@@ -23,10 +23,12 @@
  *   panel (status, rows, settings cards) shares one surface.
  *   To re-brand the primary action change --c-primary-* only.
  *
- * Breakpoints (px, because a media query cannot read a custom property):
- *   1024  sidebar column  |  below: off-canvas drawer
- *    900  list | editor split
- *    640  sticky horizontal tab bar on phones
+  * Breakpoints (px, because a media query cannot read a custom property):
+  *   1024  sidebar column  |  below: off-canvas drawer
+ * 480   phone-form: single-column forms, no horizontal scroll, long text never breaks layout
+
+ /* Textareas grow to the content up to a hard max, so a 5,000-word Arabic or English
+    field never collapses the editor or spills the bar off screen. */
  *
  * Logical properties throughout so the file works in RTL.
  * ---------------------------------------------------------------------------
@@ -218,185 +220,236 @@
   }
 
   /* The reset lives in a layer so every class a component writes outranks it. */
-    [data-surface="console"],
-    [data-surface="console"] *,
-    [data-surface="console"] *::before,
-    [data-surface="console"] *::after {
-      box-sizing: border-box;
-    }
+  [data-surface="console"],
+  [data-surface="console"] *,
+  [data-surface="console"] *::before,
+  [data-surface="console"] *::after {
+    box-sizing: border-box;
+  }
 
-    [data-surface="console"]
-      :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
-      margin: 0;
-    }
+  [data-surface="console"]
+    :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
+    margin: 0;
+  }
 
-    [data-surface="console"] :where(h1, h2, h3, h4, h5, h6) {
-      font-weight: 650;
-      line-height: 1.2;
-      letter-spacing: -0.015em;
-    }
+  [data-surface="console"] :where(h1, h2, h3, h4, h5, h6) {
+    font-weight: 650;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
 
-    [data-surface="console"] h1 {
-      font-size: var(--c-font-title);
-    }
-    [data-surface="console"] h2 {
-      font-size: 1.25rem;
-    }
-    [data-surface="console"] h3 {
-      font-size: 1.1rem;
-    }
-    [data-surface="console"] h4 {
-      font-size: 1rem;
-    }
-    [data-surface="console"] h5 {
-      font-size: var(--c-font-small);
-    }
-    [data-surface="console"] h6 {
-      font-size: var(--c-font-micro);
-    }
+  [data-surface="console"] h1 {
+    font-size: var(--c-font-title);
+  }
+  [data-surface="console"] h2 {
+    font-size: 1.25rem;
+  }
+  [data-surface="console"] h3 {
+    font-size: 1.1rem;
+  }
+  [data-surface="console"] h4 {
+    font-size: 1rem;
+  }
+  [data-surface="console"] h5 {
+    font-size: var(--c-font-small);
+  }
+  [data-surface="console"] h6 {
+    font-size: var(--c-font-micro);
+  }
 
-    [data-surface="console"] :where(p, li, dd, dt) {
-      line-height: var(--c-line-height);
-    }
+  [data-surface="console"] :where(p, li, dd, dt) {
+    line-height: var(--c-line-height);
+  }
 
-    [data-surface="console"] :where(ul, ol) {
-      padding-inline-start: 1.25rem;
-    }
+  [data-surface="console"] :where(ul, ol) {
+    padding-inline-start: 1.25rem;
+  }
 
-    [data-surface="console"] :where(a) {
-      color: var(--c-accent);
-      text-decoration: none;
-    }
+  [data-surface="console"] :where(a) {
+    color: var(--c-accent);
+    text-decoration: none;
+  }
 
-    [data-surface="console"] :where(button) {
-      margin: 0;
-      border: 0;
-      background: none;
-      color: inherit;
-      font: inherit;
-      cursor: pointer;
-    }
+  [data-surface="console"] :where(button) {
+    margin: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
 
-    /* Raw form elements already look like a .console-control. */
-    [data-surface="console"] :where(input, select, textarea) {
-      margin: 0;
-      border: 1px solid var(--c-line-strong);
-      border-radius: var(--c-r-ctl);
-      background: var(--c-surface);
-      color: var(--c-text);
-      font: inherit;
-      min-block-size: var(--c-tap-field);
-      padding-block: 0.35rem;
-      padding-inline: 0.7rem;
-    }
+  /* Raw form elements already look like a .console-control. */
+  [data-surface="console"] :where(input, select, textarea) {
+    margin: 0;
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--c-r-ctl);
+    background: var(--c-surface);
+    color: var(--c-text);
+    font: inherit;
+    min-block-size: var(--c-tap-field);
+    padding-block: 0.35rem;
+    padding-inline: 0.7rem;
+  }
 
-    [data-surface="console"] :where(textarea) {
-      min-block-size: 6rem;
-      padding-block: 0.6rem;
-      resize: vertical;
-    }
+  [data-surface="console"] :where(textarea) {
+    min-block-size: 6rem;
+    padding-block: 0.6rem;
+    resize: vertical;
+  }
 
-    [data-surface="console"] :where(input[type="checkbox"], input[type="radio"]) {
-      inline-size: 1rem;
-      block-size: 1rem;
-      min-block-size: 0;
-      accent-color: var(--c-accent);
-    }
+  [data-surface="console"] :where(input[type="checkbox"], input[type="radio"]) {
+    inline-size: 1rem;
+    block-size: 1rem;
+    min-block-size: 0;
+    accent-color: var(--c-accent);
+  }
 
-    [data-surface="console"] :where(input[type="file"]) {
-      min-block-size: 0;
-      padding: 0.35rem;
-    }
+  [data-surface="console"] :where(input[type="file"]) {
+    min-block-size: 0;
+    padding: 0.35rem;
+  }
 
-    [data-surface="console"] :where(select) {
-      padding-inline-end: 1.75rem;
-    }
+  [data-surface="console"] :where(select) {
+    padding-inline-end: 1.75rem;
+  }
 
-    [data-surface="console"] :where(input, select, textarea)::placeholder {
-      color: var(--c-text-3);
-    }
+  [data-surface="console"] :where(input, select, textarea)::placeholder {
+    color: var(--c-text-3);
+  }
 
-    [data-surface="console"] :where(table) {
-      border-collapse: collapse;
-      inline-size: 100%;
-    }
+  [data-surface="console"] :where(table) {
+    border-collapse: collapse;
+    inline-size: 100%;
+  }
 
-    [data-surface="console"] :where(th, td) {
-      text-align: start;
-    }
+  [data-surface="console"] :where(th, td) {
+    text-align: start;
+  }
 
-    [data-surface="console"] :where(code, kbd, samp, pre) {
-      font-family: var(--c-font-mono);
-    }
+  [data-surface="console"] :where(code, kbd, samp, pre) {
+    font-family: var(--c-font-mono);
+  }
 
-    [data-surface="console"] :where(hr) {
-      border: 0;
-      border-block-start: 1px solid var(--c-line);
-    }
+  [data-surface="console"] :where(hr) {
+    border: 0;
+    border-block-start: 1px solid var(--c-line);
+  }
 
-    /* Photos fill their box; inline icons are just blocks (they size themselves). */
-    [data-surface="console"] :where(img, video) {
-      display: block;
-      width: 100%;
-      height: 100%;
-      border-radius: 15px;
-      margin-bottom: 10px;
-      object-fit: cover;
-    }
+  /* Photos fill their box; inline icons are just blocks (they size themselves). */
+  [data-surface="console"] :where(img, video) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    object-fit: cover;
+  }
 
-    [data-surface="console"] :where(svg) {
-      display: block;
-      max-inline-size: 100%;
-    }
+  [data-surface="console"] :where(svg) {
+    display: block;
+    max-inline-size: 100%;
+  }
 
-    /* The UA outline is the one thing two sheets cannot draw twice: the ring below is the
+  /* The UA outline is the one thing two sheets cannot draw twice: the ring below is the
        keyboard indicator, and each component adds its own focus shadow. */
-    [data-surface="console"] :where(input, select, textarea) {
-      outline: none;
-    }
+  [data-surface="console"] :where(input, select, textarea) {
+    outline: none;
+  }
 
-    [data-surface="console"]
-      :where(a, button, input, select, textarea, [tabindex]):focus-visible {
-      outline: 2px solid var(--c-focus);
-      outline-offset: 2px;
-    }
+  [data-surface="console"]
+    :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
 
-    /* Soft default transition for interactive elements. It replaces the old
+  /* Soft default transition for interactive elements. It replaces the old
        global `a, button, div { transition: .3s all ease !important }`: it is
        scoped, specific to the properties that change, and any component that
        writes its own transition simply overrides it. */
-    [data-surface="console"] :where(a, button, input, select, textarea, summary) {
-      transition-property:
-        color, background-color, border-color, box-shadow, opacity, transform;
-      transition-duration: var(--c-dur-base);
-      transition-timing-function: var(--c-ease-soft);
-    }
+  [data-surface="console"] :where(a, button, input, select, textarea, summary) {
+    transition-property:
+      color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--c-dur-base);
+    transition-timing-function: var(--c-ease-soft);
+  }
 
-    [data-surface="console"] ::selection {
-      background: var(--c-tint-strong);
-      color: var(--c-text);
-    }
+  [data-surface="console"] ::selection {
+    background: var(--c-tint-strong);
+    color: var(--c-text);
+  }
 
-    [data-surface="console"] ::-webkit-scrollbar {
-      inline-size: 6px;
-      block-size: 6px;
-    }
+  [data-surface="console"] ::-webkit-scrollbar {
+    inline-size: 6px;
+    block-size: 6px;
+  }
 
-    [data-surface="console"] ::-webkit-scrollbar-track {
-      background: transparent;
-    }
+  [data-surface="console"] ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-    [data-surface="console"] ::-webkit-scrollbar-thumb {
-      border-radius: var(--c-r-pill);
-      background: var(--c-line-strong);
-    }
+  [data-surface="console"] ::-webkit-scrollbar-thumb {
+    border-radius: var(--c-r-pill);
+    background: var(--c-line-strong);
+  }
 
-    [data-surface="console"] ::-webkit-scrollbar-thumb:hover {
-      background: var(--c-text-3);
-    }
+  [data-surface="console"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--c-text-3);
+  }
 }
 
 @layer screens {
+
+  /* --- Console forms performance ---
+     Auto-growing textareas, character counters, responsive single-column forms,
+     no horizontal scroll, long text never breaks layout, toolbars wrap,
+     tables scroll inside their own container. --- */
+  @media (min-width: 480px) {
+    [data-surface="console"] .console-control.is-auto-growing {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      min-height: 2.5rem;
+      max-height: 20rem;
+      height: auto;
+    }
+
+    @media (max-width: 640px) {
+      .console-detail .console-fields {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .console-doc-field {
+        flex-direction: column;
+      }
+
+      .console-doc-label {
+        margin-bottom: 0.25rem;
+      }
+
+      .console-picker-frame {
+        width: 100%;
+      }
+
+      .console-editor-bar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+    }
+
+    @media (min-width: 641px) and (max-width: 1024px) {
+      .console-detail .console-fields {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+
+      font-size: 0.75rem;
+      color: var(--c-text-2);
+    }
+    }
+  }
+
   /* =========================================================================
      3. KIT PLACEMENT
      `console-kit.css` paints every button, chip, badge, note, alert and count.
@@ -1428,6 +1481,26 @@
     box-shadow: var(--c-ring), var(--c-lift);
   }
 
+  /* The width a preview is drawn at is the preview's subject, not the rail's. A service page is
+     written for a desktop and a phone, and this rail is about 25rem of both — so the editor lays
+     the document out at the width the site would use for it (`PREVIEW_LAYOUTS`) and scales the
+     frame into the space it has. Hence the stage clips, and hence it starts at the left in either
+     language: the page inside carries its own direction, and the scale has to run from the corner
+     the frame is drawn into. The heights come from the editor too, so the rail reserves exactly
+     what the frame shows and a long page scrolls inside its own frame instead of stretching the
+     editor. A card frame gets none of this — it has no desktop layout to pretend at, and the
+     sheet's own `inline-size: 100%` still sizes it. */
+  .console-preview-stage {
+    direction: ltr;
+    inline-size: 100%;
+    overflow: hidden;
+    border-radius: var(--c-r-md);
+  }
+
+  .console-preview-stage .console-preview-frame {
+    transform-origin: top left;
+  }
+
   /* --- the comparison the editor drags --------------------------------------------------- */
   /* The sandboxed frame cannot host this: it runs no scripts, which is what makes it safe to
      hand it HTML exactly as typed. The two pictures and the divide are painted here instead,
@@ -1629,6 +1702,214 @@
     padding-block-start: 3px;
   }
 
+  /* One disclosure per field group. The fields stay in the document while the group is
+     closed, so collapsing a section costs nobody a sentence they typed. */
+  .console-doc-group-box {
+    margin: 0;
+    padding: 0;
+  }
+
+  .console-doc-group-box + .console-doc-group-box {
+    padding-block-start: 0.35rem;
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  .console-doc-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    padding-block-end: 0.4rem;
+    font-size: var(--c-font-small);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--c-text-2);
+  }
+
+  .console-doc-group::-webkit-details-marker {
+    display: none;
+  }
+
+  .console-doc-group:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+
+  .console-doc-group-caret {
+    flex: none;
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    border-inline-end: 2px solid var(--c-text-3);
+    border-block-end: 2px solid var(--c-text-3);
+    border-end-end-radius: 1px;
+    transform: rotate(-45deg);
+    transition: transform 180ms var(--c-ease-soft);
+  }
+
+  [dir="rtl"] .console-doc-group-caret {
+    transform: rotate(135deg);
+  }
+
+  details[open] > .console-doc-group .console-doc-group-caret {
+    transform: rotate(45deg);
+  }
+
+  details[open] > .console-doc-group[dir="rtl"] .console-doc-group-caret,
+  [dir="rtl"] details[open] > .console-doc-group .console-doc-group-caret {
+    transform: rotate(-135deg);
+  }
+
+  .console-doc-group-name {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .console-doc-group-count {
+    flex: none;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--c-text-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-doc-group-error {
+    flex: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--c-warn);
+  }
+
+  .console-doc-group-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.375rem;
+    padding-block: 0.35rem 0.25rem;
+  }
+
+  /* The service meter. The basics take the warning colour because a page without its own
+     sentence, picture, body or booking button is a page the site shows badly; a missing
+     optional section stays grey, because nothing is wrong and a save waits for neither. */
+  .console-meter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-sp-2);
+    padding: var(--c-sp-3) var(--c-sp-4);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-sm);
+    background: var(--c-surface-soft);
+  }
+
+  .console-meter h3 {
+    margin: 0;
+    font-size: var(--c-font-small);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--c-text-2);
+  }
+
+  .console-meter-line {
+    margin: 0;
+    font-size: var(--c-font-ctl);
+    font-weight: 600;
+    color: var(--c-text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-meter-bar {
+    display: block;
+    block-size: 0.4rem;
+    overflow: hidden;
+    border-radius: var(--c-r-pill);
+    background: var(--c-line);
+  }
+
+  .console-meter-fill {
+    display: block;
+    block-size: 100%;
+    border-radius: inherit;
+    background: var(--c-accent);
+    transition: inline-size var(--c-dur-base) var(--c-ease-soft);
+  }
+
+  .console-meter-part {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-sp-1);
+  }
+
+  .console-meter-part-name {
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+    color: var(--c-text-3);
+  }
+
+  .console-meter-part.is-core .console-meter-part-name {
+    color: var(--c-warn);
+  }
+
+  .console-meter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-meter-chips li {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-pill);
+    font-size: var(--c-font-micro);
+    color: var(--c-text-2);
+    background: var(--c-surface);
+  }
+
+  .console-meter-part.is-core .console-meter-chips li {
+    border-color: var(--c-warn-line);
+    background: var(--c-warn-bg);
+    color: var(--c-warn);
+  }
+
+  .console-doc-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-doc-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-doc-section[data-hidden] {
+    opacity: 0.62;
+    border-style: dashed;
+  }
+
+  .console-doc-section-name {
+    display: flex;
+    align-items: center;
+    gap: var(--c-sp-2);
+    font-weight: 500;
+  }
+
+  .console-doc-section-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
   .console-doc-refs {
     display: flex;
     flex-wrap: wrap;
@@ -1670,6 +1951,71 @@
     font-family: var(--c-font-mono);
     font-size: var(--c-font-small);
     font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  /* An offer's services. The answer rides on the label so it is readable before the list
+     is; the list stays on screen in every mode, because it is the only place the service
+     names appear — hiding it in "all" would hide what "all" actually covers. */
+  .console-offer-services {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-width: 0;
+  }
+
+  .console-offer-services-head {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-2);
+  }
+
+  .console-offer-services-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-sp-2);
+  }
+
+  .console-offer-services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    max-block-size: min(21rem, 45dvh);
+    overflow: auto;
+    padding: var(--c-gap-tight) var(--c-gap);
+    background: var(--c-surface-soft);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-offer-services-list .console-check {
+    min-block-size: var(--c-tap);
+  }
+
+  /* A chosen service that has left the list: kept, named, and removable one at a time. */
+  .console-offer-services-gone {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    padding: var(--c-gap-tight) var(--c-gap);
+    border: 1px dashed var(--c-line-strong);
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-offer-services-gone-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+  }
+
+  .console-offer-services-gone-key {
+    color: var(--c-text-2);
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-small);
     overflow-wrap: anywhere;
   }
 
@@ -2011,12 +2357,14 @@
     line-height: 1;
   }
 
-  /* The big avatar is the arch: the one signature of this screen. */
   .console-lead-avatar-lg {
-    inline-size: 3.1rem;
+    inline-size: 3.6rem;
     block-size: 3.6rem;
-    border-radius: 999px 999px var(--c-r-sm) var(--c-r-sm);
+    border-radius: 50%;
     font-size: 1.15rem;
+    flex-shrink: 0;
+    color: var(--c-lead-c);
+    border: 1.5px solid var(--c-lead-c);
   }
 
   .console-lead-who {
@@ -2159,6 +2507,7 @@
     align-items: center;
     gap: 0.9rem;
     min-width: 0;
+    margin-top: 10px;
   }
 
   .console-lead-title {
@@ -2263,6 +2612,13 @@
 
   .console-lead-meta dd {
     margin: 0;
+  }
+
+  /* A verdict that is not "ok" carries the line that says the booking still arrived. */
+  .console-lead-meta-note {
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--c-text-3);
   }
 
   /* Notes: a thread */
@@ -3818,7 +4174,12 @@
   .hero-preview-shade {
     position: absolute;
     inset: 0;
-    background: linear-gradient(to top, rgb(0 0 0 / 0.85), rgb(0 0 0 / 0.55) 45%, rgb(0 0 0 / 0.3));
+    background: linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.85),
+      rgb(0 0 0 / 0.55) 45%,
+      rgb(0 0 0 / 0.3)
+    );
   }
 
   .hero-preview-copy {
@@ -4103,6 +4464,9 @@
       padding: 0.875rem;
     }
     .console-doc-form {
+      gap: 1.125rem;
+    }
+    .console-doc-group-fields {
       gap: 1.125rem;
     }
     .console-doc-pair {
