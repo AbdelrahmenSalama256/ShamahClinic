@@ -71,8 +71,14 @@ export function ContentListScreen({ data }: Readonly<{ data: ContentScreenData }
     }
     setTitle('');
     setCreating(false);
-    // A new row is empty, and its own screen is where the two language tabs live. A list
-    // item's section already names its list, so the detail URL needs no scope term.
+    // A new row is saved as a draft, and the site reads only published rows, so the
+    // clinic would add a service and it would never show on the site. Publish it
+    // immediately so it appears right away; the draft twin is untouched.
+    if (data.abilities.publish?.includes(scopeValue)) {
+      void consoleCall(`${api}/${created.id}/publish${scopeQuery}`, 'POST', {}).catch(() => {
+        // publishing a newly created row must never block the user from moving on
+      });
+    }
     router.push(`${contentDetailPath(kind, created.id, named ? scopeValue : null)}${named ? '' : scopeQuery}`);
   }
 
