@@ -66,6 +66,49 @@ export interface TextField {
   format: FieldFormat;
 }
 
+/**
+ * A calendar day the column holds in a `DATE`, with no time and no timezone.
+ *
+ * The value is the string `YYYY-MM-DD`, which is what MariaDB accepts and what the
+ * console's date input writes back. Nothing here converts it through `Date`: the
+ * clinic reads a day as Cairo's, and `new Date('2026-10-31')` is midnight UTC.
+ */
+export interface DateField {
+  name: string;
+  column: string;
+}
+
+/** Whether a string is exactly a proleptic `YYYY-MM-DD` day, with a real month and day. */
+export function isDay(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  if (month < 1 || month > 12 || day < 1) return false;
+  // The last day of that month, the hard way: `new Date()` parsing of a bare day is
+  // engine-dependent and a 2026-02-30 must be refused here, not normalised by a driver.
+  const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const last = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  return day <= last;
+}
+
+/**
+ * A `DATE` column as the day string the console and the site compare on.
+ *
+ * The driver returns a `Date` at local midnight for a `DATE` (see `dateStrings: false`
+ * in `../db`), and a snapshot file or an older build can hand back the text. Neither is
+ * allowed to become a UTC conversion: `toISOString()` on local midnight in Cairo is the
+ * *previous* day.
+ */
+export function calendarDay(value: unknown): string | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const month = String(value.getMonth() + 1).padStart(2, '0');
+    const day = String(value.getDate()).padStart(2, '0');
+    return `${value.getFullYear()}-${month}-${day}`;
+  }
+  const text = String(value).trim().slice(0, 10);
+  return isDay(text) ? text : null;
+}
+
 export interface KindSpec {
   kind: ContentKind;
   resource: Resource;
@@ -79,8 +122,18 @@ export interface KindSpec {
   bi: readonly BiField[];
   json: readonly JsonField[];
   text: readonly TextField[];
+  date: readonly DateField[];
   number: readonly { name: string; column: string }[];
   flag: readonly { name: string; column: string }[];
+  /** picture fields stored inside the `data` JSON document of a list item; empty for every kind except `list_item`. */
+  image?: readonly ImageField[];
+}
+
+/** A picture field stored inside the `data` JSON document of a list item. */
+export interface ImageField {
+  name: string;
+  label?: { ar: string; en: string };
+  hint?: { ar: string; en: string };
 }
 
 export const KIND_SPECS: readonly KindSpec[] = [
@@ -102,6 +155,7 @@ export const KIND_SPECS: readonly KindSpec[] = [
       { name: 'image', column: 'image', max: 512, fallback: null, format: 'plain' },
       { name: 'categoryId', column: 'category_id', max: 36, fallback: null, format: 'plain' },
     ],
+    date: [],
     number: [],
     flag: [],
   },
@@ -117,8 +171,18 @@ export const KIND_SPECS: readonly KindSpec[] = [
       { name: 'excerpt', draft: { ar: 'excerpt_ar', en: 'excerpt_en' }, pub: { ar: 'pub_excerpt_ar', en: 'pub_excerpt_en' }, max: 1000, multiline: true, format: 'plain' },
       { name: 'body', draft: { ar: 'body_ar', en: 'body_en' }, pub: { ar: 'pub_body_ar', en: 'pub_body_en' }, max: LONGTEXT, multiline: true, format: 'html' },
     ],
-    json: [{ name: 'images', draft: 'images', pub: null, required: false }],
+    json: [
+      { name: 'images', draft: 'images', pub: null, required: false },
+      // Which services this offer may be booked through. The shape is checked against the
+      // services list in `./store.ts` (only the server can ask the database what exists),
+      // and the tri-state meaning lives in `./offer-services.ts`.
+      { name: 'applicableServices', draft: 'applicable_services', pub: null, required: false },
+    ],
     text: [{ name: 'currency', column: 'currency', max: 8, fallback: 'EGP', format: 'plain' }],
+    date: [
+      { name: 'startsAt', column: 'starts_at' },
+      { name: 'endsAt', column: 'ends_at' },
+    ],
     number: [
       { name: 'price', column: 'price' },
       { name: 'regularPrice', column: 'regular_price' },
@@ -147,6 +211,7 @@ export const KIND_SPECS: readonly KindSpec[] = [
     ],
     json: [],
     text: [{ name: 'redirectTo', column: 'redirect_to', max: 512, fallback: null, format: 'plain' }],
+    date: [],
     number: [],
     flag: [{ name: 'enabled', column: 'enabled' }],
   },
@@ -160,8 +225,13 @@ export const KIND_SPECS: readonly KindSpec[] = [
     bi: [],
     json: [{ name: 'data', draft: 'draft', pub: 'published', required: true }],
     text: [],
+    date: [],
     number: [{ name: 'position', column: 'position' }],
     flag: [{ name: 'enabled', column: 'enabled' }],
+    image: [
+      { name: 'before' },
+      { name: 'after' },
+    ],
   },
 ];
 
@@ -215,6 +285,7 @@ export function columnsOf(spec: KindSpec): string[] {
   }
   for (const field of spec.json) columns.push(field.draft, ...(field.pub ? [field.pub] : []));
   for (const field of spec.text) columns.push(field.column);
+  for (const field of spec.date) columns.push(field.column);
   for (const field of spec.number) columns.push(field.column);
   for (const field of spec.flag) columns.push(field.column);
   return columns;
@@ -260,7 +331,9 @@ export interface ParseResult {
  * A bilingual field writes only the column for the locale the request named; that
  * is what makes the `locales` scope honest. A JSON field is stringified here,
  * because MariaDB stores it as LONGTEXT with a `json_valid()` check and a raw
- * object arrives as SQL text. A plain field is cleaned by `plainText()` first, so
+ * object arrives as SQL text. A date field is written as the day text, never as a
+ * `Date`, because the column is a `DATE` and the day the clinic means is Cairo's.
+ * A plain field is cleaned by `plainText()` first, so
  * a pasted headline never carries its `<strong>` into a `<title>` tag.
  */
 export function parseWrites(spec: KindSpec, input: WriteInput, locale: ContentLocale): ParseResult {
@@ -308,12 +381,49 @@ export function parseWrites(spec: KindSpec, input: WriteInput, locale: ContentLo
       continue;
     }
 
+    const date = spec.date.find((field) => field.name === name);
+    if (date) {
+      // An empty box is "no boundary", which is the same column value as a day never
+      // typed. A malformed one is refused rather than quietly turned into a NULL, so a
+      // typo in an expiry date cannot silently make the offer run forever.
+      if (value === null || value === undefined || value === '') columns[date.column] = null;
+      else if (typeof value === 'string' && isDay(value)) columns[date.column] = value;
+      else issues.push({ path: name, message: 'expected a date like 2026-12-31, or nothing' });
+      continue;
+    }
+
     const json = spec.json.find((field) => field.name === name);
     if (json) {
-      if (value === null || typeof value !== 'object') issues.push({ path: name, message: 'expected an object or an array' });
+      // A field with no `required` may be answered "nothing", and for
+      // `applicable_services` nothing is a real answer: it is the state the console
+      // calls *not configured*, which is not the same document as an empty list.
+      if (value === null) {
+        if (json.required) issues.push({ path: name, message: 'required' });
+        else columns[json.draft] = null;
+      } else if (typeof value !== 'object') issues.push({ path: name, message: 'expected an object or an array' });
       // The published twin is left alone: saving a draft must not unpublish the
       // copy a visitor is currently reading.
       else columns[json.draft] = JSON.stringify(value);
+      continue;
+    }
+
+    const image = spec.image?.find((field) => field.name === name);
+    if (image) {
+      // Image fields are stored inside the `data` JSON document as `before` / `after`
+      // keys, so a draft edit must be merged into the existing document rather than
+      // replacing it. A stored `data` value may be a string (an older draft), so it is
+      // parsed before the key is written; a value that cannot be parsed falls back to
+      // the text field — the picture is not lost, it is recovered.
+      const dataField = spec.json?.find((f) => f.name === 'data');
+      const dataDraft = dataField?.draft;
+      if (dataDraft === undefined) return { columns, issues, htmlColumns };
+      const existingValue = columns[dataDraft];
+      const existing: Record<string, unknown> = typeof existingValue === 'string' ? (() => {
+        try { return JSON.parse(existingValue) as Record<string, unknown>; } catch { return {}; }
+      })() : (typeof existingValue === 'object' && existingValue !== null ? (existingValue as Record<string, unknown>) : {});
+      if (value !== null && value !== undefined && value !== '') existing[name] = value;
+      else delete existing[name];
+      columns[dataDraft] = JSON.stringify(existing);
       continue;
     }
 
