@@ -34,6 +34,7 @@ import {
 } from './delivery';
 import { SHEETS_TEST_GROUP, SHEETS_TEST_KEY, sheetsView } from './view';
 import { integrationHistory, revertIntegration } from './history';
+import { getLead, skipSheetsLead } from '../leads/store';
 
 function revalidateSite(): void {
   try {

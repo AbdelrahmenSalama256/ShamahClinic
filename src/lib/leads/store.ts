@@ -19,6 +19,24 @@ import { likeOf } from '../db/like';
 import { isLeadStatus, LEAD_SOURCES, LEAD_STATUSES, type LeadSource, type LeadStatus } from './kinds';
 import { dayOf } from '../tracking/ingest';
 
+/** Egyptian mobile numbers are stored as plain text. The sheet parses a leading
+ * 0 as a number (dropping it) or a leading +/@ as a formula (#ERROR!), so the DB
+ * value is canonicalised to E.164 and the sheet is told to treat the column as text.
+ */
+export function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 11 && digits.startsWith('0')) return '+20' + digits.slice(1);
+  if (digits.length === 12 && digits.startsWith('20')) return '+' + digits;
+  return phone;
+}
+
+/** True when this lead must never reach the sheet: a console test row, or a
+ * deliberately-marked demo lead. Source 'console-test' identifies the console's
+ * own test submission (see `testRow`); a real enquiry has a booking/contact source. */
+export function skipSheetsLead(lead: { source?: string }): boolean {
+  return lead.source === 'console-test';
+}
+
 export { isLeadStatus, LEAD_SOURCES, LEAD_STATUSES, type LeadSource, type LeadStatus };
 
 /** One submission, as the public route knows it. */
@@ -244,7 +262,7 @@ export async function recordLead(input: LeadRecordInput): Promise<{ id: string; 
         source: input.source.slice(0, 64),
         form_id: (input.formId ?? '').slice(0, 64),
         name: input.name.slice(0, 255),
-        phone: input.phone.slice(0, 64),
+        phone: normalizePhone(input.phone).slice(0, 64),
         email: (input.email ?? '').slice(0, 255),
         message: input.message?.trim() ? input.message.trim() : null,
         fields: input.fields ? json(input.fields) : null,

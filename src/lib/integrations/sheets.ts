@@ -139,7 +139,18 @@ function doPost(e) {
     try {
       var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
       if (sheet.getLastRow() === 0) sheet.appendRow(HEADERS);
+      var phoneCol = HEADERS.indexOf('Phone');
+      var leadIdCol = HEADERS.indexOf('Lead ID');
+      // No double row: the sheet already carries this lead.
+      if (leadIdCol >= 0 && sheet.getLastRow() > 1) {
+        var lastLeadId = sheet.getRange(sheet.getLastRow(), leadIdCol + 1).getValue();
+        if (lastLeadId === row['Lead ID']) return reply({ ok: true });
+      }
       sheet.appendRow(HEADERS.map(function (key) { return row[key] === undefined ? '' : row[key]; }));
+      // Phone as text: keep leading zeros, stop +/@ being parsed as a formula.
+      if (phoneCol >= 0) {
+        sheet.getRange(2, phoneCol + 1, sheet.getLastRow() - 1, 1).setNumberFormat('@');
+      }
     } finally {
       lock.releaseLock();
     }

@@ -11,7 +11,7 @@ import { randomUUID } from 'node:crypto';
 import { sql } from 'kysely';
 import { db } from '../db';
 import { json } from '../db/json';
-import { getLead } from '../leads/store';
+import { getLead, skipSheetsLead } from '../leads/store';
 import {
   SHEETS_KIND,
   backoffSeconds,
@@ -108,11 +108,16 @@ export async function saveSheetsIntegration(input: {
   return saved;
 }
 
-/** Queue one lead for the sheet. Already queued, still unsent → no second row. */
+/** Queue one lead for the sheet. Already queued, still unsent → no second row.
+ * Demo/test leads (source 'console-test', or a marked demo row) are never queued. */
 export async function enqueueSheetsLead(leadId: string): Promise<boolean> {
   const integration = await readSheetsIntegration();
   if (!integration?.enabled) return false;
   if (!validateSheetsUrl(integration.config.url).ok) return false;
+
+  // A demo/test lead never reaches the sheet, so check before we index it.
+  const lead = await getLead(leadId);
+  if (!lead || skipSheetsLead(lead)) return false;
 
   const pending = await db
     .selectFrom('outbox')
@@ -218,6 +223,11 @@ export async function drainOutbox(limit = 20): Promise<{ sent: number; failed: n
         .set({ sent_at: new Date(), last_error: 'lead is gone' })
         .where('id', '=', row.id)
         .execute();
+      skipped += 1;
+      continue;
+    }
+    // Demo/test leads never reach the sheet, even on a retry.
+    if (skipSheetsLead(lead)) {
       skipped += 1;
       continue;
     }

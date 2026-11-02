@@ -242,7 +242,7 @@ describe('what a grant may see (BK-17a)', () => {
     expect(owner.status).toBe(200);
     const ownerRow = ((await owner.json()) as { leads: LeadRow[] }).leads[0];
     expect(ownerRow.contact_hidden).toBe(false);
-    expect(ownerRow.phone).toBe('0100 111 2222');
+    expect(ownerRow.phone).toBe('+201001112222');
 
     const viewer = await leadsHandler(consoleRequest(`?q=${encodeURIComponent('BK17 Booking')}`, read(actors.Viewer)));
     const viewerRow = ((await viewer.json()) as { leads: LeadRow[] }).leads[0];
