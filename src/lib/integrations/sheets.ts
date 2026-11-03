@@ -130,30 +130,46 @@ var HEADERS = ${JSON.stringify(headers)};
 var TOKEN = ''; // optional: the same token typed in the console's "Extra security" tab
 
 function doPost(e) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(10000);
   try {
     var body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (TOKEN && body.token !== TOKEN) return reply({ ok: false, error: 'unauthorized' });
     var row = body.row || {};
-    var lock = LockService.getScriptLock();
-    lock.waitLock(10000);
-    try {
-      var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-      if (sheet.getLastRow() === 0) sheet.appendRow(HEADERS);
-      var phoneCol = HEADERS.indexOf('Phone');
-      var leadIdCol = HEADERS.indexOf('Lead ID');
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
+    if (sheet.getLastRow() === 0) sheet.appendRow(HEADERS);
+
+    var leadIdCol = HEADERS.indexOf('Lead ID');
+    var phoneCol = HEADERS.indexOf('Phone');
+
+    // Find the first empty row so we never leave gaps behind.
+    // If a previous row was written but its Lead ID was empty (failed send), skip it
+    // so the next append does not land on a missing row number.
+    var rowNum = 2;
+    while (rowNum <= sheet.getLastRow()) {
+      var existingLeadId = sheet.getRange(rowNum, leadIdCol + 1).getValue();
+      if (existingLeadId === '') {
+        // This row is incomplete; skip it and keep searching.
+        rowNum++;
+        continue;
+      }
       // No double row: the sheet already carries this lead.
-      if (leadIdCol >= 0 && sheet.getLastRow() > 1) {
-        var lastLeadId = sheet.getRange(sheet.getLastRow(), leadIdCol + 1).getValue();
-        if (lastLeadId === row['Lead ID']) return reply({ ok: true });
+      if (existingLeadId === row['Lead ID']) {
+        return reply({ ok: true });
       }
-      sheet.appendRow(HEADERS.map(function (key) { return row[key] === undefined ? '' : row[key]; }));
-      // Phone as text: keep leading zeros, stop +/@ being parsed as a formula.
-      if (phoneCol >= 0) {
-        sheet.getRange(2, phoneCol + 1, sheet.getLastRow() - 1, 1).setNumberFormat('@');
-      }
-    } finally {
-      lock.releaseLock();
+      // Found a partial row; write our row after it.
+      rowNum++;
+      break;
     }
+
+    var values = HEADERS.map(function (key) { return row[key] === undefined ? '' : row[key]; });
+    sheet.getRange(rowNum, 1, 1, values.length).setValues([values]);
+
+    // Phone as text: keep leading zeros, stop +/@ being parsed as a formula.
+    if (phoneCol >= 0) {
+      sheet.getRange(rowNum, phoneCol + 1).setNumberFormat('@');
+    }
+
     return reply({ ok: true });
   } catch (error) {
     return reply({ ok: false, error: String(error) });
