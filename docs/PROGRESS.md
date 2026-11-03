@@ -4209,6 +4209,58 @@ remains unverified, is **`docs/JOB-A-EVIDENCE.md`**; the code and that record ar
       the evidence manifest and were deliberately not decided here; synthetic proof pictures
       were used, and no patient image or consent text was published.
 
+## Job C — the owner's live redirect of 2026-11-03 (five asks, one commit each)
+
+The owner reported five defects on top of Job B and asked for them in this order: offers
+auto-selecting their service, leads reaching Google Sheets, the Overview charts being real
+interactive charts rather than CSS bars, the service detail field set matching the site's
+own service page, and a last pass that crawls the front end and reports a wiring rate.
+Status vocabulary is the owner's: **code only** / **browser-verified** / **broken**.
+
+- [x] SHEETS-1 — leads via Sheets came with errors (`delivery.ts` + `tests/delivery.test.ts`)
+      — **code only**, nothing re-sent to the owner's sheet.
+
+      **Root cause, measured against the live deployment.** Every one of the 8 queued leads
+      failed with 300 characters of Google HTML in `last_error`. A POST to `/exec` is never
+      answered by the script: it 302s to `script.googleusercontent.com/macros/echo?user_content_key=…`,
+      and that address accepts GET only. `postSheets` had set `redirect: 'manual'` and
+      repeated the **POST** at the location, which Google answers with **405 + an HTML page** —
+      so `!response.ok` and the body of an error page became the logged reason. The content
+      type was not involved: `application/json` and `text/plain` both reached `doPost` once
+      the hop was a GET. Proven without writing a cell: a body that is not valid JSON makes
+      the script reply `{"ok":false,"error":"SyntaxError: Unexpected token 's', \"shamah-pro\"…}`
+      — which can only happen if the payload arrived. `GET /exec` on the same deployment
+      returned `{"ok":true,"service":"shamah-sheets"}`, so the deployment is reachable and
+      shared as "Anyone".
+
+      **Fix.** `postSheets` follows the redirect the way `curl -L` and the fetch spec do
+      (`redirect: 'follow'`, so the 302 hop is a GET that replays the stored request), sends
+      `text/plain;charset=utf-8` (the Apps Script docs form; `doPost` reads
+      `e.postData.contents` either way), and a 2xx whose body is not JSON is a **failure**
+      naming status + content-type + what came back, never 300 characters of markup. The
+      loopback stand-in was rewritten to be faithful — it stores the POST body, 302s to a
+      GET-only echo address, and answers a re-POST with the real 405 HTML — which is the
+      part the old stand-in got wrong and why the suite stayed green while production failed.
+
+      **Gates.** `npm run typecheck` clean · `npx eslint src/lib/integrations/delivery.ts
+      tests/delivery.test.ts` clean · `npx vitest run tests/delivery.test.ts` **13/13** ·
+      `npx vitest run tests/integrations.test.ts tests/leads.test.ts` **23/23** (test DB
+      `shamah_cms_test`). Not run for this item: build / prove:no-wp / verify-render — no
+      rendered page changed; they run at the end of the job list.
+
+      **Left for the owner to decide.** The 8 leads are still queued (`sent_at` null, all
+      with attempts recorded). The retry window opens by backoff, or now, from the console's
+      Tracking screen ("Resend failed"). Either path appends real rows to the live
+      spreadsheet, so nothing was pushed. The Apps Script dedupes by `Lead ID`, so a retry
+      of an already-written lead adds no row.
+
+- [ ] OFFER-1 — picking an offer must auto-select its service in the booking flow — pending
+- [ ] CHART-1 — Overview charts must be real interactive charts, not CSS bars — pending
+- [ ] SVC-1 — service add-from-CMS must carry the full detail set — pending
+- [ ] AB-2 — About page: repair the seed, typed editor fields, public read path — pending
+- [ ] RES-1 — Results page shows results only (no blog cards) — pending
+- [ ] CRAWL-1 — crawl the front end, report a wiring pass rate — pending
+
 ## Known gaps / notes
 
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.

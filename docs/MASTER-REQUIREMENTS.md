@@ -121,7 +121,7 @@ Status vocabulary: code only / browser-verified / broken. (Legacy rows above use
 
 | id | item | status | notes |
 |----|------|--------|-------|
-| 1 | Google Sheets leads misbehave | code only | drain/outbox/lock/dedupe; real Google creds absent → "NOT verified against real Google" |
+| 1 | Google Sheets leads misbehave | code only | Root cause found and proven on the live deployment: `/exec` 302s to a `macros/echo` address that is GET-only, and `postSheets` re-POSTed to it, so Google answered 405 + an HTML page and all 8 queued leads logged markup. Now follows the 302 as the spec does (`redirect: 'follow'`), sends `text/plain`, and refuses to count a non-JSON reply as delivered. The live proof posts a body that is not valid JSON, so `doPost` ran and replied `SyntaxError` without touching a cell. NOT done: the 8 real leads have not been re-sent — that writes to the owner's sheet and waits for their go-ahead. |
 | 2 | Before/after result photos do not attach | code only | root cause in S2; needs browser trace |
 | 3 | Edits to old imported articles not showing | code only | revalidation/publish state |
 | 4 | Article editor block-based (whole page editable) | missing | |

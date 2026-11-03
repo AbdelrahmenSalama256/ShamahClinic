@@ -135,10 +135,25 @@ export async function enqueueSheetsLead(leadId: string): Promise<boolean> {
   return true;
 }
 
+function summarizeReply(status: number, contentType: string, text: string): string {
+  const type = contentType || 'no content-type';
+  if (/text\/html|application\/xml/i.test(contentType) || /^\s*</.test(text)) {
+    return `HTTP ${status} · ${type} · the address answered with an HTML page instead of JSON — check the /exec URL and that the deployment runs as "Anyone"`;
+  }
+  const head = text.replace(/\s+/g, ' ').trim().slice(0, 90);
+  return `HTTP ${status} · ${type} · answered ${head ? `"${head}"` : 'an empty body'} instead of JSON`;
+}
+
 /**
- * Apps Script answers a POST with a 302 to googleusercontent.com. Following it with
- * `fetch` turns the request into a GET and drops the body, so the redirect is followed
- * by hand, repeating the POST at the new address.
+ * A deployed Apps Script answers the `/exec` POST with a 302 to a `macros/echo` address
+ * that accepts GET only. Repeating the POST at that address — which is what this did
+ * while it set `redirect: 'manual'` — is answered with a 405 and a Google HTML page, so
+ * every lead failed and the log filled with markup instead of a reason. Google keeps the
+ * submitted request against the echo address, so following the 302 as a GET still runs
+ * `doPost` with the original body; `redirect: 'follow'` does exactly that, the way
+ * `curl -L` has always worked against `/exec`. Proven against the live deployment with a
+ * body that is not valid JSON: the script replies `SyntaxError` for that body, which
+ * means the payload arrived through the GET hop.
  */
 export async function postSheets(
   url: string,
@@ -147,18 +162,17 @@ export async function postSheets(
 ): Promise<PostResult> {
   const init: RequestInit = {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    // `doPost` reads `e.postData.contents`, so the payload is unchanged; a text content
+    // type is the form the Apps Script docs use and keeps a browser-side retry from
+    // needing a CORS preflight.
+    headers: { 'content-type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(body),
-    redirect: 'manual',
+    redirect: 'follow',
   };
   try {
-    let response = await fetchImpl(url, init);
-    if ([301, 302, 307, 308].includes(response.status)) {
-      const location = response.headers.get('location');
-      if (!location) return { ok: false, status: response.status, error: 'redirect without a location' };
-      response = await fetchImpl(location, init);
-    }
+    const response = await fetchImpl(url, init);
     const text = await response.text().catch(() => '');
+    const contentType = response.headers.get('content-type') ?? '';
     let parsed: { ok?: unknown; error?: unknown } | null = null;
     try {
       parsed = JSON.parse(text) as { ok?: unknown; error?: unknown };
@@ -166,10 +180,23 @@ export async function postSheets(
       parsed = null;
     }
     if (!response.ok) {
-      const detail = parsed?.error ?? text;
-      return { ok: false, status: response.status, error: String(detail || `HTTP ${response.status}`).slice(0, 300) };
+      const detail = parsed?.error;
+      return {
+        ok: false,
+        status: response.status,
+        error:
+          typeof detail === 'string' && detail
+            ? `HTTP ${response.status} · ${detail}`.slice(0, 300)
+            : summarizeReply(response.status, contentType, text),
+      };
     }
-    if (parsed && parsed.ok === false) {
+    // A 200 is not a delivery until the script has said so in JSON. Google's own pages
+    // answer 200 too, and counting one of those as sent is how a lead went missing in
+    // silence.
+    if (!parsed) {
+      return { ok: false, status: response.status, error: summarizeReply(response.status, contentType, text) };
+    }
+    if (parsed.ok === false) {
       return { ok: false, status: response.status, error: String(parsed.error ?? 'rejected').slice(0, 300) };
     }
     return { ok: true, status: response.status, error: '' };

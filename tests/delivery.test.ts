@@ -4,9 +4,15 @@
  * The promise the console makes is one sentence: "a failed delivery never loses a
  * lead." These tests hold it to that by taking the endpoint down *after* the lead has
  * been accepted, then checking the row is still there, still queued, and still sends
- * once the endpoint returns. The stand-in also repeats Apps Script's real behaviour:
- * a POST answered by a 302, where following the redirect with `fetch` would silently
- * turn the retry into a body-less GET.
+ * once the endpoint returns.
+ *
+ * The stand-in reproduces the two behaviours of a real deployment that the delivery code
+ * has to survive. `/exec` never answers the POST itself: it stores the submitted request
+ * and 302s to a `macros/echo` address that accepts GET only, and running the script at
+ * that address is what delivers `doPost` the original body. Repeating the POST at the
+ * echo address instead — which is what this suite used to assert — gets a 405 HTML page,
+ * so the first test below pins both halves: the body arrives, and the hop carrying it is
+ * a GET.
  *
  * Most tests drive the delivery layer directly with rows from `recordLead`, so the
  * outbox assertions are not racing the public route's own fire-and-forget drain. The
@@ -35,20 +41,28 @@ import {
   sendTestRow,
   type DeliveryRow,
 } from '../src/lib/integrations/delivery';
-import { SHEETS_HEADERS, SHEETS_KIND, type SheetsConfig } from '../src/lib/integrations/sheets';
+import { SHEETS_HEADERS, SHEETS_KIND, testRow, type SheetsConfig } from '../src/lib/integrations/sheets';
 
 const run = randomUUID().slice(0, 8);
 const MARK = `s3c-${run}`;
 const PASSWORD = 'Shamah-sheets-2026';
 
+type Mode = 'ok' | 'fail' | 'reject' | 'challenge' | 'empty';
+
 interface Received {
   path: string;
   method: string;
+  contentType: string;
   body: unknown;
 }
 
-let mode: 'ok' | 'fail' | 'reject' = 'ok';
+let mode: Mode = 'ok';
 const received: Received[] = [];
+/** A deployment keeps the submitted request and hands the echo address a key for it. */
+const echoes = new Map<string, { body: string; contentType: string }>();
+let echoSeq = 0;
+/** POSTs aimed at the echo address, which is what the old code did. */
+const echoPosts: string[] = [];
 let server: Server;
 let base = '';
 
@@ -69,11 +83,24 @@ function readJson(text: string): unknown {
 }
 
 async function handler(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const path = (req.url ?? '/').split('?')[0];
+  const raw = req.url ?? '/';
+  const path = raw.split('?')[0];
   const text = await bodyOf(req);
   if (mode === 'fail') {
     res.writeHead(502, { 'content-type': 'text/plain' });
     res.end('upstream is down');
+    return;
+  }
+  if (mode === 'challenge') {
+    // What Google actually returns when a request is blocked: HTTP 200, an HTML page,
+    // and no sign that the script ever ran.
+    res.writeHead(200, { 'content-type': 'text/html; charset=UTF-8' });
+    res.end('<!DOCTYPE html><html lang="ar" dir="rtl"><head><script nonce="x">window[\'ppConfig\'] = {productName: \'redacted\'};</script></head><body>sign in</body></html>');
+    return;
+  }
+  if (mode === 'empty') {
+    res.writeHead(200, { 'content-type': 'text/plain' });
+    res.end('');
     return;
   }
   if (mode === 'reject') {
@@ -82,14 +109,38 @@ async function handler(req: IncomingMessage, res: ServerResponse): Promise<void>
     return;
   }
   if (req.method === 'POST' && path === '/exec') {
-    // What a real deployment does: a 302, not a 200, on the address the owner pasted.
-    res.writeHead(302, { location: `${base}/macros/s/${MARK}/exec` });
+    // Hop one of a real deployment: the request is stored, the answer is a 302.
+    echoSeq += 1;
+    const key = `${MARK}-${echoSeq}`;
+    echoes.set(key, { body: text, contentType: String(req.headers['content-type'] ?? '') });
+    res.writeHead(302, { location: `${base}/macros/echo?user_content_key=${key}` });
     res.end();
     return;
   }
-  received.push({ path, method: req.method ?? '', body: readJson(text) });
-  res.writeHead(200, { 'content-type': 'application/json' });
-  res.end(JSON.stringify({ ok: true }));
+  if (path === '/macros/echo') {
+    const key = new URL(raw, `${base}/`).searchParams.get('user_content_key') ?? '';
+    const stored = echoes.get(key);
+    if (req.method !== 'GET') {
+      // Hop two as the old code sent it: the echo address is GET-only, and a re-POST is
+      // this 405 HTML page — the reply every real lead died on.
+      echoPosts.push(req.method ?? '');
+      res.writeHead(405, { 'content-type': 'text/html; charset=utf-8' });
+      res.end('<!DOCTYPE html><html lang="ar" dir="rtl"><head><title>Error 405</title></head><body>Method Not Allowed</body></html>');
+      return;
+    }
+    if (!stored) {
+      res.writeHead(404, { 'content-type': 'text/plain' });
+      res.end('no such request');
+      return;
+    }
+    // `doPost` runs here, with the body the POST submitted.
+    received.push({ path, method: 'GET', contentType: stored.contentType, body: readJson(stored.body) });
+    res.writeHead(200, { 'content-type': 'application/json' });
+    res.end(JSON.stringify({ ok: true }));
+    return;
+  }
+  res.writeHead(404, { 'content-type': 'text/plain' });
+  res.end(`unexpected path ${path}`);
 }
 
 let actorId = '';
@@ -189,20 +240,52 @@ afterAll(async () => {
 });
 
 describe('the Apps Script handshake', () => {
-  it('follows the 302 by repeating the POST, so the row is not dropped at the redirect', async () => {
+  it('follows the 302 to the echo address as a GET, which is where doPost sees the body', async () => {
     received.length = 0;
+    echoPosts.length = 0;
     mode = 'ok';
     await configure();
     const result = await sendTestRow();
     expect(result.ok).toBe(true);
     expect(result.status).toBe(200);
+    expect(echoPosts).toEqual([]);
     expect(received).toHaveLength(1);
-    expect(received[0].path).toBe(`/macros/s/${MARK}/exec`);
-    expect(received[0].method).toBe('POST');
+    expect(received[0].path).toBe('/macros/echo');
+    expect(received[0].method).toBe('GET');
     const body = received[0].body as { row?: Record<string, string> };
     expect(Object.keys(body.row ?? {}).sort()).toEqual([...SHEETS_HEADERS].sort());
     expect(body.row?.Name).toBe('TEST — Shamah console');
     expect(body.row?.Source).toBe('console-test');
+  });
+
+  it('does not answer the echo address with a POST, which a deployment rejects as 405', async () => {
+    const hop = await fetch(`${base}/exec`, {
+      method: 'POST',
+      headers: { 'content-type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ row: testRow() }),
+      redirect: 'manual',
+    });
+    const echo = hop.headers.get('location') ?? '';
+    expect(hop.status).toBe(302);
+    expect(echo).toContain('/macros/echo?user_content_key=');
+    const repost = await fetch(echo, { method: 'POST', body: 'again', redirect: 'manual' });
+    expect(repost.status).toBe(405);
+    expect((await repost.text()).slice(0, 15)).toBe('<!DOCTYPE html>');
+    const replay = await fetch(echo, { method: 'GET', redirect: 'manual' });
+    expect(replay.status).toBe(200);
+    expect(await replay.json()).toEqual({ ok: true });
+  });
+
+  it('sends the payload as text/plain, the form the Apps Script docs use', async () => {
+    received.length = 0;
+    mode = 'ok';
+    await configure();
+    const result = await sendTestRow();
+    expect(result.ok).toBe(true);
+    expect(received).toHaveLength(1);
+    expect(received[0].contentType).toBe('text/plain;charset=utf-8');
+    const body = received[0].body as { row?: Record<string, string> };
+    expect(body.row?.Name).toBe('TEST — Shamah console');
   });
 
   it('treats a 200 that says ok:false as a failure, not a delivery', async () => {
@@ -210,6 +293,24 @@ describe('the Apps Script handshake', () => {
     const result = await sendTestRow();
     expect(result.ok).toBe(false);
     expect(result.error).toBe('unauthorized');
+  });
+
+  it('refuses to call a 200 HTML challenge page a delivery', async () => {
+    mode = 'challenge';
+    const result = await sendTestRow();
+    expect(result.ok).toBe(false);
+    expect(result.status).toBe(200);
+    expect(result.error).toContain('HTML page instead of JSON');
+    expect(result.error).not.toContain('ppConfig');
+    expect(result.error.length).toBeLessThanOrEqual(300);
+  });
+
+  it('refuses to call a 200 with no JSON in it a delivery', async () => {
+    mode = 'empty';
+    const result = await sendTestRow();
+    expect(result.ok).toBe(false);
+    expect(result.error).toContain('HTTP 200');
+    expect(result.error).toContain('instead of JSON');
   });
 });
 
@@ -336,6 +437,44 @@ describe('a failed delivery never loses a lead', () => {
       .selectFrom('leads')
       .select('sheets_sent_at')
       .where('id', '=', saved.id)
+      .executeTakeFirstOrThrow();
+    expect(lead.sheets_sent_at).not.toBeNull();
+  });
+
+  it('keeps the queue honest when the endpoint answers 200 with an HTML page', async () => {
+    await configure();
+    const leadId = await makeLead('S3C Challenge');
+    expect(await enqueueSheetsLead(leadId)).toBe(true);
+
+    mode = 'challenge';
+    received.length = 0;
+    const blocked = await drainOutbox();
+    expect(blocked.sent).toBe(0);
+    expect(blocked.failed).toBeGreaterThanOrEqual(1);
+    expect(await getLead(leadId)).not.toBeNull();
+    const [row] = await outboxRowsFor(leadId);
+    expect(row?.sent_at).toBeNull();
+    expect(Number(row?.attempts)).toBe(1);
+    expect(String(row?.last_error)).toContain('HTML page instead of JSON');
+    expect(String(row?.last_error)).not.toContain('ppConfig');
+    expect((await readSheetsIntegration())?.lastError).toContain('HTML page instead of JSON');
+
+    mode = 'ok';
+    received.length = 0;
+    await resendFailed();
+    const sentNow = await drainOutbox();
+    expect(sentNow.sent).toBeGreaterThanOrEqual(1);
+
+    const rows = await outboxRowsFor(leadId);
+    expect(rows).toHaveLength(1);
+    expect(rows[0].sent_at).not.toBeNull();
+    expect(rows[0].last_error).toBeNull();
+    // One lead, one row in the sheet — the retry does not double it.
+    expect(received.filter((item) => (item.body as { row?: Record<string, string> }).row?.['Lead ID'] === leadId)).toHaveLength(1);
+    const lead = await db
+      .selectFrom('leads')
+      .select('sheets_sent_at')
+      .where('id', '=', leadId)
       .executeTakeFirstOrThrow();
     expect(lead.sheets_sent_at).not.toBeNull();
   });
