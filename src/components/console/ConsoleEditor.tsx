@@ -884,7 +884,19 @@ function FieldRow({
   }
 
   if (field.kind === 'json') {
-    return <Alert>{labels['content.list.no_form']}</Alert>;
+    return (
+      <Field htmlFor={id} errors={errors} label={labelNode} note={noteNode}>
+        <Textarea
+          id={id}
+          rows={14}
+          value={text}
+          disabled={disabled}
+          aria-invalid={invalid || undefined}
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={leaveField}
+        />
+      </Field>
+    );
   }
 
   // #246. A `html` column is the only content the site prints as markup, and the only place a

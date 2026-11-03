@@ -609,7 +609,7 @@ const RESULTS: ListSchema = {
   ],
 };
 
-const ABOUT: ListSchema = {
+export const ABOUT: ListSchema = {
   key: 'about',
   title: 'title',
   fields: [

@@ -209,7 +209,7 @@ export const KIND_SPECS: readonly KindSpec[] = [
       // body is stored as typed and `sanitizeHtmlBody()` filters it on every render.
       { name: 'content', draft: { ar: 'content_ar', en: 'content_en' }, pub: { ar: 'pub_content_ar', en: 'pub_content_en' }, max: LONGTEXT, multiline: true, format: 'source' },
     ],
-    json: [],
+    json: [{ name: 'data', draft: 'data', pub: 'pub_data', required: false }],
     text: [{ name: 'redirectTo', column: 'redirect_to', max: 512, fallback: null, format: 'plain' }],
     date: [],
     number: [],

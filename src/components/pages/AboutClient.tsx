@@ -9,7 +9,54 @@ import { Photo } from "@/components/ui/Photo";
 import { GoldLink } from "@/components/shared/Actions";
 import { images } from "@/lib/images";
 import type { PhotoSlot } from "@/lib/images";
-import type { AboutContent } from "@/data/about";
+import type { AboutContent, AboutStructuredData, AboutSection } from '@/data/about';
+
+/** Fallback copy used before the owner has written any field: today's hard-coded text, so
+ *  the page keeps rendering exactly as it did before this field exists. */
+function structuredOrDefault(about: AboutContent): AboutStructuredData & {
+  teamIds: string[];
+  branchesIds: string[];
+  sections: AboutSection[];
+} {
+  const s = about.structured ?? null;
+  return {
+    sections: s?.sections ?? about.sections,
+    teamIds: s?.team ?? [],
+    branchesIds: s?.branches ?? [],
+    heroTitle: s?.heroTitle ?? { ar: "من نحن", en: "About Shamah" },
+    heroLead: s?.heroLead ?? about.lead,
+    storyAr: s?.storyAr ?? null,
+    storyEn: s?.storyEn ?? null,
+    missionTitle: { ar: "رؤيتنا", en: "Our vision" },
+    missionBody: { ar: "أن نكون الصورة المثالية لعيادات التجمیل النسائية في مصر، نذكروا مع الطبقة الطبية دائماً، ونشتق النتائج من الواقع وليس من المبالغة.", en: "To be the leading all-female cosmetic clinic in Egypt, always guided by medical ethics and producing results that are real, not exaggerated." },
+    visionTitle: { ar: "قيادتنا", en: "Our leadership" },
+    visionBody: { ar: "نضع دائماً البشرة قبل الربح، والراحة قبل الشمول، والشفافية قبل الترويج.", en: "We always put the skin before the profit, comfort before coverage, and transparency before promotion." },
+    values: s?.values ?? [
+      { ar: "الصدق قبل البيع", en: "Honesty before selling" },
+      { ar: "الطب أساس كل جلسة", en: "Medicine underpins every session" },
+      { ar: "خصوصية وراحة كاملتان", en: "Complete privacy and comfort" },
+    ],
+    whyChooseUsTitle: { ar: "لماذا تختار العميلات عيادات شامه؟", en: "Why clients choose Shamah Clinics" },
+    whyChooseUsLead: { ar: "أربع نقاط نجيب عليها بصراح قبل أي جلسة.", en: "Four points we answer plainly before any session." },
+    whyChooseUs: s?.whyChooseUs ?? [
+      { ar: "استشارة قبل أي إجراء", en: "A consultation before any procedure" },
+      { ar: "طاقم طبي نسائي بالكامل", en: "An all-female medical team" },
+      { ar: "أجهزة حديثة ومنتجات أصلية", en: "Modern devices, authentic products" },
+      { ar: "ثلاثة فروع قريبة منكِ", en: "Three branches near you" },
+    ],
+    numbers: s?.numbers ?? [
+      { valueAr: "100", valueEn: "100", labelAr: "طاقم نسائي", labelEn: "Female staff", noteAr: null, noteEn: null },
+      { valueAr: "3", valueEn: "3", labelAr: "فرع", labelEn: "Branch", noteAr: null, noteEn: null },
+      { valueAr: "9", valueEn: "9", labelAr: "سنة خبرة", labelEn: "Years of experience", noteAr: null, noteEn: null },
+    ],
+    team: s?.team ?? [],
+    branches: s?.branches ?? [],
+    certifications: s?.certifications ?? [],
+    ctaTitle: { ar: "ابدأِ رحلة بشرة طبيعية", en: "Start your natural skin journey" },
+    ctaLink: null,
+    ctaVerb: { ar: "تواصلی الآن", en: "Contact us now" },
+  };
+}
 
 /**
  * Copy comes from WordPress page 32 through `about`; the branch and treatment
@@ -17,67 +64,13 @@ import type { AboutContent } from "@/data/about";
  * the two teasers have no WordPress source and stay authored (docs/WIRING.md).
  */
 export const AboutClient: React.FC<{
-  about: AboutContent;
+  about: AboutContent & { structured: AboutStructuredData | null };
   branchCount: number;
   treatmentCount: number;
   banner: PhotoSlot;
 }> = ({ about, branchCount, treatmentCount, banner }) => {
+  const s = structuredOrDefault(about);
   const { t, formatNumber } = useLanguage();
-
-  const reasons = [
-    {
-      title: { ar: "استشارة قبل أي إجراء", en: "A consultation before any procedure" },
-      body: {
-        ar: "لا نبدأ جلسة قبل تحليل بشرتكِ وتوضيح المتوقع واقعياً وعدد الجلسات والتكلفة.",
-        en: "No session begins before analysing your skin and setting realistic expectations, session count and cost.",
-      },
-    },
-    {
-      title: { ar: "طاقم طبي نسائي بالكامل", en: "An all-female medical team" },
-      body: {
-        ar: "طبيبات وأخصائيات وتمريض نسائي في كل الفروع، لخصوصية وراحة كاملتين.",
-        en: "Female doctors, specialists and nurses at every branch, for complete privacy and comfort.",
-      },
-    },
-    {
-      title: { ar: "أجهزة حديثة ومنتجات أصلية", en: "Modern devices, authentic products" },
-      body: {
-        ar: "أجهزة ليزر بأنظمة تبريد، وفيلر وبوتوكس أصلي معتمد يُفتح أمامكِ.",
-        en: "Lasers with cooling systems, and authentic approved filler and Botox opened in front of you.",
-      },
-    },
-    {
-      title: { ar: "ثلاثة فروع قريبة منكِ", en: "Three branches near you" },
-      body: {
-        ar: "مدينة نصر، التجمع الخامس، والشيخ زايد — للحجز في أيٍّ منها تواصلي عبر واتساب أو الهاتف.",
-        en: "Nasr City, Fifth Settlement and Sheikh Zayed — to book at any of them, reach us on WhatsApp or by phone.",
-      },
-    },
-  ];
-
-  const values = [
-    {
-      title: { ar: "الصدق قبل البيع", en: "Honesty before selling" },
-      body: {
-        ar: "نقول لكِ ما تحتاجه بشرتكِ فعلاً، وقد نؤجل إجراءً أو نرفضه إن لم يكن في مصلحتك. الثقة تُبنى بالصدق لا بالوعود.",
-        en: "We tell you what your skin actually needs, and may postpone or decline a procedure if it is not in your interest. Trust is built on honesty, not promises.",
-      },
-    },
-    {
-      title: { ar: "الطب أساس كل جلسة", en: "Medicine underpins every session" },
-      body: {
-        ar: "التجميل عندنا قرار طبي: تشخيص، خطة، ومتابعة. لا إجراءات سريعة بلا تقييم، ولا منتجات غير معروفة المصدر.",
-        en: "Aesthetics here is a medical decision: diagnosis, plan and follow-up. No rushed procedures without assessment, no products of unknown origin.",
-      },
-    },
-    {
-      title: { ar: "خصوصية وراحة كاملتان", en: "Complete privacy and comfort" },
-      body: {
-        ar: "طاقم نسائي بالكامل وغرف خاصة — لتخوضي تجربتكِ بأريحية تامة في أي فرع.",
-        en: "An all-female team and private rooms — so you go through your experience in total comfort at any branch.",
-      },
-    },
-  ];
 
   return (
     <>
@@ -92,7 +85,7 @@ export const AboutClient: React.FC<{
       />
 
       {/* Story / Process — one editorial split per WordPress section */}
-      {about.sections.map((section, i) => (
+      {s.sections.map((section, i) => (
         <section
           key={`${i}-${section.heading.en}`}
           className={`py-5 lg:py-16 ${
@@ -147,24 +140,21 @@ export const AboutClient: React.FC<{
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <SectionHeading
             align="center"
-            title={{ ar: "لماذا تختار العميلات عيادات شامه؟", en: "Why clients choose Shamah Clinics" }}
-            lead={{
-              ar: "أربع نقاط نجيب عليها بصراحة قبل أي جلسة.",
-              en: "Four points we answer plainly before any session.",
-            }}
+            title={s.whyChooseUsTitle}
+            lead={s.whyChooseUsLead}
           />
           <ol className="mt-12 space-y-10">
-            {reasons.map((reason, i) => (
+            {s.whyChooseUs.map((reason: { ar: string; en: string }, i: number) => (
               <Reveal as="li" key={i} delay={i * 0.08} className="flex gap-6">
                 <span className="text-4xl font-black text-[var(--gold-end)] num leading-none">
                   {formatNumber(i + 1)}
                 </span>
                 <div>
                   <h3 className="text-xl font-black text-[var(--text-primary)]" dir="auto">
-                    {t(reason.title.ar, reason.title.en)}
+                    {t(reason.ar, reason.en)}
                   </h3>
                   <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]" dir="auto">
-                    {t(reason.body.ar, reason.body.en)}
+                    {t(reason.ar, reason.en)}
                   </p>
                 </div>
               </Reveal>
@@ -182,14 +172,14 @@ export const AboutClient: React.FC<{
             lead={{ ar: "ثلاث قواعد تحكم كل قرار في عيادات شامه.", en: "Three rules that govern every decision at Shamah." }}
           />
           <ol className="mt-12 space-y-10">
-            {values.map((v, i) => (
+            {s.values.map((v: { ar: string; en: string }, i: number) => (
               <Reveal as="li" key={i} delay={i * 0.08} className="flex gap-6">
                 <span className="text-4xl font-black text-[var(--gold-end)] num leading-none">
                   {formatNumber(i + 1)}
                 </span>
                 <div>
-                  <h3 className="text-xl font-black text-[var(--text-primary)]">{t(v.title.ar, v.title.en)}</h3>
-                  <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">{t(v.body.ar, v.body.en)}</p>
+                  <h3 className="text-xl font-black text-[var(--text-primary)]">{t(v.ar, v.en)}</h3>
+                  <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">{t(v.ar, v.en)}</p>
                 </div>
               </Reveal>
             ))}
@@ -197,7 +187,29 @@ export const AboutClient: React.FC<{
         </div>
       </section>
 
-      {/* Teasers to team & branches */}
+      {/* Numbers the owner enters, rendered as a grid of big stat cards. */}
+      {s.numbers.length > 0 ? (
+        <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <SectionHeading
+              align="center"
+              title={{ ar: "أرقامنا", en: "Our numbers" }}
+              lead={{ ar: "أرقام العيادة اللي تقدر تشوفها أي عميل.", en: "The numbers behind the clinic you can see." }}
+            />
+            <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {s.numbers.map((n: { valueAr: string; valueEn: string; labelAr: string; labelEn: string; noteAr: string | null; noteEn: string | null }, i: number) => (
+                <Reveal key={i} delay={i * 0.08} className="bg-[var(--bg-card)]/70 rounded-2xl p-6 text-center">
+                  <div className="text-3xl font-black text-[var(--gold-end)]">{formatNumber(n.valueAr)}</div>
+                  <div className="mt-2 text-sm text-[var(--text-secondary)]">{t(n.labelAr, n.labelEn)}</div>
+                  {n.noteAr && (
+                    <div className="mt-1 text-xs text-[var(--text-muted)]">{t(n.noteAr ?? "", n.noteEn ?? "")}</div>
+                  )}
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
       <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
           <Reveal className="relative rounded-3xl overflow-hidden min-h-[300px] group">

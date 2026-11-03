@@ -206,6 +206,8 @@ export interface PagesTable extends Editable {
   pub_title_en: Generated<string>;
   pub_content_ar: string | null;
   pub_content_en: string | null;
+  data: JsonOr<Record<string, unknown>>;
+  pub_data: JsonOr<Record<string, unknown>>;
   enabled: Generated<0 | 1>;
   redirect_to: string | null;
   published_at: Date | null;

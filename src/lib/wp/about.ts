@@ -6,6 +6,13 @@ import { arabicRatio } from "./lang";
 import { toPhotoSlot } from "./ui-helpers";
 import { aboutFallback, type AboutContent, type AboutSection } from "@/data/about";
 import type { Bi } from "./types";
+import type { AboutStructuredData } from "@/data/about";
+import type { PublicRow } from "../content/published";
+
+/** A CMS page row with the structured `data` JSON column read off the values map. */
+type AboutPageRow = PublicRow & {
+  values: Record<string, unknown> & { data?: unknown; pub_data?: unknown };
+};
 
 /**
  * About = WordPress page 32. The dashboard publishes a real bilingual page there
@@ -22,6 +29,18 @@ interface ParsedBlock {
 
 const clean = (value: string): string => value.replace(/\s+/g, " ").trim();
 const stripTags = (value: string): string => value.replace(/<[^>]*>/g, " ");
+
+/** Parse a stored JSON scalar; `null` on any failure so a bad row never breaks the page. */
+function tryParseJson(raw: unknown): unknown | null {
+  if (typeof raw === "object" && raw !== null) {
+    try {
+      return JSON.parse(JSON.stringify(raw));
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
 
 /**
  * Walk a rendered WPBakery body in document order. Paragraphs before the first
@@ -126,6 +145,10 @@ export async function getAbout(): Promise<AboutContent> {
     const en = parseAboutBody(page.item.html.en);
     const ar = parseAboutBody(page.item.html.ar);
     if (en.sections.length || en.intro.length) {
+      const aboutRow = page as unknown as AboutPageRow;
+      const raw = aboutRow.values.data ?? aboutRow.values.pub_data ?? null;
+      const structured = raw ? (tryParseJson(raw) as AboutStructuredData | null) : null;
+
       const { lead, sections } = merge(en, ar);
       return {
         title: {
@@ -134,10 +157,11 @@ export async function getAbout(): Promise<AboutContent> {
         },
         lead,
         sections: [...sections, ...extra],
+        structured,
       };
     }
   }
-  return { ...aboutFallback, sections: [...aboutFallback.sections, ...extra] };
+  return { ...aboutFallback, sections: [...aboutFallback.sections, ...extra], structured: null };
 }
 
 /**

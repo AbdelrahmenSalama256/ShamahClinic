@@ -39,6 +39,7 @@ export interface ConsoleScreen {
     | 'articles'
     | 'offers'
     | 'pages'
+    | 'about'
     | 'hero'
     | 'lists'
     | 'texts'
@@ -74,6 +75,7 @@ export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   { key: 'articles', path: '/console/articles', resource: 'article', action: 'read', entities: 'locales' },
   { key: 'offers', path: '/console/offers', resource: 'offer', action: 'read', entities: 'locales' },
   { key: 'pages', path: '/console/pages', resource: 'page', action: 'read', entities: 'locales' },
+  { key: 'about', path: '/console/pages/about', resource: 'page', action: 'read', entities: 'locales' },
   // The homepage's own photographs and headline. It is a page surface, not a new content
   // type: the grant is `page`, so a role that may rewrite that page may change its slider.
   { key: 'hero', path: '/console/hero', resource: 'page', action: 'read', entities: 'none' },
@@ -102,7 +104,6 @@ export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   { key: 'password', path: '/console/password', resource: 'self', action: 'update', entities: 'none' },
 ];
 
-/** One destination: a screen, or one named list's section. */
 export interface NavItem {
   key: string;
   label: string;

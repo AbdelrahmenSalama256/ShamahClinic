@@ -16,6 +16,49 @@ export interface AboutContent {
   title: Bilingual;
   lead: Bilingual;
   sections: AboutSection[];
+  /** Structured fields the About editor writes (JSON `data` column of the about page). */
+  structured: AboutStructuredData | null;
+}
+
+/** The typed, per-field structured data an owner writes about the clinic. */
+export interface AboutStructuredData {
+  heroTitle: Bilingual;
+  heroLead: Bilingual;
+  storyAr: string | null;
+  storyEn: string | null;
+  missionTitle: Bilingual;
+  missionBody: Bilingual;
+  visionTitle: Bilingual;
+  visionBody: Bilingual;
+  values: Bilingual[];
+  whyChooseUsTitle: Bilingual;
+  whyChooseUsLead: Bilingual;
+  whyChooseUs: Bilingual[];
+  numbers: AboutNumber[];
+  team: string[];
+  branches: string[];
+  certifications: AboutCertification[];
+  ctaTitle: Bilingual;
+  ctaLink: string | null;
+  ctaVerb: { ar: string; en: string };
+  /** Editorial splits of the "about us" story: heading, paragraphs, photo. */
+  sections: AboutSection[];
+}
+
+/** One numeric claim shown on the About page. */
+export interface AboutNumber {
+  valueAr: string;
+  valueEn: string;
+  labelAr: string;
+  labelEn: string;
+  noteAr: string | null;
+  noteEn: string | null;
+}
+
+/** One certification: photo + bilingual alt. */
+export interface AboutCertification {
+  src: string;
+  alt: Bilingual;
 }
 
 /**
@@ -59,4 +102,5 @@ export const aboutFallback: AboutContent = {
       image: images.interiors.consultation,
     },
   ],
+  structured: null,
 };
