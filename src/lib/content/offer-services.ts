@@ -69,6 +69,31 @@ export function serviceIsEligible(scope: OfferServiceScope, serviceUid: string):
   return scope.serviceUids.includes(serviceUid);
 }
 
+/**
+ * The services the booking wizard opens with, and which of them the *offer* chose.
+ *
+ * A visitor who arrived through an offer has already said what they want; making them tick
+ * the box again reads as the site not knowing what it just sold. Two rules, in order: a
+ * service the caller named — a "Book this service" click, which is a stronger statement than
+ * any promotion — wins and is nobody else's doing; otherwise the wizard starts on the first
+ * service the offer's own list holds, in the order the owner picked it.
+ *
+ * `fromOffer` is what the screen badges, and only `some` fills it. An offer that says "all
+ * services", or that nobody ever configured, did not choose that first box — the list did —
+ * and a badge claiming otherwise would put a promise on the clinic's behalf that no owner
+ * made. The visitor can still change either way; this is what is ticked when step 1 appears.
+ */
+export function autoPickServices(
+  scope: OfferServiceScope,
+  eligibleIds: readonly string[],
+  requestedId?: string,
+): { ids: string[]; fromOffer: string[] } {
+  if (requestedId && eligibleIds.includes(requestedId)) return { ids: [requestedId], fromOffer: [] };
+  const first = eligibleIds[0];
+  if (!first) return { ids: [], fromOffer: [] };
+  return { ids: [first], fromOffer: scope.state === 'some' ? [first] : [] };
+}
+
 /** How many services this offer names, for the console's label. `null` is "not configured". */
 export function scopeCount(scope: OfferServiceScope): number | null {
   if (scope.state === 'unconfigured') return null;

@@ -363,6 +363,12 @@ export function ConsoleEditor({
       locales: named ? undefined : publishable,
     });
     setBusy(false);
+    // A refused publish names a field, not a moment: the server said *which* box still has
+    // no answer, so the sentence goes under that box exactly as a refused save's does. The
+    // banner says the publish did not happen; only the field says what to do about it.
+    if (result.error && result.issues.length > 0) {
+      setServerIssues(result.issues.map((issue) => ({ ...issue, was: formValueOf(form, fieldOf(issue.path)) })));
+    }
     tell(result, 'content.published');
     if (result.data?.row) setDoc({ tag, row: result.data.row });
     onChanged();

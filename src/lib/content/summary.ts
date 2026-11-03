@@ -47,6 +47,14 @@ export interface ListSummary {
   image: string | null;
   /** a before/after case holding one picture and not the other, so the list can name what is owed */
   needsPhoto: boolean;
+  /**
+   * An offer created in the console whose services question is still unanswered.
+   *
+   * Publishing refuses it (`offerWithoutServices` in ./publish.ts), so the list marks it
+   * before someone presses the button. An imported offer keeps its blank column and its
+   * live promotion, so `legacy_id` is part of the test, not decoration.
+   */
+  needsServices: boolean;
   /** a service row whose page a visitor would find thin, named by what it is missing */
   warnings: ServiceWarning[];
   /** the kind's own columns, keyed by field name: a price, a flag, a list item's key */
@@ -424,6 +432,11 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
   for (const field of spec.flag) selects.push(sql<unknown>`${sql.ref(field.column)}`.as(`cell_${field.name}`));
   if (imageText) selects.push(sql<unknown>`${sql.ref(imageText.column)}`.as(`image_${imageText.name}`));
   if (imageJson) selects.push(sql<unknown>`${sql.ref(imageJson.draft)}`.as(`image_${imageJson.name}`));
+  if (spec.table === 'offers') {
+    // Both halves of the publish gate's question, answered by MariaDB: a blank services
+    // column on a row nobody imported is the one answer that does not mean anything yet.
+    selects.push(sql<SqlBool>`${sql.ref('applicable_services')} IS NULL AND ${sql.ref('legacy_id')} IS NULL`.as('services_unasked'));
+  }
 
   const counted = await from(spec.table)
     .select(sql<number>`COUNT(*)`.as('total'))
@@ -468,6 +481,7 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
       // draw a comparison out of one picture, and an owner staring at a card with no pair has
       // no way to know which of the two slots is the empty one.
       needsPhoto: doc ? needsOtherPhoto(asText(doc.before), asText(doc.after)) : false,
+      needsServices: truthy(row.services_unasked),
       // A service row is a whole page, so the list names the four gaps a visitor would feel
       // — the sentence under the name, the picture the card is cut from, the questions, the
       // button that books. They are marks, not gates: a flagged row saves and publishes, and

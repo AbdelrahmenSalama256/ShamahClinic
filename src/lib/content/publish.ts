@@ -18,6 +18,7 @@ import { db } from '../db';
 import { json } from '../db/json';
 import type { Database } from '../db/types';
 import { CONTENT_LOCALES, kindSpec, publishableColumns, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
+import { offerServiceScope } from './offer-services';
 import { getRow, type ContentRow, type StoreResult } from './store';
 
 export interface RevisionView {
@@ -139,6 +140,36 @@ async function addRevision(
 }
 
 /**
+ * Stop a console-authored offer that never answered "which services?" from going live.
+ *
+ * `applicable_services IS NULL` is not the owner's answer — it is the column's default, and
+ * the booking wizard reads it as *every* service. A row imported from WordPress may keep
+ * that reading: the clinic has sold those offers for years and a rule written today must not
+ * withdraw a live promotion underneath them. An offer *created in the console* is a decision
+ * being made now, so publishing one asks for the answer first. "All services" and "No
+ * services" are both answers and both pass; only the silence is refused.
+ */
+async function offerWithoutServices(
+  id: string,
+  row: ContentRow,
+): Promise<StoreResult<never> | null> {
+  const scope = offerServiceScope(row.fields.applicableServices?.draftJson ?? null);
+  if (scope.state !== 'unconfigured') return null;
+  const origin = await db
+    .selectFrom('offers')
+    .select('legacy_id')
+    .where('id', '=', id)
+    .executeTakeFirst();
+  if (origin?.legacy_id) return null;
+  return {
+    ok: false,
+    status: 400,
+    code: 'invalid_input',
+    issues: [{ path: 'fields.applicableServices', message: 'no services answered' }],
+  };
+}
+
+/**
  * Copy the draft into the published columns and record it.
  *
  * A publish with nothing pending still writes a revision: an editor who pressed
@@ -160,6 +191,11 @@ export async function publishRow(
   const named = CONTENT_LOCALES.filter((locale) => input.locales.includes(locale));
   if (spec.perLocale && named.length === 0) return { ok: false, status: 400, code: 'no_locales' };
   const locales = spec.perLocale ? named : [...CONTENT_LOCALES];
+
+  if (kind === 'offer') {
+    const refusal = await offerWithoutServices(input.id, current);
+    if (refusal) return refusal;
+  }
 
   let revision = 0;
   try {

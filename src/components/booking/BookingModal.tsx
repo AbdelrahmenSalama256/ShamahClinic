@@ -7,7 +7,7 @@ import type { BookingOffer } from "@/context/BookingContext";
 import type { BranchLite } from "@/data/branches";
 import type { Specialist } from "@/data/specialists";
 import type { TreatmentOption } from "@/data/treatments";
-import { offerServiceScope, serviceIsEligible } from "@/lib/content/offer-services";
+import { autoPickServices, offerServiceScope, serviceIsEligible } from "@/lib/content/offer-services";
 import {
   X,
   Check,
@@ -61,6 +61,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const { language, t, formatNumber } = useLanguage();
   const clinic = useClinic();
 
+  const scope = useMemo(() => offerServiceScope(offer?.services ?? null), [offer]);
+
   /**
    * The services this booking may name.
    *
@@ -69,21 +71,23 @@ export const BookingModal: React.FC<BookingModalProps> = ({
    * that says "these three" says only these three — and one that says "none" says none, so
    * step 1 has nothing to pick and says why rather than pretending the offer applies.
    */
-  const eligibleTreatments = useMemo(() => {
-    const scope = offerServiceScope(offer?.services ?? null);
-    return treatments.filter((treatment) => serviceIsEligible(scope, treatment.id));
-  }, [offer, treatments]);
+  const eligibleTreatments = useMemo(
+    () => treatments.filter((treatment) => serviceIsEligible(scope, treatment.id)),
+    [scope, treatments],
+  );
 
+  /**
+   * What step 1 arrived with, before the visitor touched anything.
+   *
+   * Held as one value read at mount because the badge has to remember *why* a box was
+   * already ticked: if the visitor picks a second service and then drops the first, the
+   * offer's own claim must not move to the new one.
+   */
+  const [opening] = useState(() =>
+    autoPickServices(scope, eligibleTreatments.map((treatment) => treatment.id), preSelectedTreatmentId),
+  );
   const [currentStep, setCurrentStep] = useState<number>(1);
-  const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>(() => {
-    const scope = offerServiceScope(offer?.services ?? null);
-    const allowed = treatments.filter((treatment) => serviceIsEligible(scope, treatment.id));
-    const preselected =
-      preSelectedTreatmentId && allowed.some((treatment) => treatment.id === preSelectedTreatmentId)
-        ? preSelectedTreatmentId
-        : allowed[0]?.id;
-    return preselected ? [preselected] : [];
-  });
+  const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>(opening.ids);
   const [selectedBranchId, setSelectedBranchId] = useState<string>(
     branches[0]?.id ?? "",
   );
@@ -138,6 +142,36 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   const currentSpecialist = specialists.find(
     (s) => s.id === selectedSpecialistId,
   );
+
+  /**
+   * What step 1 says about the offer before the picker.
+   *
+   * Only `some` is a claim the clinic actually made — "these services". An offer left
+   * unconfigured is shown against everything because that is the legacy behaviour, and
+   * saying "these are the services this offer covers" over it would put words in the
+   * owner's mouth. `none` says nothing here; the note under the heading carries it.
+   */
+  const offerScopeNote = !offer
+    ? t(
+        "يمكنكِ اختيار خدمة واحدة أو أكثر من الجلسات التجميلية المتخصصة لدينا",
+        "Select one or more of our specialized treatments",
+      )
+    : scope.state === "some"
+      ? t(
+          "هذه خدمات العرض — اختاري واحدة أو أكثر منها.",
+          "These are the services this offer covers — pick one or more of them.",
+        )
+      : scope.state === "all"
+        ? t(
+            "العرض على كل خدماتنا — اختاري واحدة أو أكثر منها.",
+            "This offer covers every service we list — pick one or more of them.",
+          )
+        : scope.state === "unconfigured"
+          ? t(
+              "لم نُحدّد لهذا العرض خدمات بعد، لذلك يظهر على كل الخدمات — اختاري واحدة أو أكثر منها.",
+              "This offer has no services set for it yet, so it is shown against every service — pick one or more of them.",
+            )
+          : null;
 
   const timeSlotLabels = {
     morning: {
@@ -433,17 +467,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                         "Step 1: Choose Your Treatment",
                       )}
                     </h4>
-                    <p className="text-xs text-[var(--text-secondary)]">
-                      {offer
-                        ? t(
-                            "هذي خدمات العرض — اختاري واحدة أو أكثر منها.",
-                            "These are the services this offer covers — pick one or more of them.",
-                          )
-                        : t(
-                            "يمكنكِ اختيار خدمة واحدة أو أكثر من الجلسات التجميلية المتخصصة لدينا",
-                            "Select one or more of our specialized treatments",
-                          )}
-                    </p>
+                    <p className="text-xs text-[var(--text-secondary)]">{offerScopeNote}</p>
                     {offer ? (
                       <p className="mt-1 text-xs font-semibold text-[var(--gold-end)]">
                         {t("العرض: ", "Offer: ")}
@@ -454,10 +478,15 @@ export const BookingModal: React.FC<BookingModalProps> = ({
 
                   {eligibleTreatments.length === 0 ? (
                     <p className="text-xs text-[var(--text-danger)] bg-[var(--bg-danger-soft)] border border-[var(--border-danger)] rounded-2xl p-3.5">
-                      {t(
-                        "هذا العرض غير مرتبط بأي خدمة بعد، فلا يمكن الحجز من خلاله. احجزي موعدك من زر «احجزي» في الأعلى أو اسألينا على واتساب.",
-                        "This offer is not linked to any service yet, so it cannot be booked through. Book from the “Book” button at the top, or ask us on WhatsApp.",
-                      )}
+                      {scope.state === "none"
+                        ? t(
+                            "هذا العرض غير مرتبط بأي خدمة بعد، فلا يمكن الحجز من خلاله. احجزي موعدك من زر «احجزي» في الأعلى أو اسألينا على واتساب.",
+                            "This offer is not linked to any service yet, so it cannot be booked through. Book from the “Book” button at the top, or ask us on WhatsApp.",
+                          )
+                        : t(
+                            "لا توجد خدمات معروضة الآن. احجزي موعدك من زر «احجزي» في الأعلى أو اسألينا على واتساب.",
+                            "No services are listed right now. Book from the “Book” button at the top, or ask us on WhatsApp.",
+                          )}
                     </p>
                   ) : null}
 
@@ -497,6 +526,11 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                                 {t("يبدأ من", "From")}{" "}
                                 {formatNumber(item.priceStartingAt)}{" "}
                                 {t("ج.م", "EGP")}
+                              </span>
+                            )}
+                            {opening.fromOffer.includes(item.id) && (
+                              <span className="mt-1 block text-[10px] font-semibold text-[var(--gold-end)]">
+                                {t("مختارة من عرضكِ", "Chosen from your offer")}
                               </span>
                             )}
                           </div>

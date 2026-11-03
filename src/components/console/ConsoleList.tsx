@@ -629,6 +629,7 @@ export function ConsoleList({
                     <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
                     {isHidden(row) && <Badge tone="neutral">{labels['content.state.hidden']}</Badge>}
                     {row.needsPhoto && <Badge tone="warn">{labels['content.result.needs-photo']}</Badge>}
+                    {row.needsServices && <Badge tone="warn">{labels['content.offer.services.unconfigured']}</Badge>}
                     <ServiceWarnings warnings={row.warnings} labels={labels} />
                   </Link>
                   {/* Cards are the phone drawing of the same list, so the order moves here too. */}
@@ -679,6 +680,7 @@ export function ConsoleList({
                       <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
                       {isHidden(row) && <Badge tone="neutral">{labels['content.state.hidden']}</Badge>}
                       {row.needsPhoto && <Badge tone="warn">{labels['content.result.needs-photo']}</Badge>}
+                      {row.needsServices && <Badge tone="warn">{labels['content.offer.services.unconfigured']}</Badge>}
                       <ServiceWarnings warnings={row.warnings} labels={labels} />
                     </td>
                     <td className="console-cell-date">

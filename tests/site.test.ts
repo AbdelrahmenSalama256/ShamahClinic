@@ -13,7 +13,8 @@
  *   - the published HTML goes through the same sanitizer the WordPress body did, so
  *     an authored `<script>` cannot ride into `dangerouslySetInnerHTML`;
  *   - a list (`branches`, `services`) is chosen per **list**, not per kind: two
- *     lists of the same table can sit on different rungs at the same time;
+ *     lists of the same table can sit on different rungs at the same time — and
+ *     `services` has no snapshot rung at all, so an empty list stays empty;
  *   - settings are the exception: a saved `site` key replaces the config value for
  *     that one field only, a blank or secret row never reaches a public reader.
  *
@@ -199,13 +200,15 @@ describe('the fallback rung', () => {
     expect(title.en).toBe(throughSeam?.item.title.en);
   });
 
-  it('renders the WordPress branches and services while their lists hold nothing', async () => {
+  it('renders the WordPress branches while their list holds nothing, and no services at all', async () => {
     const [fromSite, fromWp] = await Promise.all([getBranches(), wp.getBranches()]);
     expect(fromWp.length).toBeGreaterThan(0);
     expect(fromSite.map((branch) => branch.id)).toEqual(fromWp.map((branch) => branch.id));
+    // Services are the one list with no snapshot rung: the database is their single source,
+    // so a list holding nothing published renders an empty page rather than these rows.
     const [cards, wpCards] = await Promise.all([getServiceCards(), wp.getServiceCards()]);
     expect(wpCards.length).toBeGreaterThan(0);
-    expect(cards.map((card) => card.slug)).toEqual(wpCards.map((card) => card.slug));
+    expect(cards).toEqual([]);
   });
 });
 
@@ -291,9 +294,16 @@ describe('the database rung', () => {
   });
 
   it('renders an offer from its published row and drops a disabled one', async () => {
+    // An offer created in the console has to answer the services question before it can
+    // be published, so this one answers "every service" — the answer the legacy rows had.
     const offer = await seed('offer', 'hydra', {
       ar: { name: 'جلسة هيدرافيشل', excerpt: 'تنظيف عميق', body: '<ul><li>تشمل التنظيف</li></ul>' },
-      en: { name: 'Hydrafacial session', excerpt: 'Deep cleanse', body: '<ul><li>Includes a cleanse</li><script>alert(1)</script></ul>' },
+      en: {
+        name: 'Hydrafacial session',
+        excerpt: 'Deep cleanse',
+        body: '<ul><li>Includes a cleanse</li><script>alert(1)</script></ul>',
+        applicableServices: ['*'],
+      },
     });
     const stored = await db.selectFrom('offers').select(['id', 'version']).where('slug', '=', offer.key).executeTakeFirstOrThrow();
     unwrap(
@@ -324,6 +334,9 @@ describe('the database rung', () => {
     expect(card.image).toBe('/images/treatment-hydrafacial.jpg');
     // WooCommerce sends most product images with an empty alt, so the published name stands in.
     expect(card.imageAlt).toEqual({ ar: 'جلسة هيدرافيشل', en: 'Hydrafacial session' });
+    // The answer is handed to the reader as it was written, so the booking modal can tell
+    // "every service" from "these services" — see ./offer-services.ts.
+    expect(card.services).toEqual(['*']);
 
     const detail = await getOffer(key('hydra'));
     expect(detail?.item.html.en).toContain('Includes a cleanse');
@@ -344,7 +357,7 @@ describe('the database rung', () => {
     const other = await seedItem('services', key('ob-laser'), { name: 'خدمة تجريبية ثانية' });
     const offer = await seed('offer', 'ob-window', {
       ar: { name: 'عرض نافذة', excerpt: 'عرض تجريبي' },
-      en: { name: 'A window offer', excerpt: 'A test offer' },
+      en: { name: 'A window offer', excerpt: 'A test offer', applicableServices: ['*'] },
     });
     const stored = await db.selectFrom('offers').select(['id', 'version']).where('slug', '=', offer.key).executeTakeFirstOrThrow();
 
@@ -662,9 +675,9 @@ describe('the list kinds', () => {
 
     const last = rows.filter((row) => row.uid === key('laser'));
     for (const row of last) unwrap(await setTrashed('list_item', { id: row.id, trashed: true, actorId: actor.id }), 'trash the last service');
-    // The services list has nothing published, so it falls back — while the branch
-    // list, which does, keeps answering from the database. Same kind, two rungs.
-    expect((await getServiceCards()).map((card) => card.slug)).toEqual((await wp.getServiceCards()).map((card) => card.slug));
+    // The services list has nothing published, so it answers empty — its own rung, while
+    // the branch list of the same table keeps answering from its rows. Same kind, two rungs.
+    expect(await getServiceCards()).toEqual([]);
     expect((await getBranchList()).map((branch) => branch.id)).toEqual([key('nasr'), key('maadi')]);
 
     for (const row of rows) unwrap(await setTrashed('list_item', { id: row.id, trashed: false, actorId: actor.id }), 'restore the service');

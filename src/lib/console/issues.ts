@@ -2,7 +2,8 @@
  * Field messages, in the language the console is in.
  *
  * The server's vocabulary is small and fixed: `parseWrites()` in `../content/kinds.ts`
- * answers with one of six phrases, and a zod rejection answers with a path and a
+ * answers with one of six phrases, `publishRow()` in `../content/publish.ts` adds one for
+ * an offer nobody linked, and a zod rejection answers with a path and a
  * sentence. Those strings are the wire format — they are what the test suite asserts and
  * what the store logs — so the console translates them here instead of making the API
  * bilingual. Anything unmapped is passed through rather than hidden, because a new
@@ -25,6 +26,7 @@ const KEYS: Record<string, MessageKey> = {
   'expected true or false': 'content.issue.flag',
   'expected an object or an array': 'content.issue.json',
   'expected a list': 'content.issue.list',
+  'no services answered': 'content.issue.offer_services',
   'unknown option': 'content.issue.option',
   'not valid JSON': 'content.issue.invalid_json',
   'unknown field': 'content.issue.unknown',

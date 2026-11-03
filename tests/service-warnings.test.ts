@@ -236,6 +236,7 @@ function rowOf(warnings: string[], over: Partial<ListSummary> = {}): ListSummary
     publishedAt: '2026-10-01T08:00:00.000Z',
     image: null,
     needsPhoto: false,
+    needsServices: false,
     warnings: warnings as ListSummary['warnings'],
     cells: {},
     ...over,

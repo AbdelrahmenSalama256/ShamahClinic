@@ -64,6 +64,7 @@ function summary(kind: ContentKind, index: number, cells: Record<string, string 
     publishedAt: '2026-10-01T08:00:00.000Z',
     image: null,
     needsPhoto: false,
+    needsServices: false,
     warnings: [],
     cells,
   };

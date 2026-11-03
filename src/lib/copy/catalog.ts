@@ -5,7 +5,7 @@
  * console writes and the default the site falls back to. `npm run copy:catalog` rewrites
  * this file; `npm run build` fails when it is stale.
  *
- * 223 entries from 127 components. Data-driven calls
+ * 227 entries from 127 components. Data-driven calls
  * (`t(row.name.ar, row.name.en)`) are console rows, not copy, and are not listed here.
  */
 export interface CopyEntry {
@@ -52,21 +52,12 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 2,
   },
   {
-    key: "copy.0504df7fabd7",
-    ar: "هذي خدمات العرض — اختاري واحدة أو أكثر منها.",
-    en: "These are the services this offer covers — pick one or more of them.",
-    area: "booking",
-    file: "src/components/booking/BookingModal.tsx",
-    line: 438,
-    uses: 1,
-  },
-  {
     key: "copy.050d8e3a3d35",
     ar: "تاريخ الزيارة المفضل:",
     en: "Preferred Date:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 665,
+    line: 699,
     uses: 1,
   },
   {
@@ -111,7 +102,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "The medical team",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 207,
+    line: 225,
     uses: 1,
   },
   {
@@ -130,6 +121,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "pages",
     file: "src/components/pages/TreatmentsClient.tsx",
     line: 106,
+    uses: 1,
+  },
+  {
+    key: "copy.0cefeefc62f3",
+    ar: "هذه خدمات العرض — اختاري واحدة أو أكثر منها.",
+    en: "These are the services this offer covers — pick one or more of them.",
+    area: "booking",
+    file: "src/components/booking/BookingModal.tsx",
+    line: 160,
     uses: 1,
   },
   {
@@ -174,7 +174,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branch:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 894,
+    line: 928,
     uses: 1,
   },
   {
@@ -192,7 +192,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branches",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 116,
+    line: 109,
     uses: 1,
   },
   {
@@ -237,7 +237,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Available Branches:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 546,
+    line: 580,
     uses: 1,
   },
   {
@@ -264,7 +264,16 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Quick Booking Steps",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 374,
+    line: 408,
+    uses: 1,
+  },
+  {
+    key: "copy.20a912b93e33",
+    ar: "لا توجد خدمات معروضة الآن. احجزي موعدك من زر «احجزي» في الأعلى أو اسألينا على واتساب.",
+    en: "No services are listed right now. Book from the “Book” button at the top, or ask us on WhatsApp.",
+    area: "booking",
+    file: "src/components/booking/BookingModal.tsx",
+    line: 486,
     uses: 1,
   },
   {
@@ -291,7 +300,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Any available specialist (Earliest slot)",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 598,
+    line: 632,
     uses: 1,
   },
   {
@@ -309,7 +318,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Preferred Time Window:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 676,
+    line: 710,
     uses: 1,
   },
   {
@@ -345,7 +354,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Special Notes (Optional)",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 797,
+    line: 831,
     uses: 1,
   },
   {
@@ -390,7 +399,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Back",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 985,
+    line: 1019,
     uses: 1,
   },
   {
@@ -417,7 +426,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Any allergies, previous treatments, or questions?",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 806,
+    line: 840,
     uses: 1,
   },
   {
@@ -444,7 +453,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Thank You for Choosing Shamah",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 851,
+    line: 885,
     uses: 1,
   },
   {
@@ -570,7 +579,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Meet them",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 212,
+    line: 230,
     uses: 1,
   },
   {
@@ -597,7 +606,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Your details remain strictly confidential",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 736,
+    line: 770,
     uses: 1,
   },
   {
@@ -642,7 +651,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Next",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 1001,
+    line: 1035,
     uses: 3,
   },
   {
@@ -678,7 +687,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Confirm Immediately via WhatsApp",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 945,
+    line: 979,
     uses: 1,
   },
   {
@@ -696,7 +705,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Select one or more of our specialized treatments",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 442,
+    line: 155,
     uses: 1,
   },
   {
@@ -768,7 +777,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Appointment Request Received",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 370,
+    line: 404,
     uses: 1,
   },
   {
@@ -786,7 +795,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Offer",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 316,
+    line: 350,
     uses: 1,
   },
   {
@@ -795,7 +804,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Step 2: Choose Branch & Specialist",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 531,
+    line: 565,
     uses: 1,
   },
   {
@@ -804,7 +813,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Treatments:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 882,
+    line: 916,
     uses: 1,
   },
   {
@@ -840,7 +849,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Choose a branch",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 225,
+    line: 243,
     uses: 1,
   },
   {
@@ -921,7 +930,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Your Booking Reference Code:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 857,
+    line: 891,
     uses: 1,
   },
   {
@@ -957,7 +966,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "EGP",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 499,
+    line: 528,
     uses: 4,
   },
   {
@@ -966,7 +975,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Nasr City, Fifth Settlement and Sheikh Zayed.",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 222,
+    line: 240,
     uses: 1,
   },
   {
@@ -1002,7 +1011,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "e.g. Sarah Ahmed",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 752,
+    line: 786,
     uses: 1,
   },
   {
@@ -1029,7 +1038,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Confirm Booking",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 1000,
+    line: 1034,
     uses: 1,
   },
   {
@@ -1038,7 +1047,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Treatments",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 120,
+    line: 113,
     uses: 1,
   },
   {
@@ -1047,7 +1056,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Date & Slot:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 912,
+    line: 946,
     uses: 1,
   },
   {
@@ -1056,7 +1065,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Patient:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 928,
+    line: 962,
     uses: 1,
   },
   {
@@ -1137,7 +1146,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Step 1: Choose Your Treatment",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 431,
+    line: 465,
     uses: 1,
   },
   {
@@ -1173,7 +1182,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Booking Request Registered",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 845,
+    line: 879,
     uses: 1,
   },
   {
@@ -1209,7 +1218,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Our concierge team will contact you within minutes to finalize the exact appointment hour.",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 819,
+    line: 853,
     uses: 1,
   },
   {
@@ -1236,7 +1245,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Mobile Phone (WhatsApp) *",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 771,
+    line: 805,
     uses: 1,
   },
   {
@@ -1272,7 +1281,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Select your preferred clinic location in Egypt",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 537,
+    line: 571,
     uses: 1,
   },
   {
@@ -1371,7 +1380,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Download Calendar Invite (.ics)",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 958,
+    line: 992,
     uses: 1,
   },
   {
@@ -1407,7 +1416,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Cosmetic Appointment",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 363,
+    line: 397,
     uses: 1,
   },
   {
@@ -1461,7 +1470,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "This offer is not linked to any service yet, so it cannot be booked through. Book from the “Book” button at the top, or ask us on WhatsApp.",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 457,
+    line: 482,
     uses: 1,
   },
   {
@@ -1533,7 +1542,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Specialist:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 903,
+    line: 937,
     uses: 1,
   },
   {
@@ -1560,7 +1569,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: ", ",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 889,
+    line: 923,
     uses: 1,
   },
   {
@@ -1605,7 +1614,16 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Step 4: Contact Details for Confirmation",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 730,
+    line: 764,
+    uses: 1,
+  },
+  {
+    key: "copy.ca687213dc88",
+    ar: "لم نُحدّد لهذا العرض خدمات بعد، لذلك يظهر على كل الخدمات — اختاري واحدة أو أكثر منها.",
+    en: "This offer has no services set for it yet, so it is shown against every service — pick one or more of them.",
+    area: "booking",
+    file: "src/components/booking/BookingModal.tsx",
+    line: 170,
     uses: 1,
   },
   {
@@ -1650,7 +1668,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Offer: ",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 449,
+    line: 473,
     uses: 1,
   },
   {
@@ -1668,7 +1686,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Full Name *",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 745,
+    line: 779,
     uses: 1,
   },
   {
@@ -1713,7 +1731,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Preferred Doctor (Optional):",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 581,
+    line: 615,
     uses: 1,
   },
   {
@@ -1749,7 +1767,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Close and Return to Site",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 969,
+    line: 1003,
     uses: 1,
   },
   {
@@ -1794,8 +1812,17 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Sending…",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 998,
+    line: 1032,
     uses: 2,
+  },
+  {
+    key: "copy.e11cd42506d1",
+    ar: "مختارة من عرضكِ",
+    en: "Chosen from your offer",
+    area: "booking",
+    file: "src/components/booking/BookingModal.tsx",
+    line: 533,
+    uses: 1,
   },
   {
     key: "copy.e4199f980cb0",
@@ -1848,7 +1875,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Offer:",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 873,
+    line: 907,
     uses: 1,
   },
   {
@@ -1942,6 +1969,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.f5f2329e213c",
+    ar: "العرض على كل خدماتنا — اختاري واحدة أو أكثر منها.",
+    en: "This offer covers every service we list — pick one or more of them.",
+    area: "booking",
+    file: "src/components/booking/BookingModal.tsx",
+    line: 165,
+    uses: 1,
+  },
+  {
     key: "copy.f622e660f306",
     ar: "فروعنا: مدينة نصر • التجمع الخامس • الشيخ زايد",
     en: "Branches: Nasr City • New Cairo • Sheikh Zayed",
@@ -1956,7 +1992,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Consultants and specialists who personally lead each department.",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 209,
+    line: 227,
     uses: 1,
   },
   {
@@ -1974,7 +2010,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "From",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 497,
+    line: 526,
     uses: 2,
   },
   {
@@ -2001,7 +2037,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Step 3: Preferred Date & Time Window",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 650,
+    line: 684,
     uses: 1,
   },
   {
@@ -2010,7 +2046,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Our branches",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 220,
+    line: 238,
     uses: 2,
   },
   {
@@ -2019,7 +2055,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "We agree the day and time with you on WhatsApp or by phone after you send the request",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
-    line: 656,
+    line: 690,
     uses: 1,
   },
   {

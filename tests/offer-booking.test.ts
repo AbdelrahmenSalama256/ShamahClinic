@@ -8,6 +8,10 @@
  *
  * What is deliberately not here: real clinic wording, prices or photos. The rows are
  * obviously test copy, and they are deleted by slug prefix at the end of the run.
+ *
+ * Two more things live here because they are the same question seen from the other side: what
+ * step 1 of the booking wizard arrives with before the visitor touches anything, and the
+ * publish that will not put an offer live while its services question is still blank.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
@@ -17,6 +21,7 @@ import { json } from '../src/lib/db/json';
 import { assertTestDb } from '../src/lib/db/guard';
 import {
   ALL_SERVICES,
+  autoPickServices,
   cairoDay,
   canonicalizeOfferServices,
   foldForSearch,
@@ -30,8 +35,9 @@ import {
   type OfferServiceScope,
 } from '../src/lib/content/offer-services';
 import { bookingServiceIds, checkOfferBooking } from '../src/lib/content/offer-booking';
+import { createRow, getRow, saveDraft, type ContentRow, type FieldView, type StoreResult } from '../src/lib/content/store';
+import { publishRow } from '../src/lib/content/publish';
 import { fieldsFromForm, formOf } from '../src/lib/console/editor-form';
-import type { ContentRow, FieldView } from '../src/lib/content/store';
 
 const known = new Set(['svc-peel', 'svc-laser']);
 
@@ -203,6 +209,34 @@ describe('what the server will accept for the column', () => {
   });
 });
 
+describe("what step 1 arrives with", () => {
+  // The modal hands this function the services it has already narrowed, so an offer that
+  // says "none" arrives with an empty list, not with a service the owner excluded.
+  const peel = 'svc-peel';
+  const laser = 'svc-laser';
+
+  it('keeps the service the card was opened from', () => {
+    expect(autoPickServices(offerServiceScope([peel, laser]), [peel, laser], laser)).toEqual({ ids: [laser], fromOffer: [] });
+    // An unconfigured offer is booked from any card, and the offer makes no claim about it.
+    expect(autoPickServices(offerServiceScope(null), [peel, laser], laser)).toEqual({ ids: [laser], fromOffer: [] });
+    // A card that names a service the offer no longer covers is not obeyed over the offer.
+    expect(autoPickServices(offerServiceScope([peel]), [peel], 'svc-unlinked').ids).toEqual([peel]);
+  });
+
+  it('says which pick came from the offer, and which is only the first on the shelf', () => {
+    // `fromOffer` is what the badge reads, so it must be true only of a list the owner
+    // actually set. Falling back to every service is the legacy behaviour, not a promise.
+    expect(autoPickServices(offerServiceScope([peel, laser]), [peel, laser])).toEqual({ ids: [peel], fromOffer: [peel] });
+    expect(autoPickServices(offerServiceScope(null), [peel, laser])).toEqual({ ids: [peel], fromOffer: [] });
+    expect(autoPickServices(offerServiceScope([ALL_SERVICES]), [peel, laser])).toEqual({ ids: [peel], fromOffer: [] });
+  });
+
+  it('opens with nothing when there is nothing to open with', () => {
+    expect(autoPickServices(offerServiceScope([]), [])).toEqual({ ids: [], fromOffer: [] });
+    expect(autoPickServices(offerServiceScope([peel]), [], peel)).toEqual({ ids: [], fromOffer: [] });
+  });
+});
+
 describe('the offer window', () => {
   it('uses the clinic calendar day, not the server clock', () => {
     expect(cairoDay(new Date('2026-01-01T22:00:00Z'))).toBe('2026-01-02');
@@ -343,5 +377,69 @@ describe('the server’s verdict on a booking', () => {
     }
     // The pool is rebuilt lazily, and the row is there again.
     expect(await checkOfferBooking('ob-peel', ['svc-peel'])).toBe('ok');
+  });
+});
+
+// --- publishing the question ----------------------------------------------------
+
+const actor = { id: randomUUID(), email: 'ob-services@example.invalid' };
+
+function must<T>(result: StoreResult<T>, what: string): T {
+  if (!result.ok) throw new Error(`${what} failed: ${result.status} ${result.code} ${JSON.stringify(result.issues ?? '')}`);
+  return result.value;
+}
+
+/**
+ * An offer written the way the console writes one: created, named, and left with whatever
+ * fields the test names — or without the services key at all, which is what a fresh row is.
+ */
+async function consoleOffer(slug: string, fields: Record<string, unknown> = {}): Promise<ContentRow> {
+  const added = must(await createRow('offer', { key: slug, actorId: actor.id }), `create ${slug}`);
+  created.push(added.id);
+  must(
+    await saveDraft('offer', { id: added.id, locale: 'ar', fields: { name: 'عرض تجريبي', ...fields }, actorId: actor.id }),
+    `name ${slug}`,
+  );
+  const row = await getRow('offer', added.id);
+  if (!row) throw new Error(`${slug} disappeared`);
+  return row;
+}
+
+describe('a publish that asks the services question first', () => {
+  it('refuses a console offer nobody linked, and names the box that needs the answer', async () => {
+    const offer = await consoleOffer('ob-asked');
+    const refused = await publishRow('offer', { id: offer.id, locales: ['ar'], actor });
+    expect(refused.ok).toBe(false);
+    if (!refused.ok) {
+      expect(refused.status).toBe(400);
+      // The path is what puts the sentence under the picker rather than in a banner, the
+      // same way a refused save's does — see ./console/issues.ts.
+      expect(refused.issues).toEqual([{ path: 'fields.applicableServices', message: 'no services answered' }]);
+    }
+    expect((await getRow('offer', offer.id))?.status).toBe('draft');
+  });
+
+  it('takes either answer the owner can give', async () => {
+    for (const [slug, answer] of [
+      ['ob-answered-all', { applicableServices: [ALL_SERVICES] }],
+      ['ob-answered-none', { applicableServices: [] }],
+    ] as const) {
+      const offer = await consoleOffer(slug, answer);
+      const published = await publishRow('offer', { id: offer.id, locales: ['ar'], actor });
+      expect(published.ok, JSON.stringify(published)).toBe(true);
+    }
+  });
+
+  it('leaves an imported offer live on the reading it has always had', async () => {
+    // A WordPress row's blank column is the import never writing it, not an owner declining
+    // to answer. Withdrawing a promotion the clinic is still running, over a rule written
+    // today, would be its own bug — so `legacy_id` is what the publish asks for.
+    const added = must(await createRow('offer', { key: 'ob-imported', actorId: actor.id, legacyId: '9001' }), 'create ob-imported');
+    created.push(added.id);
+    must(await saveDraft('offer', { id: added.id, locale: 'ar', fields: { name: 'عرض مستورد' }, actorId: actor.id }), 'name ob-imported');
+    const published = await publishRow('offer', { id: added.id, locales: ['ar'], actor });
+    expect(published.ok, JSON.stringify(published)).toBe(true);
+    // And it is still bookable against every service, which is what a blank column meant before.
+    expect(await checkOfferBooking('ob-imported', ['svc-peel'])).toBe('ok');
   });
 });
