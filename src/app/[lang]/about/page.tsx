@@ -4,7 +4,7 @@ import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { AboutClient } from "@/components/pages/AboutClient";
-import { getAbout } from "@/lib/wp/about";
+import { aboutFallback } from "@/data/about";
 import { getBranchList } from "@/lib/content/site";
 import { getBanner } from "@/lib/content/banners";
 import { getMergedTreatments } from "@/lib/wp/treatments";
@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AboutPage() {
   await guardPage('about');
   const [about, branches, treatments, banner] = await Promise.all([
-    getAbout(),
+    Promise.resolve(aboutFallback),
     getBranchList(),
     getMergedTreatments(),
     getBanner('about'),
