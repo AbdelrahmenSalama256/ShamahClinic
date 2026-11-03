@@ -192,10 +192,11 @@ function seriesColor(index: number): string {
 
 // ---- shared chart plumbing ---------------------------------------------------
 
-type TooltipPayload = { label?: string; value?: unknown; name?: string }[];
+/** What a chart library hands a tooltip, narrowed to the three things this one reads. */
+type TooltipEntry = { label?: unknown; name?: unknown; value?: unknown };
 
-function tooltipContent(props: any): ReactNode {
-  const payload: { label?: string; value?: number; name?: string }[] = props.payload ?? [];
+function tooltipContent(props: { payload?: readonly TooltipEntry[] }): ReactNode {
+  const payload = props.payload ?? [];
   const theme = getChartTheme();
   const text = theme === "dark" ? "#f5eee2" : "#1a1611";
   const bg = theme === "dark" ? "#292520" : "#ffffff";
@@ -205,7 +206,7 @@ function tooltipContent(props: any): ReactNode {
       {payload.map((entry, index) => (
         <div key={index} style={{ fontSize: 12 }}>
           {String(entry.name ?? entry.label ?? "")}
-          <b> {n(entry.value ?? 0)}</b>
+          <b> {n(Number(entry.value ?? 0))}</b>
         </div>
       ))}
     </div>
