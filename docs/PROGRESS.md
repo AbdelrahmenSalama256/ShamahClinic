@@ -4254,7 +4254,72 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
       spreadsheet, so nothing was pushed. The Apps Script dedupes by `Lead ID`, so a retry
       of an already-written lead adds no row.
 
-- [ ] OFFER-1 — picking an offer must auto-select its service in the booking flow — pending
+- [x] OFFER-1 — picking an offer must auto-select its service in the booking flow — **browser-verified**
+      commits `61cce27` (the feature) + `c0be395` + `c0c36de` (two gates that were already red at HEAD).
+
+      **What the owner asked.** "offers must be added based on specifec service cause when i'm
+      select an offer it must be auto selected this service". Step 1 of the wizard used to list
+      every service and ask the question the offer had just answered. It now lists the offer's
+      own services, ticks the first one, badges that tick "مختارة من عرضكِ" so it is visible
+      that the offer chose it and not the client, and the note under the heading names which of
+      the four scopes is in force.
+
+      **The state that was hiding.** `applicable_services IS NULL` was read as "all services".
+      That is the truth about the four rows the WordPress import left behind and a lie about any
+      offer written since, so NULL is now its own state (`unconfigured`): it still fails open —
+      an offer nobody has configured must not silently become narrower than it was — but it says
+      so in its own words instead of borrowing the words of "All services". `[]` is none,
+      `["*"]` is all including services added later, and a list of uids is those services.
+      `src/lib/content/offer-services.ts` is the single reader of the difference.
+
+      **The console side.** An offer authored here cannot be published while the question is
+      unanswered (`content.issue.offer_services` in `publish.ts`), the refusal names the field so
+      the sentence paints under it (`ConsoleEditor.tsx`), the field is typed — two toggle buttons,
+      a search box and a checkbox list, no JSON textarea — and the offers list carries a
+      "لم يُحدَّد بعد" warn badge on exactly the rows with neither an answer nor a `legacy_id`
+      (`summary.ts` counts `services_unasked`, so imported rows are not nagged about).
+
+      **Tests.** `tests/offer-booking.test.ts` **32**, `tests/offer-booking-modal.test.ts` **7**
+      (new: the scope memo, `autoPickServices`, the badge and the four notes), plus
+      `tests/{list-order,result-case-console,service-warnings,visibility,site}.test.ts`.
+      `npx vitest run tests/offer-booking.test.ts tests/offer-booking-modal.test.ts tests/site.test.ts`
+      → `Test Files 3 passed (3) / Tests 56 passed (56)`.
+      `tests/site.test.ts` is realigned here, not silently: two assertions still expected
+      `getServiceCards()` to fall back to the WordPress snapshot, which stopped being true at
+      `c8667b6` — services are the one list with no snapshot rung.
+
+      **Gates.** `npm run typecheck` exit 0 · `npm run lint` exit 0, `10 problems (0 errors, 10
+      warnings)` · `npm run copy:check` → `copy-catalog: 227 entries current; 98 data-driven
+      calls skipped.` · `npm run build` exit 0 · `npm run prove:no-wp` → `5 checks passed, 0
+      failed`, `275 routes rendered, 0 failed`, `0 request(s) to the WordPress origin` ·
+      `node scripts/verify-render.mjs` against `npm run start` → `249 checks passed, 4 failed`,
+      all four on `mens-aesthetic-services` (that row's published JSON is demo junk — see the
+      defect list) · `npm test` → `Test Files 10 failed | 47 passed (57) / Tests 20 failed |
+      1088 passed (1108)`, and a pristine `HEAD` worktree run gives `Tests 22 failed | 214 passed
+      (236)` — a superset, so none of the 20 is new.
+
+      **Browser proof, production build on `localhost:3120`.** Public: the offer
+      `ازاله-شعر-بالليزر` (`["laser-hair-removal","skincare"]`) opened the wizard with
+      `count: 2`, one `aria-pressed="true"` carrying the badge, and the scoped note; the
+      unconfigured offer `/offers/begneh` opened `count: 9`, one ticked, `badge: 0`, and the
+      unconfigured note. Console, signed in as the dev Owner: the offers list shows "لم يُحدَّد
+      بعد" on 4 of 8 rows — the three with `applicable_services IS NULL AND legacy_id IS NULL` —
+      and not on the configured row or the four imported ones; pressing نشر on `begneh` painted
+      `لم تُحدَّد خدمات لهذا العرض، فلا يُنشر قبل اختيار خدمات أو الضغط على «كل الخدمات» أو «بدون خدمة».`
+      in `.console-field-error` (`rgb(179, 38, 30)`) and the row came back byte-identical
+      (`status published, version 16, applicable_services NULL, updated_at 2026-10-26T09:01:45.492Z`
+      before and after). Screenshots were read, not just taken.
+      **Not seen as pixels:** the `["*"]` and `[]` scopes — no such row exists in the dev
+      database and none was written; both are covered by the SSR tests only. The offer names in
+      those rows ("Trevor Fisher", "Marshall Parsons") are the demo values already in the dev
+      database, not copy invented here.
+
+      **Two repairs that had to come first, both pre-existing at HEAD.** `4784197` left
+      `OverviewScreen.tsx` with an `any` parameter, so `npm run lint` exited non-zero — every
+      report that called lint green since then had not run it (`c0c36de`). `0cf2a9a` passed
+      `n.labelAr`/`n.noteAr` straight into `t()`, which the copy scanner can neither address nor
+      skip, so `copy:check` and `build` both failed (`c0be395`). Reproduced in a pristine HEAD
+      worktree before either was touched.
 - [ ] CHART-1 — Overview charts must be real interactive charts, not CSS bars — pending
 - [ ] SVC-1 — service add-from-CMS must carry the full detail set — pending
 - [ ] AB-2 — About page: repair the seed, typed editor fields, public read path — pending
@@ -4262,6 +4327,47 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
 - [ ] CRAWL-1 — crawl the front end, report a wiring pass rate — pending
 
 ## Known gaps / notes
+
+### Opened by the Job C pass, for the owner to decide on (none of these is caused by OFFER-1)
+
+- **`npm test` fails 20 tests that were already failing at HEAD.** A pristine `HEAD` worktree
+  run reports `Tests 22 failed | 214 passed (236)`; the working tree reports `20 failed | 1088
+  passed (1108)`. The files they sit in: `console` (9), `no-wp-network` (2), `ui-primitives` (2),
+  `tracking-pipeline`, `results-page`, `list-doc-fields`, `src/lib/db/schema.test`, `rich-editor`,
+  `image-picker`, `server-setup`. Two of the 20 are the stale `getServiceCards()` assertions
+  OFFER-1 realigned; the other 18 are untouched here and each needs its own job.
+- **`tests/delivery.test.ts` reads state a previous process left behind.** Straight after the
+  MariaDB restart it failed 2 of 13 (`keeps the lead and queues it with a growing pause…`,
+  `does not retry before the pause has passed`), then 3 inside the full suite, then passed 13/13
+  twice on its own. The retry-pause assertions depend on `attempts` / `next_attempt_at` of rows
+  already in the outbox, so a row left by an interrupted run changes the answer. Nothing to do
+  with SHEETS-1's fix itself — but a suite whose result depends on the last process to touch the
+  test database cannot be used as a gate.
+- **`verify-render` fails 4 checks on `mens-aesthetic-services`** (rendered name, schema.org
+  `Offer`, both locales). The published JSON of that row is demo junk — `name_ar "India
+  Ellison"`, `name_en "Neil Hoff"`-class values — left by the import, so the check is right and the
+  data is wrong. Fixing it means writing real Arabic/English names into the dev database, which is
+  the owner's call, not something to invent.
+- **The About screen is registered but has no page file.** `CONSOLE_SCREENS` carries
+  `{ key: 'about', path: '/console/pages/about' }` (`src/lib/console/screens.ts:78`) while
+  `src/app/(console)/console/(workspace)/pages/` holds only `page.tsx`, so the nav row 404s — and
+  that mismatch is one of the 9 `tests/console.test.ts` failures ("has a page file for every
+  screen, and no page file outside it", 17 found vs 18 registered). AB-2 has to add the route,
+  not register it.
+- **`src/lib/db/migrations/014_about_page_seed.sql` is broken and deliberately left uncommitted.**
+  `0cf2a9a` wrote it in a syntax MariaDB rejects, and the working copy's edit makes it worse
+  (it closes the JSON early and drops the comma before `NULL`). It is AB-2's first task; nothing
+  has been applied from it.
+- **8 leads are still queued for Google Sheets** (SHEETS-1): `sent_at` null, attempts recorded.
+  Resending appends real rows to the owner's live spreadsheet, so it was not done here.
+- **The dev MariaDB stopped on its own during this pass** (no listener on 127.0.0.1:3307, no
+  `mariadbd` process, `D:\mariadb\log\` empty — `--console` logging means the log only exists
+  while the wrapper's terminal does). It was restarted with `npm run db:local:start` and the data
+  directory was not touched. The first symptom was a console login that went back to an empty
+  `/console/login` with no message at all, which reads like a wrong password but was the database
+  being unreachable; `loginHandler` has no catch around `findUserByEmail`, so it answers 500 and
+  the client form does not say so. Worth checking `netstat -ano | grep 3307` before believing a
+  login is broken.
 
 - `docs/IMAGES.md` and `docs/SEO-SOURCE.md` referenced by the old brief do not exist.
 - The old Neon/Postgres/Vercel-Blob environment belongs to the abandoned Payload attempt; this build does not
