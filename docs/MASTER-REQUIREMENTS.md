@@ -113,3 +113,30 @@ WORKING RULES (from PROGRESS.md)
 - Local DB: `npm run db:local:start` (port 3307, loopback only — see `docs/LOCAL-MARIADB.md`).
 - Mutating CLI commands default to dry-run; act only with `--apply`/`--force`.
 - If blocked (real copy, prices, photos, credentials, legal wording), log it in `docs/OPEN-QUESTIONS.md` and move to the next row.
+
+════════════════════════════════
+PHASE BIG-PROMPT — 19 NUMBERED ITEMS (2026-11-03)
+════════════════════════════════
+Status vocabulary: code only / browser-verified / broken. (Legacy rows above use done/partial/missing.)
+
+| id | item | status | notes |
+|----|------|--------|-------|
+| 1 | Google Sheets leads misbehave | code only | drain/outbox/lock/dedupe; real Google creds absent → "NOT verified against real Google" |
+| 2 | Before/after result photos do not attach | code only | root cause in S2; needs browser trace |
+| 3 | Edits to old imported articles not showing | code only | revalidation/publish state |
+| 4 | Article editor block-based (whole page editable) | missing | |
+| 5 | Article import fidelity (WP HTML → blocks) | missing | |
+| 6 | Service detail page redesign + fix | missing | |
+| 7 | Services one source of truth + honest publishing | code only | JSON-LD vs cards; auto-publish removal |
+| 8 | Before/after are cases not stories | code only | remove Related article; rename section |
+| 9 | About Us in CMS | code only | in flight; drop getAbout, seed, prove edit→publish |
+| 10 | Console forms + responsive | partial | |
+| 11 | Live on site indicator + site connection page | missing | |
+| 12 | Relations layer | missing | |
+| 13 | Service full details (port from D:\shamah) | partial | service-doc/page on disk, uncommitted snapshotted |
+| 14 | Separate public site from CMS (two apps) | missing | branch split-apps |
+| 15 | SEO specialist = Rank Math level | missing | |
+| 16 | Marketer workspace | missing | |
+| 17 | Overview/Reports/Insights | partial | |
+| 18 | Hardening + full wiring audit | missing | |
+| 19 | Performance (last) + Home 14.3 | missing | |
