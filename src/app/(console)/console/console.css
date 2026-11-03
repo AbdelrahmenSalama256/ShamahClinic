@@ -439,14 +439,9 @@
     }
 
     @media (min-width: 641px) and (max-width: 1024px) {
-          .console-detail .console-fields {
-            grid-template-columns: repeat(2, 1fr);
-          }
-
-    font-size: 0.75rem;
-    color: var(--c-text-2);
-
-    }
+      .console-detail .console-fields {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
   }
 
@@ -4760,4 +4755,5 @@
         .console-ov-plot {
           height: 8rem;
         }
-    }
+  }
+}

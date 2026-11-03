@@ -2,9 +2,9 @@
  * The published copy — what a visitor reads.
  *
  * `./store.ts` answers the console's question ("what is the draft, and how does it
- * differ from what is live?"). This answers the site's: only rows whose status is
- * `published` and that are not in the Trash, and only the value a visitor is
- * allowed to see — the `pub_*` twin when the field has one, the column itself when
+ * differ from what is live?"). This answers the site's: only rows still published — never
+ * trashed, and never unpublished — and only the value a visitor is allowed to see: the
+ * `pub_*` twin when the field has one, the column itself when
  * publishing never gated it (an offer's price, an article's image, a list item's
  * enabled flag).
  *
@@ -15,7 +15,7 @@
 import { cache } from 'react';
 import { db } from '../db';
 import { readStored } from './format';
-import { kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
+import { calendarDay, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 
 /** A bilingual field's public copy, or `null` when neither locale was ever published. */
 export type PublicValue =
@@ -90,6 +90,12 @@ function publicValue(spec: KindSpec, row: AnyRow, name: string): PublicValue | n
     return { kind: 'text', value: value === '' ? null : value };
   }
 
+  // A `DATE` is handed out as its `YYYY-MM-DD` text — the same shape the column means and
+  // the same shape a reader compares against — so it joins the `text` variants instead of
+  // adding a fourth kind every consumer of `values` would have to learn about.
+  const date = spec.date.find((field) => field.name === name);
+  if (date) return { kind: 'text', value: calendarDay(row[date.column]) };
+
   const number = spec.number.find((field) => field.name === name);
   if (number) {
     const raw = row[number.column];
@@ -103,7 +109,7 @@ function publicValue(spec: KindSpec, row: AnyRow, name: string): PublicValue | n
 }
 
 function fieldNames(spec: KindSpec): string[] {
-  return [...spec.bi, ...spec.json, ...spec.text, ...spec.number, ...spec.flag].map((field) => field.name);
+  return [...spec.bi, ...spec.json, ...spec.text, ...spec.date, ...spec.number, ...spec.flag].map((field) => field.name);
 }
 
 function toPublicRow(spec: KindSpec, row: AnyRow, listKey: string | null): PublicRow {
@@ -143,10 +149,23 @@ const listIdOf = cache(async (listKey: string): Promise<string | null> => {
   return row?.id ?? null;
 });
 
-/** Published and not in the Trash — the two conditions every site read shares. */
+/**
+ * Live for a visitor: not in the Trash, and published in one of the two shapes that means.
+ *
+ * `changed` is a list row that was published and has since had a draft saved over it. It is
+ * still the published page — `./store.ts` writes only the draft twin and `./publish.ts` is the
+ * only writer of `status`, so nothing except an explicit unpublish takes a live row out of
+ * circulation. Reading `published` alone hid a service, an article or a specialist from the
+ * site the moment someone edited it, which is the one thing saving a draft must never do.
+ *
+ * `list_items` is the only kind that gains the status today (an offer, page or article keeps
+ * draft/published and reads pending changes off the column pair), and the two agree: a
+ * `changed` row still carries its published copy in the `pub_*` twins that every read below
+ * prefers.
+ */
 function live(query: QueryShape, listId: string | null): QueryShape {
   const scoped = listId === null ? query : query.where('list_id', '=', listId);
-  return scoped.where('status', '=', 'published').where('deleted_at', 'is', null);
+  return scoped.where('status', 'in', ['published', 'changed']).where('deleted_at', 'is', null);
 }
 
 /**

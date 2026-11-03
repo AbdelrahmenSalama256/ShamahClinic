@@ -402,7 +402,10 @@ describe('the preview pane', () => {
   });
 
   it('previews a service with its picture and its points', () => {
-    const model = previewModel('list_item', { name_ar: 'ليزر', intro_ar: 'تنعيم', 'benefits_ar.0': 'نتيجة فورية', image: '/u/laser.jpg', featured: true }, 'ar', 'services');
+    // One benefit is one row, and the form types its sentence as `benefits.0.text_ar`. The
+    // older two-parallel-arrays shape is still read out of the database, but nobody types it
+    // into this form, so this is the shape the pane has to answer from.
+    const model = previewModel('list_item', { name_ar: 'ليزر', intro_ar: 'تنعيم', 'benefits.0.text_ar': 'نتيجة فورية', image: '/u/laser.jpg', featured: true }, 'ar', 'services');
     expect(model.title).toBe('ليزر');
     expect(model.intro).toBe('تنعيم');
     expect(model.image).toBe('/u/laser.jpg');
@@ -431,7 +434,7 @@ describe('the preview pane', () => {
     expect(doc).toContain('&lt;img src=x onerror=alert(1)&gt;');
     expect(doc).not.toContain('<img src=x');
     expect(doc).toContain('a &amp; b');
-    // The body is the authored HTML, on purpose — the frame it goes into is `sandbox=""`.
+    // The body is the authored HTML, on purpose — the frame it goes into runs nothing.
     expect(doc).toContain('<p>real & true</p>');
     expect(doc.startsWith('<!doctype html>')).toBe(true);
     expect(doc).toContain('lang="en" dir="ltr"');
@@ -440,10 +443,14 @@ describe('the preview pane', () => {
 
   it('is handed to a frame that cannot run it', () => {
     const editor = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
-    // No `allow-same-origin`: the draft's markup gets no origin, so it cannot read the
-    // console's session cookie even if a copy editor pastes a `<script>`.
-    expect(editor).toMatch(/<iframe[^>]*sandbox=""/);
-    expect(editor).not.toMatch(/sandbox="allow-/);
+    // Scripting is off in both frames. The card keeps `sandbox=""` outright: no origin either,
+    // so a `<script>` pasted into a body could not read the console's session cookie even if a
+    // frame could run one. The other frame is the site's own draft route, which needs an origin
+    // to load the site's stylesheet and self-hosted fonts — safe only because scripting stays
+    // off. `tests/service-preview.test.ts` checks which row gets which frame and which source.
+    expect(editor).not.toContain('allow-scripts');
+    expect(editor).toMatch(/sandbox=\{draftHref \? 'allow-same-origin' : ''\}/);
+    expect(editor).toMatch(/srcDoc=\{draftHref \? undefined : previewSrc\}/);
   });
 });
 

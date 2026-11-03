@@ -87,6 +87,38 @@ const bothStrings = (doc: Doc, stem: string): { ar: string[]; en: string[] } => 
   return { ar: [], en: [] };
 };
 
+/**
+ * A repeatable value as text pairs, from either shape.
+ *
+ * The import wrote benefits and steps as two parallel string arrays. The editor now writes
+ * one object per benefit with `text_ar`/`text_en`, a title and an icon, so the reader has to
+ * answer with the sentence in each language either way. An object with no sentence is
+ * skipped rather than printed as an empty bullet.
+ */
+const childTexts = (doc: Doc, stem: string): { ar: string[]; en: string[] } => {
+  const raw = doc[stem];
+  if (!Array.isArray(raw)) return bothStrings(doc, stem);
+  const ar: string[] = [];
+  const en: string[] = [];
+  for (const entry of raw) {
+    if (typeof entry === 'string') {
+      const text = entry.trim();
+      if (text) {
+        ar.push(text);
+        en.push(text);
+      }
+      continue;
+    }
+    if (!entry || typeof entry !== 'object') continue;
+    const pair = bi(entry as Doc, 'text');
+    if (pair.ar || pair.en) {
+      ar.push(pair.ar);
+      en.push(pair.en);
+    }
+  }
+  return { ar, en };
+};
+
 const bool = (doc: Doc, key: string, fallback = false): boolean => {
   const value = doc[key];
   return typeof value === 'boolean' ? value : fallback;
@@ -206,8 +238,8 @@ export function treatmentOfDoc(doc: Doc, id: string): Treatment | null {
     name,
     tagline: bi(doc, 'intro'),
     description: bi(doc, 'description'),
-    benefits: bothStrings(doc, 'benefits'),
-    steps: bothStrings(doc, 'steps'),
+    benefits: childTexts(doc, 'benefits'),
+    steps: childTexts(doc, 'steps'),
     aftercare: bothStrings(doc, 'aftercare'),
     idealFor: bi(doc, 'ideal'),
     duration: bi(doc, 'duration'),

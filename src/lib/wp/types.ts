@@ -98,6 +98,18 @@ export interface Offer {
   /** `images[0]`, or null when the product genuinely has no image. */
   image: string | null;
   imageAlt: Bi;
+  /**
+   * The services this offer may be booked through, as services list-item uids.
+   *
+   * `null` is *not configured* — nobody has answered the question — and is what every
+   * row imported from WordPress starts as. It is not the same as `[]` ("no services")
+   * or `['*']` ("all services"); `../content/offer-services.ts` is the interpreter and
+   * a booking treats an unconfigured offer as unrestricted.
+   */
+  services: string[] | null;
+  /** The offer's own validity window as Cairo calendar days; null on either end means no boundary. */
+  validFrom: string | null;
+  validUntil: string | null;
   href: Bi;
 }
 export interface OfferDetail extends Offer {

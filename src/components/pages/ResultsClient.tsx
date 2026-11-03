@@ -84,16 +84,9 @@ export const ResultsClient: React.FC<{
             }}
           />
 
-          <Reveal className="mt-8 mb-10 rounded-2xl border border-[var(--border-control)] bg-[var(--blush-light)]/60 p-5 sm:p-6">
-            <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
-              {t(
-                "صورة «قبل وبعد» تظهر فقط حين ترفع العيادة الصورتين معًا لنفس النتيجة: نصف مقارنة لا يعرض مقارنة. وتظهر النتيجة بعنوانها وصورتَيها ولو لم يكن لها مقال، أما حين تكون الصورتان ناقصتين فالبطاقة تبقى نصًّا أو صورة مقالها. تُرفع الصور من جهاز الطبيبة، ولا تُستبدل بصورة نموذجية ولا تُخفى حالة لأنها لم تُرضِ أحدًا — والنتيجة تتفاوت من بشرة لأخرى حسب نوعها وعمق المشكلة والالتزام بالخطة.",
-                "A before/after pair shows only when the clinic uploads both halves for the same result: half a comparison is not one. A result stands on its own title and pictures, with no article needed; while the two halves are incomplete the card stays its text, or its article's photo. Pictures are uploaded from the doctor's own device, never replaced with a stock photo and never hidden because a case was unsatisfying — and a result varies with skin type, concern depth and adherence to the plan.",
-              )}
-            </p>
-          </Reveal>
 
-          <h2 className="sr-only">
+
+          <h2 className="sr-only ">
             {t("قصص النتائج", "Result stories")}
           </h2>
 
@@ -108,7 +101,7 @@ export const ResultsClient: React.FC<{
             </Reveal>
           ) : (
             // 1 col mobile → 2 cols tablet → 3 cols desktop
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 mt-8">
               {stories.map((story, i) => (
                 <Reveal key={story.key} delay={Math.min(i, 8) * 0.08} className="h-full">
                   <ResultCaseCard story={story} gallery={gallery} priority={i < 2} />

@@ -145,6 +145,12 @@ export function mapOffer(primary: WCStoreProduct, other: WCStoreProduct | undefi
     images,
     image: images[0]?.src ?? null,
     imageAlt: images[0]?.alt ?? bi("", ""),
+    // The snapshot has no service links and no validity window: a WooCommerce product
+    // never carried either. Both are the unconfigured answer, which the booking reads
+    // as "no restriction" rather than as an empty list — see ../content/offer-services.ts.
+    services: null,
+    validFrom: null,
+    validUntil: null,
     href: { en: `/offers/${primary.slug}`, ar: `/offers/${primary.slug}` },
   };
 }

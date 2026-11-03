@@ -24,6 +24,7 @@ describe('results photos: do not drop on save', () => {
   it('parseWrites merges before/after image paths into the data JSON column', () => {
     const spec = kindSpec('list_item');
     const input = {
+      key: 'test-result-photos',
       fields: {
         before: '/uploads/202611/before.webp',
         after: '/uploads/202610/after.webp',
@@ -41,6 +42,7 @@ describe('results photos: do not drop on save', () => {
   it('parseWrites clears a removed image path (empty string => delete key)', () => {
     const spec = kindSpec('list_item');
     const input = {
+      key: 'test-result-photos-2',
       fields: {
         before: '',
         after: '/uploads/202610/after.webp',

@@ -163,7 +163,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
 
       {/* 03 — Before/after comparison, only from cases the owner put on Home and photographed
           twice. The band draws nothing when no case qualifies, and takes no numeral either. */}
-      {!!cases.length && <ResultCompareSection cases={cases} index={numeralOf("compare")} />}
+      {/* {!!cases.length && <ResultCompareSection cases={cases} index={numeralOf("compare")} />} */}
 
       {/* 04 — Seasonal offers (console, else the WooCommerce snapshot, max 3) */}
       {!!offers.length && (

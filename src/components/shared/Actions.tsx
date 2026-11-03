@@ -119,13 +119,18 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
 
 export const CallButton: React.FC<{
   phone?: string;
-  size?: "sm" | "md";
+  size?: "sm" | "md" | "lg";
   className?: string;
 }> = ({ phone, size = "md", className = "" }) => {
   const { t } = useLanguage();
   const clinic = useClinic();
   const num = (phone ?? clinic.phone).replace(/\s/g, "");
-  const pad = size === "sm" ? "text-xs px-4 py-2" : "text-sm px-6 py-3";
+  const pad =
+    size === "sm"
+      ? "text-xs px-4 py-2"
+      : size === "lg"
+        ? "text-base px-4 py-2"
+        : "text-sm px-6 py-3";
   return (
     <a
       href={`tel:${num}`}

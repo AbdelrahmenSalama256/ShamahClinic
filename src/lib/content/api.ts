@@ -248,6 +248,10 @@ async function publishHandler(req: Request, spec: KindSpec, kind: ContentKind, i
 
       const done = await publishRow(kind, { id, locales, actor: { id: ctx.auth.user.id, email: ctx.auth.user.email }, note: ctx.input.note });
       if (!done.ok) return failure(done);
+      // Publishing can change what appears on the home band (results pages render fresh on every
+      // request, so they need no cache purge). Purge the layout ISR so home and the sitemap pick
+      // the change up immediately.
+      revalidateSite();
       return { data: { row: done.value.row, revision: done.value.revision, locales: done.value.locales }, audit: { entityType: kind, entityId: id, before, after: done.value.row } };
     },
   );
@@ -340,6 +344,10 @@ async function bulkHandler(req: Request, spec: KindSpec, kind: ContentKind, bulk
 
       // A request that moved nothing changed nothing: it answers 409 and writes no audit row.
       if (done.length === 0) return { status: 409, data: { error: 'bulk_nothing_applied', failed } };
+      // Bulk publish can change what appears on the home band (results pages render fresh on every
+      // request, so they need no cache purge). Purge the layout ISR so home and the sitemap pick
+      // the change up immediately.
+      if (bulk === 'publish') revalidateSite();
       return {
         data: { done, failed, locales: spec.perLocale ? locales : null },
         audit: { entityType: kind, entityId: `bulk.${bulk}`, after: { action: bulk, done, failed } },

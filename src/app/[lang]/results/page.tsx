@@ -12,13 +12,16 @@ import { getLocalizedHref } from "@/lib/locale";
 import { SITE_URL } from "@/lib/site";
 import { routeLang } from "@/lib/route-lang";
 import { guardPage } from '@/lib/content/guard-page';
-
-export const revalidate = 300;
+import { unstable_noStore } from 'next/cache';
 
 interface Props {
   searchParams: Promise<{ page?: string }>;
 }
 
+// Rendered fresh on every request so a newly published case appears immediately.
+// `db` reads aren't a Next.js dynamic data source, so without this the Full Route
+// Cache would serve a stale page and a visitor would wait up to `revalidate` seconds
+// (or longer) for a result they just published.
 const PER_PAGE = 9;
 
 function pageHref(page: number, lang: "ar" | "en"): string {
@@ -84,6 +87,10 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 export default async function ResultsPage({ searchParams }: Props) {
+  // Opt out of the Full Route Cache: `getResultStories` reads the database directly,
+  // which Next.js cannot recognize as a dynamic data source, so a cached render would
+  // keep showing yesterday's results after a publish.
+  unstable_noStore();
   await guardPage('results');
   const [{ paged, page }, banner] = await Promise.all([read(searchParams), getBanner('results')]);
   const lang = await routeLang();

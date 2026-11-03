@@ -2,7 +2,6 @@ import { SITE_URL } from "./site";
 import { siteConfig } from "@/config/site";
 import { getClinicWords, getBrandWords, type BrandWords } from "./content/site";
 import type { BranchDetail } from "@/data/branches";
-import type { Treatment } from "@/data/treatments";
 import { faqData, type FaqItem } from "@/data/faq";
 import { type Article } from "@/data/journal";
 import { getBranchList } from "./wp";
@@ -142,25 +141,6 @@ export async function articleJsonLd(article: Article): Promise<Json> {
       logo: { "@type": "ImageObject", url: logoUrl },
     },
     mainEntityOfPage: localized(path, lang),
-  };
-}
-
-export async function serviceJsonLd(treatment: Treatment): Promise<Json> {
-  const lang = await routeLang();
-  const path = `/services/${treatment.id}`;
-  return {
-    "@context": "https://schema.org",
-    "@type": "MedicalProcedure",
-    ...names(treatment.name, lang),
-    description: treatment.description[lang],
-    image: `${SITE_URL}${treatment.image.src}`,
-    url: localized(path, lang),
-    procedureType: "https://schema.org/CosmeticProcedure",
-    inLanguage: OG_LOCALE[lang],
-    provider: { "@id": `${SITE_URL}/#organization` },
-    // No offer node: the live site prices every service after consultation, and an
-    // authored "from X EGP" would be a number WordPress never gave us. WooCommerce
-    // campaign prices keep their own offerJsonLd.
   };
 }
 

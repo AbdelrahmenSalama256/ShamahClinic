@@ -99,6 +99,7 @@ function row(index: number, enabled: boolean | undefined): ListSummary {
     publishedAt: '2026-10-01T08:00:00.000Z',
     image: null,
     needsPhoto: false,
+    warnings: [],
     cells: enabled === undefined ? { area_ar: 'الوجه' } : { area_ar: 'الوجه', enabled },
   };
 }

@@ -100,10 +100,26 @@ function offerBadge(discount: number | null): { ar: string; en: string } {
     : { ar: "عرض", en: "Offer" };
 }
 
+/**
+ * The offer's end day as the sentence the card prints, in both languages.
+ *
+ * No day typed in the console is no sentence: an offer with no expiry used to be able to
+ * carry a hardcoded "Until the end of the month", which is a claim nobody made. The day is
+ * formatted at noon local so no timezone can move it — a `DATE` column read as UTC
+ * midnight is the previous day for anyone west of Greenwich.
+ */
+function offerValidUntil(day: string | null): { ar: string; en: string } {
+  if (!day) return { ar: "", en: "" };
+  const iso = `${day}T12:00:00`;
+  return { ar: `حتى ${fmtDate(iso, "ar-EG")}`, en: `Until ${fmtDate(iso, "en-GB")}` };
+}
+
 /** WP offer (Store API) -> UI Offer (card). No invented marketing copy. */
 export function offerToUI(offer: WpOffer): UIOffer {
   return {
     id: String(offer.id),
+    slug: offer.slug,
+    services: offer.services,
     image: offer.images.length
       ? toPhotoSlot(offer.images[0].src, offer.images[0].alt)
       : toPhotoSlot(null, offer.name),
@@ -117,7 +133,7 @@ export function offerToUI(offer: WpOffer): UIOffer {
     discountedPrice: offer.price,
     savingsPercentage: offer.discountPercent || 0,
     currency: offer.currency,
-    validUntil: { ar: "", en: "" },
+    validUntil: offerValidUntil(offer.validUntil),
     href: offer.href,
     popular: Boolean(offer.onSale),
   };

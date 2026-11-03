@@ -32,16 +32,17 @@ const GALLERY_KEY = /^src$/i;
  */
 const IMAGE_EXT = /\.(avif|webp|jpe?g|png|gif)(\?|#|$)/i;
 
-export type FieldShape = { kind: 'bi' | 'json' | 'text' | 'number' | 'flag'; multiline: boolean };
+export type FieldShape = { kind: 'bi' | 'json' | 'text' | 'date' | 'number' | 'flag'; multiline: boolean };
 
 /**
  * A field this console should put an upload control on.
  *
  * A multiline text field is prose even when its name mentions a picture (`image_caption`),
- * and a number or a flag is never one, so those are refused by shape rather than by name.
+ * and a number, a day, a flag or a document is never one, so those are refused by shape
+ * rather than by name.
  */
 export function isImageField(name: string, field: FieldShape): boolean {
-  if (field.kind === 'number' || field.kind === 'flag' || field.kind === 'json') return false;
+  if (field.kind === 'number' || field.kind === 'date' || field.kind === 'flag' || field.kind === 'json') return false;
   if (field.multiline) return false;
   if (ALT_NAME.test(name)) return false;
   return IMAGE_NAME.test(name);

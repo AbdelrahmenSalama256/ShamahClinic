@@ -24,6 +24,7 @@ import { readStored, type FieldFormat } from './format';
 import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 import { listDocTitle, listSchemaOf, needsOtherPhoto, type ListSchema as TypedList } from './list-schema';
 import { resultStoryPointer } from './list-docs';
+import { serviceWarningsOfDoc, type ServiceWarning } from './service-doc';
 import { listIdForKey } from './store';
 import type { ListFilter, ListSort, ListView } from './list-view';
 
@@ -46,6 +47,8 @@ export interface ListSummary {
   image: string | null;
   /** a before/after case holding one picture and not the other, so the list can name what is owed */
   needsPhoto: boolean;
+  /** a service row whose page a visitor would find thin, named by what it is missing */
+  warnings: ServiceWarning[];
   /** the kind's own columns, keyed by field name: a price, a flag, a list item's key */
   cells: Record<string, string | number | boolean | null>;
 }
@@ -465,6 +468,11 @@ export async function listSummaries(kind: ContentKind, query: ListQuery): Promis
       // draw a comparison out of one picture, and an owner staring at a card with no pair has
       // no way to know which of the two slots is the empty one.
       needsPhoto: doc ? needsOtherPhoto(asText(doc.before), asText(doc.after)) : false,
+      // A service row is a whole page, so the list names the four gaps a visitor would feel
+      // — the sentence under the name, the picture the card is cut from, the questions, the
+      // button that books. They are marks, not gates: a flagged row saves and publishes, and
+      // an old row imported before these fields existed is editable exactly like a new one.
+      warnings: doc && query.listKey === 'services' ? serviceWarningsOfDoc(doc, asText(row.row_key)) : [],
       cells: cellsOf(spec, row, columns),
     };
   });
@@ -560,6 +568,30 @@ export async function listChoices(listKey: string, locale: ContentLocale): Promi
     const key = asText(row.uid);
     const label = typed ? listDocTitle(typed, doc, locale) : sampled ? labelsOf(doc, sampled)[locale] : '';
     return { key, label: label || key };
+  });
+}
+
+/**
+ * The published offers a service may point at, named by the slug the site resolves.
+ *
+ * The relation stores the offer's slug, not a copy of its price or title: an owner
+ * changes the offer once and every service showing it changes too. Only published,
+ * enabled offers are offered, because a service page cannot show what the offers page
+ * itself hides.
+ */
+export async function offerChoices(locale: ContentLocale): Promise<ListChoice[]> {
+  const found = await sql<{ slug: string; name_ar: string | null; name_en: string | null }>`
+    SELECT ${sql.ref('slug')} AS slug, ${sql.ref('name_ar')} AS name_ar, ${sql.ref('name_en')} AS name_en
+    FROM ${sql.ref('offers')}
+    WHERE ${sql.ref('deleted_at')} IS NULL AND ${sql.ref('status')} = 'published' AND ${sql.ref('enabled')} = 1
+    ORDER BY ${sql.ref('position')} ASC, ${sql.ref('slug')} ASC
+  `.execute(db);
+  return found.rows.map((row) => {
+    const slug = asText(row.slug);
+    const ar = readStored('plain', row.name_ar);
+    const en = readStored('plain', row.name_en);
+    const title = locale === 'ar' ? ar || en : en || ar;
+    return { key: slug, label: title || slug };
   });
 }
 

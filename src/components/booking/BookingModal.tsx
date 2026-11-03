@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useClinic } from "@/context/ClinicContext";
+import type { BookingOffer } from "@/context/BookingContext";
 import type { BranchLite } from "@/data/branches";
 import type { Specialist } from "@/data/specialists";
 import type { TreatmentOption } from "@/data/treatments";
+import { offerServiceScope, serviceIsEligible } from "@/lib/content/offer-services";
 import {
   X,
   Check,
@@ -34,7 +36,13 @@ interface BookingModalProps {
   specialists: Specialist[];
   preSelectedTreatmentId?: string;
   preSelectedSpecialistId?: string;
-  preSelectedOffer?: { ar: string; en: string };
+  /**
+   * The offer the visitor clicked, when the booking started from one.
+   *
+   * Its `services` is what narrows the picker, and its `slug` is what the lead carries so
+   * the endpoint can check the answer against the row instead of against a title.
+   */
+  offer?: BookingOffer;
 }
 
 /** Booking reference shown in step 5 and carried in the lead + WhatsApp message. */
@@ -48,17 +56,33 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   specialists,
   preSelectedTreatmentId,
   preSelectedSpecialistId,
-  preSelectedOffer,
+  offer,
 }) => {
   const { language, t, formatNumber } = useLanguage();
   const clinic = useClinic();
 
+  /**
+   * The services this booking may name.
+   *
+   * An offer that was never linked (`services` is null) covers everything, because that is
+   * what the clinic has been doing for years and a blank column is not a decision. An offer
+   * that says "these three" says only these three — and one that says "none" says none, so
+   * step 1 has nothing to pick and says why rather than pretending the offer applies.
+   */
+  const eligibleTreatments = useMemo(() => {
+    const scope = offerServiceScope(offer?.services ?? null);
+    return treatments.filter((treatment) => serviceIsEligible(scope, treatment.id));
+  }, [offer, treatments]);
+
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [selectedTreatmentIds, setSelectedTreatmentIds] = useState<string[]>(() => {
-    return preSelectedTreatmentId &&
-      treatments.some((treatment) => treatment.id === preSelectedTreatmentId)
-      ? [preSelectedTreatmentId]
-      : [treatments[0]?.id ?? ""];
+    const scope = offerServiceScope(offer?.services ?? null);
+    const allowed = treatments.filter((treatment) => serviceIsEligible(scope, treatment.id));
+    const preselected =
+      preSelectedTreatmentId && allowed.some((treatment) => treatment.id === preSelectedTreatmentId)
+        ? preSelectedTreatmentId
+        : allowed[0]?.id;
+    return preselected ? [preselected] : [];
   });
   const [selectedBranchId, setSelectedBranchId] = useState<string>(
     branches[0]?.id ?? "",
@@ -103,7 +127,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
     return () => window.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
-  const selectedTreatments = treatments.filter((treatment) =>
+  // Reading the selection off the eligible list, not off the whole one, is what makes the
+  // restriction hold past step 1: a service id that got in from a stale page is dropped from
+  // the summary, the calendar, the WhatsApp message and the lead rather than promised.
+  const selectedTreatments = eligibleTreatments.filter((treatment) =>
     selectedTreatmentIds.includes(treatment.id),
   );
   const currentBranch =
@@ -163,7 +190,10 @@ export const BookingModal: React.FC<BookingModalProps> = ({
       service: selectedTreatments
         .map((treatment) => t(treatment.name.ar, treatment.name.en))
         .join(", "),
-      offer: preSelectedOffer ? t(preSelectedOffer.ar, preSelectedOffer.en) : undefined,
+      /** The uids, not only the names: `/api/v1/lead` checks them against the offer's row. */
+      serviceIds: selectedTreatments.map((treatment) => treatment.id),
+      offer: offer ? t(offer.name.ar, offer.name.en) : undefined,
+      offerSlug: offer?.slug,
       branch: currentBranch.name[language],
       subject: [ref, t(slot.ar, slot.en), currentSpecialist?.name[language]]
         .filter(Boolean)
@@ -200,7 +230,9 @@ export const BookingModal: React.FC<BookingModalProps> = ({
   };
 
   const handleNext = async () => {
-    if (currentStep === 1 && selectedTreatmentIds.length === 0) {
+    // `selectedTreatments`, not the raw ids: an id the offer does not cover is not a choice,
+    // and stepping forward on it would carry a promise the clinic never made.
+    if (currentStep === 1 && selectedTreatments.length === 0) {
       setErrors({
         treatment:
           language === "ar"
@@ -280,8 +312,8 @@ export const BookingModal: React.FC<BookingModalProps> = ({
         `• رقم المرجع: ${bookingRef}\n` +
         `• الاسم: ${fullName}\n` +
         `• الهاتف: ${phoneNumber}\n` +
-        (preSelectedOffer
-          ? `• ${t("العرض", "Offer")}: ${t(preSelectedOffer.ar, preSelectedOffer.en)}\n`
+        (offer
+          ? `• ${t("العرض", "Offer")}: ${t(offer.name.ar, offer.name.en)}\n`
           : "") +
         `• الخدمات: ${selectedTreatments.map((treatment) => treatment.name.ar).join("، ")}\n` +
         `• الفرع: ${currentBranch.name.ar}\n` +
@@ -402,15 +434,35 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       )}
                     </h4>
                     <p className="text-xs text-[var(--text-secondary)]">
-                      {t(
-                        "يمكنكِ اختيار خدمة واحدة أو أكثر من الجلسات التجميلية المتخصصة لدينا",
-                        "Select one or more of our specialized treatments",
-                      )}
+                      {offer
+                        ? t(
+                            "هذي خدمات العرض — اختاري واحدة أو أكثر منها.",
+                            "These are the services this offer covers — pick one or more of them.",
+                          )
+                        : t(
+                            "يمكنكِ اختيار خدمة واحدة أو أكثر من الجلسات التجميلية المتخصصة لدينا",
+                            "Select one or more of our specialized treatments",
+                          )}
                     </p>
+                    {offer ? (
+                      <p className="mt-1 text-xs font-semibold text-[var(--gold-end)]">
+                        {t("العرض: ", "Offer: ")}
+                        {t(offer.name.ar, offer.name.en)}
+                      </p>
+                    ) : null}
                   </div>
 
+                  {eligibleTreatments.length === 0 ? (
+                    <p className="text-xs text-[var(--text-danger)] bg-[var(--bg-danger-soft)] border border-[var(--border-danger)] rounded-2xl p-3.5">
+                      {t(
+                        "هذا العرض غير مرتبط بأي خدمة بعد، فلا يمكن الحجز من خلاله. احجزي موعدك من زر «احجزي» في الأعلى أو اسألينا على واتساب.",
+                        "This offer is not linked to any service yet, so it cannot be booked through. Book from the “Book” button at the top, or ask us on WhatsApp.",
+                      )}
+                    </p>
+                  ) : null}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {treatments.map((item) => {
+                    {eligibleTreatments.map((item) => {
                       const isSelected = selectedTreatmentIds.includes(item.id);
                       return (
                         <button
@@ -813,6 +865,18 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   </div>
 
                   <div className="bg-[var(--bg-secondary)]/70 p-5 rounded-2xl border border-[var(--border-control)] text-start space-y-2.5 text-xs sm:text-sm">
+                    {/* The offer stays on the ticket all the way to the end: the visitor
+                        should see what they asked for, and the clinic reads the same line. */}
+                    {offer ? (
+                      <div className="flex justify-flex-start border-b border-[var(--border-control)] pb-2">
+                        <span className="text-[var(--text-muted)]">
+                          {t("العرض:", "Offer:")}
+                        </span>
+                        <strong className="text-[var(--text-primary)] mx-1">
+                          {t(offer.name.ar, offer.name.en)}
+                        </strong>
+                      </div>
+                    ) : null}
                     <div className="flex justify-flex-start border-b border-[var(--border-control)] pb-2">
                       <span className="text-[var(--text-muted)]">
                         {t("الخدمات:", "Treatments:")}

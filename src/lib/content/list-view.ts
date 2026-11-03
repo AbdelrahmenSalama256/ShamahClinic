@@ -75,7 +75,7 @@ export function naturalDir(sort: ListSort): ListDir {
 /** The view a kind draws before anyone touches it — and the one a query string falls back onto. */
 export function defaultViewFor(kind: ContentKind): ListView {
   const sort = DEFAULT_SORT_OF[kind];
-  return { mode: 'table', sort, dir: naturalDir(sort), q: '', filter: 'all', page: 1, per: 25 };
+  return { mode: 'card', sort, dir: naturalDir(sort), q: '', filter: 'all', page: 1, per: 25 };
 }
 
 type Params = Pick<URLSearchParams, 'get'>;

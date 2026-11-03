@@ -53,6 +53,14 @@ import type { LeadRow } from "@/lib/leads/view";
 import type { MessageKey } from "@/lib/console/messages";
 import type { ConsoleLocale } from "@/lib/console/prefs";
 
+// ---- charts (Recharts) -----------------------------------------------------
+// The console is server-themed on `<html> data-theme`; every brand colour comes from
+// the console sheet (`--c-accent`), so the series stay gold on dark *and* on light.
+import {
+  AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
+
 type Labels = Record<MessageKey, string>;
 
 const RANGES: readonly RangeKey[] = ["today", "7d", "30d", "90d", "custom"];
@@ -143,34 +151,98 @@ function deviceName(device: string, labels: Labels): string {
 
 /* --- geometry --------------------------------------------------------------- */
 
+/* --- chart pieces ----------------------------------------------------------- */
+
 const VIEW_W = 1000;
 
-/** SVG points for a line, min 0 so a small change is not stretched into a cliff. */
-function linePoints(values: readonly number[], max: number, height: number, width = VIEW_W): string {
-  if (values.length === 0) return "";
-  const spot = (value: number, index: number): string => {
-    const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
-    const y = height - (Math.min(Math.max(value, 0), max) / max) * height;
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  };
-  return values.map(spot).join(" ");
+// ---- chart colours ---------------------------------------------------------
+// Series palette. The console theme is picked server-side (`<html> data-theme`), so
+// each chart component reads it once per render and keeps the same colour until the
+// next reload; this prevents a theme switch from redrawing every data point.
+
+let cachedTheme: "light" | "dark" | null = null;
+const LIGHT_ACCENT = "#85640f";
+const DARK_ACCENT = "#e1c15b";
+
+function getChartTheme(): "light" | "dark" {
+  if (cachedTheme) return cachedTheme;
+  try {
+    const value = (document.documentElement as HTMLElement).dataset.theme;
+    cachedTheme = value === "dark" ? "dark" : "light";
+  } catch {
+    cachedTheme = "light";
+  }
+  return cachedTheme;
 }
 
-function areaPoints(values: readonly number[], max: number, height: number, width = VIEW_W): string {
-  if (values.length === 0) return "";
-  return `0,${height} ${linePoints(values, max, height, width)} ${width},${height}`;
+const SERIES_COLORS = [
+  "#85640f",
+  "#7c3aed",
+  "#0ea5e9",
+  "#dc2626",
+  "#059669",
+  "#d97706",
+  "#6366f1",
+  "#be185d",
+] as const;
+
+function seriesColor(index: number): string {
+  return SERIES_COLORS[index % SERIES_COLORS.length];
 }
 
-/* --- small pieces ----------------------------------------------------------- */
+// ---- shared chart plumbing ---------------------------------------------------
 
-function Sparkline({ values }: Readonly<{ values: readonly number[] }>) {
-  const max = Math.max(1, ...values);
+type TooltipPayload = { label?: string; value?: unknown; name?: string }[];
+
+function tooltipContent(props: any): ReactNode {
+  const payload: { label?: string; value?: number; name?: string }[] = props.payload ?? [];
+  const theme = getChartTheme();
+  const text = theme === "dark" ? "#f5eee2" : "#1a1611";
+  const bg = theme === "dark" ? "#292520" : "#ffffff";
+  const border = theme === "dark" ? "#3d352a" : "#e5e0d5";
   return (
-    <svg className="console-ov-spark" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true">
-      <polygon className="console-ov-spark-area" points={areaPoints(values, max, 28, 100)} />
-      <polyline className="console-ov-spark-line" points={linePoints(values, max, 28, 100)} vectorEffect="non-scaling-stroke" />
-    </svg>
+    <div style={{ color: text, background: bg, borderColor: border, fontSize: 12 }}>
+      {payload.map((entry, index) => (
+        <div key={index} style={{ fontSize: 12 }}>
+          {String(entry.name ?? entry.label ?? "")}
+          <b> {n(entry.value ?? 0)}</b>
+        </div>
+      ))}
+    </div>
   );
+}
+
+function ChartTooltip() {
+  return (
+    <Tooltip
+      content={(props) => tooltipContent(props)}
+      cursor={{ fill: "transparent" }}
+    />
+  );
+}
+
+function XAxisDay({ data, theme }: { data: readonly { day: string }[]; theme: "light" | "dark" }) {
+  const tickColor = theme === "dark" ? "#9a8a6a" : "#6b6252";
+  return (
+    <XAxis
+      dataKey="day"
+      tick={{ fill: tickColor, fontSize: 11, textAnchor: "end" }}
+      axisLine={false}
+      tickLine={false}
+      interval={0}
+      minTickGap={22}
+    />
+  );
+}
+
+function YAxisEmpty({ theme }: { theme: "light" | "dark" }) {
+  const tickColor = theme === "dark" ? "#9a8a6a" : "#6b6252";
+  return <YAxis hide axisLine={false} tickLine={false} tick={{ fill: tickColor, fontSize: 11 }} />;
+}
+
+function Grid({ theme }: { theme: "light" | "dark" }) {
+  const stroke = theme === "dark" ? "rgba(170, 148, 100, 0.14)" : "rgba(133, 100, 15, 0.35)";
+  return <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={stroke} />;
 }
 
 function Panel({
@@ -209,17 +281,27 @@ function Legend({ items }: Readonly<{ items: readonly { kind: LegendKind; label:
   );
 }
 
-function GridLines({ height }: Readonly<{ height: number }>) {
-  return (
-    <>
-      {[0.25, 0.5, 0.75].map((fraction) => (
-        <line key={fraction} className="console-ov-grid" x1={0} x2={VIEW_W} y1={height * fraction} y2={height * fraction} />
-      ))}
-    </>
-  );
-}
 
 /* --- KPI -------------------------------------------------------------------- */
+
+function Sparkline({ values, kpiKey }: Readonly<{ values: readonly number[]; kpiKey: string }>) {
+  const theme = getChartTheme();
+  const color = theme === "dark" ? DARK_ACCENT : LIGHT_ACCENT;
+  const gradientId = `spark-grad-${kpiKey}`;
+  const max = Math.max(1, ...values);
+  return (
+    <AreaChart data={[{ value: values }]} width={100} height={28}>
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.45} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      <Area type="monotone" dataKey="value" stroke="none" fill={gradientId} strokeWidth={0} />
+      <Line type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} dot={false} />
+    </AreaChart>
+  );
+}
 
 function KpiCard({ kpi, labels, compare }: Readonly<{ kpi: Kpi; labels: Labels; compare: boolean }>) {
   const shown = kpi.unit === "percent" ? percent(kpi.value) : n(kpi.value);
@@ -254,7 +336,7 @@ function KpiCard({ kpi, labels, compare }: Readonly<{ kpi: Kpi; labels: Labels; 
           </Note>
         ) : null}
       </div>
-      <Sparkline values={kpi.series} />
+      <Sparkline values={kpi.series} kpiKey={kpi.key} />
     </article>
   );
 }
@@ -293,22 +375,23 @@ function TrafficTable({ data, labels }: Readonly<{ data: OverviewData; labels: L
 function TrafficPanel({ data, labels }: Readonly<{ data: OverviewData; labels: Labels }>) {
   const days = data.daily;
   const previous = data.previousDaily;
-  const visitors = days.map((point) => point.visitors);
-  const leads = days.map((point) => point.leads);
-  const visitorMax = Math.max(1, ...visitors, ...(previous ?? []).map((point) => point.visitors));
-  const leadMax = Math.max(1, ...leads, ...(previous ?? []).map((point) => point.leads));
+  const theme = getChartTheme();
+  const visitorsColor = theme === "dark" ? DARK_ACCENT : LIGHT_ACCENT;
+  const leadsColor = seriesColor(1);
+  const previousColor = theme === "dark" ? "#6b5d3a" : "#a8874b";
+  const leadMax = Math.max(1, ...days.map((point) => point.leads), ...(previous ?? []).map((point) => point.leads));
   const totalViews = days.reduce((total, point) => total + point.views, 0);
-  const totalLeads = leads.reduce((total, value) => total + value, 0);
+  const totalLeads = days.reduce((total, point) => total + point.leads, 0);
   const empty = totalViews === 0 && totalLeads === 0;
-  const height = 150;
-  const leadHeight = 84;
 
-  const bars = days.map((point, index) => {
-    const slot = VIEW_W / days.length;
-    const width = Math.max(1, slot * 0.62);
-    const barHeight = (point.leads / leadMax) * leadHeight;
-    return { seed: point.day, x: index * slot + (slot - width) / 2, y: leadHeight - barHeight, width, height: barHeight };
-  });
+  // Merged dataset so every series lives on a single series for the chart.
+  const chartPoints: { day: string; visitors: number; leads: number; previousVisitors?: number; previousLeads?: number }[] = days.map((point, index) => ({
+    day: point.day,
+    visitors: point.visitors,
+    leads: point.leads,
+    previousVisitors: previous?.[index]?.visitors,
+    previousLeads: previous?.[index]?.leads,
+  }));
 
   return (
     <Panel
@@ -327,39 +410,46 @@ function TrafficPanel({ data, labels }: Readonly<{ data: OverviewData; labels: L
               { kind: "leads", label: labels["overview.traffic.leads"] },
             ]}
           />
-          {/* `dir="ltr"` on the plot: a time axis reads left to right in both languages. */}
+          {/* visitors: area fill over line, previous as a dashed line. */}
           <div className="console-ov-plot" dir="ltr" aria-hidden="true">
-            <span className="console-ov-max">{n(visitorMax)}</span>
-            <svg className="console-ov-chart" viewBox={`0 0 ${VIEW_W} ${height}`} preserveAspectRatio="none">
-              <GridLines height={height} />
-              <polygon className="console-ov-area" points={areaPoints(visitors, visitorMax, height)} />
-              <polyline className="console-ov-line" points={linePoints(visitors, visitorMax, height)} vectorEffect="non-scaling-stroke" />
-              {previous ? (
-                <polyline
-                  className="console-ov-line"
-                  data-kind="previous"
-                  points={linePoints(previous.map((point) => point.visitors), visitorMax, height)}
-                  vectorEffect="non-scaling-stroke"
-                />
-              ) : null}
-            </svg>
+            <span className="console-ov-max">
+              {n(Math.max(1, ...days.map((p) => p.visitors), ...(previous ?? []).map((p) => p.visitors)))}
+            </span>
+            <ResponsiveContainer width="100%" height={150}>
+              <AreaChart data={chartPoints} margin={{ top: 3, right: 6, bottom: 0, left: 0 }}>
+                <defs>
+                  <linearGradient id="traffic-visitors" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={visitorsColor} stopOpacity={0.4} />
+                    <stop offset="100%" stopColor={visitorsColor} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <ChartTooltip />
+                <Grid theme={theme} />
+                <XAxisDay data={chartPoints} theme={theme} />
+                <YAxisEmpty theme={theme} />
+                <Area type="monotone" dataKey="visitors" fill="url(#traffic-visitors)" stroke="none" strokeWidth={0} dot={false} />
+                <Line type="monotone" dataKey="visitors" stroke={visitorsColor} strokeWidth={2} dot={false} />
+                {previous ? (
+                  <Line type="monotone" dataKey="previousVisitors" stroke={previousColor} strokeWidth={2} dot={false} strokeDasharray="4 3" />
+                ) : null}
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
+          {/* leads: horizontal bars, previous as a lighter bar set. */}
           <div className="console-ov-plot" dir="ltr" aria-hidden="true" data-pane="leads">
             <span className="console-ov-max">{n(leadMax)}</span>
-            <svg className="console-ov-chart" viewBox={`0 0 ${VIEW_W} ${leadHeight}`} preserveAspectRatio="none">
-              <line className="console-ov-base" x1={0} x2={VIEW_W} y1={leadHeight} y2={leadHeight} />
-              {bars.map((bar) => (
-                <rect key={bar.seed} className="console-ov-bar" x={bar.x} y={bar.y} width={bar.width} height={bar.height} />
-              ))}
-              {previous ? (
-                <polyline
-                  className="console-ov-line"
-                  data-kind="previous"
-                  points={linePoints(previous.map((point) => point.leads), leadMax, leadHeight)}
-                  vectorEffect="non-scaling-stroke"
-                />
-              ) : null}
-            </svg>
+            <ResponsiveContainer width="100%" height={84}>
+              <BarChart data={chartPoints} margin={{ top: 2, right: 6, bottom: 0, left: 0 }}>
+                <ChartTooltip />
+                <Grid theme={theme} />
+                <XAxis dataKey="day" tick={{ fill: theme === "dark" ? "#9a8a6a" : "#6b6252", fontSize: 10, textAnchor: "end" }} axisLine={false} tickLine={false} interval={0} minTickGap={22} />
+                <YAxis hide axisLine={false} tickLine={false} />
+                <Bar dataKey="leads" fill={leadsColor} radius={[0, 2, 2, 0]} maxBarSize={40} />
+                {previous ? (
+                  <Bar dataKey="previousLeads" fill={previousColor} radius={[0, 2, 2, 0]} maxBarSize={40} opacity={0.55} />
+                ) : null}
+              </BarChart>
+            </ResponsiveContainer>
           </div>
           <div className="console-ov-axis" dir="ltr" aria-hidden="true">
             <span>{axisDay(days[0].day)}</span>
@@ -378,15 +468,25 @@ function TrafficPanel({ data, labels }: Readonly<{ data: OverviewData; labels: L
 
 function EngagementPanel({ data, labels }: Readonly<{ data: OverviewData; labels: Labels }>) {
   const points = data.engagement;
-  const cta = points.map((point) => point.cta);
-  const submit = points.map((point) => point.submit);
-  const total = [...cta, ...submit].reduce((sum, value) => sum + value, 0);
-  const max = Math.max(1, ...cta, ...submit);
-  const rate = data.kpis.find((kpi) => kpi.key === "conversion")?.series ?? [];
-  const rateMax = Math.max(1, ...rate);
-  const rateTotal = rate.reduce((sum, value) => sum + value, 0);
-  const height = 110;
-  const rateHeight = 70;
+  const conversion = data.kpis.find((kpi) => kpi.key === "conversion")?.series ?? [];
+  const theme = getChartTheme();
+  const ctaColor = theme === "dark" ? DARK_ACCENT : LIGHT_ACCENT;
+  const submitColor = seriesColor(1);
+  const rateColor = seriesColor(2);
+  const rateMax = Math.max(1, ...conversion);
+  const rateTotal = conversion.reduce((sum, value) => sum + value, 0);
+  const total = [...points.map((p) => p.cta), ...points.map((p) => p.submit)].reduce((sum, value) => sum + value, 0);
+
+  const chartEngagement: { day: string; cta: number; submit: number; rate: number }[] = points.map((point, index) => ({
+    day: point.day,
+    cta: point.cta,
+    submit: point.submit,
+    rate: conversion[index] ?? 0,
+  }));
+
+  const ctaValues = points.map((point) => point.cta);
+  const submitValues = points.map((point) => point.submit);
+  const max = Math.max(1, ...ctaValues, ...submitValues);
 
   return (
     <Panel title={labels["overview.engagement.title"]} intro={labels["overview.engagement.intro"]}>
@@ -404,16 +504,16 @@ function EngagementPanel({ data, labels }: Readonly<{ data: OverviewData; labels
               />
               <div className="console-ov-plot" dir="ltr" aria-hidden="true">
                 <span className="console-ov-max">{n(max)}</span>
-                <svg className="console-ov-chart" viewBox={`0 0 ${VIEW_W} ${height}`} preserveAspectRatio="none">
-                  <GridLines height={height} />
-                  <polyline className="console-ov-line" data-kind="cta" points={linePoints(cta, max, height)} vectorEffect="non-scaling-stroke" />
-                  <polyline
-                    className="console-ov-line"
-                    data-kind="submit"
-                    points={linePoints(submit, max, height)}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                </svg>
+                <ResponsiveContainer width="100%" height={110}>
+                  <LineChart data={chartEngagement} margin={{ top: 3, right: 6, bottom: 0, left: 0 }}>
+                    <ChartTooltip />
+                    <Grid theme={theme} />
+                    <XAxisDay data={chartEngagement} theme={theme} />
+                    <YAxisEmpty theme={theme} />
+                    <Line type="monotone" dataKey="cta" stroke={ctaColor} strokeWidth={2} dot={false} />
+                    <Line type="monotone" dataKey="submit" stroke={submitColor} strokeWidth={2} dot={false} strokeDasharray="4 3" />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
             </>
           ) : (
@@ -422,20 +522,26 @@ function EngagementPanel({ data, labels }: Readonly<{ data: OverviewData; labels
           {rateTotal > 0 ? (
             <div className="console-ov-rate">
               <p className="console-ov-caption">
-                {labels["overview.kpi.conversion"]} · {percent(rate[rate.length - 1] ?? 0)}
+                {labels["overview.kpi.conversion"]} · {percent(conversion[conversion.length - 1] ?? 0)}
               </p>
               <div className="console-ov-plot" dir="ltr" aria-hidden="true" data-pane="rate">
                 <span className="console-ov-max">{percent(rateMax)}</span>
-                <svg className="console-ov-chart" viewBox={`0 0 ${VIEW_W} ${rateHeight}`} preserveAspectRatio="none">
-                  <line className="console-ov-base" x1={0} x2={VIEW_W} y1={rateHeight} y2={rateHeight} />
-                  <polygon className="console-ov-area" points={areaPoints(rate, rateMax, rateHeight)} />
-                  <polyline
-                    className="console-ov-line"
-                    data-kind="rate"
-                    points={linePoints(rate, rateMax, rateHeight)}
-                    vectorEffect="non-scaling-stroke"
-                  />
-                </svg>
+                <ResponsiveContainer width="100%" height={70}>
+                  <AreaChart data={chartEngagement} margin={{ top: 2, right: 6, bottom: 0, left: 0 }}>
+                    <defs>
+                      <linearGradient id="rate-gradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={rateColor} stopOpacity={0.4} />
+                        <stop offset="100%" stopColor={rateColor} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <ChartTooltip />
+                    <Grid theme={theme} />
+                    <XAxisDay data={chartEngagement} theme={theme} />
+                    <YAxisEmpty theme={theme} />
+                    <Area type="monotone" dataKey="rate" fill="url(#rate-gradient)" stroke="none" strokeWidth={0} dot={false} />
+                    <Line type="monotone" dataKey="rate" stroke={rateColor} strokeWidth={2} dot={false} />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
           ) : null}
@@ -485,18 +591,11 @@ function SourcesPanel({ data, labels }: Readonly<{ data: OverviewData; labels: L
   const segments = segmentsOf(data.sources);
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
   const basis = data.sourcesBasis === "leads" ? labels["overview.sources.leads"] : labels["overview.sources.visits"];
-
-  // Each arc starts where the one before it ended; folded, so nothing is reassigned
-  // during a render.
-  const arcs = segments.reduce<Array<Segment & { length: number; offset: number }>>((out, segment) => {
-    const length = total > 0 ? (segment.value / total) * 100 : 0;
-    const previous = out[out.length - 1];
-    const offset = previous ? previous.offset + previous.length : 0;
-    return [...out, { ...segment, length, offset }];
-  }, []);
-
-  const name = (segment: Segment): string =>
-    segment.other ? labels["overview.sources.other"] : segment.label === "" ? labels["overview.sources.direct"] : segment.label;
+  const theme = getChartTheme();
+  const chartSources: { name: string; value: number }[] = segments.map((segment) => ({
+    name: segment.label === "" ? labels["overview.sources.direct"] : segment.label,
+    value: segment.value,
+  }));
 
   return (
     <Panel title={labels["overview.sources.title"]} intro={basis}>
@@ -505,35 +604,38 @@ function SourcesPanel({ data, labels }: Readonly<{ data: OverviewData; labels: L
       ) : (
         <div className="console-ov-donut-wrap">
           <div className="console-ov-donut">
-            <svg viewBox="0 0 120 120" aria-hidden="true">
-              <circle className="console-ov-donut-track" cx={60} cy={60} r={46} />
-              {arcs.map((arc, index) => (
-                <circle
-                  key={`${arc.label}-${index}`}
-                  className="console-ov-donut-seg"
-                  data-index={index}
-                  cx={60}
-                  cy={60}
-                  r={46}
-                  pathLength={100}
-                  strokeDasharray={`${arc.length} ${100 - arc.length}`}
-                  strokeDashoffset={-arc.offset}
-                  transform="rotate(-90 60 60)"
-                />
-              ))}
-            </svg>
+            <ResponsiveContainer width="100%" height={120}>
+              <PieChart height={120}>
+                <Pie
+                  data={chartSources}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={44}
+                  outerRadius={52}
+                  paddingAngle={2}
+                  isAnimationActive={false}
+                  stroke="none"
+                >
+                  {chartSources.map((segment, index) => (
+                    <Cell key={segment.name} fill={seriesColor(index % SERIES_COLORS.length)} />
+                  ))}
+                </Pie>
+                <Tooltip content={(props) => tooltipContent(props)} cursor={{ fill: "transparent" }} />
+              </PieChart>
+            </ResponsiveContainer>
             <span className="console-ov-donut-total">
               <b>{n(total)}</b>
               <small>{labels["overview.sources.total"]}</small>
             </span>
           </div>
           <ul className="console-ov-slices">
-            {arcs.map((arc, index) => (
-              <li key={`${arc.label}-${index}`}>
-                <i data-index={index} aria-hidden="true" />
-                <span className="console-ov-slice-name">{name(arc)}</span>
-                <b>{n(arc.value)}</b>
-                <Note>{percent(total > 0 ? (arc.value / total) * 100 : 0)}</Note>
+            {chartSources.map((segment, index) => (
+              <li key={`${segment.name}-${index}`}>
+                <span className="console-ov-slice-name">{segment.name}</span>
+                <b>{n(segment.value)}</b>
+                <Note>{percent(total > 0 ? (segment.value / total) * 100 : 0)}</Note>
               </li>
             ))}
           </ul>
@@ -545,22 +647,42 @@ function SourcesPanel({ data, labels }: Readonly<{ data: OverviewData; labels: L
 
 /* --- breakdowns and status ------------------------------------------------- */
 
-function Bars({ rows, labels }: Readonly<{ rows: readonly Slice[]; labels: Labels }>) {
-  const max = Math.max(1, ...rows.map((row) => row.value));
+function Bars({ rows, labels }: Readonly<{ rows: readonly { label: string; value: number }[]; labels: Labels }>) {
+  const chartBars: { name: string; value: number }[] = rows.map((row) => ({
+    name: row.label === "" ? labels["overview.sources.direct"] : row.label,
+    value: row.value,
+  }));
   return (
-    <ul className="console-ov-bars">
-      {rows.map((row) => (
-        <li key={`${row.label}-${row.value}`}>
-          <span className="console-ov-bar-label" title={row.label === "" ? labels["overview.sources.direct"] : row.label}>
-            {row.label === "" ? labels["overview.sources.direct"] : row.label}
-          </span>
-          <span className="console-ov-bar-track" aria-hidden="true">
-            <i style={{ inlineSize: `${Math.max(2, (row.value / max) * 100)}%` }} />
-          </span>
-          <span className="console-ov-bar-value">{n(row.value)}</span>
-        </li>
-      ))}
-    </ul>
+    <ResponsiveContainer width="100%" height={84}>
+      <BarChart data={chartBars} layout="horizontal" margin={{ left: 80, right: 6, top: 0, bottom: 0 }}>
+        <XAxis type="number" dataKey="value" hide />
+        <YAxis dataKey="name" type="category" width={170} />
+        <Bar dataKey="value" radius={[0, 4, 4, 0]} maxBarSize={40} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+/** A visually hidden table carrying the same numbers as a horizontal bar chart. */
+function ChartTable({ items, labels }: Readonly<{ items: readonly { label: string; value: number }[]; labels: Labels }>) {
+  return (
+    <table className="console-sr-only">
+      <caption>{labels["overview.chart.table"]}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{labels["overview.chart.table"]}</th>
+          <th scope="col">Count</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.map((item, index) => (
+          <tr key={index}>
+            <th scope="row">{item.label}</th>
+            <td>{n(item.value)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }
 
@@ -571,7 +693,14 @@ function BreakdownPanel({
 }: Readonly<{ title: string; rows: readonly Slice[]; labels: Labels }>) {
   return (
     <Panel title={title}>
-      {rows.length === 0 ? <Empty>{labels["overview.breakdown.empty"]}</Empty> : <Bars rows={rows} labels={labels} />}
+      {rows.length === 0 ? (
+        <Empty>{labels["overview.breakdown.empty"]}</Empty>
+      ) : (
+        <>
+          <Bars rows={rows} labels={labels} />
+          <ChartTable items={rows.map((row) => ({ label: row.label, value: row.value }))} labels={labels} />
+        </>
+      )}
     </Panel>
   );
 }
@@ -579,23 +708,18 @@ function BreakdownPanel({
 function StatusPanel({ data, labels }: Readonly<{ data: OverviewData; labels: Labels }>) {
   const statuses = data.leads?.statuses ?? [];
   const total = statuses.reduce((sum, row) => sum + row.count, 0);
-  const max = Math.max(1, ...statuses.map((row) => row.count));
   return (
     <Panel title={labels["overview.funnel.title"]} intro={labels["overview.funnel.intro"]}>
       {total === 0 ? (
         <Empty>{labels["overview.funnel.empty"]}</Empty>
       ) : (
-        <ul className="console-ov-bars" data-kind="funnel">
-          {statuses.map((row) => (
-            <li key={row.status} data-status={row.status}>
-              <span className="console-ov-bar-label">{labels[STATUS_KEY[row.status]]}</span>
-              <span className="console-ov-bar-track" aria-hidden="true">
-                <i style={{ inlineSize: `${Math.max(row.count === 0 ? 0 : 2, (row.count / max) * 100)}%` }} />
-              </span>
-              <span className="console-ov-bar-value">{n(row.count)}</span>
-            </li>
-          ))}
-        </ul>
+        <>
+          <Bars rows={statuses.map((row) => ({ label: labels[STATUS_KEY[row.status]], value: row.count }))} labels={labels} />
+          <ChartTable
+            items={statuses.map((row) => ({ label: labels[STATUS_KEY[row.status]], value: row.count }))}
+            labels={labels}
+          />
+        </>
       )}
     </Panel>
   );

@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { after, NextResponse } from "next/server";
+import { bookingServiceIds, checkOfferBooking } from "@/lib/content/offer-booking";
 import { recordLead } from "@/lib/leads/store";
 import { drainOutbox, enqueueSheetsLead } from "@/lib/integrations/delivery";
 import { sanitizeAttribution } from "@/lib/tracking/attribution";
@@ -26,6 +27,16 @@ interface LeadInput {
   branch?: string;
   message?: string;
   lang?: string;
+  /**
+   * The services picked in the booking wizard, as the ids the CMS gives them.
+   *
+   * `service` above is the text the clinic reads; this is what the offer's link is
+   * checked against, so an offer cannot be booked through a service somebody typed into
+   * the URL.
+   */
+  serviceIds?: string[];
+  /** The offer the booking started from, or absent for a booking nobody offered. */
+  offerSlug?: string;
   /** `document.referrer` from the page that held the form; empty on a direct visit. */
   referrer?: string;
   /** The first-party attribution the page had stored, read by `leadAttribution()`. */
@@ -132,7 +143,12 @@ function sourceOf(input: LeadInput): string {
  * legacy `utm` JSON is kept filled from the same values so the console row, the Sheets
  * row and the new columns cannot disagree.
  */
-async function keepLead(input: LeadInput, ip: string, headers: Headers): Promise<void> {
+async function keepLead(
+  input: LeadInput,
+  ip: string,
+  headers: Headers,
+  offerState: string | null,
+): Promise<void> {
   const context = pageContext(headers.get('referer'));
   const ctx = readTrackContext(headers);
   const touch = sanitizeAttribution(input.attribution);
@@ -157,6 +173,15 @@ async function keepLead(input: LeadInput, ip: string, headers: Headers): Promise
   for (const name of ['date', 'service', 'offer', 'subject', 'branch'] as const) {
     if (input[name]) fields[name] = input[name];
   }
+  // The ids behind the service names, and the server's own verdict on the offer the
+  // booking claims to come through. `offerState` is recorded rather than enforced: see
+  // `offer-booking.ts` for why a lead is never refused over a linked-services column.
+  if (input.offerSlug) {
+    fields.offerSlug = input.offerSlug;
+    fields.offerState = offerState ?? 'unchecked';
+  }
+  const serviceIds = bookingServiceIds(input.serviceIds);
+  if (serviceIds.length > 0) fields.serviceIds = serviceIds;
   try {
     const saved = await recordLead({
       source: sourceOf(input),
@@ -250,10 +275,18 @@ export async function POST(req: Request) {
 
   const message = buildMessage({ ...input, name, phone });
 
+  // Ask the database what the offer actually covers before the row is written, so the
+  // clinic sees the same answer the console would. It is a question, not a gate: the
+  // visitor is never told "this offer does not cover that service" after they pressed
+  // submit, because the wizard already refused that combination and a second opinion
+  // that arrives too late is a booking lost to a race.
+  const slug = typeof input.offerSlug === 'string' ? input.offerSlug.trim() : '';
+  const offerState = slug ? await checkOfferBooking(slug, bookingServiceIds(input.serviceIds)) : null;
+
   // Every submission lands in the leads table before the visitor is answered, so the
   // console page is the record of what the site actually received. WhatsApp and CF7
   // stay the delivery channels; this is the copy the clinic can work from.
-  await keepLead({ ...input, name, phone }, ip, req.headers);
+  await keepLead({ ...input, name, phone }, ip, req.headers, offerState);
   scheduleDrain();
 
   // Default mode: hand the user a prefilled WhatsApp deep link (no email sent).

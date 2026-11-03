@@ -37,16 +37,41 @@ export interface Bi {
 }
 
 export interface ChildField {
-  type: 'href' | 'text';
+  type: 'href' | 'text' | 'image' | 'select';
   stem: string;
   label: Bi;
   required?: boolean;
+  /** a text cell that holds a paragraph, not a line — an inline answer, a benefit's body */
+  multiline?: boolean;
+  options?: readonly { value: string; label: Bi }[];
+}
+
+/**
+ * One section a long page draws, as the editor orders it.
+ *
+ * The keys are code, not copy: the public page renders `hero`, `overview`, … and a row that
+ * named a key no component draws would be a section the site silently loses. Parsing refuses
+ * an unknown key and appends any section the row has never mentioned, so a record written
+ * before a section existed still shows the whole page.
+ */
+export interface SectionOption {
+  key: string;
+  label: Bi;
+}
+
+/** A heading the editor draws above a run of fields. */
+export interface FieldGroup {
+  key: string;
+  label: Bi;
+  hint?: Bi;
 }
 
 interface FieldBase {
   stem: string;
   label: Bi;
   hint?: Bi;
+  /** the editor's group; consecutive fields with the same key share one heading */
+  group?: FieldGroup;
 }
 
 /**
@@ -74,7 +99,8 @@ export type ListField =
    * because an article's slug is what a person can recognise and its WordPress id is not.
    */
   | (FieldBase & { type: 'story'; required?: boolean })
-  | (FieldBase & { type: 'children'; row: readonly ChildField[] });
+  | (FieldBase & { type: 'children'; row: readonly ChildField[] })
+  | (FieldBase & { type: 'sections'; sections: readonly SectionOption[] });
 
 export interface ListSchema {
   key: string;
@@ -95,13 +121,57 @@ function optionsOf(values: readonly string[]): { value: string; label: Bi }[] {
   return values.map((value) => ({ value, label: CATEGORY_LABELS[value] ?? { ar: value, en: value } }));
 }
 
+/**
+ * The sections a service page draws, in the order a new row starts with.
+ *
+ * `hero` is deliberately absent: the name, the photograph and the booking button are the
+ * page's identity, and a page with no heading is not a layout a checkbox should be able to
+ * produce. Everything else may be hidden or moved.
+ */
+export const SERVICE_SECTIONS = [
+  { key: 'overview', label: { ar: 'نظرة عامة', en: 'Overview' } },
+  { key: 'how', label: { ar: 'كيف تعمل الجلسة', en: 'How it works' } },
+  { key: 'prep', label: { ar: 'التحضير والعناية', en: 'Preparation & aftercare' } },
+  { key: 'safety', label: { ar: 'السلامة', en: 'Safety' } },
+  { key: 'pricing', label: { ar: 'السعر والعروض', en: 'Pricing & offers' } },
+  { key: 'proof', label: { ar: 'النتائج', en: 'Proof & results' } },
+  { key: 'gallery', label: { ar: 'الصور', en: 'Gallery' } },
+  { key: 'people', label: { ar: 'الفريق والفروع', en: 'Specialists & branches' } },
+  { key: 'faq', label: { ar: 'الأسئلة الشائعة', en: 'FAQ' } },
+  { key: 'related', label: { ar: 'خدمات ومقالات ذات صلة', en: 'Related services & articles' } },
+] as const satisfies readonly SectionOption[];
+
+/** The hideable sections of a service page, in the order a new row starts with. */
+export type ServiceSectionKey = (typeof SERVICE_SECTIONS)[number]['key'];
+
+const G = {
+  identity: { key: 'identity', label: { ar: 'التعريف', en: 'Identity' } },
+  hero: { key: 'hero', label: { ar: 'الواجهة', en: 'Hero' } },
+  overview: { key: 'overview', label: { ar: 'نظرة عامة', en: 'Overview' } },
+  how: { key: 'how', label: { ar: 'كيف تعمل الجلسة', en: 'How it works' } },
+  prep: { key: 'prep', label: { ar: 'التحضير والعناية', en: 'Preparation & aftercare' } },
+  safety: { key: 'safety', label: { ar: 'السلامة', en: 'Safety' } },
+  pricing: { key: 'pricing', label: { ar: 'السعر والعروض', en: 'Pricing & offers' } },
+  proof: { key: 'proof', label: { ar: 'النتائج', en: 'Proof & results' } },
+  gallery: { key: 'gallery', label: { ar: 'الصور', en: 'Gallery' } },
+  people: { key: 'people', label: { ar: 'الفريق والفروع', en: 'Specialists & branches' } },
+  faq: { key: 'faq', label: { ar: 'الأسئلة الشائعة', en: 'FAQ' } },
+  related: { key: 'related', label: { ar: 'محتوى ذو صلة', en: 'Related content' } },
+  seo: { key: 'seo', label: { ar: 'تحسين محركات البحث', en: 'SEO' } },
+  sections: { key: 'sections', label: { ar: 'ترتيب الأقسام وإظهارها', en: 'Section order & visibility' } },
+} as const;
+
+const SERVICE_ICONS = optionsOf(['sparkles', 'shield', 'droplet', 'sun', 'heart', 'clock']);
+
 const SERVICES: ListSchema = {
   key: 'services',
   title: 'name',
   fields: [
+    // --- identity ---------------------------------------------------------------
     {
       type: 'text',
       stem: 'name',
+      group: G.identity,
       label: { ar: 'اسم الخدمة', en: 'Service name' },
       hint: { ar: 'يظهر على بطاقة الخدمة وفي صفحتها.', en: 'Shown on the service card and its page.' },
       required: true,
@@ -110,34 +180,242 @@ const SERVICES: ListSchema = {
     {
       type: 'text',
       stem: 'intro',
+      group: G.identity,
       label: { ar: 'جملة قصيرة', en: 'Short description' },
-      hint: { ar: 'سطر واحد يشرح الخدمة تحت الاسم.', en: 'One line under the name that explains the service.' },
+      hint: { ar: 'سطر واحد يشرح الخدمة تحت الاسم، ويُستخدم أيضًا في البطاقات والبحث.', en: 'One line under the name that explains the service; also the card teaser and the search fallback.' },
       multiline: true,
       max: 400,
     },
     {
-      type: 'text',
-      stem: 'description',
-      label: { ar: 'الوصف الكامل', en: 'Full description' },
-      hint: { ar: 'عدة جمل تظهر في صفحة الخدمة.', en: 'A few sentences shown on the service page.' },
-      multiline: true,
-      max: 4000,
+      type: 'select',
+      stem: 'category',
+      group: G.identity,
+      label: { ar: 'التصنيف', en: 'Category' },
+      hint: { ar: 'يُستخدم لتصفية صفحة الخدمات ولاقتراح الخدمات ذات الصلة.', en: 'Filters the services page and seeds related-service suggestions.' },
+      options: optionsOf(['laser', 'injectables', 'skincare', 'anti-aging', 'general']),
     },
-    { type: 'list', stem: 'benefits', label: { ar: 'الفوائد', en: 'Benefits' }, hint: { ar: 'نقطة لكل فائدة، بالعربية والإنجليزية.', en: 'One bullet per benefit, in Arabic and English.' } },
-    { type: 'list', stem: 'steps', label: { ar: 'خطوات الجلسة', en: 'Session steps' }, hint: { ar: 'ما يحدث في الجلسة بالترتيب.', en: 'What happens during the session, in order.' } },
-    { type: 'list', stem: 'aftercare', label: { ar: 'العناية بعد الجلسة', en: 'Aftercare' }, hint: { ar: 'التعليمات التي تُعطى للمريضة بعد الجلسة.', en: 'Instructions the patient is given afterwards.' } },
-    { type: 'text', stem: 'ideal', label: { ar: 'مناسب لمن', en: 'Best for' }, hint: { ar: 'نوع الحالات التي تستفيد من الخدمة.', en: 'The kind of cases this service suits.' }, multiline: true, max: 600 },
-    { type: 'text', stem: 'duration', label: { ar: 'مدة الجلسة', en: 'Session time' }, hint: { ar: 'مثال: ٣٠–٤٥ دقيقة.', en: 'For example: 30–45 minutes.' }, max: 120 },
-    { type: 'text', stem: 'sessions', label: { ar: 'عدد الجلسات', en: 'Sessions advised' }, hint: { ar: 'مثال: ٤–٦ جلسات.', en: 'For example: 4–6 sessions.' }, max: 120 },
-    { type: 'number', stem: 'price', label: { ar: 'السعر يبدأ من', en: 'Starting price' }, hint: { ar: 'اتركيه فارغًا إذا لم تريد إظهار سعر.', en: 'Leave empty to show no price.' } },
-    { type: 'image', stem: 'image', label: { ar: 'الصورة', en: 'Image' }, hint: { ar: 'ارفعي صورة من جهازك.', en: 'Upload a picture from your device.' } },
-    { type: 'text', stem: 'alt', label: { ar: 'وصف الصورة', en: 'Image description' }, hint: { ar: 'جملة تقرأها قارئات الشاشة لمن لا يرى الصورة.', en: 'Read aloud to people who cannot see the picture.' }, max: 300 },
-    { type: 'text', stem: 'body', label: { ar: 'تفاصيل إضافية', en: 'Extra details' }, hint: { ar: 'اختياري: نص طويل يظهر أسفل صفحة الخدمة.', en: 'Optional: longer text below the service page.' }, multiline: true, html: true },
-    { type: 'flag', stem: 'featured', label: { ar: 'خدمة مميزة', en: 'Featured service' }, hint: { ar: 'تظهر ضمن الخدمات البارزة في الرئيسية.', en: 'Show among the highlighted services on the home page.' } },
-    { type: 'select', stem: 'category', label: { ar: 'التصنيف', en: 'Category' }, options: optionsOf(['laser', 'injectables', 'skincare', 'anti-aging']) },
+    {
+      type: 'flag',
+      stem: 'featured',
+      group: G.identity,
+      label: { ar: 'خدمة مميزة', en: 'Featured service' },
+      hint: { ar: 'تظهر ضمن الخدمات البارزة في الرئيسية.', en: 'Show among the highlighted services on the home page.' },
+    },
     // A WordPress service is a section of one page, so a card links to `/services` unless
     // its author writes an address of its own. One field, because the site reads one.
-    { type: 'href', stem: 'href', label: { ar: 'رابط الخدمة (اختياري)', en: 'Service link (optional)' }, hint: { ar: 'مسار داخل الموقع مثل /peeling. اتركه فارغًا ليذهب إلى صفحة الخدمات.', en: 'A path inside the site, such as /peeling. Leave it empty to point at the services page.' } },
+    {
+      type: 'href',
+      stem: 'href',
+      group: G.identity,
+      label: { ar: 'رابط الخدمة (اختياري)', en: 'Service link (optional)' },
+      hint: { ar: 'مسار داخل الموقع مثل /peeling. اتركه فارغًا ليذهب إلى صفحة الخدمة العادية.', en: 'A path inside the site, such as /peeling. Leave it empty to open this service’s own page.' },
+    },
+
+    // --- hero -------------------------------------------------------------------
+    {
+      type: 'image',
+      stem: 'image',
+      group: G.hero,
+      label: { ar: 'الصورة الرئيسية', en: 'Hero image' },
+      hint: { ar: 'ارفعي صورة من جهازك. تُستخدم أيضًا على بطاقة الخدمة.', en: 'Uploaded from your device; also the card picture.' },
+    },
+    {
+      type: 'text',
+      stem: 'alt',
+      group: G.hero,
+      label: { ar: 'وصف الصورة', en: 'Hero image description' },
+      hint: { ar: 'جملة تقرأها قارئات الشاشة لمن لا يرى الصورة.', en: 'Read aloud to people who cannot see the picture.' },
+      max: 300,
+    },
+    {
+      type: 'text',
+      stem: 'heroHeadline',
+      group: G.hero,
+      label: { ar: 'عنوان الواجهة', en: 'Hero headline' },
+      hint: { ar: 'اختياري: إن تركته فارغًا يظهر اسم الخدمة.', en: 'Optional: leave empty to use the service name.' },
+      max: 200,
+    },
+    {
+      type: 'text',
+      stem: 'heroSubheadline',
+      group: G.hero,
+      label: { ar: 'سطر تحت العنوان', en: 'Hero subheadline' },
+      hint: { ar: 'اختياري: إن تركته فارغًا تظهر الجملة القصيرة.', en: 'Optional: leave empty to use the short description.' },
+      multiline: true,
+      max: 400,
+    },
+    {
+      type: 'select',
+      stem: 'ctaPrimary',
+      group: G.hero,
+      label: { ar: 'الزر الرئيسي', en: 'Primary action' },
+      hint: { ar: 'أرقام الهاتف والواتساب تأتي من الإعدادات، لا تُكتب هنا.', en: 'Phone and WhatsApp numbers come from Settings; they are never typed here.' },
+      options: [
+        { value: 'booking', label: { ar: 'احجزي موعدًا', en: 'Book an appointment' } },
+        { value: 'whatsapp', label: { ar: 'واتساب', en: 'WhatsApp' } },
+        { value: 'call', label: { ar: 'اتصال', en: 'Call' } },
+        { value: 'none', label: { ar: 'بلا زر', en: 'No button' } },
+      ],
+    },
+    {
+      type: 'select',
+      stem: 'ctaSecondary',
+      group: G.hero,
+      label: { ar: 'الزر الثاني', en: 'Secondary action' },
+      hint: { ar: 'اختياري: يظهر بجانب الزر الرئيسي.', en: 'Optional: shown beside the primary action.' },
+      options: [
+        { value: 'none', label: { ar: 'بلا زر', en: 'No button' } },
+        { value: 'whatsapp', label: { ar: 'واتساب', en: 'WhatsApp' } },
+        { value: 'call', label: { ar: 'اتصال', en: 'Call' } },
+        { value: 'booking', label: { ar: 'احجزي موعدًا', en: 'Book an appointment' } },
+      ],
+    },
+
+    // --- overview ---------------------------------------------------------------
+    {
+      type: 'text',
+      stem: 'description',
+      group: G.overview,
+      label: { ar: 'الوصف الكامل', en: 'Full description' },
+      hint: { ar: 'عدة جمل تظهر في صفحة الخدمة. يمكن تنسيقها بالعناوين والقوائم.', en: 'A few sentences on the service page; headings and lists are allowed.' },
+      multiline: true,
+      html: true,
+      max: 8000,
+    },
+    {
+      type: 'children',
+      stem: 'benefits',
+      group: G.overview,
+      label: { ar: 'الفوائد', en: 'Benefits' },
+      hint: { ar: 'فائدة لكل صف: عنوان ونص، وأيقونة اختيارية. الصفوف القديمة التي تحمل سطرًا واحدًا تُقرأ كما هي.', en: 'One benefit per row: a title, a sentence, and an optional icon. Older one-line rows still read as they did.' },
+      row: [
+        { type: 'text', stem: 'text', label: { ar: 'النص', en: 'Text' }, multiline: true, required: true },
+        { type: 'text', stem: 'title', label: { ar: 'العنوان', en: 'Title' } },
+        { type: 'select', stem: 'icon', label: { ar: 'الأيقونة', en: 'Icon' }, options: SERVICE_ICONS },
+      ],
+    },
+    {
+      type: 'text',
+      stem: 'ideal',
+      group: G.overview,
+      label: { ar: 'مناسب لمن', en: 'Best for' },
+      hint: { ar: 'نوع الحالات التي تستفيد من الخدمة.', en: 'The kind of cases this service suits.' },
+      multiline: true,
+      max: 600,
+    },
+    {
+      type: 'list',
+      stem: 'notFor',
+      group: G.overview,
+      label: { ar: 'غير مناسب لمن', en: 'Who it is not for' },
+      hint: { ar: 'نقطة لكل حالة لا تُنصح بالخدمة لها. لا تُكتب وعود طبية هنا.', en: 'One point per case this service is not advised for. No medical promises here.' },
+    },
+
+    // --- how it works -----------------------------------------------------------
+    {
+      type: 'children',
+      stem: 'steps',
+      group: G.how,
+      label: { ar: 'خطوات الجلسة', en: 'Session steps' },
+      hint: { ar: 'ما يحدث في الجلسة بالترتيب، مع صورة اختيارية لكل خطوة.', en: 'What happens during the session, in order, with an optional picture per step.' },
+      row: [
+        { type: 'text', stem: 'text', label: { ar: 'النص', en: 'Text' }, multiline: true, required: true },
+        { type: 'text', stem: 'title', label: { ar: 'العنوان', en: 'Title' } },
+        { type: 'image', stem: 'image', label: { ar: 'الصورة', en: 'Picture' } },
+      ],
+    },
+    { type: 'text', stem: 'duration', group: G.how, label: { ar: 'مدة الجلسة', en: 'Session time' }, hint: { ar: 'مثال: ٣٠–٤٥ دقيقة.', en: 'For example: 30–45 minutes.' }, max: 120 },
+    { type: 'text', stem: 'sessions', group: G.how, label: { ar: 'عدد الجلسات', en: 'Sessions advised' }, hint: { ar: 'مثال: ٤–٦ جلسات.', en: 'For example: 4–6 sessions.' }, max: 120 },
+    { type: 'text', stem: 'frequency', group: G.how, label: { ar: 'المسافة بين الجلسات', en: 'Time between sessions' }, hint: { ar: 'مثال: كل ٤ أسابيع.', en: 'For example: every 4 weeks.' }, max: 160 },
+    { type: 'text', stem: 'timeline', group: G.how, label: { ar: 'متى تظهر النتيجة', en: 'When results appear' }, hint: { ar: 'مثال: تدريجيًا خلال ٤–٦ أسابيع. اكتب فقط ما تعرفه العيادة.', en: 'For example: gradually over 4–6 weeks. State only what the clinic knows.' }, max: 200 },
+    { type: 'text', stem: 'downtime', group: G.how, label: { ar: 'فترة التعافي', en: 'Downtime' }, hint: { ar: 'مثال: بضع ساعات من الاحمرار.', en: 'For example: a few hours of redness.' }, max: 200 },
+    { type: 'text', stem: 'anesthesia', group: G.how, label: { ar: 'التخدير', en: 'Anesthesia' }, hint: { ar: 'مثال: كريم مخدر موضعي.', en: 'For example: a topical numbing cream.' }, max: 200 },
+    { type: 'text', stem: 'technology', group: G.how, label: { ar: 'الجهاز أو التقنية', en: 'Technology or device' }, hint: { ar: 'اسم الجهاز كما تكتبه العيادة.', en: 'The device name as the clinic writes it.' }, max: 200 },
+
+    // --- preparation and aftercare ----------------------------------------------
+    { type: 'list', stem: 'prep', group: G.prep, label: { ar: 'قبل الجلسة', en: 'Before the session' }, hint: { ar: 'نقطة لكل تعليمات ما قبل الجلسة.', en: 'One point per instruction before the session.' } },
+    { type: 'list', stem: 'aftercare', group: G.prep, label: { ar: 'العناية بعد الجلسة', en: 'Aftercare' }, hint: { ar: 'التعليمات التي تُعطى للمريضة بعد الجلسة.', en: 'Instructions the patient is given afterwards.' } },
+
+    // --- safety -----------------------------------------------------------------
+    { type: 'list', stem: 'contraindications', group: G.safety, label: { ar: 'موانع الاستخدام', en: 'Contraindications' }, hint: { ar: 'حالات طبية تمنع الجلسة. اتركيها فارغة إن لم تكن مكتوبة من العيادة.', en: 'Medical conditions that rule the session out. Leave empty when the clinic has not stated them.' } },
+    { type: 'list', stem: 'sideEffects', group: G.safety, label: { ar: 'الآثار الجانبية', en: 'Side effects' }, hint: { ar: 'ما قد يحدث بعد الجلسة، كما تكتبه العيادة. لا تُضاف وعود.', en: 'What may follow the session, as the clinic states it. Nothing is added.' } },
+    {
+      type: 'flag',
+      stem: 'showDisclaimer',
+      group: G.safety,
+      label: { ar: 'إظهار الإخلاء الطبي', en: 'Show the medical disclaimer' },
+      hint: { ar: 'يظهر النص المشترك من الإعدادات أسفل هذا القسم. لن يظهر شيء قبل أن يُكتب النص.', en: 'Shows the shared wording from Settings under this section. Nothing renders until that wording exists.' },
+    },
+
+    // --- pricing and offers -----------------------------------------------------
+    { type: 'number', stem: 'price', group: G.pricing, label: { ar: 'السعر يبدأ من', en: 'Starting price' }, hint: { ar: 'اتركيه فارغًا إذا لم تريد إظهار سعر.', en: 'Leave empty to show no price.' } },
+    { type: 'number', stem: 'priceMax', group: G.pricing, label: { ar: 'السعر حتى', en: 'Price up to' }, hint: { ar: 'اختياري: لإظهار نطاق سعر. اتركيه فارغًا لسعر واحد.', en: 'Optional: makes a price range. Leave empty for a single price.' } },
+    { type: 'text', stem: 'currency', group: G.pricing, mono: true, label: { ar: 'العملة', en: 'Currency' }, hint: { ar: 'مثال: EGP. اتركيه فارغًا ليُقرأ من إعدادات الموقع.', en: 'For example: EGP. Leave empty to read the site default.' }, max: 8 },
+    { type: 'text', stem: 'priceNote', group: G.pricing, label: { ar: 'ملاحظة السعر', en: 'Pricing note' }, hint: { ar: 'سطر يوضح ما يشمله السعر.', en: 'One line on what the price covers.' }, multiline: true, max: 400 },
+    { type: 'flag', stem: 'priceOnRequest', group: G.pricing, label: { ar: 'السعر عند الطلب', en: 'Price on request' }, hint: { ar: 'يخفي الأرقام ويطلب من الزائرة السؤال.', en: 'Hides the numbers and invites the visitor to ask.' } },
+    { type: 'refs', stem: 'offers', source: 'offers', group: G.pricing, label: { ar: 'عروض تنطبق على هذه الخدمة', en: 'Offers that apply to this service' }, hint: { ar: 'تُقرأ من العروض المنشورة، ولا تُنسخ هنا.', en: 'Read from published offers; nothing is copied here.' } },
+
+    // --- proof ------------------------------------------------------------------
+    { type: 'refs', stem: 'results', source: 'results', group: G.proof, label: { ar: 'حالات قبل/بعد', en: 'Before/after cases' }, hint: { ar: 'لا تظهر إلا الحالات التي لها صورتان ومفعّلة.', en: 'Only enabled cases with both pictures appear.' } },
+    { type: 'href', stem: 'videoUrl', group: G.proof, label: { ar: 'رابط فيديو (اختياري)', en: 'Video link (optional)' }, hint: { ar: 'رابط مباشر لملف فيديو تستضيفه العيادة.', en: 'A direct link to a video file the clinic hosts.' } },
+    { type: 'image', stem: 'videoPoster', group: G.proof, label: { ar: 'صورة غلاف الفيديو', en: 'Video poster' }, hint: { ar: 'تظهر قبل التشغيل.', en: 'Shown before the video plays.' } },
+
+    // --- gallery ----------------------------------------------------------------
+    {
+      type: 'children',
+      stem: 'gallery',
+      group: G.gallery,
+      label: { ar: 'معرض الصور', en: 'Gallery' },
+      hint: { ar: 'صورة لكل صف، مع وصف لها ونص يظهر تحتها.', en: 'One picture per row, with its description and a caption below.' },
+      row: [
+        { type: 'image', stem: 'image', label: { ar: 'الصورة', en: 'Picture' }, required: true },
+        { type: 'text', stem: 'alt', label: { ar: 'وصف الصورة', en: 'Picture description' } },
+        { type: 'text', stem: 'caption', label: { ar: 'نص تحت الصورة', en: 'Caption' } },
+      ],
+    },
+
+    // --- people and places ------------------------------------------------------
+    { type: 'refs', stem: 'specialists', source: 'specialists', group: G.people, label: { ar: 'الأطباء', en: 'Specialists' }, hint: { ar: 'تظهر بطاقاتهم وهم مفعّلون فقط.', en: 'Their cards appear; only enabled specialists do.' } },
+    { type: 'refs', stem: 'branches', source: 'branches', group: G.people, label: { ar: 'الفروع', en: 'Branches' }, hint: { ar: 'تظهر الفروع المفعّلة فقط.', en: 'Only enabled branches appear.' } },
+
+    // --- FAQ --------------------------------------------------------------------
+    { type: 'refs', stem: 'faq', source: 'faq', group: G.faq, label: { ar: 'أسئلة من قائمة الأسئلة', en: 'Questions from the FAQ list' }, hint: { ar: 'تُقرأ من الأسئلة المنشورة، ولا تُنسخ.', en: 'Read from the published questions; nothing is copied.' } },
+    {
+      type: 'children',
+      stem: 'faqInline',
+      group: G.faq,
+      label: { ar: 'أسئلة خاصة بهذه الخدمة', en: 'Questions just for this service' },
+      hint: { ar: 'سؤال وجواب لكل صف. تُضاف إلى أسئلة القائمة أعلاه.', en: 'One question and answer per row, added after the list questions.' },
+      row: [
+        { type: 'text', stem: 'question', label: { ar: 'السؤال', en: 'Question' }, required: true },
+        { type: 'text', stem: 'answer', label: { ar: 'الجواب', en: 'Answer' }, multiline: true, required: true },
+      ],
+    },
+
+    // --- related content --------------------------------------------------------
+    { type: 'refs', stem: 'relatedServices', source: 'services', group: G.related, label: { ar: 'خدمات ذات صلة', en: 'Related services' }, hint: { ar: 'اختياري: إن تركتِه فارغًا تُقترح خدمات من التصنيف نفسه.', en: 'Optional: when empty, services in the same category are suggested.' } },
+    { type: 'refs', stem: 'relatedArticles', source: 'articles', group: G.related, label: { ar: 'مقالات ذات صلة', en: 'Related articles' }, hint: { ar: 'اختياري: مقالات منشورة فقط.', en: 'Optional; published articles only.' } },
+
+    // --- extra body (kept from the old model) ------------------------------------
+    { type: 'text', stem: 'body', group: G.related, label: { ar: 'تفاصيل إضافية', en: 'Extra details' }, hint: { ar: 'اختياري: نص طويل يظهر أسفل صفحة الخدمة.', en: 'Optional: longer text below the service page.' }, multiline: true, html: true },
+
+    // --- SEO --------------------------------------------------------------------
+    { type: 'text', stem: 'seoTitle', group: G.seo, label: { ar: 'عنوان الصفحة لمحركات البحث', en: 'Search title' }, hint: { ar: 'اختياري: إن تركته فارغًا يُبنى من اسم الخدمة.', en: 'Optional: built from the service name when empty.' }, max: 120 },
+    { type: 'text', stem: 'seoDescription', group: G.seo, label: { ar: 'وصف الصفحة لمحركات البحث', en: 'Search description' }, hint: { ar: 'اختياري: جملة تظهر تحت العنوان في نتائج البحث.', en: 'Optional: the sentence under the title in search results.' }, multiline: true, max: 320 },
+    { type: 'text', stem: 'focusKeyword', group: G.seo, mono: true, label: { ar: 'الكلمة المفتاحية', en: 'Focus keyword' }, hint: { ar: 'كلمة واحدة تُقاس عليها درجة تحسين الصفحة في مركز SEO.', en: 'One phrase the SEO center scores this page against.' }, max: 80 },
+    { type: 'image', stem: 'ogImage', group: G.seo, label: { ar: 'صورة المشاركة', en: 'Social sharing image' }, hint: { ar: 'اختياري: تظهر عند مشاركة الرابط.', en: 'Optional: shown when the link is shared.' } },
+    { type: 'href', stem: 'canonical', group: G.seo, label: { ar: 'الرابط الأساسي', en: 'Canonical path' }, hint: { ar: 'اتركيه فارغًا: المسار الصحيح يُبنى تلقائيًا.', en: 'Leave empty: the correct path is built automatically.' } },
+    { type: 'flag', stem: 'noindex', group: G.seo, label: { ar: 'منع الفهرسة', en: 'Hide from search engines' }, hint: { ar: 'يجعل الصفحة غير مرئية في نتائج البحث، مع بقائها متاحة لمن يعرف الرابط.', en: 'Keeps the page out of search results while it stays reachable by link.' } },
+
+    // --- section controls -------------------------------------------------------
+    {
+      type: 'sections',
+      stem: 'sections',
+      group: G.sections,
+      label: { ar: 'أقسام الصفحة', en: 'Page sections' },
+      hint: { ar: 'رتّبي الأقسام وأظهريها أو أخفيها. القسم الفارغ لا يظهر على الموقع مهما كان هذا الخيار.', en: 'Order the sections and show or hide them. An empty section never renders, whatever this says.' },
+      sections: SERVICE_SECTIONS,
+    },
   ],
 };
 
@@ -331,7 +609,33 @@ const RESULTS: ListSchema = {
   ],
 };
 
-const SCHEMAS: readonly ListSchema[] = [SERVICES, BRANCHES, SPECIALISTS, FAQ, NAV, RESULTS];
+const ABOUT: ListSchema = {
+  key: 'about',
+  title: 'title',
+  fields: [
+    { type: 'text', stem: 'title', label: { ar: 'عنوان الصفحة', en: 'Page title' }, hint: { ar: 'العنوان الرئيسي للصفحة، يظهر في المتصفح وعناوين الروابط.', en: 'The main heading of the page, shown in the browser and link titles.' }, required: true, max: 300 },
+    { type: 'text', stem: 'lead', label: { ar: 'مقدمة الصفحة', en: 'Page lead' }, hint: { ar: 'سطران يعرّفان العيادة باختصار، يعرضان أسفل العنوان.', en: 'Two short lines introducing the clinic, shown below the title.' }, multiline: true, max: 800 },
+    {
+      type: 'sections',
+      stem: 'sections',
+      label: { ar: 'الأقسام', en: 'Sections' },
+      hint: { ar: 'رتّبي الأقسام وأظهريها أو أخفيها. القسم الفارغ لا يظهر على الموقع مهما كان هذا الخيار.', en: 'Order the sections and show or hide them. An empty section never renders, whatever this says.' },
+      sections: [
+        { key: 'heading', label: { ar: 'عنوان القسم', en: 'Section heading' } },
+        { key: 'paragraphs', label: { ar: 'الفقرات', en: 'Paragraphs' } },
+        { key: 'image', label: { ar: 'الصورة', en: 'Image' } },
+      ],
+    },
+    {
+      type: 'text',
+      stem: 'showOnHome',
+      label: { ar: 'عرض على الصفحة الرئيسية', en: 'Show on homepage' },
+      hint: { ar: 'اختياري: عرض وصف مختصر للعيادة في قسم الترحيب بالصفحة الرئيسية.', en: 'Optional: show a short clinic description in the homepage welcome section.' },
+    },
+  ],
+};
+
+const SCHEMAS: readonly ListSchema[] = [SERVICES, BRANCHES, SPECIALISTS, FAQ, NAV, RESULTS, ABOUT];
 
 const BY_KEY = new Map<string, ListSchema>(SCHEMAS.map((schema) => [schema.key, schema]));
 
@@ -341,6 +645,18 @@ export function listSchemaOf(listKey: string | null | undefined): ListSchema | n
 
 export function listSchemas(): readonly ListSchema[] {
   return SCHEMAS;
+}
+
+/**
+ * The words the console writes beside one field, asked for by its stem.
+ *
+ * A public page prints some of these labels too — «قبل الجلسة» over the preparation list, the
+ * fact names on a service page — and reading them from here is what keeps the two sets of words
+ * from drifting apart when an author's label is reworded. Null when the list has no such field:
+ * the caller then prints its own heading rather than a raw stem.
+ */
+export function fieldLabelOf(listKey: string, stem: string): Bi | null {
+  return listSchemaOf(listKey)?.fields.find((field) => field.stem === stem)?.label ?? null;
 }
 
 /** The root names the editor draws an error under. */
@@ -475,13 +791,38 @@ function readBiList(doc: Record<string, unknown>, stem: string): { value: { ar: 
 }
 
 function readChildren(doc: Record<string, unknown>, stem: string, row: readonly ChildField[]): { value: Record<string, unknown>[]; present: boolean; bad: boolean; issues: ListDocIssue[] } {
-  const raw = doc[stem];
+  const bare = doc[stem];
+  const legacyAr = doc[`${stem}_ar`];
+  const legacyEn = doc[`${stem}_en`];
+  // The import stored a repeatable bilingual value as two parallel string arrays under
+  // `stem_ar`/`stem_en` — a benefit, a step. Those rows predate the multi-cell editor, so
+  // each pair is folded into the row's first text cell here: the list keeps every line it
+  // had, and gains the newer cells the next time somebody saves it.
+  let raw: unknown = bare;
+  if (bare === undefined && (legacyAr !== undefined || legacyEn !== undefined)) {
+    const firstText = row.find((field) => field.type === 'text');
+    if (!firstText) return { value: [], present: true, bad: true, issues: [] };
+    const ar = legacyAr === undefined ? [] : stringList(legacyAr);
+    const en = legacyEn === undefined ? [] : stringList(legacyEn);
+    if (ar === null || en === null) return { value: [], present: true, bad: true, issues: [] };
+    const size = Math.max(ar.length, en.length);
+    raw = Array.from({ length: size }, (_, index) => ({ [firstText.stem]: { ar: ar[index] ?? '', en: en[index] ?? '' } }));
+  }
   if (raw === undefined) return { value: [], present: false, bad: false, issues: [] };
   if (!Array.isArray(raw)) return { value: [], present: true, bad: true, issues: [] };
   const issues: ListDocIssue[] = [];
   const value: Record<string, unknown>[] = [];
+  const firstText = row.find((field) => field.type === 'text');
   const known = new Set(row.flatMap((field) => (field.type === 'text' ? [field.stem, `${field.stem}_ar`, `${field.stem}_en`] : [field.stem])));
   raw.forEach((entry, index) => {
+    // A one-line row written before this row had more than one cell: the string *is* its text.
+    if (typeof entry === 'string') {
+      if (!firstText) {
+        issues.push({ path: `${stem}.${index}`, message: 'expected an object or an array' });
+        return;
+      }
+      entry = { [firstText.stem]: entry };
+    }
     if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
       issues.push({ path: `${stem}.${index}`, message: 'expected an object or an array' });
       return;
@@ -492,10 +833,15 @@ function readChildren(doc: Record<string, unknown>, stem: string, row: readonly 
     }
     const written: Record<string, unknown> = {};
     for (const field of row) {
-      if (field.type === 'href') {
-        const href = textOf(record[field.stem]);
-        if (field.required && !href) issues.push({ path: `${stem}.${index}.${field.stem}`, message: 'required' });
-        written[field.stem] = href;
+      if (field.type !== 'text') {
+        const cell = record[field.stem];
+        if (cell !== undefined && typeof cell !== 'string') issues.push({ path: `${stem}.${index}.${field.stem}`, message: 'expected text' });
+        const value = textOf(cell);
+        if (field.type === 'select' && value && !(field.options ?? []).some((option) => option.value === value)) {
+          issues.push({ path: `${stem}.${index}.${field.stem}`, message: 'unknown option' });
+        }
+        if (field.required && !value) issues.push({ path: `${stem}.${index}.${field.stem}`, message: 'required' });
+        written[field.stem] = value;
         continue;
       }
       const pair = readBi(record, field.stem, 'plain');
@@ -531,7 +877,9 @@ export function parseListDoc(schema: ListSchema, input: unknown): ParsedListDoc 
 
   const known = new Set<string>();
   for (const field of schema.fields) {
-    if (field.type === 'text' || field.type === 'list') {
+    // A repeatable bilingual value imported before the multi-cell editor kept its items in
+    // `stem_ar`/`stem_en`; those keys stay known so an untouched imported row saves as-is.
+    if (field.type === 'text' || field.type === 'list' || field.type === 'children') {
       known.add(field.stem);
       known.add(`${field.stem}_ar`);
       known.add(`${field.stem}_en`);
@@ -629,6 +977,52 @@ export function parseListDoc(schema: ListSchema, input: unknown): ParsedListDoc 
       const raw = source[field.stem];
       if (raw !== undefined && !Array.isArray(raw)) issues.push({ path: field.stem, message: 'expected a list' });
       doc[field.stem] = Array.isArray(raw) ? raw.filter((item): item is string => typeof item === 'string' && item.trim() !== '').map((item) => item.trim()) : [];
+      continue;
+    }
+
+    if (field.type === 'sections') {
+      const raw = source[field.stem];
+      const catalogue = new Set(field.sections.map((section) => section.key));
+      const order: { key: string; visible: boolean }[] = [];
+      const seen = new Set<string>();
+      if (raw !== undefined) {
+        if (!Array.isArray(raw)) {
+          issues.push({ path: field.stem, message: 'expected a list' });
+        } else {
+          raw.forEach((entry, index) => {
+            if (entry === null || typeof entry !== 'object' || Array.isArray(entry)) {
+              issues.push({ path: `${field.stem}.${index}`, message: 'expected an object' });
+              return;
+            }
+            const record = entry as Record<string, unknown>;
+            for (const key of Object.keys(record)) {
+              if (key !== 'key' && key !== 'visible') issues.push({ path: `${field.stem}.${index}.${key}`, message: 'unknown field' });
+            }
+            const key = textOf(record.key);
+            if (!catalogue.has(key)) {
+              // A section no component draws cannot be stored: the site would silently lose it.
+              issues.push({ path: `${field.stem}.${index}.key`, message: 'unknown section' });
+              return;
+            }
+            if (seen.has(key)) {
+              issues.push({ path: `${field.stem}.${index}.key`, message: 'duplicate section' });
+              return;
+            }
+            const visible = record.visible;
+            if (visible !== undefined && typeof visible !== 'boolean') {
+              issues.push({ path: `${field.stem}.${index}.visible`, message: 'expected true or false' });
+            }
+            seen.add(key);
+            order.push({ key, visible: visible === undefined ? true : Boolean(visible) });
+          });
+        }
+      }
+      // A section the row has never mentioned is a section that did not exist when it was
+      // saved; it appears in its catalogue place rather than disappearing from the page.
+      for (const section of field.sections) {
+        if (!seen.has(section.key)) order.push({ key: section.key, visible: true });
+      }
+      doc[field.stem] = order;
       continue;
     }
 
@@ -769,6 +1163,14 @@ export function listDocForm(schema: ListSchema, doc: Record<string, unknown>): R
       });
       continue;
     }
+    if (field.type === 'sections') {
+      const rows = (normal[field.stem] as { key: string; visible: boolean }[]) ?? [];
+      rows.forEach((entry, index) => {
+        form[`${field.stem}.${index}.key`] = entry.key;
+        form[`${field.stem}.${index}.visible`] = Boolean(entry.visible);
+      });
+      continue;
+    }
     form[field.stem] = textOf(normal[field.stem]);
   }
   return form;
@@ -861,6 +1263,13 @@ export function listDocFromForm(
       raw[field.stem] = rows;
       continue;
     }
+    if (field.type === 'sections') {
+      raw[field.stem] = indicesOf(form, field.stem).map((index) => ({
+        key: String(form[`${field.stem}.${index}.key`] ?? ''),
+        visible: Boolean(form[`${field.stem}.${index}.visible`]),
+      }));
+      continue;
+    }
     raw[field.stem] = form[field.stem] ?? (field.type === 'flag' ? false : '');
   }
   return parseListDoc(schema, { ...raw, ...(extra ?? {}) });
@@ -910,12 +1319,34 @@ export function listDocMeta(schema: ListSchema, doc: Record<string, unknown>, lo
   return out;
 }
 
-/** The first repeatable list's items, for the preview's bullets. */
+/** The first repeatable field's points, for the preview's bullets. */
 export function listDocBullets(schema: ListSchema, doc: Record<string, unknown>, locale: ContentLocale): string[] {
+  const other = locale === 'ar' ? 'en' : 'ar';
   for (const field of schema.fields) {
-    if (field.type !== 'list') continue;
-    const read = readBiList(doc, field.stem);
-    const items = read.value[locale].length ? read.value[locale] : read.value[locale === 'ar' ? 'en' : 'ar'];
+    if (field.type === 'list') {
+      const read = readBiList(doc, field.stem);
+      const items = read.value[locale].length ? read.value[locale] : read.value[other];
+      if (items.length) return items.slice(0, 6);
+      continue;
+    }
+    if (field.type !== 'children') continue;
+    // A benefit or a step is one point per row, and the row's cells are tried in schema
+    // order so the sentence the clinic wrote first is the one the card prints. A row that
+    // only has the other language still says something, and a bullet list of two-word titles
+    // would be worse than the sentence it replaced.
+    const rows = Array.isArray(doc[field.stem]) ? (doc[field.stem] as Record<string, unknown>[]) : [];
+    const items = rows
+      .map((row) => {
+        for (const language of [locale, other]) {
+          for (const cell of field.row) {
+            if (cell.type !== 'text') continue;
+            const value = textOf(row[`${cell.stem}_${language}`]);
+            if (value) return value;
+          }
+        }
+        return '';
+      })
+      .filter(Boolean);
     if (items.length) return items.slice(0, 6);
   }
   return [];

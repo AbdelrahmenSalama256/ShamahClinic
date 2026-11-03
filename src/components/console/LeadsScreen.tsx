@@ -91,9 +91,28 @@ const FIELD_KEYS: Record<string, MessageKey> = {
   date: "leads.field.date",
   service: "leads.field.service",
   offer: "leads.field.offer",
+  offerSlug: "leads.field.offerSlug",
+  offerState: "leads.field.offerState",
   branch: "leads.field.branch",
   subject: "leads.field.subject",
 };
+
+/** The server's verdict on the offer a booking claims to come through. */
+const OFFER_STATE_KEY: Record<string, MessageKey> = {
+  ok: "leads.offerState.ok",
+  unknown: "leads.offerState.unknown",
+  hidden: "leads.offerState.hidden",
+  "not-live": "leads.offerState.not-live",
+  "not-linked": "leads.offerState.not-linked",
+  unchecked: "leads.offerState.unchecked",
+};
+
+/**
+ * `serviceIds` is the machine half of `service`: the ids the offer check ran against,
+ * which nobody at the clinic can read off a screen. The lead stores them and the export
+ * carries them, so the record is complete without a row of uuids in the detail pane.
+ */
+const HIDDEN_FIELDS = new Set(["serviceIds"]);
 
 const PER_PAGES = [25, 50, 100];
 
@@ -147,6 +166,12 @@ const DEVICE_KEY: Record<string, MessageKey> = {
 function deviceName(device: string, labels: Labels): string {
   const key = DEVICE_KEY[device];
   return key ? labels[key] : "";
+}
+
+/** A verdict the site wrote, in the words the clinic reads. An unknown word is shown as it came. */
+function offerStateName(state: string, labels: Labels): string {
+  const key = OFFER_STATE_KEY[state];
+  return key ? labels[key] : state;
 }
 
 function valueOf(value: unknown): string {
@@ -410,13 +435,20 @@ export function LeadsScreen({
   if (view.source && !(sources as string[]).includes(view.source))
     sources.push(view.source as (typeof LEAD_SOURCES)[number]);
 
+  // A warning that reads as a rejected booking is worse than no warning: the appointment
+  // always arrived, so any verdict but `ok` carries the one line that says so.
   const shownFields = detail
     ? Object.entries(detail.fields ?? {})
-        .map(([key, value]) => ({
-          key,
-          label: FIELD_KEYS[key],
-          shown: valueOf(value),
-        }))
+        .filter(([key]) => !HIDDEN_FIELDS.has(key))
+        .map(([key, value]) => {
+          const state = key === "offerState" ? valueOf(value) : "";
+          return {
+            key,
+            label: FIELD_KEYS[key],
+            shown: state ? offerStateName(state, labels) : valueOf(value),
+            note: state !== "" && state !== "ok" ? labels["leads.offerState.hint"] : "",
+          };
+        })
         .filter((entry) => entry.shown !== "")
     : [];
 
@@ -791,7 +823,12 @@ export function LeadsScreen({
                   {shownFields.map((entry) => (
                     <Fragment key={entry.key}>
                       <dt>{entry.label ? labels[entry.label] : entry.key}</dt>
-                      <dd>{entry.shown}</dd>
+                      <dd>
+                        {entry.shown}
+                        {entry.note ? (
+                          <span className="console-lead-meta-note">{entry.note}</span>
+                        ) : null}
+                      </dd>
                     </Fragment>
                   ))}
                 </dl>

@@ -25,6 +25,7 @@ import { db, destroyDb } from '../src/lib/db';
 import { assertTestDb } from '../src/lib/db/guard';
 import { createRow, getRow, saveDraft, setTrashed, type ContentRow, type StoreResult } from '../src/lib/content/store';
 import { publishRow } from '../src/lib/content/publish';
+import { cairoDay } from '../src/lib/content/offer-services';
 import type { ContentKind, ContentLocale } from '../src/lib/content/kinds';
 import {
   getAllArticles,
@@ -58,6 +59,12 @@ const run = randomUUID().slice(0, 8);
 const key = (name: string): string => `site-${run}-${name}`;
 const actor = { id: randomUUID(), email: `site-${run}@example.invalid` };
 
+/** The offers' validity window is written as the clinic's calendar day, so the fixtures use it too. */
+const today = cairoDay();
+const shift = (days: number): string => {
+  const [year, month, day] = today.split('-').map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+};
 /** The store and the publish step answer `StoreResult`; a failure must fail the test loudly. */
 function unwrap<T>(result: StoreResult<T>, what: string): T {
   if (!result.ok) throw new Error(`${what} failed: ${result.status} ${result.code} ${JSON.stringify(result.issues ?? '')}`);
@@ -330,6 +337,61 @@ describe('the database rung', () => {
     expect(await getOffer(key('hydra'))).toBeNull();
     unwrap(await saveDraft('offer', { id: stored.id, locale: 'en', fields: { enabled: true }, actorId: actor.id }), 're-enable');
     expect(await getAllOffers('en')).toHaveLength(1);
+  });
+
+  it('links an offer to the services it can be booked through and keeps it inside its days', async () => {
+    const peel = await seedItem('services', key('ob-peel'), { name: 'خدمة تجريبية للحجز' });
+    const other = await seedItem('services', key('ob-laser'), { name: 'خدمة تجريبية ثانية' });
+    const offer = await seed('offer', 'ob-window', {
+      ar: { name: 'عرض نافذة', excerpt: 'عرض تجريبي' },
+      en: { name: 'A window offer', excerpt: 'A test offer' },
+    });
+    const stored = await db.selectFrom('offers').select(['id', 'version']).where('slug', '=', offer.key).executeTakeFirstOrThrow();
+
+    // A service that is not in the list is refused, not dropped: a save that quietly
+    // lost two of three links would overwrite the owner's answer with a smaller one.
+    const typedIn = await saveDraft('offer', {
+      id: stored.id,
+      locale: 'en',
+      fields: { applicableServices: [peel.key, 'svc-never-imported'] },
+      expectedVersion: stored.version,
+      actorId: actor.id,
+    });
+    expect(typedIn.ok).toBe(false);
+    if (!typedIn.ok) expect(JSON.stringify(typedIn.issues)).toContain('svc-never-imported');
+
+    const save = (fields: Record<string, unknown>, expectedVersion: number) =>
+      saveDraft('offer', { id: stored.id, locale: 'en', fields, expectedVersion, actorId: actor.id });
+
+    unwrap(await save({ applicableServices: [peel.key, other.key], startsAt: shift(-1), endsAt: shift(3) }, stored.version), 'link and open the window');
+    const detail = await getOffer(offer.key);
+    expect(detail?.item.services).toEqual([peel.key, other.key]);
+    expect(detail?.item.validFrom).toBe(shift(-1));
+    expect(detail?.item.validUntil).toBe(shift(3));
+    // The card the offers grid draws carries the same list, so the modal can narrow itself.
+    const card = (await getAllOffers('en')).find((row) => row.slug === offer.key);
+    expect(card?.services).toEqual([peel.key, other.key]);
+
+    // The day an offer ends is still its day; the next one it is gone from the site.
+    unwrap(await save({ endsAt: today }, (await rowOf('offer', stored.id)).version), 'end it today');
+    expect(await getOffer(offer.key)).not.toBeNull();
+    unwrap(await save({ endsAt: shift(-1) }, (await rowOf('offer', stored.id)).version), 'let it expire');
+    expect(await getOffer(offer.key)).toBeNull();
+    expect((await getAllOffers('en')).map((row) => row.slug)).not.toContain(offer.key);
+
+    // An offer nobody answered about is not "All services" on the site either: it stays
+    // bookable (the clinic has taken these appointments for years) and says so with null.
+    unwrap(await save({ endsAt: shift(3), applicableServices: [] }, (await rowOf('offer', stored.id)).version), 'answer "no services"');
+    expect((await getOffer(offer.key))?.item.services).toEqual([]);
+    unwrap(await save({ applicableServices: null }, (await rowOf('offer', stored.id)).version), 'ask the question again');
+    expect((await getOffer(offer.key))?.item.services).toBeNull();
+
+    // The rows this case created go back exactly as the file found them: the homepage
+    // case below asserts the published offers by slug, and the list-kind case after it
+    // asserts that services list's rows by id.
+    await db.deleteFrom('revisions').where('entity_id', 'in', [peel.id, other.id, offer.id]).execute();
+    await db.deleteFrom('list_items').where('id', 'in', [peel.id, other.id]).execute();
+    await db.deleteFrom('offers').where('id', '=', offer.id).execute();
   });
 
   it('reads a page by its route in either spelling and publishes the Arabic rule', async () => {

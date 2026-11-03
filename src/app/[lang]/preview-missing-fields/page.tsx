@@ -56,6 +56,8 @@ function treatment(over: Partial<Treatment>): Treatment {
 function offer(over: Partial<Offer>): Offer {
   return {
     id: "fixture-offer",
+    slug: "fixture-offer",
+    services: null,
     image: slot,
     images: [slot],
     badge: { ar: "الأكثر طلباً", en: "Most booked" },

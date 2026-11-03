@@ -37,9 +37,12 @@ import type { ListPage } from '../src/lib/content/summary';
 import type { SavedView } from '../src/lib/console/views-route';
 import type { ContentRow } from '../src/lib/content/store';
 import { syncLists } from '../src/lib/content/lists';
+import { hasPublished, publicRow, publicRows } from '../src/lib/content/published';
 import type { RevisionView } from '../src/lib/content/publish';
 import type { SettingView } from '../src/lib/content/settings';
-import { contentScreenData } from '../src/lib/console/content-screen';
+import { contentScreenData, contentDetailData } from '../src/lib/console/content-screen';
+import { formOf } from '../src/lib/console/editor-form';
+import { ALL_SERVICES, offerServiceScope, serviceIsEligible } from '../src/lib/content/offer-services';
 
 const run = randomUUID().slice(0, 8);
 const PASSWORD = 'Shamah-content-2026';
@@ -486,6 +489,105 @@ describe('the content API keeps the guard order', () => {
     expect({ currency: raw.currency, price: Number(raw.price), enabled: raw.enabled }).toEqual({ currency: 'EGP', price: 250, enabled: 0 });
   });
 
+  it('keeps an offer’s service scope through a save, a reopen and a change', async () => {
+    // B4e. The picker's three empties are three different answers, and the console is only
+    // honest if each one survives the trip to the column and back. The token's own arithmetic
+    // is unit-tested in `./offer-booking.test.ts`; what lives here is the part a unit test
+    // cannot reach — `./store.ts` canonicalising the write against the services that actually
+    // exist, the editor's loader handing it those choices, and the service page then answering
+    // the booking question from the column that ended up on disk.
+    const first = await call('/content/list_item?list=services', write(actors.Editor, 'POST', { key: slug('scope-first') }));
+    const second = await call('/content/list_item?list=services', write(actors.Editor, 'POST', { key: slug('scope-second') }));
+    const mine = first.row.key;
+    const other = second.row.key;
+    const offer = await call('/content/offer?locale=ar', write(actors.Editor, 'POST', { key: slug('scope-offer') }));
+    const id = offer.row.id;
+
+    // A row nobody has asked: the column is NULL, and the editor opens on the unanswered token.
+    expect(offer.row.fields.applicableServices.draftJson).toBeNull();
+
+    /** The column as the database holds it, not as the response echoed it back. */
+    const column = async (): Promise<unknown> => {
+      const stored = await db.selectFrom('offers').select('applicable_services').where('id', '=', id).executeTakeFirstOrThrow();
+      const raw = stored.applicable_services;
+      // MariaDB hands a JSON column back already parsed; the same driver on a TEXT column
+      // would hand back the text. `./store.ts` reads it the same way, for the same reason.
+      if (typeof raw !== 'string') return raw ?? null;
+      try {
+        return JSON.parse(raw) as unknown;
+      } catch {
+        return raw;
+      }
+    };
+    /** Reopen the editor the way the screen does, and read what the picker would hold. */
+    const reopen = async (): Promise<{ token: string; choices: string[] }> => {
+      const detail = await contentDetailData('offer', id, { grants: actors.Owner.grants, locale: 'ar', search: { locale: 'ar' } });
+      if (!detail.ok) throw new Error(`the editor could not open the row: ${detail.reason}`);
+      return {
+        token: String(formOf(detail.data.row, 'ar').applicableServices),
+        choices: (detail.data.referenceOptions.applicableServices ?? []).map((choice) => choice.key),
+      };
+    };
+    const save = async (value: unknown, version: number) =>
+      call(`/content/offer/${id}?locale=ar`, write(actors.Editor, 'PATCH', { fields: { applicableServices: value }, version }));
+
+    // Pick two, in an order of the owner's own making, and let the server re-order nothing.
+    const picked = await save([mine, other], offer.row.version);
+    expect(picked.status, JSON.stringify(picked.body)).toBe(200);
+    expect(await column()).toEqual([mine, other]);
+    const reopened = await reopen();
+    expect(reopened.token).toBe(`${mine},${other}`);
+    // The services the list holds are the ones the picker is offered, so the saved answer has
+    // a box to show itself in when the row is opened again.
+    expect(reopened.choices).toEqual(expect.arrayContaining([mine, other]));
+
+    // Change the answer, and the old one is gone rather than merged into it.
+    const changed = await save([other], picked.row.version);
+    expect(changed.status, JSON.stringify(changed.body)).toBe(200);
+    expect(await column()).toEqual([other]);
+    expect((await reopen()).token).toBe(other);
+
+    // Each of the three empties, written and read back as itself.
+    const states: [label: string, sent: unknown, stored: unknown, shown: string][] = [
+      ['all services', [ALL_SERVICES], [ALL_SERVICES], ALL_SERVICES],
+      ['no services', [], [], 'none'],
+      ['nobody answered', null, null, ''],
+    ];
+    let version = changed.row.version;
+    for (const [label, sent, stored, shown] of states) {
+      const saved = await save(sent, version);
+      expect(saved.status, `${label}: ${JSON.stringify(saved.body)}`).toBe(200);
+      version = saved.row.version;
+      expect(await column(), label).toEqual(stored);
+      expect((await reopen()).token, label).toBe(shown);
+    }
+
+    // A uid that is not a service is refused, and the answer the row already had survives it.
+    const named = await save([mine, other], version);
+    expect(named.status, JSON.stringify(named.body)).toBe(200);
+    const bogus = await save(['not-a-service'], named.row.version);
+    expect(bogus.status).toBe(400);
+    expect(bogus.issues).toEqual([{ path: 'applicableServices', message: expect.stringContaining('not-a-service') }]);
+    expect(await column()).toEqual([mine, other]);
+    expect((await reopen()).token).toBe(`${mine},${other}`);
+
+    // The service page asks the column the database holds, so the two answers cannot drift:
+    // `buildServicePage()` calls `serviceIsEligible(offerServiceScope(offer.services), …)` on
+    // exactly this value (./src/lib/content/service-page.ts). Read from `column()` and not from
+    // what was sent, because the point is that what landed is what the site then decides with.
+    const eligible = async (uid: string): Promise<boolean> => serviceIsEligible(offerServiceScope(await column()), uid);
+    expect(await eligible(mine)).toBe(true);
+    expect(await eligible(other)).toBe(true);
+    const narrowed = await save([mine], named.row.version);
+    expect(narrowed.status, JSON.stringify(narrowed.body)).toBe(200);
+    expect(await eligible(mine)).toBe(true);
+    expect(await eligible(other)).toBe(false);
+    const refused = await save([], narrowed.row.version);
+    expect(refused.status, JSON.stringify(refused.body)).toBe(200);
+    expect(await column()).toEqual([]);
+    expect(await eligible(mine)).toBe(false);
+  });
+
   it('creates, edits, publishes and re-edits a list item in one Editor-scoped list', async () => {
     const noList = await call('/content/list_item', read(actors.Owner));
     expect(noList.status).toBe(400);
@@ -669,6 +771,45 @@ describe('publishing moves the copy a visitor reads, and only that', () => {
     expect(blocked.status).toBe(409);
     expect(blocked.error).toBe('in_trash');
     await call(`/content/article/${id}/restore?locale=ar`, write(actors.Owner, 'POST', {}));
+  });
+
+  it('keeps a published list item on the site while its draft is being edited', async () => {
+    // The status `changed` is the console's word for "there is an unpublished edit", not a
+    // withdrawal: a row stays live until someone publishes over it or un-publishes it. Read
+    // on `published` alone, saving a draft took a service, a branch or a specialist off the
+    // site — its public page answered 404 until the next publish.
+    const created = await call('/content/list_item?list=branches', write(actors.Editor, 'POST', { key: slug('site-read') }));
+    const itemId = created.row.id;
+    await call(
+      `/content/list_item/${itemId}?list=branches`,
+      write(actors.Editor, 'PATCH', { fields: { data: { name: { ar: 'فرع المعاينة', en: 'Preview branch' }, phone: '+20 100' } } }),
+    );
+    const first = await call(`/content/list_item/${itemId}/publish?list=branches`, write(actors.Editor, 'POST', {}));
+    expect(first.row.status).toBe('published');
+
+    const live = () => publicRow('list_item', slug('site-read'), { listKey: 'branches' });
+    const served = await live();
+    expect(served?.values.data).toEqual({ kind: 'json', value: first.row.fields.data.pubJson });
+    expect((await publicRows('list_item', { listKey: 'branches' })).map((row) => row.key)).toContain(slug('site-read'));
+
+    const edited = await call(
+      `/content/list_item/${itemId}?list=branches`,
+      write(actors.Editor, 'PATCH', { fields: { data: { name: { ar: 'فرع لم يُنشر', en: 'Not yet published' } } }, version: first.row.version }),
+    );
+    expect(edited.row.status).toBe('changed');
+
+    // The visitor still gets the published document, and the draft's wording never reaches it.
+    expect(edited.row.fields.data.pubJson).toEqual(first.row.fields.data.pubJson);
+    expect(await hasPublished('list_item', { listKey: 'branches' })).toBe(true);
+    const after = await live();
+    expect(after?.values.data).toEqual({ kind: 'json', value: first.row.fields.data.pubJson });
+    expect(JSON.stringify(after?.values.data)).not.toContain('Not yet published');
+
+    // Trash is the explicit withdrawal, and it still hides the row.
+    await call(`/content/list_item/${itemId}?list=branches`, write(actors.Owner, 'DELETE', { trashed: true }));
+    expect(await live()).toBeNull();
+    await call(`/content/list_item/${itemId}/restore?list=branches`, write(actors.Owner, 'POST', {}));
+    expect((await live())?.values.data).toEqual({ kind: 'json', value: first.row.fields.data.pubJson });
   });
 });
 
@@ -877,7 +1018,7 @@ describe('a list page filters, searches, orders and pages in the database', () =
     expect(res.body.trash).toBe(false);
     // The kind's own defaults, re-stated: the screen and the address bar agree without
     // the browser having to remember what it did not send.
-    expect(res.view).toEqual({ mode: 'table', sort: 'updated', dir: 'desc', q: `${ar}-pg`, filter: 'all', page: 1, per: 25 });
+    expect(res.view).toEqual({ mode: 'card', sort: 'updated', dir: 'desc', q: `${ar}-pg`, filter: 'all', page: 1, per: 25 });
     expect(res.page.total).toBe(12);
     expect(res.page.pages).toBe(1);
     // An article has no number or flag columns, so the table prints none.
@@ -1190,7 +1331,7 @@ describe('a saved view is the filter one person saved for themselves', () => {
     }));
     expect(saved.status).toBe(200);
     // Re-rendered by the parser, in the address bar order, with the row it opened left out.
-    expect(saved.viewRow).toMatchObject({ kind: 'article', name: viewName('card'), query: '?mode=card&sort=title&dir=desc&q=%D9%81%D8%B1%D8%B9&filter=published&page=4&per=10' });
+    expect(saved.viewRow).toMatchObject({ kind: 'article', name: viewName('card'), query: '?sort=title&dir=desc&q=%D9%81%D8%B1%D8%B9&filter=published&page=4&per=10' });
 
     const ran = await call(`/content/article${saved.viewRow.query}`, read(actors.Viewer));
     expect(ran.view).toEqual({ mode: 'card', sort: 'title', dir: 'desc', q: 'فرع', filter: 'published', page: 4, per: 10 });
@@ -1210,7 +1351,7 @@ describe('a saved view is the filter one person saved for themselves', () => {
     expect(ran.body.listKey).toBe('branches');
     expect(ran.body.trash).toBe(true);
     expect(ran.view.filter).toBe('all');
-    expect(ran.view.mode).toBe('table');
+    expect(ran.view.mode).toBe('card');
   });
 
   it('is private: nobody else can list it, and nobody else can delete it', async () => {

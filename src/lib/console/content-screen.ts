@@ -20,7 +20,7 @@ import { CONTENT_LOCALES, kindSpec, type ContentKind, type ContentLocale } from 
 import { LIST_LABELS, type ListKey } from '../content/lists';
 import { getRow, knownListKeys, listKeyOfItem, type ContentRow } from '../content/store';
 import { filtersFor, parseListView, parseListScope, sortsFor, type ListFilter, type ListView, type ListSort } from '../content/list-view';
-import { articleChoices, listChoices, linkedArticleTitle, listSummaries, type ListChoice, type ListPage } from '../content/summary';
+import { articleChoices, listChoices, linkedArticleTitle, listSummaries, offerChoices, type ListChoice, type ListPage } from '../content/summary';
 import { listDocTitle, listSchemaOf } from '../content/list-schema';
 import { resultStoryPointer } from '../content/list-docs';
 import { catalogFor, type MessageKey } from './messages';
@@ -124,6 +124,27 @@ function abilitiesFor(kind: ContentKind, grants: readonly Grant[]): ContentAbili
     publish: holding('publish').filter((scope) => holding('update').includes(scope)),
     remove: holding('delete'),
   };
+}
+
+/**
+ * One row for a draft preview: the read scope the detail screen checks, and nothing else.
+ *
+ * A preview shows the document the editor is already holding, so it asks the same two
+ * questions that screen asks — may this role read this list at all, and does this row belong
+ * to it — and reads no reference choices, no SEO row and no pickers, because a page does not
+ * need them. The draft is the point, so a row in the Trash answers with nothing: the owner
+ * restores it before looking at its page.
+ */
+export async function previewableRow(
+  id: string,
+  input: { grants: readonly Grant[]; listKey: string },
+): Promise<ContentRow | null> {
+  const spec = kindSpec('list_item');
+  if (!can(input.grants, spec.resource, 'read', {})) return null;
+  if (!can(input.grants, spec.resource, 'read', { lists: input.listKey })) return null;
+  if ((await listKeyOfItem(id)) !== input.listKey) return null;
+  const row = await getRow('list_item', id);
+  return row && !row.trashed ? row : null;
 }
 
 /** Rows for one content screen, or `null` when the role cannot read the resource. */
@@ -256,10 +277,21 @@ export async function contentDetailData(
 
   const referenceOptions: Record<string, ListChoice[]> = {};
   for (const field of schema?.fields ?? []) {
-    if (field.type === 'refs') referenceOptions[field.stem] = await listChoices(field.source, activeLocale);
+    if (field.type === 'refs') {
+      referenceOptions[field.stem] =
+        field.source === 'offers'
+          ? await offerChoices(activeLocale)
+          : field.source === 'articles'
+            ? await articleChoices(activeLocale)
+            : await listChoices(field.source, activeLocale);
+    }
     // A result story is not a list item, so its choices come from the journal itself.
     if (field.type === 'story') referenceOptions[field.stem] = await articleChoices(activeLocale);
   }
+  // An offer's services are not a `refs` field in a list document, so nothing above asks for
+  // them: the picker reads the services list in its own order, and a service that later
+  // leaves the list stays visible in the editor instead of disappearing from the column.
+  if (kind === 'offer') referenceOptions.applicableServices = await listChoices('services', activeLocale);
 
   return {
     ok: true,

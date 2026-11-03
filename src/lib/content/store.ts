@@ -16,15 +16,27 @@ import { readStored, type FieldFormat } from './format';
 import { sanitizeRichHtml } from './rich';
 import { htmlStems, listSchemaOf, parseListDoc } from './list-schema';
 import { positionForNewItem } from './order';
-import { CONTENT_LOCALES, kindSpec, parseWrites, positionColumn, type ContentKind, type ContentLocale, type KindSpec, type ParseResult } from './kinds';
+import { canonicalizeOfferServices } from './offer-services';
+import {
+  calendarDay,
+  CONTENT_LOCALES,
+  kindSpec,
+  parseWrites,
+  positionColumn,
+  type ContentKind,
+  type ContentLocale,
+  type KindSpec,
+  type ParseResult,
+} from './kinds';
 
 type AnyRow = Record<string, unknown>;
 
 /** One field of a row, as the console renders it: the draft plus its published twin. */
 export interface FieldView {
-  kind: 'bi' | 'json' | 'text' | 'number' | 'flag';
+  kind: 'bi' | 'json' | 'text' | 'date' | 'number' | 'flag';
   draft?: Record<ContentLocale, string>;
   pub?: Record<ContentLocale, string | null>;
+  /** for a `date` field this is the day as `YYYY-MM-DD`, which is what its input box writes back */
   value?: string | number | boolean | null;
   draftJson?: unknown;
   pubJson?: unknown;
@@ -39,7 +51,7 @@ export interface FieldView {
    *
    * The editor uses it to clean a `plain` box when the person leaves it — the same
    * `plainText()` the server runs, so the words in the box are the words in the database.
-   * A `json`, `number` or `flag` field has no format to report and leaves it off.
+   * A `json`, `date`, `number` or `flag` field has no format to report and leaves it off.
    */
   format?: FieldFormat;
 }
@@ -142,6 +154,16 @@ function mapRow(spec: KindSpec, row: AnyRow, listKey: string | null = null): Con
       multiline: false,
       max: field.max,
       format: field.format,
+    };
+  }
+  for (const field of spec.date) {
+    fields[field.name] = {
+      kind: 'date',
+      value: calendarDay(row[field.column]),
+      pending: false,
+      immediate: true,
+      multiline: false,
+      max: 10,
     };
   }
   for (const field of spec.number) {
@@ -333,6 +355,46 @@ export function planWrites(
 }
 
 /**
+ * The uids the services list holds, trashed rows included.
+ *
+ * A trashed service still occupies its uid, and an offer linked to it before the row was
+ * trashed is a link the owner made on purpose. Refusing that uid would make an unrelated
+ * edit — fixing a price — unsaveable, so the check asks whether the row exists, not
+ * whether it is live. The picker the console draws is filtered to live rows by
+ * `listChoices()` in ./summary.ts, so the two do not have to agree.
+ */
+export async function serviceUids(): Promise<Set<string>> {
+  const rows = await db
+    .selectFrom('list_items')
+    .innerJoin('lists', 'lists.id', 'list_items.list_id')
+    .select(['list_items.uid'])
+    .where('lists.list_key', '=', 'services')
+    .execute();
+  return new Set(rows.map((row) => row.uid));
+}
+
+/**
+ * The offer's service list, checked against the services the database actually holds.
+ *
+ * This is the only place the relation can be verified, because only the server can ask
+ * the database what exists: the console's browser bundle knows what it drew, not what a
+ * colleague published a minute ago. It runs in `saveDraft()` — the one funnel every
+ * console write and the WordPress import already passes through — and it canonicalises
+ * before `parseWrites()` stringifies, so the column ends up holding the picked order with
+ * its duplicates removed, never whatever the request happened to carry.
+ */
+async function validatedFields(
+  spec: KindSpec,
+  fields: Record<string, unknown>,
+): Promise<{ fields: Record<string, unknown>; issues: { path: string; message: string }[] }> {
+  if (spec.kind !== 'offer' || !('applicableServices' in fields)) return { fields, issues: [] };
+  const known = await serviceUids();
+  const result = canonicalizeOfferServices(fields.applicableServices, known);
+  if (!result.ok) return { fields, issues: [{ path: 'applicableServices', message: result.message }] };
+  return { fields: { ...fields, applicableServices: result.column }, issues: [] };
+}
+
+/**
  * Save one locale's draft. The row's `version` is the optimistic lock: if another
  * editor wrote first, this update matches no row and the caller is told to reload
  * rather than having their colleague's change silently overwritten.
@@ -348,7 +410,10 @@ export async function saveDraft(
   if (!current) return { ok: false, status: 404, code: 'not_found' };
   if (current.trashed) return { ok: false, status: 409, code: 'in_trash' };
 
-  const parsed = planWrites(spec, input.fields, input.locale, current.listKey);
+  const checked = await validatedFields(spec, input.fields);
+  if (checked.issues.length > 0) return { ok: false, status: 400, code: 'invalid_input', issues: checked.issues };
+
+  const parsed = planWrites(spec, checked.fields, input.locale, current.listKey);
   if (parsed.issues.length > 0) return { ok: false, status: 400, code: 'invalid_input', issues: parsed.issues };
 
   const patch: Record<string, unknown> = { ...parsed.columns, updated_by: input.actorId, version: current.version + 1 };

@@ -8,11 +8,16 @@
  * bilingual field, an Add/Remove pair for every repeatable one, and no box anywhere that
  * accepts a document by hand.
  *
- * Three things deserve a note:
+ * Four things deserve a note:
  *
  * **A picture is an upload, never a path.** The schema's `image` field draws `ImagePicker`,
  * which is the same control the article editor uses; the value it writes is the address the
  * server returned.
+ *
+ * **A group is a door, not a filter.** Consecutive fields sharing a `group` collapse into one
+ * `<details>`, because a service row has fourteen of them and fifty-two fields behind them.
+ * The controls stay in the document while the door is shut, so hiding a section never discards
+ * what somebody typed into it, and a field that still owes a fix says so on the handle.
  *
  * **A key the form does not describe is shown, not dropped.** The editor keeps those entries
  * in a hidden form key and this block lists them one by one with a Remove button, because
@@ -24,12 +29,13 @@
  * screen reader, so a person hearing the row one control at a time knows which field either
  * box belongs to. See `pairName`.
  */
+import { Fragment, useState } from 'react';
 import { Badge, Button, Checkbox, Field, Input, Note, Select, Textarea, pairName } from '@/components/console/kit';
 import { ImagePicker } from './ImagePicker';
 import { RichEditor } from './RichEditor';
 import type { Form } from '@/lib/console/editor-form';
 import type { MessageKey } from '@/lib/console/messages';
-import { UNKNOWN_FORM_KEY, type ChildField, type ListField, type ListSchema } from '@/lib/content/list-schema';
+import { UNKNOWN_FORM_KEY, type ChildField, type FieldGroup, type ListField, type ListSchema } from '@/lib/content/list-schema';
 import type { ContentLocale } from '@/lib/content/kinds';
 
 /** A row a `refs` field may point at, as the server resolved it for this screen. */
@@ -73,6 +79,28 @@ function indicesOf(form: Form, stem: string): number[] {
   return [...seen].sort((a, b) => a - b);
 }
 
+/** The fields one disclosure holds: a group's own, or the run of fields no group claims. */
+interface FieldChunk {
+  group: FieldGroup | null;
+  fields: ListField[];
+}
+
+/**
+ * The schema's fields, in the schema's order, cut where the group changes.
+ *
+ * A list whose schema names no group at all comes back as one ungrouped chunk, which is the
+ * flat form it drew before the service row grew fourteen sections.
+ */
+function chunksOf(schema: ListSchema): FieldChunk[] {
+  const chunks: FieldChunk[] = [];
+  for (const field of schema.fields) {
+    const last = chunks[chunks.length - 1];
+    if (last && last.group?.key === field.group?.key) last.fields.push(field);
+    else chunks.push({ group: field.group ?? null, fields: [field] });
+  }
+  return chunks;
+}
+
 export function ListDocFields({
   schema,
   form,
@@ -84,22 +112,50 @@ export function ListDocFields({
   onChange,
 }: Readonly<ListDocFieldsProps>) {
   const unknown = readUnknown(form[UNKNOWN_FORM_KEY]);
+  // Which doors a person has shut. Nothing else about the form moves when they do: the
+  // fields stay mounted inside a closed `<details>`, so collapsing a group never costs
+  // anybody a sentence they typed, and the value the save reads is the value in the box.
+  const [shut, setShut] = useState<Record<string, boolean>>({});
+
+  // One disclosure per group, so a fifty-field service row can be read one part at a time.
+  const chunks = chunksOf(schema);
 
   return (
     <div className="console-doc-form">
-      {schema.fields.map((field) => (
-        <SchemaField
-          key={field.stem}
-          field={field}
-          form={form}
-          errors={errors[field.stem] ?? []}
-          referenceOptions={referenceOptions[field.stem] ?? []}
-          locale={locale}
-          disabled={disabled}
-          labels={labels}
-          onChange={onChange}
-        />
-      ))}
+      {chunks.map((chunk) => {
+        const fields = chunk.fields.map((field) => (
+          <SchemaField
+            key={field.stem}
+            field={field}
+            form={form}
+            errors={errors[field.stem] ?? []}
+            referenceOptions={referenceOptions[field.stem] ?? []}
+            locale={locale}
+            disabled={disabled}
+            labels={labels}
+            onChange={onChange}
+          />
+        ));
+        const group = chunk.group;
+        if (!group) return <Fragment key="*">{fields}</Fragment>;
+        const owed = chunk.fields.some((field) => (errors[field.stem] ?? []).length > 0);
+        return (
+          <details
+            key={group.key}
+            className="console-doc-group-box"
+            open={!shut[group.key]}
+            onToggle={(event) => setShut((current) => ({ ...current, [group.key]: !event.currentTarget.open }))}
+          >
+            <summary className="console-doc-group">
+              <span className="console-doc-group-caret" aria-hidden="true" />
+              <span className="console-doc-group-name">{group.label[locale] || group.label.en || group.label.ar}</span>
+              <span className="console-doc-group-count">{chunk.fields.length}</span>
+              {owed && <span className="console-doc-group-error">{labels['content.list.group.error']}</span>}
+            </summary>
+            <div className="console-doc-group-fields">{fields}</div>
+          </details>
+        );
+      })}
 
       {Object.keys(unknown).length > 0 && (
         <section className="console-doc-unknown" aria-labelledby="list-unknown-heading">
@@ -409,6 +465,7 @@ function SchemaField({
                 <ChildInput
                   key={cell.stem}
                   cell={cell}
+                  row={field.row}
                   stem={field.stem}
                   index={index}
                   form={form}
@@ -587,6 +644,81 @@ function SchemaField({
     );
   }
 
+  if (field.type === 'sections') {
+    const rows = indicesOf(form, field.stem);
+    const labelOf = (key: string): string => {
+      const section = field.sections.find((candidate) => candidate.key === key);
+      return section ? section.label[locale] || section.label.en || section.label.ar : key;
+    };
+    const swap = (from: number, to: number) => {
+      const fromKey = textOf(form, `${field.stem}.${from}.key`);
+      const toKey = textOf(form, `${field.stem}.${to}.key`);
+      const fromVisible = Boolean(form[`${field.stem}.${from}.visible`]);
+      const toVisible = Boolean(form[`${field.stem}.${to}.visible`]);
+      onChange(`${field.stem}.${from}.key`, toKey);
+      onChange(`${field.stem}.${to}.key`, fromKey);
+      onChange(`${field.stem}.${from}.visible`, toVisible);
+      onChange(`${field.stem}.${to}.visible`, fromVisible);
+    };
+    return (
+      <div className="console-doc-field" data-invalid={errors.length > 0 || undefined}>
+        <span className="console-doc-label" id={`${id}-label`}>
+          {label}
+        </span>
+        {hint ? <Note>{hint}</Note> : null}
+        <ol className="console-doc-sections" aria-labelledby={`${id}-label`}>
+          {rows.map((index, position) => {
+            const key = textOf(form, `${field.stem}.${index}.key`);
+            const visible = Boolean(form[`${field.stem}.${index}.visible`]);
+            const name = labelOf(key);
+            return (
+              <li className="console-doc-section" key={index} data-hidden={!visible || undefined}>
+                <span className="console-doc-section-name">
+                  {name}
+                  {visible ? null : <Badge tone="neutral">{labels['content.sections.hidden']}</Badge>}
+                </span>
+                <div className="console-doc-section-actions">
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={disabled || position === 0}
+                    aria-label={`${name}: ${labels['content.order.up']}`}
+                    onClick={() => {
+                      const previous = rows[position - 1];
+                      if (previous !== undefined) swap(index, previous);
+                    }}
+                  >
+                    ↑
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={disabled || position === rows.length - 1}
+                    aria-label={`${name}: ${labels['content.order.down']}`}
+                    onClick={() => {
+                      const next = rows[position + 1];
+                      if (next !== undefined) swap(index, next);
+                    }}
+                  >
+                    ↓
+                  </Button>
+                  <Checkbox
+                    label={labels['content.sections.visible']}
+                    checked={visible}
+                    disabled={disabled}
+                    aria-label={`${name}: ${visible ? labels['content.sections.hide'] : labels['content.sections.show']}`}
+                    onChange={(event) => onChange(`${field.stem}.${index}.visible`, event.target.checked)}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+        {errorsNode}
+      </div>
+    );
+  }
+
   return (
     <Field htmlFor={id} errors={errors} label={label} note={hint ? <Note>{hint}</Note> : null}>
       <Input
@@ -602,6 +734,7 @@ function SchemaField({
 
 function ChildInput({
   cell,
+  row,
   stem,
   index,
   form,
@@ -611,6 +744,7 @@ function ChildInput({
   onChange,
 }: Readonly<{
   cell: ChildField;
+  row: readonly ChildField[];
   stem: string;
   index: number;
   form: Form;
@@ -634,25 +768,86 @@ function ChildInput({
       </Field>
     );
   }
-  return (
-    <>
-      <Field label={`${label} — ${labels['content.locale.ar']}`} htmlFor={`child-${stem}.${index}.${cell.stem}_ar`}>
-        <Input
-          id={`child-${stem}.${index}.${cell.stem}_ar`}
-          dir="rtl"
-          value={textOf(form, `${stem}.${index}.${cell.stem}_ar`)}
+  if (cell.type === 'image') {
+    const key = `${stem}.${index}.${cell.stem}`;
+    // A gallery row names its own picture in the `alt` cell beside it; a step's picture is
+    // described by the service's hero description. The upload carries whichever exists, so
+    // the media library never files a picture under somebody else's words.
+    const ownAlt = row.some((candidate) => candidate.type === 'text' && candidate.stem === 'alt');
+    const alt = ownAlt
+      ? { ar: textOf(form, `${stem}.${index}.alt_ar`), en: textOf(form, `${stem}.${index}.alt_en`) }
+      : { ar: textOf(form, 'alt_ar'), en: textOf(form, 'alt_en') };
+    return (
+      <Field label={label} htmlFor={`child-${key}`}>
+        <ImagePicker
+          labels={labels}
+          value={textOf(form, key)}
           disabled={disabled}
-          onChange={(event) => onChange(`${stem}.${index}.${cell.stem}_ar`, event.target.value)}
+          inputId={`child-${key}`}
+          alt={alt}
+          onChange={(next) => onChange(key, next)}
         />
       </Field>
-      <Field label={`${label} — ${labels['content.locale.en']}`} htmlFor={`child-${stem}.${index}.${cell.stem}_en`}>
-        <Input
-          id={`child-${stem}.${index}.${cell.stem}_en`}
-          dir="ltr"
-          value={textOf(form, `${stem}.${index}.${cell.stem}_en`)}
-          disabled={disabled}
-          onChange={(event) => onChange(`${stem}.${index}.${cell.stem}_en`, event.target.value)}
-        />
+    );
+  }
+  if (cell.type === 'select') {
+    const key = `${stem}.${index}.${cell.stem}`;
+    return (
+      <Field label={label} htmlFor={`child-${key}`}>
+        <Select id={`child-${key}`} value={textOf(form, key)} disabled={disabled} onChange={(event) => onChange(key, event.target.value)}>
+          <option value="">—</option>
+          {(cell.options ?? []).map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label[locale] || option.label.en || option.label.ar}
+            </option>
+          ))}
+        </Select>
+      </Field>
+    );
+  }
+  const arKey = `${stem}.${index}.${cell.stem}_ar`;
+  const enKey = `${stem}.${index}.${cell.stem}_en`;
+  return (
+    <>
+      <Field label={pairName(label, labels['content.locale.ar'])} htmlFor={`child-${arKey}`}>
+        {cell.multiline ? (
+          <Textarea
+            id={`child-${arKey}`}
+            rows={3}
+            dir="rtl"
+            value={textOf(form, arKey)}
+            disabled={disabled}
+            onChange={(event) => onChange(arKey, event.target.value)}
+          />
+        ) : (
+          <Input
+            id={`child-${arKey}`}
+            dir="rtl"
+            value={textOf(form, arKey)}
+            disabled={disabled}
+            onChange={(event) => onChange(arKey, event.target.value)}
+          />
+        )}
+      </Field>
+      <Field label={pairName(label, labels['content.locale.en'])} htmlFor={`child-${enKey}`}>
+        {cell.multiline ? (
+          <Textarea
+            id={`child-${enKey}`}
+            rows={3}
+            dir="ltr"
+            value={textOf(form, enKey)}
+            disabled={disabled}
+            onChange={(event) => onChange(enKey, event.target.value)}
+          />
+        ) : (
+          <Input
+            id={`child-${enKey}`}
+            dir="ltr"
+            value={textOf(form, enKey)}
+            disabled={disabled}
+            onChange={(event) => onChange(enKey, event.target.value)}
+          />
+        )}
       </Field>
     </>
   );

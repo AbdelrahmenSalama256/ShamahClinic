@@ -62,6 +62,7 @@ function row(index: number, needsPhoto: boolean): ListSummary {
     publishedAt: '2026-10-01T08:00:00.000Z',
     image: null,
     needsPhoto,
+    warnings: [],
     cells: { area_ar: 'الوجه' },
   };
 }

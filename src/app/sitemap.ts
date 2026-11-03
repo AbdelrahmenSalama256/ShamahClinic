@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
 import { siteConfig } from "@/config/site";
 import { getLocalizedHref, type Locale } from "@/lib/locale";
-import { getMergedTreatments } from "@/lib/wp/treatments";
+import { getMergedServices, getMergedTreatments } from "@/lib/wp/treatments";
 import { getAllArticles, getAllOffers, getAllPages } from "@/lib/content/site";
 import { getBranchList } from "@/lib/content/site";
 import { readPageStates, type PageStates } from "@/lib/content/page-visibility";
@@ -47,13 +47,14 @@ const date = (value: string | undefined): Date | undefined => {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [articles, offersAr, offersEn, pages, branches, treatments, states] = await Promise.all([
+  const [articles, offersAr, offersEn, pages, branches, treatments, services, states] = await Promise.all([
     getAllArticles(),
     getAllOffers("ar"),
     getAllOffers("en"),
     getAllPages().catch(() => []),
     getBranchList(),
     getMergedTreatments(),
+    getMergedServices(),
     readPageStates(),
   ]);
 
@@ -78,12 +79,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: "/privacy", priority: 0.3, changeFrequency: "yearly", lastModified: wpModified("privacy-policy"), page: "privacy" },
   ];
 
-  const treatmentRoutes: Route[] = treatments.map((t) => ({
-    path: `/services/${t.id}`,
-    priority: 0.8,
-    changeFrequency: "monthly",
-    page: "services",
-  }));
+  // A row that asks not to be indexed is a page the author has taken out of the race, and a
+  // sitemap is a list of invitations — so it lists none. Only the typed document answers this:
+  // a service the listing knows from the dashboard snapshot has no box to tick, and keeps the
+  // URL it has always had.
+  const unindexed = new Set(services.filter((s) => s.seo.noindex).map((s) => s.key));
+  const treatmentRoutes: Route[] = treatments
+    .filter((t) => !unindexed.has(t.id))
+    .map((t) => ({
+      path: `/services/${t.id}`,
+      priority: 0.8,
+      changeFrequency: "monthly",
+      page: "services",
+    }));
 
   const branchRoutes: Route[] = branches.map((b) => ({
     path: `/branches/${b.id}`,

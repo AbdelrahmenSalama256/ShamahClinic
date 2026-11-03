@@ -87,6 +87,10 @@ describe('a list view round-trips through its own query string', () => {
 
 describe('the defaults belong to the kind, not to the module', () => {
   it('an offer and a list start in their authored order, an article in time', () => {
+    expect(defaultViewFor('article').mode).toBe('card');
+    expect(defaultViewFor('offer').mode).toBe('card');
+    expect(defaultViewFor('page').mode).toBe('card');
+    expect(defaultViewFor('list_item').mode).toBe('card');
     expect(defaultViewFor('offer').sort).toBe('position');
     expect(defaultViewFor('list_item').sort).toBe('position');
     expect(defaultViewFor('page').sort).toBe('key');

@@ -36,9 +36,21 @@ import {
   UNKNOWN_FORM_KEY,
   type ListSchema,
 } from '../content/list-schema';
+import { offerServiceScope, scopeToColumn, scopeToToken, tokenToScope } from '../content/offer-services';
 
 export type FormValue = string | boolean;
 export type Form = Record<string, FormValue>;
+
+/**
+ * The one JSON column the console draws as a picker instead of a document.
+ *
+ * Its form value is a token, not text a person reads: `''` means nobody has answered (the
+ * column is NULL), `'*'` means every service, `'none'` means deliberately no service, and
+ * anything else is the chosen uids in the order they were picked. The three shapes are
+ * different answers, and a JSON textarea is the one control that cannot show which of them
+ * is on the screen — see `../content/offer-services.ts`.
+ */
+const OFFER_SERVICES_FIELD = 'applicableServices';
 
 /** The row's state, as one chip. `pending` is the draft having outrun the published copy. */
 export function contentStateKey(row: ContentRow): MessageKey {
@@ -108,6 +120,8 @@ export function formOf(row: ContentRow, locale: ContentLocale): Form {
         const doc = documentOf(field.draftJson) ?? {};
         Object.assign(out, listDocForm(schema, doc));
         out[UNKNOWN_FORM_KEY] = JSON.stringify(listDocUnknown(schema, doc));
+      } else if (name === OFFER_SERVICES_FIELD) {
+        out[name] = scopeToToken(offerServiceScope(field.draftJson));
       } else {
         out[name] = JSON.stringify(field.draftJson ?? {}, null, 2);
       }
@@ -262,6 +276,13 @@ export function fieldsFromForm(row: ContentRow, form: Form): ParsedForm {
         const parsed = listDocFromForm(schema, form, unknownOf(form));
         fields[name] = parsed.doc;
         issues.push(...parsed.issues);
+        continue;
+      }
+      if (name === OFFER_SERVICES_FIELD) {
+        // The picker's token is the answer, and the column is the three shapes it decodes
+        // to — including NULL for "nobody has answered", which is why this does not go
+        // through the JSON text below.
+        fields[name] = scopeToColumn(tokenToScope(String(value ?? '')));
         continue;
       }
       const text = String(value ?? '').trim();

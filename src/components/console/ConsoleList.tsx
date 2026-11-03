@@ -52,6 +52,7 @@ import {
   type ListView,
 } from '@/lib/content/list-view';
 import type { ListPage, ListSummary } from '@/lib/content/summary';
+import type { ServiceWarning } from '@/lib/content/service-doc';
 import type { MessageKey } from '@/lib/console/messages';
 
 interface SavedViewRow {
@@ -160,6 +161,27 @@ function Thumb({ src, labels }: Readonly<{ src: string | null; labels: Record<Me
   // a data URL — so it cannot be listed in `next.config`'s image hosts at build time.
   // eslint-disable-next-line @next/next/no-img-element
   return <img className="console-thumb" src={src} alt="" width={44} height={44} loading="lazy" decoding="async" />;
+}
+
+/**
+ * The four gaps a service row leaves in the page the site will draw, as short marks.
+ *
+ * They sit beside the status badge but are not a second status: a flagged row saves, publishes
+ * and opens for editing exactly like a clean one. The list is the only place an owner sees a
+ * whole page of them at once, which is why each one names a thing to add, not a problem.
+ */
+function ServiceWarnings({
+  warnings,
+  labels,
+}: Readonly<{
+  warnings: ServiceWarning[];
+  labels: Record<MessageKey, string>;
+}>) {
+  return warnings.map((warning) => (
+    <Badge key={warning} tone="warn">
+      {labels[`content.service.warn.${warning}`]}
+    </Badge>
+  ));
 }
 
 export function ConsoleList({
@@ -607,6 +629,7 @@ export function ConsoleList({
                     <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
                     {isHidden(row) && <Badge tone="neutral">{labels['content.state.hidden']}</Badge>}
                     {row.needsPhoto && <Badge tone="warn">{labels['content.result.needs-photo']}</Badge>}
+                    <ServiceWarnings warnings={row.warnings} labels={labels} />
                   </Link>
                   {/* Cards are the phone drawing of the same list, so the order moves here too. */}
                   {sorts.includes('position') && orderCell(row, index)}
@@ -656,6 +679,7 @@ export function ConsoleList({
                       <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
                       {isHidden(row) && <Badge tone="neutral">{labels['content.state.hidden']}</Badge>}
                       {row.needsPhoto && <Badge tone="warn">{labels['content.result.needs-photo']}</Badge>}
+                      <ServiceWarnings warnings={row.warnings} labels={labels} />
                     </td>
                     <td className="console-cell-date">
                       <bdi>{row.updatedAt.slice(0, 10)}</bdi>

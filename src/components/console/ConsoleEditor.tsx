@@ -31,11 +31,15 @@
  * or the keystroke refused it. A server message left standing over a value that has since
  * been corrected is a lie about what is on the screen.
  *
- * **The body is previewed inside `sandbox=""`.** No origin, no scripts, no top-level
- * navigation — which is what makes it safe to hand the frame the HTML exactly as it was
- * typed, instead of bundling the site's Node-only sanitizer into the console.
+ * **The body is previewed inside a frame that runs no scripts.** For the card-shaped kinds
+ * that means `sandbox=""`: no origin, no navigation — which is what makes it safe to hand
+ * the frame the HTML exactly as it was typed, instead of bundling the site's Node-only
+ * sanitizer into the console. A service row is a whole page rather than a card, so its
+ * frame loads the site's own draft route instead: the real components, the site's stylesheet
+ * and none of the console's. Scripting stays off there too, which is the one thing that
+ * makes a same-origin frame safe to point at a page holding half-written HTML.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { consoleCall, consoleRead } from './client-api';
 import { fieldOf, formValueOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/console/issues';
 import {
@@ -53,8 +57,9 @@ import {
   type Form,
 } from '@/lib/console/editor-form';
 import { isSharedAltKey } from '@/lib/content/alt-migration';
-import { listDocFromForm, listDocImage, schemaStems } from '@/lib/content/list-schema';
+import { listDocFromForm, listDocImage, listDocTitle, schemaStems } from '@/lib/content/list-schema';
 import { ListDocFields, type ReferenceChoice } from './ListDocFields';
+import { ServiceCompleteness } from './ServiceCompleteness';
 import { CaseComparePreview } from './CaseComparePreview';
 import { previewDocument, previewModel, type ResultCasePreview } from '@/lib/console/preview';
 import { localizedPath } from '@/lib/content/paths';
@@ -65,6 +70,7 @@ import { Card } from '@/components/console/kit';
 import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/console/kit';
 import { ImageGallery } from './ImageGallery';
 import { ImagePicker } from './ImagePicker';
+import { OfferServicesField } from './OfferServicesField';
 import { RichEditor } from './RichEditor';
 import { SeoPanel } from './SeoPanel';
 import { imageSlots, isImageField, isImageGalleryField, looksLikeImage } from '@/lib/console/image-field';
@@ -79,6 +85,20 @@ import type { MessageKey } from '@/lib/console/messages';
 const AUTOSAVE_MS = 2000;
 /** The frame reloads on its own clock, so the preview does not blink every keystroke. */
 const PREVIEW_MS = 450;
+/**
+ * The width a previewed page is laid out at, in CSS px: the real content width of a desktop
+ * browser and of a phone, not fractions of the rail. The site's own breakpoints key on this
+ * number, so a frame drawn at 390 shows what a phone shows — which is the only way a desktop
+ * preview can be more than the phone one with the margins put back.
+ */
+const PREVIEW_LAYOUTS = { wide: 1280, phone: 390 } as const;
+/**
+ * How much rail the frame may take, in CSS px. The frame is scaled to fit the width it is
+ * given, so the height has to be decided here rather than left to a document that is now
+ * twice as tall as the space it is drawn in: a long page scrolls inside its own frame instead
+ * of stretching the editor, and the author sees the same slice of it either way.
+ */
+const PREVIEW_RAIL_HEIGHTS = { wide: 440, phone: 544 } as const;
 
 export interface ConsoleEditorProps {
   kind: ContentKind;
@@ -152,6 +172,12 @@ export function ConsoleEditor({
   const [autosaveStopped, setAutosaveStopped] = useState(false);
   const [history, setHistory] = useState<{ id: string; revisions: RevisionView[] } | null>(null);
   const [previewSrc, setPreviewSrc] = useState('');
+  /** The frame's width, not the browser's: a page is written for both, and the narrow one
+   *  is where a section's overflow first shows. */
+  const [viewport, setViewport] = useState<'wide' | 'phone'>('wide');
+  /** The rail the frame is drawn into, measured — see the scale below. */
+  const stageRef = useRef<HTMLDivElement | null>(null);
+  const [stageWidth, setStageWidth] = useState(0);
   /** The case the same form draws its comparison from, kept beside the frame because the
    *  frame runs no scripts and a slider needs them. */
   const [previewCase, setPreviewCase] = useState<ResultCasePreview | null>(null);
@@ -317,6 +343,18 @@ export function ConsoleEditor({
     return () => clearTimeout(timer);
   }, [kind, locale, row?.listKey, shown, referenceOptions, labels]);
 
+  // The scale is a fraction of the rail, so the rail's width has to be measured, not guessed:
+  // it changes with the window, with the console's own breakpoints and with the locale's script.
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+    const measure = () => setStageWidth(stage.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, []);
+
   async function publish(): Promise<void> {
     if (!row) return;
     if (dirty && !(await save('nav'))) return;
@@ -399,6 +437,44 @@ export function ConsoleEditor({
   const media = row ? imagesOfForm(row, shown) : [];
   const state = row ? contentStateKey(row) : null;
   const previewPath = seo.path === null ? null : localizedPath(seo.path, locale);
+  /**
+   * The address of this row's own draft page, or null when there is nothing to draw one with.
+   *
+   * A service row is a whole page rather than a card, so its preview asks the site to render
+   * it: `src/lib/wp/…` builds the page from the row's saved draft, the site's components paint
+   * it, and the stylesheet that arrives is the site's, never the console's. `?v=` is the row's
+   * version, so the frame reloads on the write that lands — which is the same moment the
+   * public page would change, and why the document behind it is `savedForm` rather than the
+   * words still being typed: a name that is only in this browser would ask for a page that
+   * does not exist yet and be answered by a 404.
+   */
+  const draftHref =
+    row && listSchema?.key === 'services' && !row.trashed && listDocTitle(listSchema, listDocFromForm(listSchema, savedForm).doc, locale) !== ''
+      ? `${localizedPath(`/preview/services/${row.id}`, locale)}?v=${row.version}`
+      : null;
+  /** The same row, too nameless to have a page yet — said, because the frame is what is missing. */
+  const needsName = row !== null && listSchema?.key === 'services' && !row.trashed && draftHref === null;
+  /**
+   * The frame's geometry, and only for a page frame. A card has no desktop layout to pretend
+   * at — it is one box, and the sheet's own width suits it. A page is laid out at a real
+   * device width, then scaled into the rail, because the media queries inside the frame fire
+   * on the layout width: a rail-sized frame would report "desktop" while showing the phone
+   * grid with the margins put back, which is the one thing a preview must not do.
+   */
+  const previewLayout = PREVIEW_LAYOUTS[viewport];
+  const previewScale = draftHref !== null && stageWidth > 0 ? Math.min(1, stageWidth / previewLayout) : 1;
+  const railHeight = PREVIEW_RAIL_HEIGHTS[viewport];
+  const stageStyle = draftHref !== null ? { blockSize: `${railHeight}px` } : undefined;
+  const frameStyle =
+    draftHref === null
+      ? undefined
+      : {
+          // The height is divided by the scale because the frame is measured before it is
+          // shrunk: what the author gets is exactly the rail, at either width.
+          inlineSize: `${previewLayout}px`,
+          blockSize: `${Math.round(railHeight / previewScale)}px`,
+          transform: `scale(${previewScale})`,
+        };
 
   return (
     <div className="console-editor">
@@ -467,6 +543,13 @@ export function ConsoleEditor({
           <ResultAdvice form={shown} rowKey={row.key} labels={labels} />
         ) : null}
 
+        {/* A service row is the one list item whose whole page is a document of fifty-two
+            fields, so the editor says how much of it the site would show — from the words in
+            the boxes right now, not from the last write. It never withholds a save. */}
+        {row && listSchema?.key === 'services' && !row.trashed ? (
+          <ServiceCompleteness doc={listDocFromForm(listSchema, shown).doc} rowKey={row.key} labels={labels} />
+        ) : null}
+
         {/* The picture is part of the item, not a detail of the list: whatever URL the
             image field (or a list item's `data`) holds is shown here as the person types
             it, so a broken path is visible before it reaches the site. */}
@@ -518,6 +601,7 @@ export function ConsoleEditor({
                   errors={issues.byField[name] ?? []}
                   disabled={!canEditRow}
                   labels={labels}
+                  serviceChoices={referenceOptions.applicableServices ?? []}
                   onChange={(next) => setForm((current) => ({ ...current, [name]: next }))}
                 />
               ))}
@@ -615,7 +699,7 @@ export function ConsoleEditor({
         {previewCase && <CaseComparePreview model={previewCase} locale={locale} labels={labels} />}
         <Card as="section" className="console-panel console-preview">
           <h3>{labels['content.preview']}</h3>
-          <Note>{labels['content.preview.draft']}</Note>
+          <Note>{draftHref ? labels['content.preview.page'] : labels['content.preview.draft']}</Note>
           {previewPath ? (
             <ButtonLink href={previewPath} target="_blank" rel="noreferrer">
               {labels['content.preview.site']}
@@ -623,9 +707,36 @@ export function ConsoleEditor({
           ) : (
             <Note>{labels['content.preview.no_page']}</Note>
           )}
-          {/* No `allow-same-origin`, no `allow-scripts`: the draft's own markup is inert
-              here, and it never reaches the document that holds the session cookie. */}
-          <iframe className="console-preview-frame" title={labels['content.preview']} sandbox="" srcDoc={previewSrc} />
+          {needsName && <Alert tone="warn">{labels['content.preview.needs_name']}</Alert>}
+          {draftHref !== null && (
+            <div className="console-controls">
+              {/* A toggle, not two buttons that look alike: `data-active` is what says which
+                  width the frame is holding, and `aria-pressed` says it to a screen reader.
+                  They belong to a page — a card is one box at any width. */}
+              <Button size="sm" active={viewport === 'wide'} aria-pressed={viewport === 'wide'} onClick={() => setViewport('wide')}>
+                {labels['content.preview.desktop']}
+              </Button>
+              <Button size="sm" active={viewport === 'phone'} aria-pressed={viewport === 'phone'} onClick={() => setViewport('phone')}>
+                {labels['content.preview.mobile']}
+              </Button>
+              <ButtonLink size="sm" href={draftHref} target="_blank" rel="noreferrer">
+                {labels['content.preview.open_draft']}
+              </ButtonLink>
+            </div>
+          )}
+          <div ref={stageRef} className="console-preview-stage" data-viewport={viewport} style={stageStyle}>
+            {/* A page frame is same-origin and still runs no scripts, so the half-written HTML
+                it renders cannot reach the session cookie the route read it with; the card
+                frame keeps the stricter sandbox and no origin at all. */}
+            <iframe
+              className="console-preview-frame"
+              title={labels['content.preview']}
+              style={frameStyle}
+              sandbox={draftHref ? 'allow-same-origin' : ''}
+              src={draftHref ?? undefined}
+              srcDoc={draftHref ? undefined : previewSrc}
+            />
+          </div>
         </Card>
 
         <SeoPanel
@@ -651,6 +762,7 @@ function FieldRow({
   errors,
   disabled,
   labels,
+  serviceChoices = [],
   onChange,
 }: Readonly<{
   name: string;
@@ -660,6 +772,8 @@ function FieldRow({
   errors: string[];
   disabled: boolean;
   labels: Record<MessageKey, string>;
+  /** the services an offer may be booked through, resolved on the server for this locale */
+  serviceChoices?: ReferenceChoice[];
   onChange: (next: string | boolean) => void;
 }>) {
   const label = labels[`content.field.${name}` as MessageKey] ?? name;
@@ -705,6 +819,18 @@ function FieldRow({
     </>
   );
 
+  // A day box has to say what it holds, because the field next to it used to be an hour and
+  // an owner who reads "Valid from" as a time of day will type the wrong thing.
+  const noteNode =
+    field.kind === 'date' ? (
+      <Note>
+        {labels['content.offer.dates.hint']}
+        {field.immediate && !invalid ? ` · ${labels['content.immediate']}` : ''}
+      </Note>
+    ) : field.immediate && !invalid ? (
+      <Note>{labels['content.immediate']}</Note>
+    ) : null;
+
   // BK-14a: a picture is chosen from the disk, never typed. The row keeps its label and its
   // `id` — the id now belongs to the file input the picker stretches over the frame — so the
   // `<label>` still names a real control and a keyboard reaches the upload the same way it
@@ -739,6 +865,24 @@ function FieldRow({
   // A document with no form is not an invitation to type JSON. Nothing reaches this line
   // today — every JSON column is a gallery or a list the console knows — but a new one has
   // to fail as a sentence on the screen, not as a textarea waiting for a paste.
+  //
+  // The one JSON column that is not a document goes first: an offer's services are one
+  // question with three answers, and braces cannot tell "nobody answered" from "no service"
+  // from "every service" — which is the difference that decides what booking restricts.
+  if (name === 'applicableServices' && field.kind === 'json') {
+    return (
+      <OfferServicesField
+        id={id}
+        value={text}
+        choices={serviceChoices}
+        disabled={disabled}
+        errors={errors}
+        labels={labels}
+        onChange={onChange}
+      />
+    );
+  }
+
   if (field.kind === 'json') {
     return <Alert>{labels['content.list.no_form']}</Alert>;
   }
@@ -748,7 +892,7 @@ function FieldRow({
   // a page instead. The row keeps the same `id`, which now names the surface they type in.
   if (field.format === 'html') {
     return (
-      <Field htmlFor={id} errors={errors} label={labelNode} note={field.immediate && !invalid ? <Note>{labels['content.immediate']}</Note> : null}>
+      <Field htmlFor={id} errors={errors} label={labelNode} note={noteNode}>
         <RichEditor
           labels={labels}
           value={text}
@@ -763,7 +907,7 @@ function FieldRow({
   }
 
   return (
-    <Field htmlFor={id} errors={errors} label={labelNode} note={field.immediate && !invalid ? <Note>{labels['content.immediate']}</Note> : null}>
+    <Field htmlFor={id} errors={errors} label={labelNode} note={noteNode}>
       {field.multiline ? (
         <Textarea
           id={id}
@@ -777,7 +921,7 @@ function FieldRow({
       ) : (
         <Input
           id={id}
-          type={field.kind === 'number' ? 'number' : 'text'}
+          type={field.kind === 'date' ? 'date' : field.kind === 'number' ? 'number' : 'text'}
           value={text}
           disabled={disabled}
           maxLength={field.max > 0 && field.max < 100_000 ? field.max : undefined}

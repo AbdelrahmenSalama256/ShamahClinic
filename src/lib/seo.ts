@@ -19,6 +19,32 @@ interface PageMetaInput {
   type?: "website" | "article";
   /** Override the language taken from the URL segment. */
   lang?: Locale;
+  /**
+   * The address the row's author named as the canonical one, in the row's own SEO box.
+   * Anything the shape cannot answer — an empty box, a bare word — is ignored and the
+   * page keeps its own URL, which is the answer a specialist would expect from a field
+   * they left alone.
+   */
+  canonical?: string | null;
+  /** The row asked not to be indexed. Nothing else about the page changes. */
+  noindex?: boolean;
+}
+
+/**
+ * The canonical a page publishes, given what its author typed.
+ *
+ * Two spellings mean the same thing to a search engine and are written differently in the
+ * console's box: an owner who means *this page, over there* pastes a whole address, and one
+ * who means *this page, at another path on this site* types a path. A bare word is a typo,
+ * and a typo in the canonical is a page that stops being found, so the caller's own URL
+ * stands instead of guessing which of the two the typo meant.
+ */
+export function authoritativeCanonical(value: string | null | undefined, fallback: string): string {
+  const text = (value ?? '').trim();
+  if (!text) return fallback;
+  if (/^https?:\/\//i.test(text)) return text;
+  if (text.startsWith('//') || text.startsWith('://')) return fallback;
+  return text.startsWith('/') ? `${SITE_URL}${text}` : fallback;
 }
 
 const OG_LOCALE: Record<Locale, string> = { ar: "ar_EG", en: "en_US" };
@@ -35,6 +61,8 @@ export async function buildPageMetadata({
   image,
   type = "website",
   lang: langOverride,
+  canonical,
+  noindex,
 }: PageMetaInput): Promise<Metadata> {
   const lang = langOverride ?? (await routeLang());
   const other: Locale = lang === "ar" ? "en" : "ar";
@@ -60,8 +88,12 @@ export async function buildPageMetadata({
   return {
     title: { absolute: pageTitle },
     description: summary,
+    // Only a row that asked to stay out of the index gets a robots tag. Emitting the
+    // permissive answer on every page would rewrite the served HTML of a site nobody
+    // asked to change, and `index, follow` is what a crawler already assumes.
+    ...(noindex ? { robots: { index: false, follow: true } } : {}),
     alternates: {
-      canonical: url,
+      canonical: authoritativeCanonical(canonical, url),
       languages: {
         ar: `${SITE_URL}${getLocalizedHref(path, "ar")}`,
         en: `${SITE_URL}${getLocalizedHref(path, "en")}`,

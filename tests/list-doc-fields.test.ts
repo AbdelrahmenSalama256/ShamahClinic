@@ -146,7 +146,27 @@ function sampleDoc(schema: ListSchema): Record<string, unknown> {
       continue;
     }
     if (field.type === 'children') {
-      doc[field.stem] = [{ label_ar: 'ب', label_en: 'b', href: '/b' }];
+      // A row of a repeatable field is drawn only when it holds something, and which cells it
+      // holds is the schema's answer, not the test's: a benefit is a sentence and a title, a
+      // gallery row is a picture and its words.
+      const row: Record<string, unknown> = {};
+      for (const cell of field.row) {
+        if (cell.type === 'text') {
+          row[`${cell.stem}_ar`] = 'ب';
+          row[`${cell.stem}_en`] = 'b';
+        } else if (cell.type === 'image') {
+          row[cell.stem] = '/uploads/202610/abc.webp';
+        } else if (cell.type === 'select') {
+          row[cell.stem] = cell.options?.[0]?.value ?? '';
+        } else {
+          row[cell.stem] = '/b';
+        }
+      }
+      doc[field.stem] = [row];
+      continue;
+    }
+    if (field.type === 'sections') {
+      doc[field.stem] = field.sections.map((section) => ({ key: section.key, visible: true }));
       continue;
     }
     if (field.type === 'number') {
@@ -199,6 +219,17 @@ describe('what the typed list form really paints (BK-20 F)', () => {
           // A sub-item's cells are named by their row and their column, not by the field.
           expect(markup, `${schema.key}.${field.stem} has a row`).toContain('id="child-');
           expect(markup, `${schema.key}.${field.stem} can be added to`).toContain('console-doc-add');
+          continue;
+        }
+        if (field.type === 'sections') {
+          // A section is not a control with the field's id: it is a row of the page's own
+          // order. What has to be on screen is every section of the catalogue, named in the
+          // words this form's locale draws it in — a section the person cannot see is a
+          // section they cannot show or hide.
+          expect(markup, `${schema.key}.${field.stem} is a list of sections`).toContain('console-doc-section');
+          for (const section of field.sections) {
+            expect(markup, `${schema.key}.${field.stem} names ${section.key}`).toContain(section.label.ar);
+          }
           continue;
         }
         if (field.type === 'list') {
@@ -455,5 +486,45 @@ describe('what the typed list form really paints (BK-20 F)', () => {
     expect(box).toBeGreaterThan(-1);
     expect(refusal).toBeLessThan(box);
     expect(editorSource).toContain('content.list.no_form');
+  });
+
+  it('puts each of a service row\'s fourteen sections behind its own door', () => {
+    const services = listSchemaOf('services')!;
+    const markup = renderForm(services, emptyListDocForm(services));
+    const groupKeys = [...new Set(services.fields.map((field) => field.group?.key).filter((key): key is string => Boolean(key)))];
+    expect(groupKeys).toHaveLength(14);
+
+    const doors = markup.match(/<details class="console-doc-group-box"[^>]*>/g) ?? [];
+    expect(doors).toHaveLength(14);
+    // Every door starts open, so nothing an owner wrote is hidden behind a click they have
+    // not made yet, and the row reads as the whole page it is.
+    for (const door of doors) expect(door).toContain('open=""');
+
+    // The name of each group is the door's handle, in the language the screen speaks.
+    for (const key of groupKeys) {
+      const label = services.fields.find((field) => field.group?.key === key)!.group!.label.ar;
+      expect(unscape(markup)).toContain(label);
+    }
+    // A heading is a handle, not a floating line between fields.
+    expect(markup).not.toContain('<h3 class="console-doc-group">');
+
+    // A closed door is still a door with the room behind it: the fields are children of the
+    // `<details>`, so hiding a section never removes a control somebody has typed into —
+    // which is the whole reason this is a disclosure and not a filter.
+    const opened = markup.indexOf('<details class="console-doc-group-box"');
+    const fields = markup.indexOf('<div class="console-doc-group-fields">');
+    const shut = markup.indexOf('</details>');
+    expect(opened).toBeGreaterThan(-1);
+    expect(fields).toBeGreaterThan(opened);
+    expect(shut).toBeGreaterThan(fields);
+    for (const field of services.fields) {
+      const control = markup.search(new RegExp(`id="${field.stem}`));
+      if (control === -1) continue;
+      expect(control).toBeGreaterThan(opened);
+    }
+
+    // A list whose schema names no group keeps the flat form it has always drawn.
+    const branches = listSchemaOf('branches')!;
+    expect(renderForm(branches, emptyListDocForm(branches))).not.toContain('console-doc-group-box');
   });
 });

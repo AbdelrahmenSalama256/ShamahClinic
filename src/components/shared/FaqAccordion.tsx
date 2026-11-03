@@ -3,11 +3,23 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
-import type { FaqItem } from "@/data/faq";
 import { Plus, Minus } from "lucide-react";
 import { track } from "@/lib/tracking/first-party";
 
-export const FaqAccordion: React.FC<{ items: FaqItem[] }> = ({ items }) => {
+/**
+ * One row of the accordion: a question, its answer, and the id that keeps it open.
+ *
+ * The questions page hands over `FaqItem`s from the questions list; a service page hands over
+ * the questions written on its own row, which belong to no list and have no category to claim.
+ * Both are drawn here, so the shape is the words and nothing else.
+ */
+export interface FaqEntry {
+  id: string;
+  question: { ar: string; en: string };
+  answer: { ar: string; en: string };
+}
+
+export const FaqAccordion: React.FC<{ items: readonly FaqEntry[] }> = ({ items }) => {
   const { t, language, formatNumber } = useLanguage();
   const reduce = useReducedMotion();
   const [open, setOpen] = useState<string | null>(items[0]?.id ?? null);

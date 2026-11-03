@@ -13,11 +13,25 @@ const BookingModal = dynamic(
   { ssr: false, loading: () => null },
 );
 
+/**
+ * The offer a booking started from.
+ *
+ * It carries the slug as well as the name so the lead can be checked against the row
+ * rather than against a title somebody typed, and `services` so the wizard can narrow
+ * its own picker. `null` is "nobody has configured this offer yet", which is not the
+ * same answer as `[]`; `@/lib/content/offer-services` is what reads the difference.
+ */
+export interface BookingOffer {
+  slug: string;
+  name: { ar: string; en: string };
+  services: string[] | null;
+}
+
 interface BookingOptions {
   treatmentId?: string;
   specialistId?: string;
   /** Offer the booking started from, shown prefilled in the summary. */
-  offerName?: { ar: string; en: string };
+  offer?: BookingOffer;
 }
 
 interface BookingContextType {
@@ -61,7 +75,7 @@ export const BookingProvider: React.FC<{
           specialists={specialists}
           preSelectedTreatmentId={options.treatmentId}
           preSelectedSpecialistId={options.specialistId}
-          preSelectedOffer={options.offerName}
+          offer={options.offer}
         />
       ) : null}
     </BookingContext.Provider>

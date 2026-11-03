@@ -184,7 +184,12 @@ export interface OffersTable extends Editable {
   currency: Generated<string>;
   on_sale: Generated<0 | 1>;
   images: JsonOr<OfferImage[]>;
+  /** NULL is "never configured", not "all services" — see 012_offer_services.sql */
+  applicable_services: JsonOr<string[]>;
   enabled: Generated<0 | 1>;
+  /** Cairo calendar day the offer starts being live; null has no boundary */
+  starts_at: string | null;
+  ends_at: string | null;
   position: Generated<number>;
   published_at: Date | null;
   legacy_id: string | null;
