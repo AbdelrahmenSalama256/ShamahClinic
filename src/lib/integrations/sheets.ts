@@ -173,6 +173,8 @@ function doPost(e) {
     return reply({ ok: true });
   } catch (error) {
     return reply({ ok: false, error: String(error) });
+  } finally {
+    lock.releaseLock();
   }
 }
 
