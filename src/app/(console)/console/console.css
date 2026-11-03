@@ -27,8 +27,9 @@
   *   1024  sidebar column  |  below: off-canvas drawer
  * 480   phone-form: single-column forms, no horizontal scroll, long text never breaks layout
 
- /* Textareas grow to the content up to a hard max, so a 5,000-word Arabic or English
-    field never collapses the editor or spills the bar off screen. */
+ /*
+ * Textareas grow to the content up to a hard max, so a 5,000-word Arabic or English
+ * field never collapses the editor or spills the bar off screen.
  *
  * Logical properties throughout so the file works in RTL.
  * ---------------------------------------------------------------------------
@@ -438,14 +439,13 @@
     }
 
     @media (min-width: 641px) and (max-width: 1024px) {
-      .console-detail .console-fields {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
+          .console-detail .console-fields {
+            grid-template-columns: repeat(2, 1fr);
+          }
 
+    font-size: 0.75rem;
+    color: var(--c-text-2);
 
-      font-size: 0.75rem;
-      color: var(--c-text-2);
     }
     }
   }
@@ -4747,18 +4747,17 @@
     }
 
     .console-ov-main,
-    .console-ov-split {
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
+        .console-ov-split {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
 
-    .console-ov-trio {
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
+        .console-ov-trio {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
 
     /* An SVG that stretches to the page height is a blob; a fixed plot keeps
        the shape the reader is meant to read. */
-    .console-ov-plot {
-      height: 8rem;
+        .console-ov-plot {
+          height: 8rem;
+        }
     }
-  }
-}
