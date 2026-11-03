@@ -5,7 +5,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { AboutClient } from "@/components/pages/AboutClient";
 import { aboutFallback } from "@/data/about";
-import { getBranchList } from "@/lib/content/site";
+import { getPage, getBranchList } from "@/lib/content/site";
 import { getBanner } from "@/lib/content/banners";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 import { guardPage } from '@/lib/content/guard-page';
@@ -22,12 +22,19 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AboutPage() {
   await guardPage('about');
-  const [about, branches, treatments, banner] = await Promise.all([
-    Promise.resolve(aboutFallback),
+  const [page, branches, treatments, banner] = await Promise.all([
+    getPage('about'),
     getBranchList(),
     getMergedTreatments(),
     getBanner('about'),
   ]);
+  const about = page
+    ? {
+        title: { ar: page.item.title.ar || aboutFallback.title.ar, en: page.item.title.en || aboutFallback.title.en },
+        lead: { ar: page.item.html.ar || aboutFallback.lead.ar, en: page.item.html.en || aboutFallback.lead.en },
+        sections: aboutFallback.sections,
+      }
+    : aboutFallback;
   return (
     <>
       <JsonLd
