@@ -883,22 +883,6 @@ function FieldRow({
     );
   }
 
-  if (field.kind === 'json') {
-    return (
-      <Field htmlFor={id} errors={errors} label={labelNode} note={noteNode}>
-        <Textarea
-          id={id}
-          rows={14}
-          value={text}
-          disabled={disabled}
-          aria-invalid={invalid || undefined}
-          onChange={(event) => onChange(event.target.value)}
-          onBlur={leaveField}
-        />
-      </Field>
-    );
-  }
-
   // #246. A `html` column is the only content the site prints as markup, and the only place a
   // person used to read `<p class="wp-block-paragraph">` while trying to fix a sentence. They get
   // a page instead. The row keeps the same `id`, which now names the surface they type in.
