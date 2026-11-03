@@ -197,15 +197,21 @@ export const AboutClient: React.FC<{
               lead={{ ar: "أرقام العيادة اللي تقدر تشوفها أي عميل.", en: "The numbers behind the clinic you can see." }}
             />
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {s.numbers.map((n: { valueAr: string; valueEn: string; labelAr: string; labelEn: string; noteAr: string | null; noteEn: string | null }, i: number) => (
-                <Reveal key={i} delay={i * 0.08} className="bg-[var(--bg-card)]/70 rounded-2xl p-6 text-center">
-                  <div className="text-3xl font-black text-[var(--gold-end)]">{formatNumber(n.valueAr)}</div>
-                  <div className="mt-2 text-sm text-[var(--text-secondary)]">{t(n.labelAr, n.labelEn)}</div>
-                  {n.noteAr && (
-                    <div className="mt-1 text-xs text-[var(--text-muted)]">{t(n.noteAr ?? "", n.noteEn ?? "")}</div>
-                  )}
-                </Reveal>
-              ))}
+              {s.numbers.map((n: { valueAr: string; valueEn: string; labelAr: string; labelEn: string; noteAr: string | null; noteEn: string | null }, i: number) => {
+                // Read as `.ar`/`.en` members: the catalog addresses the literal pairs the
+                // site was built with, and an owner's number is not one of those.
+                const label = { ar: n.labelAr, en: n.labelEn };
+                const note = { ar: n.noteAr ?? "", en: n.noteEn ?? "" };
+                return (
+                  <Reveal key={i} delay={i * 0.08} className="bg-[var(--bg-card)]/70 rounded-2xl p-6 text-center">
+                    <div className="text-3xl font-black text-[var(--gold-end)]">{formatNumber(n.valueAr)}</div>
+                    <div className="mt-2 text-sm text-[var(--text-secondary)]">{t(label.ar, label.en)}</div>
+                    {n.noteAr && (
+                      <div className="mt-1 text-xs text-[var(--text-muted)]">{t(note.ar, note.en)}</div>
+                    )}
+                  </Reveal>
+                );
+              })}
             </div>
           </div>
         </section>
