@@ -1,64 +1,15 @@
-import { images, type PhotoSlot } from "@/lib/images";
-
+/**
+ * The one authored sentence pair the homepage still borrows.
+ *
+ * Everything else this file used to hold — the About page's story, values, reasons and
+ * numbers — is a `pages` row now: `src/lib/content/list-schema.ts` describes the document,
+ * `src/lib/content/about-page.ts` reads its published copy, and the console edits it. A
+ * fallback copy of a page that has its own row is a second source of truth, so none is
+ * left here.
+ */
 export interface Bilingual {
   ar: string;
   en: string;
-}
-
-/** One WPBakery section of the About page: heading, paragraphs, photo. */
-export interface AboutSection {
-  heading: Bilingual;
-  paragraphs: Bilingual[];
-  image: PhotoSlot | null;
-}
-
-export interface AboutContent {
-  title: Bilingual;
-  lead: Bilingual;
-  sections: AboutSection[];
-  /** Structured fields the About editor writes (JSON `data` column of the about page). */
-  structured: AboutStructuredData | null;
-}
-
-/** The typed, per-field structured data an owner writes about the clinic. */
-export interface AboutStructuredData {
-  heroTitle: Bilingual;
-  heroLead: Bilingual;
-  storyAr: string | null;
-  storyEn: string | null;
-  missionTitle: Bilingual;
-  missionBody: Bilingual;
-  visionTitle: Bilingual;
-  visionBody: Bilingual;
-  values: Bilingual[];
-  whyChooseUsTitle: Bilingual;
-  whyChooseUsLead: Bilingual;
-  whyChooseUs: Bilingual[];
-  numbers: AboutNumber[];
-  team: string[];
-  branches: string[];
-  certifications: AboutCertification[];
-  ctaTitle: Bilingual;
-  ctaLink: string | null;
-  ctaVerb: { ar: string; en: string };
-  /** Editorial splits of the "about us" story: heading, paragraphs, photo. */
-  sections: AboutSection[];
-}
-
-/** One numeric claim shown on the About page. */
-export interface AboutNumber {
-  valueAr: string;
-  valueEn: string;
-  labelAr: string;
-  labelEn: string;
-  noteAr: string | null;
-  noteEn: string | null;
-}
-
-/** One certification: photo + bilingual alt. */
-export interface AboutCertification {
-  src: string;
-  alt: Bilingual;
 }
 
 /**
@@ -73,34 +24,4 @@ export const homeIntroFallback: { title: Bilingual; lead: Bilingual } = {
     ar: "لأننا نتعامل مع البشرة كحالة طبية تحتاج تقييماً وخطة، لا كمنتج يُباع. هذا ما يجعل النتائج طبيعية ومستقرة.",
     en: "Because we treat skin as a medical case needing assessment and a plan, not a product to sell. That is what makes results natural and stable.",
   },
-};
-
-/**
- * Used only when WordPress answers with nothing (no snapshot, no live origin):
- * the page still has to render. Everything here is replaced by page 32 as soon
- * as the dashboard copy is available — see docs/WIRING.md.
- */
-export const aboutFallback: AboutContent = {
-  title: { ar: "من نحن", en: "About Shamah" },
-  lead: {
-    ar: "عيادات شامه وجهة لطب التجميل والليزر والعناية بالبشرة في القاهرة والجيزة، تقوم على فكرة بسيطة: بشرة صحية بنتيجة طبيعية، وقرار طبي واضح بلا مبالغة.",
-    en: "Shamah Clinics is a destination for aesthetic medicine, laser and skincare in Cairo and Giza, built on a simple idea: healthy skin with natural results, and a clear medical decision without exaggeration.",
-  },
-  sections: [
-    {
-      heading: { ar: "بدأنا من سؤال بسيط", en: "We started from a simple question" },
-      paragraphs: [
-        {
-          ar: "لماذا تخرج كثيرات من عيادات التجميل بنتيجة لا تشبههن؟ كان هذا سؤالنا الأول. الإجابة عندنا أن التجميل الناجح لا يغيّر الملامح بل يرتاح بها الوجه، وأن كل بشرة حالة مستقلة تحتاج تقييماً لا قالباً جاهزاً.",
-          en: "Why do many women leave aesthetic clinics with a result that does not look like them? That was our first question. Our answer is that successful aesthetics does not change features but lets the face rest, and that every skin is a unique case needing assessment, not a ready-made template.",
-        },
-        {
-          ar: "من هذه الفكرة وُلدت عيادات شامه: طاقم طبي نسائي متخصص، أجهزة حديثة بمنتجات أصلية، وبروتوكول يبدأ دائماً باستشارة وتحليل مكتوب. اليوم نخدم عميلاتنا من ثلاثة فروع في القاهرة والجيزة.",
-          en: "From this idea Shamah Clinics was born: a specialised all-female medical team, modern devices with authentic products, and a protocol that always begins with a consultation and a written analysis. Today we serve our clients from three branches across Cairo and Giza.",
-        },
-      ],
-      image: images.interiors.consultation,
-    },
-  ],
-  structured: null,
 };

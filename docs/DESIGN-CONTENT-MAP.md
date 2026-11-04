@@ -234,14 +234,17 @@ from published items so an all-DRAFT seed emits no FAQ schema.
 
 ## `/about` (`AboutClient`)
 
-H1/lead + Story/Process sections WP (page 32, `wp/about.ts`), plus homepage `#process`/
-story prose rows (`getHomeProseSections`); WP branch/treatment counters; STATIC hero
-photo, "Female staff 100", "What we stand by" 3 values (`:56-78`), team/branches teasers,
-and the four "why Shamah" reasons (`:25-54`, rendered `:141-155`).
-→ `pages` collection (slug `about`): `title`,`lead`,`sections[]`(heading,paras,image).
-Published (real bilingual WP). The "what we stand by" values + reasons are AUTH/STATIC
-on About — allowed here (not on Home); mark editable via `homeContent`/page fields,
-DRAFT if unverified.
+Was: H1/lead + Story/Process sections WP (page 32), WP branch/treatment counters, and
+STATIC hero photo, "Female staff 100", "What we stand by" values, teasers and the four
+"why Shamah" reasons. → `pages` collection, and AB-2 did it: the row whose route is
+`/about` carries `title`, `lead`, three photo slots with both descriptions, the story and
+process headings with 2 and 5 paragraphs, `staffValue`, the reasons (4) and the values (3)
+each behind their own heading and lead, and a `numbers` block the console can grow. The
+document is `ABOUT` in `src/lib/content/list-schema.ts`, published through the row's
+`pub_data`, read by `getAboutPage()`; `/console/pages/about` is the screen. The branch and
+treatment figures are counted from the published lists rather than stored, and the two
+teasers plus the three labels under the counted band stay site wording on `/console/texts`.
+The values and reasons are no longer AUTH/STATIC — they are the row's, in both languages.
 
 ---
 

@@ -8,214 +8,136 @@ import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Photo } from "@/components/ui/Photo";
 import { GoldLink } from "@/components/shared/Actions";
 import { images } from "@/lib/images";
-import type { PhotoSlot } from "@/lib/images";
-import type { AboutContent, AboutStructuredData, AboutSection } from '@/data/about';
-
-/** Fallback copy used before the owner has written any field: today's hard-coded text, so
- *  the page keeps rendering exactly as it did before this field exists. */
-function structuredOrDefault(about: AboutContent): AboutStructuredData & {
-  teamIds: string[];
-  branchesIds: string[];
-  sections: AboutSection[];
-} {
-  const s = about.structured ?? null;
-  return {
-    sections: s?.sections ?? about.sections,
-    teamIds: s?.team ?? [],
-    branchesIds: s?.branches ?? [],
-    heroTitle: s?.heroTitle ?? { ar: "من نحن", en: "About Shamah" },
-    heroLead: s?.heroLead ?? about.lead,
-    storyAr: s?.storyAr ?? null,
-    storyEn: s?.storyEn ?? null,
-    missionTitle: { ar: "رؤيتنا", en: "Our vision" },
-    missionBody: { ar: "أن نكون الصورة المثالية لعيادات التجمیل النسائية في مصر، نذكروا مع الطبقة الطبية دائماً، ونشتق النتائج من الواقع وليس من المبالغة.", en: "To be the leading all-female cosmetic clinic in Egypt, always guided by medical ethics and producing results that are real, not exaggerated." },
-    visionTitle: { ar: "قيادتنا", en: "Our leadership" },
-    visionBody: { ar: "نضع دائماً البشرة قبل الربح، والراحة قبل الشمول، والشفافية قبل الترويج.", en: "We always put the skin before the profit, comfort before coverage, and transparency before promotion." },
-    values: s?.values ?? [
-      { ar: "الصدق قبل البيع", en: "Honesty before selling" },
-      { ar: "الطب أساس كل جلسة", en: "Medicine underpins every session" },
-      { ar: "خصوصية وراحة كاملتان", en: "Complete privacy and comfort" },
-    ],
-    whyChooseUsTitle: { ar: "لماذا تختار العميلات عيادات شامه؟", en: "Why clients choose Shamah Clinics" },
-    whyChooseUsLead: { ar: "أربع نقاط نجيب عليها بصراح قبل أي جلسة.", en: "Four points we answer plainly before any session." },
-    whyChooseUs: s?.whyChooseUs ?? [
-      { ar: "استشارة قبل أي إجراء", en: "A consultation before any procedure" },
-      { ar: "طاقم طبي نسائي بالكامل", en: "An all-female medical team" },
-      { ar: "أجهزة حديثة ومنتجات أصلية", en: "Modern devices, authentic products" },
-      { ar: "ثلاثة فروع قريبة منكِ", en: "Three branches near you" },
-    ],
-    numbers: s?.numbers ?? [
-      { valueAr: "100", valueEn: "100", labelAr: "طاقم نسائي", labelEn: "Female staff", noteAr: null, noteEn: null },
-      { valueAr: "3", valueEn: "3", labelAr: "فرع", labelEn: "Branch", noteAr: null, noteEn: null },
-      { valueAr: "9", valueEn: "9", labelAr: "سنة خبرة", labelEn: "Years of experience", noteAr: null, noteEn: null },
-    ],
-    team: s?.team ?? [],
-    branches: s?.branches ?? [],
-    certifications: s?.certifications ?? [],
-    ctaTitle: { ar: "ابدأِ رحلة بشرة طبيعية", en: "Start your natural skin journey" },
-    ctaLink: null,
-    ctaVerb: { ar: "تواصلی الآن", en: "Contact us now" },
-  };
-}
+import type { AboutPage, AboutSplit } from "@/lib/content/about-page";
 
 /**
- * Copy comes from WordPress page 32 through `about`; the branch and treatment
- * counters are the WordPress branch list and service list. The values block and
- * the two teasers have no WordPress source and stay authored (docs/WIRING.md).
+ * The About page as its published row describes it.
+ *
+ * Every sentence here is a value the owner typed — `getAboutPage()` reads them off the
+ * `/about` row's published copy — and every block that has nothing under it is not drawn.
+ * The two figures the first split counts (branches, treatments) arrive counted, because a
+ * number typed beside a list is a number that goes stale; the third is the owner's.
+ *
+ * The two cards at the foot of the page are the shell's own links to `/doctors` and
+ * `/branches`: their words are catalogue copy the console's text center rewrites, and their
+ * photographs are the site's standing ones, so neither belongs to this row.
  */
-export const AboutClient: React.FC<{
-  about: AboutContent & { structured: AboutStructuredData | null };
-  branchCount: number;
-  treatmentCount: number;
-  banner: PhotoSlot;
-}> = ({ about, branchCount, treatmentCount, banner }) => {
-  const s = structuredOrDefault(about);
+export const AboutClient: React.FC<{ page: AboutPage }> = ({ page }) => {
   const { t, formatNumber } = useLanguage();
+
+  const split = (entry: AboutSplit, index: number) => (
+    <section
+      key={index}
+      className={`py-5 lg:py-16 ${index % 2 ? "bg-[var(--bg-secondary)]/60" : "bg-[var(--bg-primary)]"}`}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+        <div className={entry.image ? "lg:col-span-6" : "lg:col-span-12"}>
+          <SectionHeading title={entry.title} />
+          <div className="mt-6 space-y-4 text-base leading-[1.9] text-[var(--text-secondary)]">
+            {entry.paragraphs.map((paragraph, position) => (
+              <Reveal key={position} delay={position * 0.08}>
+                <p dir="auto">{t(paragraph.ar, paragraph.en)}</p>
+              </Reveal>
+            ))}
+          </div>
+
+          {index === 0 ? (
+            <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-[var(--border-control)] pt-8">
+              <div>
+                <dt className="text-xs text-[var(--text-muted)]">{t("فرع", "Branches")}</dt>
+                <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(page.branchCount)}</span></dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[var(--text-muted)]">{t("خدمة", "Treatments")}</dt>
+                <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(page.treatmentCount)}</span></dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[var(--text-muted)]">{t("طاقم نسائي", "Female staff")}</dt>
+                <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(t(page.staffValue.ar, page.staffValue.en))}</span></dd>
+              </div>
+            </dl>
+          ) : null}
+        </div>
+        {entry.image ? (
+          <div className="lg:col-span-6">
+            <Reveal direction="start">
+              <div className="rounded-3xl overflow-hidden">
+                <Photo slot={entry.image} ratio="landscape" curtain sizes="(max-width:1024px) 100vw, 45vw" />
+              </div>
+            </Reveal>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+
+  /** One numbered editorial list — the reasons and the values are drawn the same way. */
+  const numberedList = (items: { ar: string; en: string }[]) => (
+    <ol className="mt-12 space-y-10">
+      {items.map((item, index) => (
+        <Reveal as="li" key={index} delay={index * 0.08} className="flex gap-6">
+          <span className="text-4xl font-black text-[var(--gold-end)] num leading-none">
+            {formatNumber(index + 1)}
+          </span>
+          <h3 className="text-xl font-black text-[var(--text-primary)]" dir="auto">
+            {t(item.ar, item.en)}
+          </h3>
+        </Reveal>
+      ))}
+    </ol>
+  );
 
   return (
     <>
       <PageHero
-        title={about.title}
-        lead={about.lead}
+        title={page.title}
+        lead={page.lead}
         breadcrumbs={[
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
-          { href: "/about", label: about.title },
+          { href: "/about", label: page.title },
         ]}
-        photo={banner}
+        photo={page.hero ?? undefined}
       />
 
-      {/* Story / Process — one editorial split per WordPress section */}
-      {s.sections.map((section, i) => (
-        <section
-          key={`${i}-${section.heading.en}`}
-          className={`py-5 lg:py-16 ${
-            i % 2 ? "bg-[var(--bg-secondary)]/60" : "bg-[var(--bg-primary)]"
-          }`}
-        >
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
-            <div className={section.image ? "lg:col-span-6" : "lg:col-span-12"}>
-              <SectionHeading title={section.heading} />
-              <div className="mt-6 space-y-4 text-base leading-[1.9] text-[var(--text-secondary)]">
-                {section.paragraphs.map((paragraph, p) => (
-                  <Reveal key={p} delay={p * 0.08}>
-                    <p>{t(paragraph.ar, paragraph.en)}</p>
-                  </Reveal>
-                ))}
-              </div>
+      {page.splits.map(split)}
 
-              {i === 0 ? (
-                <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-[var(--border-control)] pt-8">
-                  <div>
-                    <dt className="text-xs text-[var(--text-muted)]">{t("فرع", "Branches")}</dt>
-                    <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(branchCount)}</span></dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-[var(--text-muted)]">{t("خدمة", "Treatments")}</dt>
-                    <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(treatmentCount)}</span></dd>
-                  </div>
-                  <div>
-                    <dt className="text-xs text-[var(--text-muted)]">{t("طاقم نسائي", "Female staff")}</dt>
-                    <dd className="text-3xl font-black text-[var(--gold-end)]"><span>{formatNumber(100)}٪</span></dd>
-                  </div>
-                </dl>
-              ) : null}
-            </div>
-            {section.image ? (
-              <div className="lg:col-span-6">
-                <Reveal direction="start">
-                  <div className="rounded-3xl overflow-hidden">
-                    <Photo slot={section.image} ratio="landscape" curtain sizes="(max-width:1024px) 100vw, 45vw" />
-                  </div>
-                </Reveal>
-              </div>
-            ) : null}
+      {page.reasons.length > 0 ? (
+        <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6">
+            <SectionHeading align="center" title={page.reasonsTitle} lead={page.reasonsLead} />
+            {numberedList(page.reasons)}
           </div>
         </section>
-      ))}
+      ) : null}
 
-      {/* Why clients choose Shamah — the four reasons Home used to carry. They have
-          no WordPress source (see docs/STATIC-SWEEP.md), so they live here as
-          authored copy and Home links to this block. */}
-      <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <SectionHeading
-            align="center"
-            title={s.whyChooseUsTitle}
-            lead={s.whyChooseUsLead}
-          />
-          <ol className="mt-12 space-y-10">
-            {s.whyChooseUs.map((reason: { ar: string; en: string }, i: number) => (
-              <Reveal as="li" key={i} delay={i * 0.08} className="flex gap-6">
-                <span className="text-4xl font-black text-[var(--gold-end)] num leading-none">
-                  {formatNumber(i + 1)}
-                </span>
-                <div>
-                  <h3 className="text-xl font-black text-[var(--text-primary)]" dir="auto">
-                    {t(reason.ar, reason.en)}
-                  </h3>
-                  <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]" dir="auto">
-                    {t(reason.ar, reason.en)}
-                  </p>
-                </div>
-              </Reveal>
-            ))}
-          </ol>
-        </div>
-      </section>
+      {page.values.length > 0 ? (
+        <section className="py-5 lg:py-16 bg-[var(--bg-secondary)]/60">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6">
+            <SectionHeading align="center" title={page.valuesTitle} lead={page.valuesLead} />
+            {numberedList(page.values)}
+          </div>
+        </section>
+      ) : null}
 
-      {/* Values — numbered editorial list, not identical cards */}
-      <section className="py-5 lg:py-16 bg-[var(--bg-secondary)]/60">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6">
-          <SectionHeading
-            align="center"
-            title={{ ar: "ما نلتزم به", en: "What we stand by" }}
-            lead={{ ar: "ثلاث قواعد تحكم كل قرار في عيادات شامه.", en: "Three rules that govern every decision at Shamah." }}
-          />
-          <ol className="mt-12 space-y-10">
-            {s.values.map((v: { ar: string; en: string }, i: number) => (
-              <Reveal as="li" key={i} delay={i * 0.08} className="flex gap-6">
-                <span className="text-4xl font-black text-[var(--gold-end)] num leading-none">
-                  {formatNumber(i + 1)}
-                </span>
-                <div>
-                  <h3 className="text-xl font-black text-[var(--text-primary)]">{t(v.ar, v.en)}</h3>
-                  <p className="mt-2 text-base leading-relaxed text-[var(--text-secondary)]">{t(v.ar, v.en)}</p>
-                </div>
-              </Reveal>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* Numbers the owner enters, rendered as a grid of big stat cards. */}
-      {s.numbers.length > 0 ? (
+      {page.numbers.length > 0 ? (
         <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <SectionHeading
-              align="center"
-              title={{ ar: "أرقامنا", en: "Our numbers" }}
-              lead={{ ar: "أرقام العيادة اللي تقدر تشوفها أي عميل.", en: "The numbers behind the clinic you can see." }}
-            />
+            <SectionHeading align="center" title={page.numbersTitle} lead={page.numbersLead} />
             <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {s.numbers.map((n: { valueAr: string; valueEn: string; labelAr: string; labelEn: string; noteAr: string | null; noteEn: string | null }, i: number) => {
-                // Read as `.ar`/`.en` members: the catalog addresses the literal pairs the
-                // site was built with, and an owner's number is not one of those.
-                const label = { ar: n.labelAr, en: n.labelEn };
-                const note = { ar: n.noteAr ?? "", en: n.noteEn ?? "" };
-                return (
-                  <Reveal key={i} delay={i * 0.08} className="bg-[var(--bg-card)]/70 rounded-2xl p-6 text-center">
-                    <div className="text-3xl font-black text-[var(--gold-end)]">{formatNumber(n.valueAr)}</div>
-                    <div className="mt-2 text-sm text-[var(--text-secondary)]">{t(label.ar, label.en)}</div>
-                    {n.noteAr && (
-                      <div className="mt-1 text-xs text-[var(--text-muted)]">{t(note.ar, note.en)}</div>
-                    )}
-                  </Reveal>
-                );
-              })}
+              {page.numbers.map((entry, index) => (
+                <Reveal key={index} delay={index * 0.08} className="bg-[var(--bg-card)]/70 rounded-2xl p-6 text-center">
+                  <div className="text-3xl font-black text-[var(--gold-end)]">{formatNumber(t(entry.value.ar, entry.value.en))}</div>
+                  <div className="mt-2 text-sm text-[var(--text-secondary)]" dir="auto">{t(entry.label.ar, entry.label.en)}</div>
+                  {entry.note.ar || entry.note.en ? (
+                    <div className="mt-1 text-xs text-[var(--text-muted)]" dir="auto">{t(entry.note.ar, entry.note.en)}</div>
+                  ) : null}
+                </Reveal>
+              ))}
             </div>
           </div>
         </section>
       ) : null}
+
       <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
           <Reveal className="relative rounded-3xl overflow-hidden min-h-[300px] group">

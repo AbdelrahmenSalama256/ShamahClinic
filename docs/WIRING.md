@@ -258,17 +258,23 @@ Every content element on this route is WordPress; the chrome around it is author
 
 ## 11. `/about` — `src/app/[lang]/about/page.tsx` + `AboutClient`
 
+AB-2 moved this whole page onto one `pages` row. `getAboutPage()`
+(`src/lib/content/about-page.ts`) reads the published twins of the row whose route is
+`/about`; `ABOUT` in `src/lib/content/list-schema.ts` describes the document the console
+writes, and `/console/pages/about` is its screen. `src/lib/wp/about.ts` is deleted and
+`src/data/about.ts` keeps only the homepage's introduction pair, so there is one answer
+per element and nothing to fall back to.
+
 | element | source now | WordPress source? | action |
 |---|---|---|---|
-| H1 + lead (`AboutClient.tsx:52-53`) | **WP** `getAbout()` (page 32) | yes — `PAGE(32)` title `About`/معلومات عنا and its real intro sentence "Shamah Clinic — the laser and aesthetic center offering beauty, trust, and comprehensive care…" | wired (`8e647e3`) |
-| Breadcrumb 2 label (`:56`) | WP title | yes | kept WP |
-| Hero photo (`:58`) | STATIC `images.interiors.reception` | no — 32's only body images are the site icon crops (`2025/07/cropped-Shamah-Clinics-*`) and the process photo used inside the sections | kept STATIC |
-| Story + Process sections (`:62-108`) | **WP** page 32: "The Story"/قصتنا, "The Process"/عمليتنا, 5 `<br>` lines, process photo | yes — parsed by `src/lib/wp/about.ts` | wired (`8e647e3`); `src/data/about.ts` now only the outage fallback |
-| Branch / treatment counters (`:83-88`) | WP lists (`getBranchList`, `getMergedTreatments`) | yes | wired (`8e647e3`); `verifiedFacts` deleted |
-| "Female staff 100" (`:91-92`) | STATIC literal | no | kept STATIC |
-| "What we stand by" heading + 3 values (`:113-130`, literals `:25-47`) | STATIC literals | no — page 32 has no values block; 622/67/169 are demo or slider copy | kept STATIC, listed in `docs/inventory.md` |
-| Team teaser (`:137-148`) | STATIC literals + `images.doctors.doctor1` | no (§12 evidence) | kept STATIC |
-| Branches teaser (`:150-162`) | STATIC literals + `images.interiors.corridor`; the link target `/branches` is WP | partial — the three city names do exist in WP (office blocks), but this is a design teaser | kept STATIC text |
+| H1, breadcrumb 2, lead | row `pub_title_*`, `lead_*` | the words are page 32's own — Arabic from the import, English from the `D:\shamah` snapshot, because the imported English column is placeholder | AB-2 — the row, seeded by `014_about_page_seed.sql` |
+| Hero, story and process photographs + their descriptions | row `heroImage`/`storyImage`/`processImage` and `*Alt_*` | no — 32's only body images are site-icon crops | AB-2 — the row's own slots through `toPhotoSlot()` |
+| Story + Process splits | row `storyTitle_*` + 2 `storyParagraphs_*`, `processTitle_*` + 5 `processParagraphs_*` | yes, page 32's `<br>` lines, now owned by the row | AB-2 |
+| "Why clients choose" + 4 reasons, "What we stand by" + 3 values | row `reasonsTitle_*`/`reasonsLead_*`/`reasons_*`, `valuesTitle_*`/`valuesLead_*`/`values_*` | no — 32 has no values block; 622/67/169 are demo or slider copy | AB-2 — the client's own lines, editable |
+| Branch / treatment counters | `getBranchList()` / `getServiceCards()` lengths (`page.branchCount`, `page.treatmentCount`) | yes | counted, never stored, so a figure cannot disagree with the list it counts |
+| "Female staff 100%" value | row `staffValue_*` | no | AB-2 — the one figure in the band the owner can rewrite |
+| Numbers block | row `numbers` — `[]`, both headings empty | no | deliberately unseeded; rendering and `+ Add row` work, the fourth number is Q-10 |
+| Team / branches teaser cards, and the three labels under the counted band | component wording through `t(ar, en)` — `/console/texts` rewrites it | partial (the cities are real; the band is a design teaser) | kept as site wording, not page content |
 
 ## 12. `/doctors` — `DoctorsClient` + `DoctorCard`
 
@@ -377,7 +383,6 @@ Not a defect to hide — the reason each exists is the TranslatePress gap or a m
 | `src/lib/seo.ts:41-42`, `:49-53` | title/description/image missing for a language | other language; `/images/clinic-reception.jpg` as OG |
 | `getPageTitle` (`src/lib/wp/index.ts:422-432`) | page absent from `PAGES`, or AR title untranslated (page 3) | the authored H1 fallback passed by the route |
 | `getHomeIntro()` (`src/lib/wp/index.ts:433-447`) | page 622 has no recognizable introduction row (dashboard rewrite or outage) | `homeIntroFallback` in `src/data/about.ts` |
-| `homeProseSections()` (`src/lib/wp/about.ts:146`) | the story / `#process` rows are missing from the homepage body | that split is not rendered, and the English line stands in for Arabic because the client's own `/ar/` homepage serves those rows in English (`docs/STATIC-SWEEP.md`) |
 | `getFeaturedServices()` (`src/lib/wp/treatments.ts`) | fewer than three sections carry both a photo and an intro, or page 696 is unavailable | the rows that do render; if none, the whole services block is absent rather than filled with authored cards (`docs/HOME-PRIORITY.md`) |
 
 ## 18. Re-verification evidence (production build, `npx next start -p 3100`)

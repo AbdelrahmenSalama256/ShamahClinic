@@ -5,8 +5,9 @@
  *
  *  1. **behaviour**: `globalThis.fetch` is replaced with a recorder that throws, then
  *     every public reader runs — the whole read path (`lib/content/site`), the kinds
- *     still on the snapshot rung, and the derived readers behind /about, /results and
- *     the treatment pages. Zero recorded URLs means zero requests, and the content
+ *     still on the snapshot rung, the derived readers behind /results and the treatment
+ *     pages, and the About page's own reader. Zero recorded URLs means zero requests, and
+ *     the content
  *     assertions in the same pass mean that "zero" is not the result of a reader
  *     quietly returning nothing.
  *  2. **structure**: a source scan, because the behaviour half can only catch a call
@@ -21,19 +22,63 @@
  * write, not a read, and BK-8 replaces lead handling entirely — so it is asserted to
  * be the *only* one rather than silently tolerated.
  */
+import { randomUUID } from 'node:crypto';
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { db, destroyDb } from '../src/lib/db';
+import { assertTestDb } from '../src/lib/db/guard';
+import { json } from '../src/lib/db/json';
 import * as site from '../src/lib/content/site';
 import * as wp from '../src/lib/wp';
-import { getAbout } from '../src/lib/wp/about';
+import { getAboutPage } from '../src/lib/content/about-page';
 import { getFeaturedServices, getMergedTreatment, getMergedTreatments } from '../src/lib/wp/treatments';
 
 const ROOT = process.cwd();
 const fetches: string[] = [];
 let restore: (() => void) | null = null;
 
-beforeAll(() => {
+/**
+ * The content half of this file asks that a network-free render still hands back real rows.
+ * `getServiceCards()` and the treatment readers lost their snapshot rung at 1A, so the only
+ * thing that can answer them is a published row — and a test that leans on whatever the last
+ * run left in the database is not an assertion. One service, named for this run, removed
+ * again in `afterAll`.
+ */
+const run = randomUUID().slice(0, 8);
+const fixtureUid = `nowp-${run}`;
+
+async function seedService(): Promise<void> {
+  const listId = randomUUID();
+  const existing = await db.selectFrom('lists').select('id').where('list_key', '=', 'services').executeTakeFirst();
+  const key = existing?.id ?? listId;
+  if (!existing) {
+    await db
+      .insertInto('lists')
+      .values({ id: listId, list_key: 'services', label: 'services', item_schema: json({}), reorderable: 1, is_article_collection: 0 })
+      .execute();
+  }
+  const doc = { name_ar: 'ليزر تجريبي', name_en: 'A test service', intro_ar: 'جلسة', intro_en: 'A session' };
+  await db
+    .insertInto('list_items')
+    .values({
+      id: randomUUID(),
+      list_id: key,
+      uid: fixtureUid,
+      position: 0,
+      enabled: 1,
+      draft: json(doc),
+      published: json(doc),
+      status: 'published',
+      published_at: new Date(),
+    })
+    .execute();
+}
+
+beforeAll(async () => {
+  assertTestDb();
+  await db.deleteFrom('list_items').where('uid', 'like', 'nowp-%').execute();
+  await seedService();
   const original = globalThis.fetch;
   globalThis.fetch = (async (input: unknown) => {
     fetches.push(String(typeof input === 'object' && input && 'url' in input ? (input as Request).url : input));
@@ -44,8 +89,11 @@ beforeAll(() => {
   };
 });
 
-afterAll(() => {
+afterAll(async () => {
   restore?.();
+  await db.deleteFrom('revisions').where('entity_id', '=', fixtureUid).execute();
+  await db.deleteFrom('list_items').where('uid', '=', fixtureUid).execute();
+  await destroyDb();
 });
 
 /** Everything a public route renders, in the language it renders it in. */
@@ -83,7 +131,7 @@ async function renderEveryPublicReader(): Promise<void> {
     wp.getPosts({ page: 1 }),
     wp.getPost(article.slug),
     wp.getOffer(offer.slug, 'ar'),
-    getAbout(),
+    getAboutPage(),
     site.getResultStories({ page: 1, perPage: 9 }),
     getFeaturedServices(3),
     getMergedTreatment(treatments[0]?.id ?? ''),

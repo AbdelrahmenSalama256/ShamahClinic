@@ -1,6 +1,7 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { declarations, sourceText } from './source-text';
 
 /*
  * The control layer, proved the way every styling suite here proves anything: against
@@ -11,19 +12,19 @@ import { describe, expect, it } from 'vitest';
  * quietly re-painting something the primitive had already decided.
  */
 
-const uiCss = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
-const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+const uiCss = sourceText(join(process.cwd(), 'src/components/ui/ui.css'));
+const globals = sourceText(join(process.cwd(), 'src/app/globals.css'));
 // BK-240 split the tokens out of the site stylesheet so the console can read the palette
 // without importing the element rules that would flatten a thumbnail. The numbers live
 // here now; `globals.css` and the console layout both import this file.
-const tokens = readFileSync(join(process.cwd(), 'src/styles/tokens.css'), 'utf8');
-const buttonSource = readFileSync(join(process.cwd(), 'src/components/ui/Button.tsx'), 'utf8');
-const consoleCss = readFileSync(join(process.cwd(), 'src/app/(console)/console/console.css'), 'utf8');
+const tokens = sourceText(join(process.cwd(), 'src/styles/tokens.css'));
+const buttonSource = sourceText(join(process.cwd(), 'src/components/ui/Button.tsx'));
+const consoleCss = sourceText(join(process.cwd(), 'src/app/(console)/console/console.css'));
 // Slice 0 of the console redesign split the two surfaces' control layers: the console now
 // paints its own kit from its own `--c-*` tokens and imports neither `ui.css` nor the site
 // palette. The cases below keep the site's kit honest and prove the console's twin exists.
-const consoleKitCss = readFileSync(join(process.cwd(), 'src/app/(console)/console/console-kit.css'), 'utf8');
-const kitSource = readFileSync(join(process.cwd(), 'src/components/console/kit.tsx'), 'utf8');
+const consoleKitCss = sourceText(join(process.cwd(), 'src/app/(console)/console/console-kit.css'));
+const kitSource = sourceText(join(process.cwd(), 'src/components/console/kit.tsx'));
 
 /** Declarations, not prose: the header comments quote the hexes they measured, and a
  *  test that read them as colour decisions would fail for the wrong reason. */
@@ -60,12 +61,12 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
     expect(match, 'globals.css imports the control layer').not.toBeNull();
     const resolved = join(process.cwd(), 'src/app', match![1]!);
     expect(existsSync(resolved), `${match![1]} resolves from src/app`).toBe(true);
-    expect(readFileSync(resolved, 'utf8')).toContain('.ui-button');
+    expect(sourceText(resolved)).toContain('.ui-button');
     // The console is its own root with its own two sheets, and it names neither the site's
     // token file nor the shared control layer: `globals.css` carries the public page's
     // element rules (`img { width: 100% !important }` would flatten every thumbnail), and
     // `ui.css` paints the site's controls in the site's palette.
-    const layout = readFileSync(join(process.cwd(), 'src/app/(console)/console/layout.tsx'), 'utf8');
+    const layout = sourceText(join(process.cwd(), 'src/app/(console)/console/layout.tsx'));
     expect(layout).toContain("import './console-kit.css';");
     expect(layout).toContain("import './console.css';");
     expect(layout).not.toContain('components/ui/ui.css');
@@ -191,7 +192,7 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
     expect(consoleCode).not.toMatch(/\.console-button/);
     expect(consoleCode).not.toMatch(/--console-tap/);
     for (const name of ['ConsoleControls', 'ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
-      const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
+      const source = sourceText(join(process.cwd(), 'src/components/console', `${name}.tsx`));
       expect(source, `${name} still uses the old class`).not.toContain('console-button');
     }
   });
@@ -206,7 +207,7 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
   });
 
   it('uses the icon family the rest of the product uses', () => {
-    const list = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
+    const list = sourceText(join(process.cwd(), 'src/components/console/ConsoleList.tsx'));
     expect(list).toMatch(/from 'lucide-react'/);
     // The sort and the remove control used to be text glyphs, which Tajawal draws at an
     // unknown size in an unknown place on the baseline.
@@ -233,7 +234,7 @@ describe('one button, painted once, for both surfaces (BK-19.3a)', () => {
  * whose 16-pixel graphic was the only thing a finger could hit.
  */
 describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
-  const fieldSource = readFileSync(join(process.cwd(), 'src/components/ui/Field.tsx'), 'utf8');
+  const fieldSource = sourceText(join(process.cwd(), 'src/components/ui/Field.tsx'));
 
   it('names every state a field can be in', () => {
     for (const selector of [
@@ -376,7 +377,7 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
     expect(consoleCode, 'the console surface does not re-paint a field').not.toMatch(/\.console-control\b/);
     expect(consoleCode, 'no site class survives in the console sheet').not.toMatch(/\.ui-/);
     for (const name of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace', 'LeadsScreen', 'UsersScreen', 'RolesScreen']) {
-      const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
+      const source = sourceText(join(process.cwd(), 'src/components/console', `${name}.tsx`));
       expect(source, `${name} still imports the site control layer`).not.toMatch(/@\/components\/ui/);
       expect(source, `${name} still writes a raw control`).not.toMatch(/<(input|textarea|select)\s/);
       // The `console-field` wrapper is layout a flag row may still need; the control's
@@ -395,19 +396,19 @@ describe('one field, painted once, for both surfaces (BK-19.3b)', () => {
  * no voice reads and a list whose loading state was an `aria-label` on empty boxes.
  */
 describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
-  const statusSource = readFileSync(join(process.cwd(), 'src/components/ui/Status.tsx'), 'utf8');
-  const listSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
-  const editorSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
-  const messages = readFileSync(join(process.cwd(), 'src/lib/console/messages.ts'), 'utf8');
+  const statusSource = sourceText(join(process.cwd(), 'src/components/ui/Status.tsx'));
+  const listSource = sourceText(join(process.cwd(), 'src/components/console/ConsoleList.tsx'));
+  const editorSource = sourceText(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'));
+  const messages = sourceText(join(process.cwd(), 'src/lib/console/messages.ts'));
 
   /** Every `tone=` written anywhere in the console, in a literal or inside an expression. */
   const namedTones = [
-    readFileSync(join(process.cwd(), 'src/app/(console)/console/(workspace)/page.tsx'), 'utf8'),
-    readFileSync(join(process.cwd(), 'src/app/(console)/console/password/page.tsx'), 'utf8'),
+    sourceText(join(process.cwd(), 'src/app/(console)/console/(workspace)/page.tsx')),
+    sourceText(join(process.cwd(), 'src/app/(console)/console/password/page.tsx')),
     listSource,
     editorSource,
     ...['ConsolePalette', 'ConsoleShell', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace'].map((name) =>
-      readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8'),
+      sourceText(join(process.cwd(), 'src/components/console', `${name}.tsx`)),
     ),
   ].flatMap((source) =>
     [...source.matchAll(/tone=(?:"([^"]+)"|\{([^}]*)\})/g)].flatMap((match) =>
@@ -457,7 +458,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
       expect(source, 'a banner does not spell out its own role').not.toMatch(/role=\{(notice|failed)\.tone ===/);
     }
     for (const name of ['ContentListScreen', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
-      const source = readFileSync(join(process.cwd(), 'src/components/console', `${name}.tsx`), 'utf8');
+      const source = sourceText(join(process.cwd(), 'src/components/console', `${name}.tsx`));
       expect(source, `${name} uses the primitive`).toMatch(/<Alert/);
       expect(source, `${name} still writes an alert by hand`).not.toMatch(/console-alert/);
     }
@@ -534,7 +535,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
       'src/app/(console)/console/(workspace)/settings/page.tsx',
       'src/app/(console)/console/password/page.tsx',
     ]) {
-      const source = readFileSync(join(process.cwd(), path), 'utf8');
+      const source = sourceText(join(process.cwd(), path));
       for (const name of [...dead, 'className="console-chip"']) {
         expect(source, `${path} still writes ${name}`).not.toContain(name);
       }
@@ -544,7 +545,7 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
   it('keeps one colour table for the state of a row', () => {
     // The list and the editor used to read the same key and pick the same colour by hand, in
     // two files, in two shapes — the only way one pane stops matching the other.
-    const form = readFileSync(join(process.cwd(), 'src/lib/console/editor-form.ts'), 'utf8');
+    const form = sourceText(join(process.cwd(), 'src/lib/console/editor-form.ts'));
     expect(form).toMatch(/export function contentStateTone\(key: MessageKey\): Tone/);
     expect(form).toMatch(/if \(key === 'content\.state\.trashed'\) return 'danger';/);
     expect(form).toMatch(/return key === 'content\.state\.published' \? 'ok' : 'neutral';/);
@@ -586,14 +587,14 @@ describe('one tone, six shapes, for both surfaces (BK-19.3c)', () => {
 });
 
 describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
-  const surfaceSource = readFileSync(join(process.cwd(), 'src/components/ui/Surface.tsx'), 'utf8');
-  const chipSource = readFileSync(join(process.cwd(), 'src/components/ui/Chip.tsx'), 'utf8');
-  const tabsSource = readFileSync(join(process.cwd(), 'src/components/ui/Tabs.tsx'), 'utf8');
-  const listScreenSource = readFileSync(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'), 'utf8');
-  const detailSource = readFileSync(join(process.cwd(), 'src/components/console/ContentDetail.tsx'), 'utf8');
-  const listSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
-  const navSource = readFileSync(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'), 'utf8');
-  const siteConfig = readFileSync(join(process.cwd(), 'src/config/site.ts'), 'utf8');
+  const surfaceSource = sourceText(join(process.cwd(), 'src/components/ui/Surface.tsx'));
+  const chipSource = sourceText(join(process.cwd(), 'src/components/ui/Chip.tsx'));
+  const tabsSource = sourceText(join(process.cwd(), 'src/components/ui/Tabs.tsx'));
+  const listScreenSource = sourceText(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'));
+  const detailSource = sourceText(join(process.cwd(), 'src/components/console/ContentDetail.tsx'));
+  const listSource = sourceText(join(process.cwd(), 'src/components/console/ConsoleList.tsx'));
+  const navSource = sourceText(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'));
+  const siteConfig = sourceText(join(process.cwd(), 'src/config/site.ts'));
 
   it('leaves the console its own shells, painted by the console kit', () => {
     // Slice 0 gave the console a twin of the surface family. A leading dot and the
@@ -658,7 +659,7 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     expect(listSource).toMatch(/<Card flat flush className="console-table-wrap">/);
     // A call site that already owns an element puts the class on it instead of nesting a
     // second box — the login posts from a `form`, and a form inside a card is two objects.
-    expect(readFileSync(join(process.cwd(), 'src/components/console/LoginForm.tsx'), 'utf8')).toContain('className="console-card console-panel"');
+    expect(sourceText(join(process.cwd(), 'src/components/console/LoginForm.tsx'))).toContain('className="console-card console-panel"');
     // The console's twin shell carries the same attribute shape from the console kit.
     expect(kitSource).toMatch(/className=\{clsx\('console-card', className\)\}/);
     expect(kitSource).toMatch(/data-flat=\{flat \|\| undefined\}/);
@@ -805,7 +806,7 @@ describe('the shells a screen is built out of, painted once (BK-19.3d)', () => {
     // reason said out loud: a lead sheet's own bar and a save bar have no argument with
     // the top bar.
     expect((consoleCode.match(/z-index: \d/g) ?? []).length).toBe(2);
-    expect(rule(consoleCode, '.console-editor-bar')).toMatch(/z-index: 6;/);
+    expect(declarations(consoleCode, '.console-editor-bar')).toMatch(/z-index: 6;/);
     expect(consoleCode).toMatch(/--c-z-sticky: 30;[\s\S]*--c-z-scrim: 35;[\s\S]*--c-z-drawer: 40;/);
   });
 });

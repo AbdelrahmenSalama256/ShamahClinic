@@ -401,19 +401,10 @@
 
 @layer screens {
 
-  /* --- Console forms performance ---
-     Auto-growing textareas, character counters, responsive single-column forms,
-     no horizontal scroll, long text never breaks layout, toolbars wrap,
-     tables scroll inside their own container. --- */
+  /* --- Console forms placement ---
+     Single-column forms on a phone, wrapping toolbars. The control's own paint is
+     `console-kit.css`'s, so nothing here names a field class. --- */
   @media (min-width: 480px) {
-    [data-surface="console"] .console-control.is-auto-growing {
-      overflow-wrap: anywhere;
-      word-break: break-word;
-      min-height: 2.5rem;
-      max-height: 20rem;
-      height: auto;
-    }
-
     @media (max-width: 640px) {
       .console-detail .console-fields {
         grid-template-columns: 1fr;

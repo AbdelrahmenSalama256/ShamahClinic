@@ -476,8 +476,10 @@ describe('what the typed list form really paints (BK-20 F)', () => {
   });
 
   it('leaves no door to the document open in the editor either', () => {
-    // A list item's `data` column is not drawn as a field at all: the typed form owns it.
-    expect(editorSource).toContain('!(row.kind === \'list_item\' && field.kind === \'json\')');
+    // A JSON column is never drawn as a field of its own: the typed form owns a document
+    // that has a schema — a list, or a page such as /about — and an empty column has
+    // nothing to show.
+    expect(editorSource).toContain("!(field.kind === 'json' && (listSchema !== null || field.draftJson === null))");
     // And a JSON column the console has no form for answers with a sentence, before the
     // textarea branch that used to be a place to paste a document.
     const refusal = editorSource.indexOf("if (field.kind === 'json')");

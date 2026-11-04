@@ -14,7 +14,7 @@ import { randomUUID } from 'node:crypto';
 import { db } from '../db';
 import { readStored, type FieldFormat } from './format';
 import { sanitizeRichHtml } from './rich';
-import { htmlStems, listSchemaOf, parseListDoc } from './list-schema';
+import { htmlStems, listSchemaOf, pageDocSchema, parseListDoc } from './list-schema';
 import { positionForNewItem } from './order';
 import { canonicalizeOfferServices } from './offer-services';
 import {
@@ -323,17 +323,22 @@ export function planWrites(
   locale: ContentLocale,
   /** the list a `list_item` belongs to; it selects the typed schema the document must obey */
   listKey?: string | null,
+  /** a `pages` row's route, which is how the console finds that page's document schema */
+  rowKey?: string | null,
 ): ParseResult {
+  // A row's JSON column is a *document* only when a schema describes it: a `list_items`
+  // row by its list, a `pages` row by the route the site renders. Anything else keeps the
+  // plain column path. The console draws the same schema (`listSchemaOfRow`), so what a
+  // person edits and what the database stores are built from one definition.
+  const docSchema = spec.table === 'list_items' ? listSchemaOf(listKey ?? '') : spec.table === 'pages' ? pageDocSchema(rowKey) : null;
   let written = fields;
-  if (spec.table === 'list_items' && 'data' in fields) {
-    const schema = listSchemaOf(listKey ?? '');
-    if (!schema) return { columns: {}, issues: [{ path: 'list', message: 'unknown field' }], htmlColumns: [] };
-    const doc = parseListDoc(schema, fields.data);
+  if (docSchema) {
+    const doc = parseListDoc(docSchema, fields.data);
     if (doc.issues.length > 0) return { columns: {}, issues: doc.issues, htmlColumns: [] };
     // The one body a service can carry is authored markup, so it is filtered before it is
     // stored — the same allowlist the public render path uses. Every other list field is
     // plain text and was already cleaned by `parseListDoc()`.
-    for (const stem of htmlStems(schema)) {
+    for (const stem of htmlStems(docSchema)) {
       for (const language of CONTENT_LOCALES) {
         const column = `${stem}_${language}`;
         const value = doc.doc[column];
@@ -341,6 +346,8 @@ export function planWrites(
       }
     }
     written = { ...fields, data: doc.doc };
+  } else if (spec.table === 'list_items' && 'data' in fields) {
+    return { columns: {}, issues: [{ path: 'list', message: 'unknown field' }], htmlColumns: [] };
   }
   const parsed = parseWrites(spec, { key: '', fields: written }, locale);
   // A body is the only thing the site prints as markup, so the allowlist runs here: the
@@ -413,7 +420,7 @@ export async function saveDraft(
   const checked = await validatedFields(spec, input.fields);
   if (checked.issues.length > 0) return { ok: false, status: 400, code: 'invalid_input', issues: checked.issues };
 
-  const parsed = planWrites(spec, checked.fields, input.locale, current.listKey);
+  const parsed = planWrites(spec, checked.fields, input.locale, current.listKey, current.key);
   if (parsed.issues.length > 0) return { ok: false, status: 400, code: 'invalid_input', issues: parsed.issues };
 
   const patch: Record<string, unknown> = { ...parsed.columns, updated_by: input.actorId, version: current.version + 1 };

@@ -7,7 +7,7 @@
  * that the caller may actually open.
  */
 import { randomUUID } from 'node:crypto';
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { db, destroyDb } from '../src/lib/db';
@@ -37,6 +37,7 @@ import { searchRows } from '../src/lib/console/search';
 import { likeOf } from '../src/lib/db/like';
 import { searchHandler } from '../src/lib/console/search-route';
 import { createRow, getRow, saveDraft } from '../src/lib/content/store';
+import { declarations, sourceText } from './source-text';
 
 const run = randomUUID().slice(0, 8);
 const PASSWORD = 'Shamah-console-2026';
@@ -104,7 +105,7 @@ function consoleSources(): string[] {
     for (const entry of readdirSync(dir)) {
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) walk(full);
-      else if (entry.endsWith('.tsx') || entry.endsWith('.ts')) files.push(readFileSync(full, 'utf8'));
+      else if (entry.endsWith('.tsx') || entry.endsWith('.ts')) files.push(sourceText(full));
     }
   };
   walk(consoleDir);
@@ -270,7 +271,8 @@ describe('the sidebar registry', () => {
     // grant and only Owner/Admin can read `setting`, so those rows are the proof the
     // sidebar is filtered by the catalog rather than hardcoded.
     // The hero slider is a `page` surface: every role that may read the home page sees it.
-    const content = ['articles', 'offers', 'pages', 'hero'];
+    // `/about` is the same: a `page` row with its own door, so a role that reads pages reads it.
+    const content = ['articles', 'offers', 'pages', 'about', 'hero'];
     // `texts` is the site's own wording, addressed through the `page` grant, so every role
     // that reads pages sees the row — six of six here.
     const expected: Record<RoleName, string[]> = {
@@ -302,31 +304,31 @@ describe('the console is not the site', () => {
     // site's import. That is also how `img { width: 100% !important }` reached a 44px
     // thumbnail. Slice 0 went the rest of the way: the console declares its own `--c-*`
     // palette and kit, so its root names neither the site tokens nor the shared controls.
-    const layout = readFileSync(join(consoleDir, 'layout.tsx'), 'utf8');
+    const layout = sourceText(join(consoleDir, 'layout.tsx'));
     expect(layout).toContain("import './console-kit.css';");
     expect(layout).toContain("import './console.css';");
     expect(layout).not.toContain('tokens.css');
     expect(layout).not.toContain('ui.css');
     expect(layout).not.toMatch(/import\s+['"][^'"]*globals\.css/);
     // The site keeps reading the shared token layer from its own root.
-    const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+    const globals = sourceText(join(process.cwd(), 'src/app/globals.css'));
     expect(globals).toContain('@import "../styles/tokens.css";');
   });
 
   it('tells crawlers to stay out', () => {
-    const layout = readFileSync(join(consoleDir, 'layout.tsx'), 'utf8');
+    const layout = sourceText(join(consoleDir, 'layout.tsx'));
     expect(layout).toMatch(/index:\s*false/);
     expect(layout).toMatch(/data-surface="console"/);
   });
 });
 
 describe('the shell reaches every screen at every width (BK-13.1)', () => {
-  const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
+  const css = sourceText(join(consoleDir, 'console.css'));
   // BK-240: the tokens live in their own file now. The console imports it directly and
   // the site imports it from `globals.css`; reading them from the site stylesheet here
   // would have passed while proving nothing about the file the console actually reads.
-  const tokensText = readFileSync(join(process.cwd(), 'src/styles/tokens.css'), 'utf8');
-  const frame = readFileSync(join(process.cwd(), 'src/components/console/ConsoleFrame.tsx'), 'utf8');
+  const tokensText = sourceText(join(process.cwd(), 'src/styles/tokens.css'));
+  const frame = sourceText(join(process.cwd(), 'src/components/console/ConsoleFrame.tsx'));
 
   it('has a sidebar column, an off-canvas drawer and a phone tab bar', () => {
     expect(css).toMatch(/@media \(min-width: 1024px\)/);
@@ -353,11 +355,13 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect((css.match(/min-(?:height|block-size): var\(--c-tap\)/g) ?? []).length).toBeGreaterThanOrEqual(4);
     expect(css).not.toMatch(/data-density/);
 
-    // Every control the list still paints itself takes `--c-tap` by name.
+    // Every control the list still paints itself takes `--c-tap` by name — read off every
+    // rule that names it, because a media query that only wraps the bar is not the rule
+    // that sizes it, and the first block in the file is whichever one came first.
     for (const selector of ['.console-cards-head', '.console-editor-bar']) {
-      const start = css.search(new RegExp(`\\n\\s*${selector.replace('.', '\\.')} \\{`));
-      expect(start, `${selector} is styled`).toBeGreaterThan(-1);
-      expect(css.slice(start, css.indexOf('}', start)), selector).toMatch(/var\(--c-tap\)/);
+      const painted = declarations(css, selector);
+      expect(painted, `${selector} is styled`).not.toBe('');
+      expect(painted, selector).toMatch(/var\(--c-tap\)/);
     }
     // The redesign deliberately draws compact list rows (36–40px) for a data screen; what
     // may not shrink is a control, and the kit proves that floor in its own file.
@@ -367,7 +371,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // come back, and prose about the old one is the thing that keeps it from coming back.
     expect(css).not.toMatch(/^\s*\.console-field[ ,{]/m);
     for (const component of ['ConsoleEditor', 'ConsoleList', 'ConsolePalette', 'ContentListScreen', 'ContentDetail', 'LoginForm', 'PasswordForm', 'SettingsWorkspace']) {
-      const source = readFileSync(join(process.cwd(), 'src/components/console', `${component}.tsx`), 'utf8');
+      const source = sourceText(join(process.cwd(), 'src/components/console', `${component}.tsx`));
       expect(source, `${component} has no raw field markup`).not.toMatch(/<(input|textarea|select)\s/);
     }
   });
@@ -391,7 +395,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
       'src/styles/tokens.css',
     ];
     for (const sheet of sheets) {
-      const text = readFileSync(join(process.cwd(), ...sheet.split('/')), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      const text = sourceText(join(process.cwd(), ...sheet.split('/'))).replace(/\/\*[\s\S]*?\*\//g, '');
       expect(text, `${sheet} forces a transition`).not.toMatch(/transition:[^;]*!important/);
       for (const [, selector, body] of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
         if (!/transition(-property)?\s*:/.test(body ?? '')) continue;
@@ -409,7 +413,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect(css).toMatch(/:where\(a, button, input, select, textarea, summary\)/);
     expect(css).toMatch(/transition-property:/);
     // And so does the site: the same eleven names, six properties, no `all`.
-    const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+    const globals = sourceText(join(process.cwd(), 'src/app/globals.css'));
     expect(globals).toMatch(/\n\[tabindex\] \{\n\s+transition:\n\s+color var\(--dur-base\)/);
   });
 
@@ -421,7 +425,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // site's blanket `transition: all .3s !important` on `*`. BK-19.1 removed that
     // blanket rule, so the assertion is now the negative: it must not come back, and the
     // drawer must still name `transform` and nothing else.
-    const globals = readFileSync(join(process.cwd(), 'src/app/globals.css'), 'utf8');
+    const globals = sourceText(join(process.cwd(), 'src/app/globals.css'));
     // `[^;]` alone would also match across the lines of the comment that explains what
     // used to be here, so the pattern is anchored to one declaration.
     expect(globals).not.toMatch(/transition: all [^;\n]*!important/);
@@ -492,14 +496,14 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
   it('draws the header as three tools, with no density switch (S5)', () => {
     // One comfortable rhythm: the root carries `data-theme` and no `data-density`, and
     // no catalog key survives for a layout choice that no longer exists.
-    expect(readFileSync(join(consoleDir, 'layout.tsx'), 'utf8')).not.toMatch(/data-density/);
-    expect(readFileSync(join(process.cwd(), 'src/lib/console/messages.ts'), 'utf8')).not.toMatch(/shell\.density/);
+    expect(sourceText(join(consoleDir, 'layout.tsx'))).not.toMatch(/data-density/);
+    expect(sourceText(join(process.cwd(), 'src/lib/console/messages.ts'))).not.toMatch(/shell\.density/);
     // The one place the word survives is the note that an old cookie's third term is
     // ignored; no type, field or resolver may remain.
-    expect(readFileSync(join(process.cwd(), 'src/lib/console/prefs.ts'), 'utf8')).not.toMatch(/ConsoleDensity|densityOf|density\s*[:?]/);
+    expect(sourceText(join(process.cwd(), 'src/lib/console/prefs.ts'))).not.toMatch(/ConsoleDensity|densityOf|density\s*[:?]/);
 
-    const controls = readFileSync(join(process.cwd(), 'src/components/console/ConsoleControls.tsx'), 'utf8');
-    const palette = readFileSync(join(process.cwd(), 'src/components/console/ConsolePalette.tsx'), 'utf8');
+    const controls = sourceText(join(process.cwd(), 'src/components/console/ConsoleControls.tsx'));
+    const palette = sourceText(join(process.cwd(), 'src/components/console/ConsolePalette.tsx'));
     // Two preference buttons here plus the palette's trigger: search, theme, language.
     // The view-site link is not a fourth tool; it lives with the account in the drawer.
     expect((controls.match(/<Button\b/g) ?? []).length).toBe(2);
@@ -513,7 +517,7 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     expect(rule).toMatch(/inline-size: var\(--c-tap\)/);
     expect(rule).toMatch(/block-size: var\(--c-tap\)/);
     expect(rule, 'the tool paints no radius of its own').not.toMatch(/border-radius|background|border:/);
-    const kit = readFileSync(join(consoleDir, 'console-kit.css'), 'utf8');
+    const kit = sourceText(join(consoleDir, 'console-kit.css'));
     expect(kit).toMatch(/border-radius: var\(--c-r-md\)/);
     expect(css).toMatch(/\.console-tool svg\s*\{[^}]*stroke-width: 1\.75;/);
 
@@ -526,11 +530,11 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
 });
 
 describe('the navigation reads off the grants (BK-13.2, S3)', () => {
-  const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
-  const nav = readFileSync(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'), 'utf8');
-  const frame = readFileSync(join(process.cwd(), 'src/components/console/ConsoleFrame.tsx'), 'utf8');
-  const shell = readFileSync(join(process.cwd(), 'src/components/console/ConsoleShell.tsx'), 'utf8');
-  const palette = readFileSync(join(process.cwd(), 'src/components/console/ConsolePalette.tsx'), 'utf8');
+  const css = sourceText(join(consoleDir, 'console.css'));
+  const nav = sourceText(join(process.cwd(), 'src/components/console/ConsoleNav.tsx'));
+  const frame = sourceText(join(process.cwd(), 'src/components/console/ConsoleFrame.tsx'));
+  const shell = sourceText(join(process.cwd(), 'src/components/console/ConsoleShell.tsx'));
+  const palette = sourceText(join(process.cwd(), 'src/components/console/ConsolePalette.tsx'));
 
   it('hides a screen the role cannot read and greys a screen it cannot write', () => {
     const grants: Grant[] = [
@@ -581,6 +585,7 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
       'articles',
       'offers',
       'pages',
+      'about',
       'hero',
       ...LIST_KEYS,
       'texts',
@@ -595,9 +600,12 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
     expect(new Set(items.map((item) => item.path)).size).toBe(items.length);
     for (const item of items) {
       expect(item.label.length).toBeGreaterThan(0);
-      expect(item.path).toMatch(/^\/console(?:\/[a-z]+)?$/);
+      // Every door stays inside the console and carries no query — but a row of its own
+      // may sit under its surface, which is where `/console/pages/about` goes.
+      expect(item.path).toMatch(/^\/console(?:\/[a-z-]+)*$/);
     }
     expect(items.find((item) => item.key === 'articles')?.path).toBe('/console/articles');
+    expect(items.find((item) => item.key === 'about')?.path).toBe('/console/pages/about');
     expect(items.find((item) => item.key === 'services')?.path).toBe('/console/services');
     expect(items.find((item) => item.key === 'texts')?.path).toBe('/console/texts');
   });
@@ -657,7 +665,7 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
     expect(nav).toMatch(/consoleCall\('\/api\/console\/auth', 'DELETE'\)/);
     expect(nav).toMatch(/className="console-nav-link console-nav-signout"/);
     // The old header control is gone: one sign-out row, at the end of the navigation.
-    expect(readFileSync(join(process.cwd(), 'src/components/console/ConsoleControls.tsx'), 'utf8')).not.toMatch(/signOut/);
+    expect(sourceText(join(process.cwd(), 'src/components/console/ConsoleControls.tsx'))).not.toMatch(/signOut/);
   });
 
   it('answers 401, 403 and 400 before it reads a single row', async () => {
@@ -702,8 +710,8 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
 });
 
 describe('a section opens its entity with every field editable (S3)', () => {
-  const detail = readFileSync(join(process.cwd(), 'src/components/console/ContentDetail.tsx'), 'utf8');
-  const editor = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
+  const detail = sourceText(join(process.cwd(), 'src/components/console/ContentDetail.tsx'));
+  const editor = sourceText(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'));
 
   it('shows the slug without ever making it a form value', () => {
     // The identity came from the first save's title and is what the site's URL means;
@@ -862,10 +870,10 @@ describe('a screen only says saved when the server says saved', () => {
 });
 
 describe('one row on its own page (BK-13.4, 240)', () => {
-  const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
-  const editor = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
-  const detail = readFileSync(join(process.cwd(), 'src/components/console/ContentDetail.tsx'), 'utf8');
-  const listScreen = readFileSync(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'), 'utf8');
+  const css = sourceText(join(consoleDir, 'console.css'));
+  const editor = sourceText(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'));
+  const detail = sourceText(join(process.cwd(), 'src/components/console/ContentDetail.tsx'));
+  const listScreen = sourceText(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'));
 
   it('gives the list the whole width, and a row its own address', () => {
     // The editor used to be a column beside the list, so the list got 75% of the page and
@@ -893,10 +901,10 @@ describe('one row on its own page (BK-13.4, 240)', () => {
 
   it('pins the save bar and keeps every control in it at the tap floor', () => {
     expect(css).toMatch(/\.console-editor-bar\s*\{[^}]*position: sticky/);
-    const ui = readFileSync(join(process.cwd(), 'src/components/ui/ui.css'), 'utf8');
+    const ui = sourceText(join(process.cwd(), 'src/components/ui/ui.css'));
     // The bar still owns its own floor; the controls inside it are the primitive's, so
     // their floor is proved in the file that paints them (19.3a) and not re-declared here.
-    expect(css.slice(css.indexOf('.console-editor-bar {'), css.indexOf('}', css.indexOf('.console-editor-bar {')))).toMatch(/var\(--c-tap\)/);
+    expect(declarations(css, '.console-editor-bar'), 'the save bar keeps its floor').toMatch(/var\(--c-tap\)/);
     expect(ui).toMatch(/\.ui-button\s*\{[^}]*min-height: var\(--tap\);/);
     expect(editor).toContain('<Button');
     expect(editor).not.toContain('console-button');
@@ -996,10 +1004,10 @@ describe('every screen reaches the primitives through one door (BK-13.5)', () =>
     readdirSync(dir).flatMap((entry) => {
       const full = join(dir, entry);
       if (statSync(full).isDirectory()) return pageFiles(full);
-      return entry === 'page.tsx' ? [{ path: full, source: readFileSync(full, 'utf8') }] : [];
+      return entry === 'page.tsx' ? [{ path: full, source: sourceText(full) }] : [];
     });
   const pages = pageFiles(consoleDir);
-  const list = readFileSync(join(process.cwd(), 'src/components/console/ConsoleList.tsx'), 'utf8');
+  const list = sourceText(join(process.cwd(), 'src/components/console/ConsoleList.tsx'));
 
   it('draws a content screen from the workspace, never from a primitive', () => {
     // Every registered screen, the login screen, the section page and the row page the
@@ -1038,8 +1046,8 @@ describe('every screen reaches the primitives through one door (BK-13.5)', () =>
 });
 
 describe('the settings screen is catalog words, not literals (S1)', () => {
-  const source = readFileSync(join(process.cwd(), 'src/components/console/SettingsWorkspace.tsx'), 'utf8');
-  const css = readFileSync(join(consoleDir, 'console.css'), 'utf8');
+  const source = sourceText(join(process.cwd(), 'src/components/console/SettingsWorkspace.tsx'));
+  const css = sourceText(join(consoleDir, 'console.css'));
 
   it('names every word it shows through the catalog', () => {
     for (const key of ['settings.unsaved', 'settings.read_only', 'settings.banners.default', 'settings.banners.reset'] as const) {
@@ -1078,10 +1086,10 @@ describe('the settings screen is catalog words, not literals (S1)', () => {
 });
 
 describe('every named list is its own section (S2)', () => {
-  const listsPage = readFileSync(join(consoleDir, '(workspace)/lists/page.tsx'), 'utf8');
-  const sectionPage = readFileSync(join(consoleDir, '(workspace)/[kind]/page.tsx'), 'utf8');
-  const detailPage = readFileSync(join(consoleDir, '(workspace)/[kind]/[id]/page.tsx'), 'utf8');
-  const listScreen = readFileSync(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'), 'utf8');
+  const listsPage = sourceText(join(consoleDir, '(workspace)/lists/page.tsx'));
+  const sectionPage = sourceText(join(consoleDir, '(workspace)/[kind]/page.tsx'));
+  const detailPage = sourceText(join(consoleDir, '(workspace)/[kind]/[id]/page.tsx'));
+  const listScreen = sourceText(join(process.cwd(), 'src/components/console/ContentListScreen.tsx'));
 
   it('turns the old aggregate list into a redirect that keeps the view', () => {
     // The page is not a screen any more; it answers with the section that replaced it and

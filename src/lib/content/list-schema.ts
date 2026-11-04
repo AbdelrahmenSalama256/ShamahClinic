@@ -609,31 +609,213 @@ const RESULTS: ListSchema = {
   ],
 };
 
+/**
+ * The About page's own headings, in the order `/about` draws its blocks.
+ *
+ * A `pages` row keeps its title in its own columns; this document holds every other word
+ * the page prints, so an owner can change a sentence, a number or a photograph without
+ * asking a developer to open a file. The three counters under the first split are not
+ * all here on purpose: two of them count the branches and services the site publishes,
+ * and a figure typed twice is a figure that goes stale.
+ */
+const ABOUT_G = {
+  hero: { key: 'hero', label: { ar: 'واجهة الصفحة', en: 'Page hero' } },
+  story: { key: 'story', label: { ar: 'القصة وطريقة العمل', en: 'Story & process' } },
+  stats: { key: 'stats', label: { ar: 'أرقام أسفل القصة', en: 'Figures under the story' } },
+  reasons: { key: 'reasons', label: { ar: 'لماذا تختارنا', en: 'Why clients choose us' } },
+  values: { key: 'values', label: { ar: 'ما نلتزم به', en: 'What we stand by' } },
+  numbers: { key: 'numbers', label: { ar: 'أرقام العيادة', en: 'Clinic numbers' } },
+} as const;
+
 export const ABOUT: ListSchema = {
   key: 'about',
-  title: 'title',
+  title: 'lead',
   fields: [
-    { type: 'text', stem: 'title', label: { ar: 'عنوان الصفحة', en: 'Page title' }, hint: { ar: 'العنوان الرئيسي للصفحة، يظهر في المتصفح وعناوين الروابط.', en: 'The main heading of the page, shown in the browser and link titles.' }, required: true, max: 300 },
-    { type: 'text', stem: 'lead', label: { ar: 'مقدمة الصفحة', en: 'Page lead' }, hint: { ar: 'سطران يعرّفان العيادة باختصار، يعرضان أسفل العنوان.', en: 'Two short lines introducing the clinic, shown below the title.' }, multiline: true, max: 800 },
     {
-      type: 'sections',
-      stem: 'sections',
-      label: { ar: 'الأقسام', en: 'Sections' },
-      hint: { ar: 'رتّبي الأقسام وأظهريها أو أخفيها. القسم الفارغ لا يظهر على الموقع مهما كان هذا الخيار.', en: 'Order the sections and show or hide them. An empty section never renders, whatever this says.' },
-      sections: [
-        { key: 'heading', label: { ar: 'عنوان القسم', en: 'Section heading' } },
-        { key: 'paragraphs', label: { ar: 'الفقرات', en: 'Paragraphs' } },
-        { key: 'image', label: { ar: 'الصورة', en: 'Image' } },
-      ],
+      type: 'image',
+      stem: 'heroImage',
+      group: ABOUT_G.hero,
+      label: { ar: 'صورة الصفحة', en: 'Page picture' },
+      hint: { ar: 'تظهر بجانب عنوان الصفحة في أعلى كل زيارة.', en: 'Shown beside the page title at the top of every visit.' },
     },
     {
       type: 'text',
-      stem: 'showOnHome',
-      label: { ar: 'عرض على الصفحة الرئيسية', en: 'Show on homepage' },
-      hint: { ar: 'اختياري: عرض وصف مختصر للعيادة في قسم الترحيب بالصفحة الرئيسية.', en: 'Optional: show a short clinic description in the homepage welcome section.' },
+      stem: 'heroAlt',
+      group: ABOUT_G.hero,
+      label: { ar: 'وصف صورة الصفحة', en: 'Page picture description' },
+      hint: { ar: 'جملة تقرأها قارئات الشاشة.', en: 'Read aloud to people who cannot see the picture.' },
+      max: 300,
+    },
+    {
+      type: 'text',
+      stem: 'lead',
+      group: ABOUT_G.hero,
+      label: { ar: 'مقدمة الصفحة', en: 'Page lead' },
+      hint: { ar: 'سطران يعرّفان العيادة باختصار، يظهران أسفل عنوان الصفحة.', en: 'Two short lines introducing the clinic, shown below the page title.' },
+      multiline: true,
+      max: 800,
+    },
+
+    {
+      type: 'text',
+      stem: 'storyTitle',
+      group: ABOUT_G.story,
+      label: { ar: 'عنوان القصة', en: 'Story heading' },
+      max: 300,
+    },
+    {
+      type: 'list',
+      stem: 'storyParagraphs',
+      group: ABOUT_G.story,
+      label: { ar: 'فقرات القصة', en: 'Story paragraphs' },
+      hint: { ar: 'فقرة لكل سطر، بالترتيب الذي تظهر به.', en: 'One paragraph per line, in the order they appear.' },
+    },
+    {
+      type: 'image',
+      stem: 'storyImage',
+      group: ABOUT_G.story,
+      label: { ar: 'صورة القصة', en: 'Story picture' },
+    },
+    {
+      type: 'text',
+      stem: 'storyAlt',
+      group: ABOUT_G.story,
+      label: { ar: 'وصف صورة القصة', en: 'Story picture description' },
+      max: 300,
+    },
+    {
+      type: 'text',
+      stem: 'processTitle',
+      group: ABOUT_G.story,
+      label: { ar: 'عنوان طريقة العمل', en: 'Process heading' },
+      max: 300,
+    },
+    {
+      type: 'list',
+      stem: 'processParagraphs',
+      group: ABOUT_G.story,
+      label: { ar: 'فقرات طريقة العمل', en: 'Process paragraphs' },
+      hint: { ar: 'فقرة لكل سطر. القسم بلا فقرة لا يظهر على الموقع.', en: 'One paragraph per line. A split with no paragraph never reaches the site.' },
+    },
+    {
+      type: 'image',
+      stem: 'processImage',
+      group: ABOUT_G.story,
+      label: { ar: 'صورة طريقة العمل', en: 'Process picture' },
+    },
+    {
+      type: 'text',
+      stem: 'processAlt',
+      group: ABOUT_G.story,
+      label: { ar: 'وصف صورة طريقة العمل', en: 'Process picture description' },
+      max: 300,
+    },
+
+    {
+      type: 'text',
+      stem: 'staffValue',
+      group: ABOUT_G.stats,
+      label: { ar: 'رقم الطاقم النسائي', en: 'Female-staff figure' },
+      hint: {
+        ar: 'الرقم الثالث تحت القصة، مع علامته كما تريدينه في كل لغة. العددان الآخران يُحسبان من الفروع والخدمات المنشورة.',
+        en: 'The third figure under the story, with its sign as you want it in each language. The other two are counted from the published branches and services.',
+      },
+      max: 40,
+    },
+
+    {
+      type: 'text',
+      stem: 'reasonsTitle',
+      group: ABOUT_G.reasons,
+      label: { ar: 'عنوان القسم', en: 'Section heading' },
+      max: 300,
+    },
+    {
+      type: 'text',
+      stem: 'reasonsLead',
+      group: ABOUT_G.reasons,
+      label: { ar: 'سطر تحت العنوان', en: 'Line under the heading' },
+      multiline: true,
+      max: 800,
+    },
+    {
+      type: 'list',
+      stem: 'reasons',
+      group: ABOUT_G.reasons,
+      label: { ar: 'الأسباب', en: 'The reasons' },
+      hint: { ar: 'سبب لكل سطر، ويُرَقَّم على الموقع بالترتيب.', en: 'One reason per line; the site numbers them in this order.' },
+    },
+
+    {
+      type: 'text',
+      stem: 'valuesTitle',
+      group: ABOUT_G.values,
+      label: { ar: 'عنوان القسم', en: 'Section heading' },
+      max: 300,
+    },
+    {
+      type: 'text',
+      stem: 'valuesLead',
+      group: ABOUT_G.values,
+      label: { ar: 'سطر تحت العنوان', en: 'Line under the heading' },
+      multiline: true,
+      max: 800,
+    },
+    {
+      type: 'list',
+      stem: 'values',
+      group: ABOUT_G.values,
+      label: { ar: 'قيم العيادة', en: 'The clinic’s values' },
+      hint: { ar: 'قاعدة لكل سطر، وتُرَقَّم على الموقع بالترتيب.', en: 'One rule per line; the site numbers them in this order.' },
+    },
+
+    {
+      type: 'text',
+      stem: 'numbersTitle',
+      group: ABOUT_G.numbers,
+      label: { ar: 'عنوان القسم', en: 'Section heading' },
+      max: 300,
+    },
+    {
+      type: 'text',
+      stem: 'numbersLead',
+      group: ABOUT_G.numbers,
+      label: { ar: 'سطر تحت العنوان', en: 'Line under the heading' },
+      multiline: true,
+      max: 800,
+    },
+    {
+      type: 'children',
+      stem: 'numbers',
+      group: ABOUT_G.numbers,
+      label: { ar: 'الأرقام', en: 'The numbers' },
+      hint: {
+        ar: 'رقم مع وصفه وملاحظة اختيارية لكل لغة. لا تكتبي رقمًا لا تستطيع العيادة إثباته: الموقع يعرض ما تكتبينه كما هو.',
+        en: 'A figure with its label and an optional note, in each language. Write only a number the clinic can stand behind: the site prints what you type.',
+      },
+      row: [
+        { type: 'text', stem: 'value', label: { ar: 'الرقم', en: 'Number' }, required: true },
+        { type: 'text', stem: 'label', label: { ar: 'الوصف', en: 'Label' }, required: true },
+        { type: 'text', stem: 'note', label: { ar: 'الملاحظة', en: 'Note' } },
+      ],
     },
   ],
 };
+
+/**
+ * The page rows the console draws as a typed document instead of a JSON box.
+ *
+ * A `pages` row keeps its own title and body columns; this names the rows whose extra
+ * `data` column has a form. A page is addressed by the route the site renders, so the
+ * console's document and the public reader are keyed by the same string.
+ */
+const PAGE_DOCS: Readonly<Record<string, ListSchema>> = {
+  '/about': ABOUT,
+};
+
+export function pageDocSchema(route: string | null | undefined): ListSchema | null {
+  return route ? PAGE_DOCS[route] ?? null : null;
+}
 
 const SCHEMAS: readonly ListSchema[] = [SERVICES, BRANCHES, SPECIALISTS, FAQ, NAV, RESULTS, ABOUT];
 

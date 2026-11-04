@@ -4374,7 +4374,106 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
       a day with leads and no recorded views — so the defect is in the rollup, and it is listed under
       Known gaps for the owner to decide on.
 - [ ] SVC-1 — service add-from-CMS must carry the full detail set — pending
-- [ ] AB-2 — About page: repair the seed, typed editor fields, public read path — pending
+- [x] AB-2 — About page: repair the seed, typed editor fields, public read path — **browser-verified**
+
+      **The seed.** `src/lib/db/migrations/014_about_page_seed.sql` was rewritten whole (it is
+      applied, and `npm run doctor` reports `migrations — 14 applied` with the checksums matching)
+      as **one `INSERT`** — a migration adds and never rewrites, and `schema.test.ts` reads that
+      rule off the first word of every statement — guarded by `WHERE NOT EXISTS (… route = '/about')`,
+      so a re-run cannot overwrite a word the owner has edited. The document is named once in a
+      subquery and selected twice, because `data` and `pub_data` are one document read two ways: the
+      draft column and the published column arrive together, so the page has real copy on the first
+      boot instead of an unpublished `{"test":"value"}`. The literal is the shape
+      `parseListDoc(ABOUT, …)` writes — flat `<stem>_ar`/`<stem>_en` keys, one array per `list`
+      field — which is what makes the first save in the console rewrite nothing. `tests/about-page.test.ts`
+      reads the JSON out of the migration file and compares it to what the form writes, so editing
+      either half without the other is caught rather than discovered in production.
+      The words are the client's own: the Arabic body from the page-32 import, the English body from
+      the `D:\shamah` snapshot, because the imported English column is lorem-ipsum placeholder. Brand
+      spelling follows the site («شامه»), not the import — Q-9.
+
+      **The read path.** `src/lib/content/about-page.ts` is one `cache()`d reader of one row from one
+      table, and `src/app/[lang]/about/page.tsx` + `AboutClient` print it: title, lead, three photo
+      slots with both descriptions, the story heading with 2 paragraphs, the process heading with 5,
+      the reasons heading + lead + 4, the values heading + lead + 3, and `staffValue`. A draft cannot
+      reach a visitor because the reader reads `pub_*` — the case that proves it PATCHes a real draft
+      through `contentItemHandler` with a real session, renders the page between the save and the
+      publish and still finds the published sentence, then publishes through `contentActionHandler`
+      and finds the new one, with `revalidatePath('/[lang]','layout')` and `('/sitemap.xml','page')`
+      both recorded. `src/lib/wp/about.ts` is deleted, `structuredOrDefault()` and `aboutFallback`
+      are gone, and the case that keeps them gone asserts the file and the identifiers stay absent
+      rather than trusting the diff. `src/data/about.ts` keeps only `homeIntroFallback`, which is
+      Home's row, not this page's. Nothing was applied to the WordPress origin: `npm run prove:no-wp`
+      reports `0 request(s)` and names the host `0 time(s)` in the server log.
+
+      **The console.** `{ key: 'about', path: '/console/pages/about' }` was registered with no page
+      file behind it, so the sidebar row 404s. The screen is now eight lines: look the row up by the
+      route the site renders (`idForRowKey('page', '/about')`) and hand it to the shared
+      `ContentDetailScreen`, so the draft, the publish bar, the revisions and the preview are the
+      row's and not a second copy built for this page. Read off the served HTML: 75 typed controls
+      with `list-field-*` ids — a file picker per photograph, one input per `strings` row per
+      language, a textarea per lead, `+ Add row` on each list — and no JSON textarea. Save draft,
+      Publish, Move to Trash, History and the two locale tabs all answer, because they are the
+      endpoints `tests/content.test.ts` and this file drive directly.
+
+      **What is not the row.** The branch and treatment figures are *counted* from the published
+      lists, so a figure cannot drift from the list it counts; the third figure in that band is
+      `staffValue`, the one the owner can rewrite. The numbers block ships empty (`numbers: []`)
+      because a fourth number would be invented — Q-10. The two teasers and the three labels under
+      the counted band are component wording, edited through `/console/texts` like every other
+      literal on the site.
+
+      **Collateral, each one a defect that was open.** `tests/no-wp-network.test.ts` passed for the
+      wrong reason — it asserted content that only existed because `articles`/`offers` still fall back
+      to committed snapshots — so it now seeds its own published `services` row and takes it away.
+      `tests/console.test.ts` and `tests/ui-primitives.test.ts` read their source files through the new
+      `tests/source-text.ts`, which collapses line endings and reads *every* rule that names a selector
+      instead of the first one: a checkout with `core.autocrlf` had them reporting a missing
+      `[tabindex]` transition, and a `flex-wrap` inside a media query was vouching for the save bar's
+      tap floor and `z-index`. `src/lib/db/schema.test.ts` got the same line-ending fix (the drift case
+      was calling all 45 tables missing). `[data-surface="console"] .console-control.is-auto-growing`
+      is deleted from `console.css`: nothing sets that class, and the surface sheet may not name a
+      control the kit paints. `tests/server-setup.test.ts` no longer asserts a migration count — the
+      equality above already proves both readers found every file, and a number written there has to be
+      re-edited by the next migration. `tests/results-page.test.ts` was corrected to the sentence the
+      component actually prints (`ترفع`, not `يرفع`). `ConsoleEditor`'s JSON refusal lost its
+      `tone="warn"`, which two regexes in the editor suites require of that block.
+
+      **Tests.** `tests/about-page.test.ts` **13** (new): the seed parses clean and equals what the
+      console writes, every field the form draws has a value except the deliberately empty numbers
+      block, the row is the schema's own (`pageDocSchema('/about') === ABOUT`, `listSchemaOfRow(row) ===
+      ABOUT`, `form['storyParagraphs_ar.2']` undefined), the door opens the shared editor, the reader
+      answers title/hero/lead/splits/reasons/values, a draft stays out of the visitor's page, publish
+      moves both twins and revalidates, the Arabic render carries the row and none of the four invented
+      headings, the English render carries the English halves, the counted figures equal the list
+      lengths, and the deleted readers stay deleted.
+
+      **Gates.** `npm run typecheck` exit 0 · `npm run lint` exit 0, `6 problems (0 errors, 6 warnings)`
+      · `npx vitest run` → `Test Files 58 passed (58) / Tests 1121 passed (1121)`, twice — the 20 that
+      OFFER-1 and CHART-1 recorded as failing at HEAD are closed · `npm run copy:check` → `234 entries
+      current; 97 data-driven calls skipped` · `npm run build` exit 0, `/console/pages/about` in the
+      route list · `npm run doctor` → all checks passed, `14 applied`, checksums match ·
+      `npm run prove:no-wp` → `5 checks passed, 0 failed`, `275 routes rendered, 0 failed`,
+      `0 request(s) to the WordPress origin` · `scripts/verify-style-isolation.mjs` → public pages load
+      site CSS only, the console loads console CSS only · `node scripts/verify-render.mjs` →
+      `249 checks passed, 4 failed`, the same four `mens-aesthetic-services` rows (demo junk — the
+      defect list, not this row).
+
+      **Browser pass.** `/ar/about` and `/en/about` on the built server, measured rather than admired:
+      `lang`/`dir` correct both ways, H1 `About Shamah`, the four row headings, 2 story and 5 process
+      paragraphs, 4 reasons and 3 values, the counted band `٣ ٩ ١٠٠٪` in Arabic under `/ar` against
+      `3 9 100%` under `/en`, zero alt-less images, zero broken images, and none of the four headings
+      the deleted `structuredOrDefault()` used to invent. No sideways pan: `scrollX` stays 0 at 361px
+      (the ~12px `scrollWidth` overshoot is the off-canvas drawer, which is clipped). The console screen
+      was read as the HTML the server sends — a session was already present in the in-app browser, and no
+      credential was typed, read or reset for this pass; anonymously the same URL redirects to
+      `/console/login` and the body carries no `list-field-` markup at all. `/ar`, `/en`, `/en/services`,
+      `/en/offers`, `/console` and `/console/pages` each answered 200 with their own H1.
+      **Not seen as pixels:** the in-app browser pane is 361×425 and reports `visibilityState: hidden`,
+      so `take_screenshot` fails with `NATIVE_BROWSER_VIEWPORT_UNAVAILABLE` — the 390px and 1440px
+      layouts (the desktop two-column story, the hero crop, the console's own field widths) were not
+      looked at, and no colour or type judgment was made. That is a decision left to the owner with a
+      real window open.
 - [ ] RES-1 — Results page shows results only (no blog cards) — pending
 - [ ] CRAWL-1 — crawl the front end, report a wiring pass rate — pending
 
@@ -4382,19 +4481,23 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
 
 ### Opened by the Job C pass, for the owner to decide on (none of these is caused by OFFER-1)
 
-- **`npm test` fails 20 tests that were already failing at HEAD.** A pristine `HEAD` worktree
-  run reports `Tests 22 failed | 214 passed (236)`; the working tree reports `20 failed | 1088
-  passed (1108)`. The files they sit in: `console` (9), `no-wp-network` (2), `ui-primitives` (2),
+- **Closed by AB-2: `npm test` failed 20 tests that were already failing at HEAD.** A pristine
+  `HEAD` worktree run reported `Tests 22 failed | 214 passed (236)`; the working tree reported
+  `20 failed | 1088 passed (1108)` across `console` (9), `no-wp-network` (2), `ui-primitives` (2),
   `tracking-pipeline`, `results-page`, `list-doc-fields`, `src/lib/db/schema.test`, `rich-editor`,
-  `image-picker`, `server-setup`. Two of the 20 are the stale `getServiceCards()` assertions
-  OFFER-1 realigned; the other 18 are untouched here and each needs its own job.
+  `image-picker`, `server-setup`. AB-2 closed them all — see its **Collateral** paragraph — and the
+  suite is now `58 files / 1121 tests` green, twice. The line-ending and first-rule-match fixes in
+  `tests/source-text.ts` are the reason the same tests now pass in a `core.autocrlf` checkout.
 - **`tests/delivery.test.ts` reads state a previous process left behind.** Straight after the
   MariaDB restart it failed 2 of 13 (`keeps the lead and queues it with a growing pause…`,
   `does not retry before the pause has passed`), then 3 inside the full suite, then passed 13/13
   twice on its own. The retry-pause assertions depend on `attempts` / `next_attempt_at` of rows
-  already in the outbox, so a row left by an interrupted run changes the answer. Nothing to do
-  with SHEETS-1's fix itself — but a suite whose result depends on the last process to touch the
-  test database cannot be used as a gate.
+  already in the outbox, so a row left by an interrupted run changes the answer. AB-2 probed the
+  test database at the moment of failure (`outbox rows: 0`, `integrations rows: 0`, `recent leads:
+  []`) so leftovers were ruled out; the content is then the single shared `integrations` row plus
+  the whole-table `drainOutbox()` / `resendFailed()` under two processes writing the same schema.
+  Q-12 holds the options — a suite whose result depends on the last process to touch the test
+  database cannot be used as a gate.
 - **`verify-render` fails 4 checks on `mens-aesthetic-services`** (rendered name, schema.org
   `Offer`, both locales). The published JSON of that row is demo junk — `name_ar "India
   Ellison"`, `name_en "Neil Hoff"`-class values — left by the import, so the check is right and the
@@ -4406,16 +4509,14 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
   table, so a lead whose visit was never tracked (or tracked on a different day) divides by a small
   or zero denominator. Either the rollup clamps the ratio or the two series need the same day
   boundary; both change a number the owner reads, so it is a decision, not a fix to make quietly.
-- **The About screen is registered but has no page file.** `CONSOLE_SCREENS` carries
-  `{ key: 'about', path: '/console/pages/about' }` (`src/lib/console/screens.ts:78`) while
-  `src/app/(console)/console/(workspace)/pages/` holds only `page.tsx`, so the nav row 404s — and
-  that mismatch is one of the 9 `tests/console.test.ts` failures ("has a page file for every
-  screen, and no page file outside it", 17 found vs 18 registered). AB-2 has to add the route,
-  not register it.
-- **`src/lib/db/migrations/014_about_page_seed.sql` is broken and deliberately left uncommitted.**
-  `0cf2a9a` wrote it in a syntax MariaDB rejects, and the working copy's edit makes it worse
-  (it closes the JSON early and drops the comma before `NULL`). It is AB-2's first task; nothing
-  has been applied from it.
+- **Closed by AB-2: the About screen was registered with no page file behind it.** `CONSOLE_SCREENS`
+  carried `{ key: 'about', path: '/console/pages/about' }` (`src/lib/console/screens.ts:78`) while
+  `src/app/(console)/console/(workspace)/pages/` held only `page.tsx`, so the nav row 404ed and the
+  "has a page file for every screen" case found 17 against 18 registered. AB-2 added the route.
+- **Closed by AB-2: `src/lib/db/migrations/014_about_page_seed.sql` was broken and uncommitted.**
+  `0cf2a9a` wrote it in a syntax MariaDB rejects and the working copy's edit closed the JSON early
+  and dropped the comma before `NULL`. It is rewritten whole, applied, and checksummed — `npm run
+  doctor` reports `14 applied` with the checksums matching.
 - **8 leads are still queued for Google Sheets** (SHEETS-1): `sent_at` null, attempts recorded.
   Resending appends real rows to the owner's live spreadsheet, so it was not done here.
 - **The dev MariaDB stopped on its own during this pass** (no listener on 127.0.0.1:3307, no

@@ -647,8 +647,11 @@ describe('the results screen draws what the row says', () => {
   });
 
   it('states the rule the page now follows, in both languages', () => {
-    expect(render([], 'en')).toContain('A before/after pair shows only when the clinic uploads both halves');
-    expect(render([], 'ar')).toContain('صورة «قبل وبعد» تظهر فقط حين ترفع العيادة الصورتين');
+    // The sentence the copy center owns: a result is two pictures, and the page says so
+    // where it has nothing else to say. (It replaced an earlier one-line rule that named the
+    // same requirement in fewer words and no instructions.)
+    expect(render([], 'en')).toContain('it uploads a before and an after');
+    expect(render([], 'ar')).toContain('ترفع صورة قبل وأخرى بعد');
   });
 
   it('links the service the row named, and the article the card belongs to', () => {

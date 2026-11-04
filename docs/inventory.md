@@ -130,16 +130,18 @@ STATIC and with no WP source: `branchesData.features` ("what this branch offers"
 the `/branches` band headline. `clinicData.branches` and `getBranch()` were deleted by this audit.
 
 ## About (`/about`)
-WP — page 32 parsed by `src/lib/wp/about.ts`: the intro becomes the hero lead, "The Story"/قصتنا and
-"The Process"/عمليتنا plus their 5 `<br>` lines and the process photo become the two editorial splits.
-Those two splits come from page **622** (the homepage rows `#process` and the story band) through
-`getHomeProseSections()` — the dashboard writes them on the homepage, and the About page shows them so
-the copy is not stranded on Home; the client's own Arabic homepage serves those rows in English, which is
-why the English line stands in for Arabic there (`docs/STATIC-SWEEP.md`). `src/data/about.ts` is now only
-the outage fallback. STATIC with no WP source: the four "why clients choose Shamah" reasons — Home no
-longer spends a section on them (`docs/HOME-PRIORITY.md`), so `/about` holds the full list, reached from
-Home's introduction row — the three "what we stand by" values, the two teasers, the 100٪ female-staff
-figure. Branch and treatment counters count the WordPress lists.
+One `pages` row — route `/about` — read by `getAboutPage()` and described by `ABOUT` in
+`src/lib/content/list-schema.ts`. AB-2 seeded it from `014_about_page_seed.sql` and `/console/pages/about`
+edits it. The words are the client's own: the Arabic arrives from the page-32 import, the English from the
+`D:\shamah` snapshot, because the imported English column is placeholder. The hero, story and process
+photographs are the row's own slots; the two editorial splits are its headings and paragraphs (2 and 5,
+what page 32's `<br>` lines actually hold). The four "why clients choose Shamah" reasons and the three
+"what we stand by" values are rows in the document now, not literals — Home no longer spends a section on
+the reasons (`docs/HOME-PRIORITY.md`), so `/about` holds the full list. The 100٪ female-staff figure is
+`staffValue`; the branch and treatment figures are *counted* from the published lists, so neither can drift
+from the list it counts. `src/lib/wp/about.ts` is deleted and `src/data/about.ts` keeps only Home's
+introduction pair. Still component wording, and edited through `/console/texts` rather than the row: the two
+teasers and the three labels under the counted figures. The numbers block is seeded empty — Q-10.
 
 ## Contact (`/contact`) + Booking
 STATIC info + contact form UI -> `POST /api/v1/lead`. `LEAD_MODE=whatsapp` (default) returns a prefilled

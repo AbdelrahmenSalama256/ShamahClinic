@@ -23,9 +23,9 @@ describe('server-setup agrees with the TypeScript migration runner', () => {
     expect(fromScript.map((file) => ({ name: file.name, checksum: file.checksum }))).toEqual(
       files.map((file) => ({ name: file.name, checksum: file.checksum })),
     );
-    expect(fromScript.length).toBe(12);
+    // The count is not asserted: the equality above already says both readers found every
+    // file on disk, and a number written here has to be re-edited by the next migration.
     expect(fromScript[0].name).toBe('001_auth.sql');
-    expect(fromScript.at(-1)?.name).toBe('012_offer_services.sql');
   });
 
   it('splits every migration into exactly the statements the runner executes', () => {

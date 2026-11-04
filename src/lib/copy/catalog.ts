@@ -102,7 +102,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "The medical team",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 225,
+    line: 147,
     uses: 1,
   },
   {
@@ -192,7 +192,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branches",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 109,
+    line: 47,
     uses: 1,
   },
   {
@@ -579,7 +579,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Meet them",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 230,
+    line: 152,
     uses: 1,
   },
   {
@@ -849,7 +849,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Choose a branch",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 243,
+    line: 165,
     uses: 1,
   },
   {
@@ -975,7 +975,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Nasr City, Fifth Settlement and Sheikh Zayed.",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 240,
+    line: 162,
     uses: 1,
   },
   {
@@ -1047,7 +1047,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Treatments",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 113,
+    line: 51,
     uses: 1,
   },
   {
@@ -1992,7 +1992,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Consultants and specialists who personally lead each department.",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 227,
+    line: 149,
     uses: 1,
   },
   {
@@ -2046,7 +2046,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Our branches",
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
-    line: 238,
+    line: 160,
     uses: 2,
   },
   {

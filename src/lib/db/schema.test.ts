@@ -29,7 +29,10 @@ const isGenerated = (type: string): boolean => /^Generated</.test(type);
 function declaredColumns(src: string): Map<string, { cols: Set<string>; types: Map<string, string> }> {
   const ifaces = new Map<string, Parsed>();
   let current: Parsed | null = null;
-  for (const line of src.split('\n')) {
+  // A checkout with `core.autocrlf` hands the file CRLF endings. The line-anchored
+  // patterns below would then match nothing, and a detector that sees no table reports
+  // every table as missing — so the endings are normalised before parsing, not assumed.
+  for (const line of src.replace(/\r\n?/g, '\n').split('\n')) {
     const decl = line.match(/^(?:export )?interface (\w+)(?: extends ([^{]*))? \{/);
     if (decl) {
       current = { parents: (decl[2] ?? '').split(/\s+and\s+/).map((p) => p.trim()).filter(Boolean), cols: new Map() };

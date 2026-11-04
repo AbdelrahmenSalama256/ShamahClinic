@@ -592,7 +592,11 @@ export function ConsoleEditor({
               <Alert>{labels['content.list.no_form']}</Alert>
             ) : null}
             {Object.entries(row.fields)
-              .filter(([, field]) => !(row.kind === 'list_item' && field.kind === 'json'))
+              // A JSON column is never a box to type into. When the row's document has a
+              // schema (a list, or a page such as /about) the typed form above owns it; when
+              // it holds nothing there is nothing to draw; when it holds a document the
+              // console has no form for, `FieldRow` says so in one sentence.
+              .filter(([, field]) => !(field.kind === 'json' && (listSchema !== null || field.draftJson === null)))
               // The order is set with the arrows on the list, never with a number in a box. Typing
               // one meant reading every other row's number to work out what was free — and two
               // rows given the same number share a place, so a list could reorder itself on reload.
@@ -887,6 +891,14 @@ function FieldRow({
         onChange={onChange}
       />
     );
+  }
+
+  // A document the console has no form for is not an invitation to type JSON. Nothing
+  // reaches this line today — every JSON column is a gallery, an offer's services, or a
+  // page the schema above draws — but a new one has to fail as a sentence on the screen,
+  // not as a textarea waiting for a paste.
+  if (field.kind === 'json') {
+    return <Alert>{labels['content.doc.no_form']}</Alert>;
   }
 
   // #246. A `html` column is the only content the site prints as markup, and the only place a

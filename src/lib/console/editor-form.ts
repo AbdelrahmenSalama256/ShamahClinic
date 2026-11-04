@@ -33,6 +33,7 @@ import {
   listDocFromForm,
   listDocUnknown,
   listSchemaOf,
+  pageDocSchema,
   UNKNOWN_FORM_KEY,
   type ListSchema,
 } from '../content/list-schema';
@@ -81,8 +82,16 @@ export function isPendingIn(field: FieldView, locale: ContentLocale): boolean {
 }
 
 /** The typed form a list row's document deserves, or null when its list has no schema. */
+/**
+ * The typed form this row's JSON column is drawn from, or null when it has none.
+ *
+ * A list item is shaped by its list; a page is shaped by the route the site renders.
+ * Both go through one door so the console's form and the public reader cannot end up
+ * describing the same column differently.
+ */
 export function listSchemaOfRow(row: ContentRow): ListSchema | null {
-  return row.kind === 'list_item' ? listSchemaOf(row.listKey) : null;
+  if (row.kind === 'list_item') return listSchemaOf(row.listKey);
+  return row.kind === 'page' ? pageDocSchema(row.key) : null;
 }
 
 /** The column's JSON as a document, or null when it is not a document at all. */
