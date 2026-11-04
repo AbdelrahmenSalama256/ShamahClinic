@@ -1,0 +1,1000 @@
+{
+  "buildId": "02zpKI9iZLsh9fg1CxUyc",
+  "generatedAt": "2026-11-04T16:52:35.545Z",
+  "totals": {
+    "clientJsRaw": 2647.4,
+    "clientJsGzip": 814.8,
+    "cssRaw": 205.9,
+    "cssGzip": 36.2,
+    "fonts": [
+      {
+        "file": "static/media/21f8968c2a580335-s.p.woff2",
+        "rawKb": 20.3,
+        "gzipKb": 20.4
+      },
+      {
+        "file": "static/media/42cd8d2519ec1b18-s.p.woff2",
+        "rawKb": 20.3,
+        "gzipKb": 20.3
+      },
+      {
+        "file": "static/media/7360ced81bd46491-s.p.woff2",
+        "rawKb": 20.4,
+        "gzipKb": 20.5
+      },
+      {
+        "file": "static/media/9df8b88aaf5d46d7-s.p.woff2",
+        "rawKb": 21.2,
+        "gzipKb": 21.2
+      }
+    ],
+    "fontCount": 4
+  },
+  "largestChunks": [
+    {
+      "file": "static/chunks/9404-f25604c3edc94d73.js",
+      "rawKb": 431.7,
+      "gzipKb": 115
+    },
+    {
+      "file": "static/chunks/3794-0a1186eb85c3950f.js",
+      "rawKb": 235.7,
+      "gzipKb": 64
+    },
+    {
+      "file": "static/chunks/4bd1b696-8a4ab4fdf0ae305a.js",
+      "rawKb": 196.3,
+      "gzipKb": 61.7
+    },
+    {
+      "file": "static/chunks/framework-666c53740fc261c8.js",
+      "rawKb": 185.2,
+      "gzipKb": 58.4
+    },
+    {
+      "file": "static/chunks/2651-0f6399001dbfe945.js",
+      "rawKb": 124.3,
+      "gzipKb": 40.9
+    },
+    {
+      "file": "static/chunks/polyfills-42372ed130431b0a.js",
+      "rawKb": 110,
+      "gzipKb": 38.6
+    },
+    {
+      "file": "static/chunks/main-91940c8e95ada4ba.js",
+      "rawKb": 130.9,
+      "gzipKb": 38.1
+    },
+    {
+      "file": "static/chunks/app/(console)/console/error-04d7c1d82787e213.js",
+      "rawKb": 103.4,
+      "gzipKb": 29.2
+    },
+    {
+      "file": "static/chunks/8064-a6b2626b59bfccca.js",
+      "rawKb": 87.2,
+      "gzipKb": 24.7
+    },
+    {
+      "file": "static/chunks/1712.1376c01cce58e5cb.js",
+      "rawKb": 72.1,
+      "gzipKb": 21.8
+    },
+    {
+      "file": "static/css/a55b8f8ec0ee129f.css",
+      "rawKb": 110.4,
+      "gzipKb": 18.5
+    },
+    {
+      "file": "static/chunks/8733-e8c191de144215f5.js",
+      "rawKb": 61.3,
+      "gzipKb": 18
+    },
+    {
+      "file": "static/css/eebf12bc9240245e.css",
+      "rawKb": 69.8,
+      "gzipKb": 12.5
+    },
+    {
+      "file": "static/chunks/211-4febadf4d477adc9.js",
+      "rawKb": 43.9,
+      "gzipKb": 12.4
+    },
+    {
+      "file": "static/chunks/9537-1b609d2ae2af4987.js",
+      "rawKb": 42.9,
+      "gzipKb": 11.3
+    },
+    {
+      "file": "static/chunks/6168.e89ddf0d767d59ae.js",
+      "rawKb": 33.4,
+      "gzipKb": 10.4
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/page-b8f92866d5ef0620.js",
+      "rawKb": 37.9,
+      "gzipKb": 9.9
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/settings/page-4732ac3eae8b6c37.js",
+      "rawKb": 30.8,
+      "gzipKb": 9.8
+    },
+    {
+      "file": "static/chunks/3687-b94926ceb9c17d33.js",
+      "rawKb": 34.2,
+      "gzipKb": 9.4
+    },
+    {
+      "file": "static/chunks/app/[lang]/contact/page-596462733ccc9f43.js",
+      "rawKb": 29.2,
+      "gzipKb": 9.2
+    }
+  ],
+  "stylesheets": [
+    {
+      "file": "static/css/a55b8f8ec0ee129f.css",
+      "rawKb": 110.4,
+      "gzipKb": 18.5
+    },
+    {
+      "file": "static/css/eebf12bc9240245e.css",
+      "rawKb": 69.8,
+      "gzipKb": 12.5
+    },
+    {
+      "file": "static/css/c127233da73f11af.css",
+      "rawKb": 17,
+      "gzipKb": 3.3
+    },
+    {
+      "file": "static/css/bdc8353fadd67def.css",
+      "rawKb": 7.8,
+      "gzipKb": 1.6
+    },
+    {
+      "file": "static/css/e5843fe87b9ecb6d.css",
+      "rawKb": 0.9,
+      "gzipKb": 0.3
+    }
+  ],
+  "routes": [],
+  "routeSizes": [],
+  "allFiles": [
+    {
+      "file": "static/chunks/9404-f25604c3edc94d73.js",
+      "ext": ".js",
+      "raw": 442108,
+      "gzip": 117755
+    },
+    {
+      "file": "static/chunks/3794-0a1186eb85c3950f.js",
+      "ext": ".js",
+      "raw": 241388,
+      "gzip": 65551
+    },
+    {
+      "file": "static/chunks/4bd1b696-8a4ab4fdf0ae305a.js",
+      "ext": ".js",
+      "raw": 201060,
+      "gzip": 63160
+    },
+    {
+      "file": "static/chunks/framework-666c53740fc261c8.js",
+      "ext": ".js",
+      "raw": 189686,
+      "gzip": 59766
+    },
+    {
+      "file": "static/chunks/2651-0f6399001dbfe945.js",
+      "ext": ".js",
+      "raw": 127323,
+      "gzip": 41834
+    },
+    {
+      "file": "static/chunks/polyfills-42372ed130431b0a.js",
+      "ext": ".js",
+      "raw": 112594,
+      "gzip": 39520
+    },
+    {
+      "file": "static/chunks/main-91940c8e95ada4ba.js",
+      "ext": ".js",
+      "raw": 134055,
+      "gzip": 39060
+    },
+    {
+      "file": "static/chunks/app/(console)/console/error-04d7c1d82787e213.js",
+      "ext": ".js",
+      "raw": 105878,
+      "gzip": 29867
+    },
+    {
+      "file": "static/chunks/8064-a6b2626b59bfccca.js",
+      "ext": ".js",
+      "raw": 89251,
+      "gzip": 25272
+    },
+    {
+      "file": "static/chunks/1712.1376c01cce58e5cb.js",
+      "ext": ".js",
+      "raw": 73811,
+      "gzip": 22344
+    },
+    {
+      "file": "static/css/a55b8f8ec0ee129f.css",
+      "ext": ".css",
+      "raw": 113062,
+      "gzip": 18983
+    },
+    {
+      "file": "static/chunks/8733-e8c191de144215f5.js",
+      "ext": ".js",
+      "raw": 62780,
+      "gzip": 18471
+    },
+    {
+      "file": "static/css/eebf12bc9240245e.css",
+      "ext": ".css",
+      "raw": 71427,
+      "gzip": 12775
+    },
+    {
+      "file": "static/chunks/211-4febadf4d477adc9.js",
+      "ext": ".js",
+      "raw": 44941,
+      "gzip": 12671
+    },
+    {
+      "file": "static/chunks/9537-1b609d2ae2af4987.js",
+      "ext": ".js",
+      "raw": 43921,
+      "gzip": 11605
+    },
+    {
+      "file": "static/chunks/6168.e89ddf0d767d59ae.js",
+      "ext": ".js",
+      "raw": 34232,
+      "gzip": 10653
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/page-b8f92866d5ef0620.js",
+      "ext": ".js",
+      "raw": 38825,
+      "gzip": 10092
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/settings/page-4732ac3eae8b6c37.js",
+      "ext": ".js",
+      "raw": 31544,
+      "gzip": 10016
+    },
+    {
+      "file": "static/chunks/3687-b94926ceb9c17d33.js",
+      "ext": ".js",
+      "raw": 34999,
+      "gzip": 9617
+    },
+    {
+      "file": "static/chunks/app/[lang]/contact/page-596462733ccc9f43.js",
+      "ext": ".js",
+      "raw": 29893,
+      "gzip": 9379
+    },
+    {
+      "file": "static/chunks/7223-9260d387ebef8e89.js",
+      "ext": ".js",
+      "raw": 30310,
+      "gzip": 9358
+    },
+    {
+      "file": "static/chunks/1577-0884c65d06e236b3.js",
+      "ext": ".js",
+      "raw": 20836,
+      "gzip": 8614
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/tracking/page-6ac71c788bd55a41.js",
+      "ext": ".js",
+      "raw": 29440,
+      "gzip": 8535
+    },
+    {
+      "file": "static/chunks/app/[lang]/blogs/[slug]/page-181130eaeed64ce1.js",
+      "ext": ".js",
+      "raw": 27166,
+      "gzip": 8527
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/hero/page-67722bf24c8f30b7.js",
+      "ext": ".js",
+      "raw": 29401,
+      "gzip": 8457
+    },
+    {
+      "file": "static/chunks/app/[lang]/offers/[slug]/page-868294315ca4c355.js",
+      "ext": ".js",
+      "raw": 26069,
+      "gzip": 8301
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/leads/page-7a970431007fdb09.js",
+      "ext": ".js",
+      "raw": 26448,
+      "gzip": 8027
+    },
+    {
+      "file": "static/chunks/app/[lang]/blogs/page-832c79bae638b7e3.js",
+      "ext": ".js",
+      "raw": 21052,
+      "gzip": 7903
+    },
+    {
+      "file": "static/chunks/8181-3e8ddba11dcba35f.js",
+      "ext": ".js",
+      "raw": 18718,
+      "gzip": 7073
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/users/page-48b7fb2bce4333b4.js",
+      "ext": ".js",
+      "raw": 22550,
+      "gzip": 6522
+    },
+    {
+      "file": "static/chunks/app/[lang]/offers/page-495941a745d3efbe.js",
+      "ext": ".js",
+      "raw": 20395,
+      "gzip": 6477
+    },
+    {
+      "file": "static/chunks/623-e30b2067b66b9dcd.js",
+      "ext": ".js",
+      "raw": 17328,
+      "gzip": 6238
+    },
+    {
+      "file": "static/chunks/app/[lang]/about/page-2e59f6885bc693c1.js",
+      "ext": ".js",
+      "raw": 20587,
+      "gzip": 6095
+    },
+    {
+      "file": "static/chunks/app/[lang]/faq/page-3fbcb2349a637e4a.js",
+      "ext": ".js",
+      "raw": 17141,
+      "gzip": 6087
+    },
+    {
+      "file": "static/chunks/app/[lang]/branches/[slug]/page-cf63e1fa03cc2bda.js",
+      "ext": ".js",
+      "raw": 19269,
+      "gzip": 5836
+    },
+    {
+      "file": "static/chunks/5645-875102479147220c.js",
+      "ext": ".js",
+      "raw": 14311,
+      "gzip": 5565
+    },
+    {
+      "file": "static/chunks/1643-81930a4c924b2ff5.js",
+      "ext": ".js",
+      "raw": 18320,
+      "gzip": 5556
+    },
+    {
+      "file": "static/chunks/app/[lang]/layout-7140a70cacdf4c9a.js",
+      "ext": ".js",
+      "raw": 12721,
+      "gzip": 5321
+    },
+    {
+      "file": "static/chunks/app/[lang]/results/page-9e216024fccc2f6d.js",
+      "ext": ".js",
+      "raw": 13115,
+      "gzip": 5199
+    },
+    {
+      "file": "static/chunks/app/[lang]/doctors/page-a893f4b94bbe4f97.js",
+      "ext": ".js",
+      "raw": 13830,
+      "gzip": 4958
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/seo/page-03dd2a5f824b6964.js",
+      "ext": ".js",
+      "raw": 14724,
+      "gzip": 4724
+    },
+    {
+      "file": "static/chunks/1292-975011d4c699815b.js",
+      "ext": ".js",
+      "raw": 15253,
+      "gzip": 4595
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/texts/page-422064edb39ece9b.js",
+      "ext": ".js",
+      "raw": 14270,
+      "gzip": 4580
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/layout-0551c77a08ee859a.js",
+      "ext": ".js",
+      "raw": 14609,
+      "gzip": 4568
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/roles/page-27b6d5d0ea659c91.js",
+      "ext": ".js",
+      "raw": 14567,
+      "gzip": 4375
+    },
+    {
+      "file": "static/chunks/4700-54a7dfdd9bf6c484.js",
+      "ext": ".js",
+      "raw": 9355,
+      "gzip": 4227
+    },
+    {
+      "file": "static/chunks/app/[lang]/page-bf16b7f84d69277a.js",
+      "ext": ".js",
+      "raw": 10666,
+      "gzip": 4049
+    },
+    {
+      "file": "static/chunks/app/[lang]/privacy/page-fcb7c381fefaca12.js",
+      "ext": ".js",
+      "raw": 9751,
+      "gzip": 3922
+    },
+    {
+      "file": "static/chunks/583-2da28fba323fb614.js",
+      "ext": ".js",
+      "raw": 9648,
+      "gzip": 3765
+    },
+    {
+      "file": "static/chunks/8830-3540124a7c404aca.js",
+      "ext": ".js",
+      "raw": 10467,
+      "gzip": 3729
+    },
+    {
+      "file": "static/chunks/4515-3ad4e32ba2c9c38b.js",
+      "ext": ".js",
+      "raw": 9588,
+      "gzip": 3653
+    },
+    {
+      "file": "static/chunks/8185-332997e410fd45f5.js",
+      "ext": ".js",
+      "raw": 8707,
+      "gzip": 3585
+    },
+    {
+      "file": "static/chunks/9820-8c1ccc2999e54426.js",
+      "ext": ".js",
+      "raw": 9036,
+      "gzip": 3564
+    },
+    {
+      "file": "static/chunks/8500-01a63dafd809e317.js",
+      "ext": ".js",
+      "raw": 8665,
+      "gzip": 3561
+    },
+    {
+      "file": "static/chunks/app/[lang]/services/page-1360e9bda0f5d1fc.js",
+      "ext": ".js",
+      "raw": 9718,
+      "gzip": 3532
+    },
+    {
+      "file": "static/chunks/7596-7896f843a577e95c.js",
+      "ext": ".js",
+      "raw": 8765,
+      "gzip": 3432
+    },
+    {
+      "file": "static/css/c127233da73f11af.css",
+      "ext": ".css",
+      "raw": 17395,
+      "gzip": 3335
+    },
+    {
+      "file": "static/chunks/app/[lang]/branches/page-eb89fc7aaa64b723.js",
+      "ext": ".js",
+      "raw": 8076,
+      "gzip": 2801
+    },
+    {
+      "file": "static/chunks/app/(console)/console/password/page-3d44f99123d5221f.js",
+      "ext": ".js",
+      "raw": 8057,
+      "gzip": 2667
+    },
+    {
+      "file": "static/chunks/webpack-1c222ed5320b14f7.js",
+      "ext": ".js",
+      "raw": 4973,
+      "gzip": 2381
+    },
+    {
+      "file": "static/chunks/app/(console)/console/login/page-ce7116a2b704f92d.js",
+      "ext": ".js",
+      "raw": 6902,
+      "gzip": 2294
+    },
+    {
+      "file": "static/chunks/2577-8d1f991aeffd62d5.js",
+      "ext": ".js",
+      "raw": 6795,
+      "gzip": 2179
+    },
+    {
+      "file": "static/chunks/3899.d4d0ae202f418161.js",
+      "ext": ".js",
+      "raw": 4767,
+      "gzip": 2008
+    },
+    {
+      "file": "static/chunks/app/[lang]/preview-missing-fields/page-766328f1e597c2ac.js",
+      "ext": ".js",
+      "raw": 5773,
+      "gzip": 1929
+    },
+    {
+      "file": "static/css/bdc8353fadd67def.css",
+      "ext": ".css",
+      "raw": 8038,
+      "gzip": 1644
+    },
+    {
+      "file": "static/chunks/2028-8fcc8cb77bde4fef.js",
+      "ext": ".js",
+      "raw": 4410,
+      "gzip": 1487
+    },
+    {
+      "file": "static/02zpKI9iZLsh9fg1CxUyc/_buildManifest.js",
+      "ext": ".js",
+      "raw": 3356,
+      "gzip": 585
+    },
+    {
+      "file": "static/chunks/1966.b8f83f7ba376c962.js",
+      "ext": ".js",
+      "raw": 759,
+      "gzip": 426
+    },
+    {
+      "file": "static/css/e5843fe87b9ecb6d.css",
+      "ext": ".css",
+      "raw": 890,
+      "gzip": 319
+    },
+    {
+      "file": "static/chunks/app/global-not-found-30343f8df563fbef.js",
+      "ext": ".js",
+      "raw": 498,
+      "gzip": 306
+    },
+    {
+      "file": "static/chunks/app/_not-found/page-30343f8df563fbef.js",
+      "ext": ".js",
+      "raw": 498,
+      "gzip": 306
+    },
+    {
+      "file": "static/chunks/app/(console)/console/layout-e0ba3c26e59e75c6.js",
+      "ext": ".js",
+      "raw": 451,
+      "gzip": 283
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/lists/page-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/loading-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/auth/me/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/auth/password/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/auth/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/content/[kind]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/content/[kind]/[id]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/content/[kind]/[id]/[action]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/copy/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/hero/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/leads/export/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/leads/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/leads/[id]/notes/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/leads/[id]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/media/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/media/[id]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/overview/export/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/overview/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/prefs/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/roles/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/roles/[id]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/search/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/seo/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/settings/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/sheets/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/tracking/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/users/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/users/[id]/password/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/users/[id]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/views/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/console/views/[id]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/revalidate/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/track/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/branches/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/categories/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/home/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/lead/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/offer-categories/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/offers/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/offers/[slug]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/pages/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/pages/[slug]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/posts/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/posts/[slug]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/services/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/api/v1/settings/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/robots.txt/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/sitemap.xml/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/uploads/[...path]/route-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/app/_global-error/page-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/next/dist/client/components/builtin/app-error-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/next/dist/client/components/builtin/empty-stub-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/next/dist/client/components/builtin/forbidden-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/next/dist/client/components/builtin/unauthorized-0f82b5faefbf2773.js",
+      "ext": ".js",
+      "raw": 397,
+      "gzip": 264
+    },
+    {
+      "file": "static/chunks/main-app-2b7b9ad3281b7507.js",
+      "ext": ".js",
+      "raw": 529,
+      "gzip": 233
+    },
+    {
+      "file": "static/chunks/app/not-found-d8a726dd95b33349.js",
+      "ext": ".js",
+      "raw": 309,
+      "gzip": 210
+    },
+    {
+      "file": "static/chunks/app/(console)/console/not-found-b3248cb30e597833.js",
+      "ext": ".js",
+      "raw": 191,
+      "gzip": 167
+    },
+    {
+      "file": "static/chunks/next/dist/client/components/builtin/global-error-de31c773bd0dfc1c.js",
+      "ext": ".js",
+      "raw": 186,
+      "gzip": 164
+    },
+    {
+      "file": "static/chunks/app/[lang]/preview/services/[id]/page-56e7851fa9b264a4.js",
+      "ext": ".js",
+      "raw": 168,
+      "gzip": 151
+    },
+    {
+      "file": "static/chunks/app/[lang]/services/[slug]/page-a4267e435a324b34.js",
+      "ext": ".js",
+      "raw": 168,
+      "gzip": 151
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/articles/page-38da58fdd9a91457.js",
+      "ext": ".js",
+      "raw": 153,
+      "gzip": 141
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/offers/page-b180944d2129d449.js",
+      "ext": ".js",
+      "raw": 153,
+      "gzip": 141
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/pages/about/page-e75fde9f578f5e40.js",
+      "ext": ".js",
+      "raw": 152,
+      "gzip": 140
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/pages/page-2c7277dadc7ef006.js",
+      "ext": ".js",
+      "raw": 152,
+      "gzip": 140
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/[kind]/page-62e98b074ac2d5af.js",
+      "ext": ".js",
+      "raw": 153,
+      "gzip": 140
+    },
+    {
+      "file": "static/chunks/app/(console)/console/(workspace)/[kind]/[id]/page-6a77ca729233f226.js",
+      "ext": ".js",
+      "raw": 153,
+      "gzip": 140
+    },
+    {
+      "file": "static/02zpKI9iZLsh9fg1CxUyc/_ssgManifest.js",
+      "ext": ".js",
+      "raw": 80,
+      "gzip": 64
+    }
+  ]
+}

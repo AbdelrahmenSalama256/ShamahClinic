@@ -59,6 +59,16 @@ next-env.d.ts
 # name, byte count and SHA-256, so a later run proves identity without committing pixels.
 /docs/baseline/*.png
 
+# The §0b Lighthouse matrix: 96 full JSON reports, 0.7–1.1 MB each (~80 MB). docs/perf/
+# summary.json carries every number that matters (categories, timings, sizes, request
+# counts, CLS culprits, per-chunk bytes) and docs/perf/baseline.md is the table the owner
+# reads; the raw traces stay on disk for re-summarising without re-running the matrix.
+# runs.jsonl is the in-flight progress log the runner appends to, and db-timing.jsonl is the
+# per-statement line log — both superseded by the committed summary.json / db-timing.json.
+/docs/perf/raw/
+/docs/perf/runs.jsonl
+/docs/perf/db-timing.jsonl
+
 # browser screenshots taken while verifying a row in the built app: the evidence stays
 # on disk for the run, and the PROGRESS row says what it showed
 /.shots/

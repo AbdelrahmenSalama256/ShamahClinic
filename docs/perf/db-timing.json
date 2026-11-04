@@ -1,0 +1,3368 @@
+[
+  {
+    "locale": "ar",
+    "page": "home",
+    "url": "http://127.0.0.1:3431/ar",
+    "cold": {
+      "status": 200,
+      "bytes": 186595,
+      "wall": 387,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 32,
+      "totalMs": 1272.5,
+      "slowest": [
+        {
+          "ms": 249.3,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 248.7,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 206.1,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 5,
+          "ms": 603.1999999999999,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 5,
+          "ms": 212.7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 206.1,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 101.8,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc",
+          "count": 1,
+          "ms": 23.5,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 5,
+          "ms": 23,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 23,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 18,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 32
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 186595,
+      "wall": 187,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 32,
+      "totalMs": 724.5,
+      "slowest": [
+        {
+          "ms": 134.6,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 129.8,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 91.8,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 5,
+          "ms": 416.5,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 5,
+          "ms": 96.8,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 91.8,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 34.8,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 5,
+          "ms": 15.4,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc",
+          "count": 1,
+          "ms": 14.4,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 9.7,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 9.3,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 32
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "services",
+    "url": "http://127.0.0.1:3431/ar/services",
+    "cold": {
+      "status": 200,
+      "bytes": 136489,
+      "wall": 90,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 21,
+      "totalMs": 242.2,
+      "slowest": [
+        {
+          "ms": 47,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 46.8,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 46.7,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 186.60000000000002,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 13.9,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 13.7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 9.1,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 4.8,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.6,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2.9,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 2.7,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        }
+      ],
+      "dbLines": 21
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 136489,
+      "wall": 88,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 21,
+      "totalMs": 107.7,
+      "slowest": [
+        {
+          "ms": 52.2,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 4.8,
+          "sql": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "ms": 3.6,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 62.2,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 10.4,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 10.1,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 8.899999999999999,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 4.8,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.6,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2.6,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        }
+      ],
+      "dbLines": 21
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "service-detail",
+    "url": "http://127.0.0.1:3431/ar/services/laser-hair-removal",
+    "cold": {
+      "status": 200,
+      "bytes": 118304,
+      "wall": 136,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 31,
+      "totalMs": 137.1,
+      "slowest": [
+        {
+          "ms": 46.2,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 10.9,
+          "sql": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "ms": 4.7,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 46.2,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 6,
+          "ms": 17.7,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 6,
+          "ms": 17.4,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 6,
+          "ms": 13.4,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 10.9,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 9.2,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 4.5,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 4,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 31
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 118304,
+      "wall": 99,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 31,
+      "totalMs": 113,
+      "slowest": [
+        {
+          "ms": 29.6,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 10.3,
+          "sql": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "ms": 5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 29.6,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 6,
+          "ms": 17.3,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 6,
+          "ms": 15,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 6,
+          "ms": 12.8,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 10.3,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 3.5,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `id` from `articles` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 3.3,
+          "sample": "select `id` from `articles` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        }
+      ],
+      "dbLines": 31
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "offers",
+    "url": "http://127.0.0.1:3431/ar/offers",
+    "cold": {
+      "status": 200,
+      "bytes": 168234,
+      "wall": 93,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 23,
+      "totalMs": 132.7,
+      "slowest": [
+        {
+          "ms": 59,
+          "sql": "select * from `offers` where `status` in (?, ?) and `deleted_at` is null order by `position` asc, `slug` asc"
+        },
+        {
+          "ms": 22.5,
+          "sql": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "ms": 3.2,
+          "sql": "select `id` from `offers` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `offers` where `status` in (?, ?) and `deleted_at` is null order by `position` asc, `slug` asc",
+          "count": 1,
+          "ms": 59,
+          "sample": "select * from `offers` where `status` in (?, ?) and `deleted_at` is null order by `position` asc, `slug` asc"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 22.5,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 10.3,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 9.3,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8.299999999999999,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.6000000000000005,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id` from `offers` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 3.2,
+          "sample": "select `id` from `offers` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 23
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 168234,
+      "wall": 89,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 23,
+      "totalMs": 141.6,
+      "slowest": [
+        {
+          "ms": 39.6,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 39.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 7.9,
+          "sql": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 85.30000000000001,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 11,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8.9,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 8.4,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 7.9,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.6,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select * from `offers` where `status` in (?, ?) and `deleted_at` is null order by `position` asc, `slug` asc",
+          "count": 1,
+          "ms": 3.6,
+          "sample": "select * from `offers` where `status` in (?, ?) and `deleted_at` is null order by `position` asc, `slug` asc"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.2,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 23
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "cases",
+    "url": "http://127.0.0.1:3431/ar/results",
+    "cold": {
+      "status": 200,
+      "bytes": 131777,
+      "wall": 104,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 25,
+      "totalMs": 122.9,
+      "slowest": [
+        {
+          "ms": 31.4,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 14.7,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 6.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 5,
+          "ms": 36.599999999999994,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 31.4,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 5,
+          "ms": 13.6,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 5,
+          "ms": 12.7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 9.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 4.3,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 4.2,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 3.2,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        }
+      ],
+      "dbLines": 25
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 131777,
+      "wall": 82,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 25,
+      "totalMs": 153,
+      "slowest": [
+        {
+          "ms": 53,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 24.9,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 7.9,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 5,
+          "ms": 79.2,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 24.9,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 5,
+          "ms": 12.7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 5,
+          "ms": 11.400000000000002,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.8,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.4,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.1,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 3.1,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        }
+      ],
+      "dbLines": 25
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "articles",
+    "url": "http://127.0.0.1:3431/ar/blogs",
+    "cold": {
+      "status": 200,
+      "bytes": 148334,
+      "wall": 145,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 27,
+      "totalMs": 113.8,
+      "slowest": [
+        {
+          "ms": 24.3,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 7.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 7.4,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 25.300000000000004,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 24.3,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 11.9,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 10.399999999999999,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 8,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null and `enabled` = ? order by `position` asc",
+          "count": 2,
+          "ms": 6.1,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null and `enabled` = ? order by `position` asc"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 5,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.8,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        }
+      ],
+      "dbLines": 27
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 148334,
+      "wall": 131,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 27,
+      "totalMs": 220.5,
+      "slowest": [
+        {
+          "ms": 40.7,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 40.6,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 40.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 128.7,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 14.4,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 14,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 12.6,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 10.9,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 9,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.300000000000001,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null and `enabled` = ? order by `position` asc",
+          "count": 2,
+          "ms": 3.9,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null and `enabled` = ? order by `position` asc"
+        }
+      ],
+      "dbLines": 27
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "article",
+    "url": "http://127.0.0.1:3431/ar/blogs/laser-underarm-hair-removal",
+    "cold": {
+      "status": 200,
+      "bytes": 205883,
+      "wall": 96,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 22,
+      "totalMs": 78.2,
+      "slowest": [
+        {
+          "ms": 13.9,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 9.7,
+          "sql": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "ms": 4.4,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 13.9,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 11.9,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 11.3,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 11.3,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 10.5,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 9.7,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `id` from `articles` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 2.7,
+          "sample": "select `id` from `articles` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null and `slug` in (?, ?) order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 2.2,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null and `slug` in (?, ?) order by `published_at` desc, `slug` desc"
+        }
+      ],
+      "dbLines": 22
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 205883,
+      "wall": 90,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 22,
+      "totalMs": 71.7,
+      "slowest": [
+        {
+          "ms": 10.9,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 10.3,
+          "sql": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "ms": 3.6,
+          "sql": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 10.9,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 10.3,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 10.3,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 10.1,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 8.9,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.6,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.6,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.5,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        }
+      ],
+      "dbLines": 22
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "contact",
+    "url": "http://127.0.0.1:3431/ar/contact",
+    "cold": {
+      "status": 200,
+      "bytes": 122608,
+      "wall": 43,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 46.6,
+      "slowest": [
+        {
+          "ms": 3.9,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 3.3,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 3.2,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 10,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 9.3,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 8.9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 8.8,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.3,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 2.3,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 1.6,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 19
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 122608,
+      "wall": 33,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 35.4,
+      "slowest": [
+        {
+          "ms": 2.9,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 2.5,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "ms": 2.2,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8.1,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 7.8,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.1,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 6.1,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.1,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.9,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 1.3,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        }
+      ],
+      "dbLines": 19
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "about",
+    "url": "http://127.0.0.1:3431/ar/about",
+    "cold": {
+      "status": 200,
+      "bytes": 129286,
+      "wall": 36,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 56.6,
+      "slowest": [
+        {
+          "ms": 8.3,
+          "sql": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "ms": 4.4,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 4.3,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 11.600000000000001,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 11.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 9.7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 8.3,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 7.1,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 4,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc",
+          "count": 1,
+          "ms": 2.9,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 1.5,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 19
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 129286,
+      "wall": 35,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 40.1,
+      "slowest": [
+        {
+          "ms": 3.1,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 3,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 2.8,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 9,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 7.300000000000001,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.1000000000000005,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 7.1,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.8,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc",
+          "count": 1,
+          "ms": 2.2,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.6,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 19
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "doctors",
+    "url": "http://127.0.0.1:3431/ar/doctors",
+    "cold": {
+      "status": 200,
+      "bytes": 139014,
+      "wall": 38,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 51.6,
+      "slowest": [
+        {
+          "ms": 4.3,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 4,
+          "sql": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 3.7,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 10.6,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 9.899999999999999,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 9.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 7.7,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 4.3,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 4,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 3,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2.6,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        }
+      ],
+      "dbLines": 19
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 139014,
+      "wall": 33,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 54,
+      "slowest": [
+        {
+          "ms": 4.4,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 4,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "ms": 3.6,
+          "sql": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 12.600000000000001,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 11.7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 9.200000000000001,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 9.1,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.6,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 3.1,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2.9,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 1.8,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        }
+      ],
+      "dbLines": 19
+    }
+  },
+  {
+    "locale": "ar",
+    "page": "branches",
+    "url": "http://127.0.0.1:3431/ar/branches",
+    "cold": {
+      "status": 200,
+      "bytes": 122885,
+      "wall": 48,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 46.1,
+      "slowest": [
+        {
+          "ms": 3.6,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 3.4,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "ms": 3.1,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 11.1,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 9.4,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 8.7,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 8.399999999999999,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 2.3,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 1.4,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 19
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 122885,
+      "wall": 35,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 39.8,
+      "slowest": [
+        {
+          "ms": 3.1,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 3.1,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 2.9,
+          "sql": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 10.3,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 6.9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.700000000000001,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.1,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.9,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 1.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.4,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 19
+    }
+  },
+  {
+    "locale": "en",
+    "page": "home",
+    "url": "http://127.0.0.1:3431/en",
+    "cold": {
+      "status": 200,
+      "bytes": 184344,
+      "wall": 146,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 32,
+      "totalMs": 346.9,
+      "slowest": [
+        {
+          "ms": 74.7,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 63.3,
+          "sql": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "ms": 52.3,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 5,
+          "ms": 76.39999999999999,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 74.7,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 5,
+          "ms": 67.2,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 35.3,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc",
+          "count": 1,
+          "ms": 21.3,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc"
+        },
+        {
+          "shape": "select * from `offers` where `status` in (?, ?) and `deleted_at` is null order by `position` asc, `slug` asc",
+          "count": 1,
+          "ms": 12.1,
+          "sample": "select * from `offers` where `status` in (?, ?) and `deleted_at` is null order by `position` asc, `slug` asc"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 11.4,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 5,
+          "ms": 10.5,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        }
+      ],
+      "dbLines": 32
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 184344,
+      "wall": 143,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 32,
+      "totalMs": 538.4,
+      "slowest": [
+        {
+          "ms": 82.6,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 63.6,
+          "sql": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "ms": 63.3,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 5,
+          "ms": 291.9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 82.6,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 5,
+          "ms": 75.4,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 22.5,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 5,
+          "ms": 14.5,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc",
+          "count": 1,
+          "ms": 9.9,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.300000000000001,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 7,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        }
+      ],
+      "dbLines": 32
+    }
+  },
+  {
+    "locale": "en",
+    "page": "services",
+    "url": "http://127.0.0.1:3431/en/services",
+    "cold": {
+      "status": 200,
+      "bytes": 135321,
+      "wall": 81,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 21,
+      "totalMs": 186.4,
+      "slowest": [
+        {
+          "ms": 43.8,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 43.8,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 43.7,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 134,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 11,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 10.5,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 9.399999999999999,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 4.3,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 4.2,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 4,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 3.2,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 21
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 135321,
+      "wall": 72,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 21,
+      "totalMs": 174.1,
+      "slowest": [
+        {
+          "ms": 32.7,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 32.6,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 32.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 130.2,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 11.600000000000001,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 8.7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.800000000000001,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 4,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.4,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 2.2,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 2.1,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        }
+      ],
+      "dbLines": 21
+    }
+  },
+  {
+    "locale": "en",
+    "page": "service-detail",
+    "url": "http://127.0.0.1:3431/en/services/laser-hair-removal",
+    "cold": {
+      "status": 200,
+      "bytes": 116885,
+      "wall": 86,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 31,
+      "totalMs": 159.4,
+      "slowest": [
+        {
+          "ms": 38.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 37.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 15.4,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 6,
+          "ms": 81.1,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 15.4,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 6,
+          "ms": 15.3,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 6,
+          "ms": 12,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 8.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 7.8,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 4.2,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.2,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 31
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 116885,
+      "wall": 73,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 31,
+      "totalMs": 146.4,
+      "slowest": [
+        {
+          "ms": 36.2,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 36,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 12.2,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 6,
+          "ms": 77.9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 6,
+          "ms": 14.099999999999998,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 12.2,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 6,
+          "ms": 9.7,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 7.7,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.8,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 3.6,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.8,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        }
+      ],
+      "dbLines": 31
+    }
+  },
+  {
+    "locale": "en",
+    "page": "offers",
+    "url": "http://127.0.0.1:3431/en/offers",
+    "cold": {
+      "status": 200,
+      "bytes": 166166,
+      "wall": 76,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 23,
+      "totalMs": 183.1,
+      "slowest": [
+        {
+          "ms": 41.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 41.4,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 40.8,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 125.9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 10.8,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 10.8,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 8.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 6.4,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.8,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.7,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id` from `offers` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 2.8,
+          "sample": "select `id` from `offers` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        }
+      ],
+      "dbLines": 23
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 166166,
+      "wall": 81,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 23,
+      "totalMs": 131.1,
+      "slowest": [
+        {
+          "ms": 36.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 36.4,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 7.6,
+          "sql": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 81.6,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 10.1,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 7.6,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 7.6,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.1,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.8,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.5,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        }
+      ],
+      "dbLines": 23
+    }
+  },
+  {
+    "locale": "en",
+    "page": "cases",
+    "url": "http://127.0.0.1:3431/en/results",
+    "cold": {
+      "status": 200,
+      "bytes": 130554,
+      "wall": 69,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 25,
+      "totalMs": 90.5,
+      "slowest": [
+        {
+          "ms": 18.4,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 13.4,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 5.4,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 5,
+          "ms": 24.9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 18.4,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 5,
+          "ms": 12.399999999999999,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 5,
+          "ms": 10.3,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 8.399999999999999,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.7,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.5,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 2.3,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 25
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 130554,
+      "wall": 82,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 25,
+      "totalMs": 163.9,
+      "slowest": [
+        {
+          "ms": 51.8,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 50.2,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 12.5,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 5,
+          "ms": 113.5,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 12.5,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 5,
+          "ms": 10.5,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 5,
+          "ms": 8.299999999999999,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.8999999999999995,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.8,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        }
+      ],
+      "dbLines": 25
+    }
+  },
+  {
+    "locale": "en",
+    "page": "articles",
+    "url": "http://127.0.0.1:3431/en/blogs",
+    "cold": {
+      "status": 200,
+      "bytes": 147484,
+      "wall": 148,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 27,
+      "totalMs": 116.7,
+      "slowest": [
+        {
+          "ms": 59.7,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 5.1,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 5.1,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 59.7,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 13.499999999999998,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8.2,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 7,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null and `enabled` = ? order by `position` asc",
+          "count": 2,
+          "ms": 3.5,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null and `enabled` = ? order by `position` asc"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 3.2,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.7,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        }
+      ],
+      "dbLines": 27
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 147484,
+      "wall": 111,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 27,
+      "totalMs": 181.7,
+      "slowest": [
+        {
+          "ms": 42.5,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 41.6,
+          "sql": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "ms": 18.4,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 90.5,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 18.4,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 1,
+          "ms": 18.2,
+          "sample": "select `id` from `pages` where `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 11.8,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 7.800000000000001,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 7.6000000000000005,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 5.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc",
+          "count": 1,
+          "ms": 4.4,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null order by `route` asc"
+        }
+      ],
+      "dbLines": 27
+    }
+  },
+  {
+    "locale": "en",
+    "page": "article",
+    "url": "http://127.0.0.1:3431/en/blogs/laser-underarm-hair-removal",
+    "cold": {
+      "status": 200,
+      "bytes": 206552,
+      "wall": 115,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 22,
+      "totalMs": 111,
+      "slowest": [
+        {
+          "ms": 53.3,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 14,
+          "sql": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "ms": 7.5,
+          "sql": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 53.3,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 14,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 8.000000000000002,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 7.8,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 7.5,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 7.199999999999999,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 5.2,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "dbLines": 22
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 206552,
+      "wall": 90,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 22,
+      "totalMs": 78.5,
+      "slowest": [
+        {
+          "ms": 27,
+          "sql": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "ms": 8.2,
+          "sql": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "ms": 3.1,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc",
+          "count": 1,
+          "ms": 27,
+          "sample": "select * from `articles` where `status` in (?, ?) and `deleted_at` is null order by `published_at` desc, `slug` desc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 9.9,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 9.5,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null",
+          "count": 1,
+          "ms": 8.2,
+          "sample": "select `id`, `slug`, `name_ar`, `name_en` from `categories` where `deleted_at` is null"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 7.699999999999999,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 2,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 22
+    }
+  },
+  {
+    "locale": "en",
+    "page": "contact",
+    "url": "http://127.0.0.1:3431/en/contact",
+    "cold": {
+      "status": 200,
+      "bytes": 121034,
+      "wall": 32,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 44.5,
+      "slowest": [
+        {
+          "ms": 3.6,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 3.6,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 3.4,
+          "sql": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 10.4,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 8.700000000000001,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 7.699999999999999,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 7.1,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.6,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.4,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 1.9,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.7,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 19
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 121034,
+      "wall": 31,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 40.6,
+      "slowest": [
+        {
+          "ms": 3.3,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 3.2,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 3.1,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 11,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 8.2,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.2,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 5.9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.3,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.9,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 1.6,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.5,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 19
+    }
+  },
+  {
+    "locale": "en",
+    "page": "about",
+    "url": "http://127.0.0.1:3431/en/about",
+    "cold": {
+      "status": 200,
+      "bytes": 128703,
+      "wall": 32,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 33.9,
+      "slowest": [
+        {
+          "ms": 3.3,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 2.8,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 2.7,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8.5,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.4,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 6.2,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 4.2,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.8,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc",
+          "count": 1,
+          "ms": 1.5,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.3,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 19
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 128703,
+      "wall": 42,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 48.6,
+      "slowest": [
+        {
+          "ms": 7.5,
+          "sql": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "ms": 2.9,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 2.8,
+          "sql": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 9.8,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 7.7,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 7.5,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.5,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.9,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.8,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc",
+          "count": 1,
+          "ms": 2.4,
+          "sample": "select * from `pages` where `status` in (?, ?) and `deleted_at` is null and `route` in (?, ?) order by `route` asc"
+        }
+      ],
+      "dbLines": 19
+    }
+  },
+  {
+    "locale": "en",
+    "page": "doctors",
+    "url": "http://127.0.0.1:3431/en/doctors",
+    "cold": {
+      "status": 200,
+      "bytes": 138196,
+      "wall": 39,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 39.4,
+      "slowest": [
+        {
+          "ms": 2.9,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 2.8,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "ms": 2.8,
+          "sql": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8.8,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 8.3,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 6.800000000000001,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 6.6,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.9,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.8,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 1.7,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.5,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 19
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 138196,
+      "wall": 31,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 34,
+      "slowest": [
+        {
+          "ms": 2.6,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "ms": 2.5,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 2.3,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8.7,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 7,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 6.1,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 5.3,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.3,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.3,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 1.3,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        }
+      ],
+      "dbLines": 19
+    }
+  },
+  {
+    "locale": "en",
+    "page": "branches",
+    "url": "http://127.0.0.1:3431/en/branches",
+    "cold": {
+      "status": 200,
+      "bytes": 121549,
+      "wall": 29,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 41.3,
+      "slowest": [
+        {
+          "ms": 3.6,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 3.4,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 3.1,
+          "sql": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 8.4,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8.399999999999999,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 7.4,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 6.9,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 3.4,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 3.1,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 2.1,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 1.6,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        }
+      ],
+      "dbLines": 19
+    },
+    "warm": {
+      "status": 200,
+      "bytes": 121549,
+      "wall": 30,
+      "cacheControl": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "nextCache": null,
+      "queries": 19,
+      "totalMs": 35.8,
+      "slowest": [
+        {
+          "ms": 2.7,
+          "sql": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "ms": 2.7,
+          "sql": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "ms": 2.5,
+          "sql": "select `id` from `lists` where `list_key` = ?"
+        }
+      ],
+      "shapes": [
+        {
+          "shape": "select `id` from `lists` where `list_key` = ?",
+          "count": 4,
+          "ms": 8,
+          "sample": "select `id` from `lists` where `list_key` = ?"
+        },
+        {
+          "shape": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc",
+          "count": 4,
+          "ms": 7.300000000000001,
+          "sample": "select * from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null order by `position` asc, `uid` asc"
+        },
+        {
+          "shape": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?",
+          "count": 4,
+          "ms": 6.3999999999999995,
+          "sample": "select `id` from `list_items` where `list_id` = ? and `status` in (?, ?) and `deleted_at` is null limit ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?",
+          "count": 3,
+          "ms": 5.7,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?",
+          "count": 1,
+          "ms": 2.7,
+          "sample": "select `default_ar`, `default_en`, `pub_ar`, `pub_en` from `content_fields` where `field_key` like ? and `deleted_at` is null and `enabled` = ?"
+        },
+        {
+          "shape": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?",
+          "count": 1,
+          "ms": 2.3,
+          "sample": "select `value` from `settings` where `group_name` = ? and `setting_key` = ? and `is_secret` = ?"
+        },
+        {
+          "shape": "select `setting_key`, `value` from `settings` where `group_name` = ?",
+          "count": 1,
+          "ms": 1.8,
+          "sample": "select `setting_key`, `value` from `settings` where `group_name` = ?"
+        },
+        {
+          "shape": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?",
+          "count": 1,
+          "ms": 1.6,
+          "sample": "select `title`, `description` from `seo_entries` where `entity_type` = ? and `entity_id` = ? and `locale` = ?"
+        }
+      ],
+      "dbLines": 19
+    }
+  }
+]

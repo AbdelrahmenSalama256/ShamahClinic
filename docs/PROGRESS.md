@@ -4594,7 +4594,130 @@ says plainly "Never hide a page that is below target." Rows live in
   no-WordPress check trips on *content*, not on code. Reported as failing, not smoothed; deleting a
   row the owner has not agreed to delete is not this item's call.
 
-- [ ] MB-0b — Lighthouse baseline (mobile + desktop, 3 runs, median, 8 pages × AR/EN) + bundle + DB timing — pending
+- [x] MB-0b — Lighthouse baseline (mobile + desktop, 3 runs, median, 8 pages × AR/EN) + bundle + DB timing — done, 96 runs published; the record is the block directly below
+- [x] **MB-0b — the performance baseline** — browser-verified (with two red lines printed beside it, not under it)
+
+  96 Lighthouse runs = 8 pages × AR/EN × mobile/desktop × 3, medians of all three runs, on the
+  disposable production build `02zpKI9iZLsh9fg1CxUyc` (built 18:16:41) served on **3430** (PID 31324);
+  DB timing on a second server with `DATABASE_LOG_QUERIES=1` on **3431** (PIDs 37916/32868, started
+  19:13:53, after the matrix exited so nothing competed for CPU). Content database `shamah_cms`
+  @ 127.0.0.1:3307; the test database `shamah_cms_test` served nothing here (it is vitest's only).
+  Nothing on the site changed to produce these numbers.
+
+  What it says, in the brief's own framing — failures first:
+
+  - **18 of 32 combinations are below a row-7 budget: 60 individual breaches, each on its own line**
+    in `docs/perf/baseline.md`. All **16 mobile combinations fail, in both locales** — every Arabic
+    page (71–80) and every English page (76–86) — plus two desktop combinations, both home pages:
+    `desktop-ar-home` (Performance 90 against the "aim 95+" line, CLS 0.064) and `desktop-en-home`
+    (CLS 0.113). Mobile Performance medians **71–86** against ≥ 90; the worst single run was 68.
+  - Mobile LCP is 3.88–4.75 s while TTFB is only 29–222 ms, so the delay is entirely client-side:
+    bootup-time 598–2,089 ms, main-thread 3.1–6.9 s, 3–7 long tasks (medians 190–317 ms, 402 ms in
+    the worst single run).
+  - **First-load JS is 218.8–243.8 KiB gzip on every page** against the 170 KB budget. The chunk
+    inventory shows why: `9404-…js` is **115.0 KiB gzip of recharts, requested by none of the 96
+    public runs**; `8064-…js` is 24.7 KiB of zod, likewise 0 of 96; `2651-…js` is 40.9 KiB of
+    framer-motion on all 96 with ~70% unused (`unused-javascript` estimates 75.2–78.7 KiB per page).
+    Whole build: 132 chunks, 814.8 KiB gzip / 2,647.4 KiB raw.
+  - CSS is not carrying weight: 20.2 KiB transferred per public page (site stylesheet 110.4 KiB raw /
+    18.5 KiB gzip) and `unused-css-rules` reports **0 bytes**. Fonts are 83.4 KiB gzip of four
+    Tajawal faces on every page in both locales.
+  - **CLS breaches are four of 32, and Arabic shifts an order of magnitude more than English even
+    inside budget**: `mobile-ar-services` 0.173, `desktop-en-home` 0.113, `mobile-ar-home` 0.067,
+    `desktop-ar-home` 0.064 — while the other six Arabic mobile pages sit at 0.033–0.045 and all
+    eight English mobile pages at 0–0.007. **17 of the 32 combinations name "Web font loaded" as the
+    cause of their single worst shift** (the four Tajawal faces), which is item 1's number to hit and
+    is logged as Q-19 because the budget and the "look identical" rule meet there.
+  - Accessibility loses points in four places only (Q-20): `target-size` on the home swiper dots,
+    mobile in both locales, and `label-content-name-mismatch` on the Cases "View <faker title>"
+    buttons, English in both viewports. Best Practices and SEO are 100 on all 32 with no failing
+    audit in either category.
+  - DB floor: **19 statements before a page renders any content** (32 on home), `select * from
+    list_items where list_id = ? … order by position asc, uid asc` issued **96× across the 22 first
+    hits (1,403 ms)**, each triple of `lists → list_items → count` one list at a time, 4–6 lists a
+    page; `select * from pages … order by route asc` on 8 of the 22 URLs and never on the other 14.
+    **Hit 2 issues the identical query count as hit 1 on all 22 URLs — nothing is cached at any
+    layer**, only the milliseconds fall (1,272.5 → 724.5 on `/ar` home).
+  - The 74% finding: **the desktop Arabic homepage stampedes the RSC prefetcher** — its three runs
+    issued **2,661 / 2,699 / 2,835 `?_rsc=` requests** out of 2,706 / 2,744 / 2,880 total (3.27 MB),
+    resolving to only 8 targets (`/ar/services` 768×, `/ar/doctors` 768×, `/ar/about` 640×,
+    `/ar/results` 480×), while `desktop-en-home` issued 15 in every run and `mobile-en-home` 3.
+    Across the 96 runs **9,697 of 13,063 requests (74.2%) were prefetches**. Same HTML link counts in
+    both locales (68 `<a>`, 3–4 per route), so it is a duplicate-prefetch defect in code, logged as
+    Q-18, because
+    it makes any request-count budget meaningless until it is fixed; the four CLS breaches and the
+    font-swap asymmetry are Q-19, the accessibility deductions are Q-20.
+
+  Gates, raw, on the **rebuild of the same tree** (`NEXT_DIST_DIR=.next-build npm run build` at
+  19:37:11 → `BUILD_ID 8rFROZu4x77RQE7K46BIK`, gate server PID 23604 on 3430; the rebuild is
+  content-identical — every JS chunk by the same name, the same 5 stylesheets / 210,830 B raw, only
+  the site CSS chunk renamed from `a55b8f8ec0ee129f.css` to `4e5f95117001f1db.css` at the same
+  113,080 B / 18.6 KiB gzip):
+
+  ```
+  npm run typecheck                                   → exit 0, no output
+  npm run lint                                        → exit 0, ✖ 6 problems (0 errors, 6 warnings)
+  npx vitest run                                      → exit 1
+     Test Files  1 failed | 57 passed (58)
+          Tests  3 failed | 1118 passed (1121)   Duration 74.95s   DB: shamah_cms_test @ 127.0.0.1:3307
+  npx vitest run tests/delivery.test.ts               → exit 1, 3 failed | 10 passed (13)   ← was 13/13 at 0a
+  npm run copy:check                                  → exit 0, copy-catalog: 234 entries current; 97 data-driven calls skipped
+  NEXT_DIST_DIR=.next-build npm run build             → exit 0
+  NEXT_DIST_DIR=.next-build npm run prove:no-wp       → exit 0
+     ok   275 routes rendered, 0 failed; smallest HTML page 35522 bytes
+     ok   the server attempted 0 request(s) to the WordPress origin
+     5 checks passed, 0 failed
+  node scripts/verify-render.mjs http://127.0.0.1:3430 → exit 1, 249 checks passed, 4 failed
+  node scripts/verify-style-isolation.mjs --base http://127.0.0.1:3430 → exit 0
+     OK: the public pages load site CSS only; the console loads console CSS only.
+  ```
+
+  The two red lines, named rather than smoothed, and the reason this row reads `browser-verified` and
+  not done:
+
+  1. `verify-render`'s 4 failures are the same Q-16 faker `mens-aesthetic-services` row as at 0a, in
+     both locales ("is rendered on /services" + "publishes no schema.org Offer without a price").
+     Content decision, still the owner's.
+  2. `tests/delivery.test.ts` fails 3 of 13 **even when the file runs alone**, which is a change from
+     the 0a record of 13/13 alone. Cause measured, not guessed: MariaDB's clock runs 2–3 ms ahead of
+     the Node process (4 samples of `select now(3)` vs `Date.now()` = +2, +2, +3, +3 ms), and
+     `outbox.next_attempt_at` defaults to the DB's `CURRENT_TIMESTAMP(3)`
+     (`src/lib/db/migrations/004_leads.sql:66`) while `drainOutbox()` filters with
+     `.where('next_attempt_at', '<=', new Date())` (`src/lib/integrations/delivery.ts:235`). A row
+     enqueued milliseconds ago is therefore not "due" for the drain that follows it, which is exactly
+     the shape of all three failures: test 1's drain returns `failed: 0`, the next test's drain picks
+     the same row up and returns `failed: 1` where it asserts 0, and the third then finds it paused.
+     MB-0b touched no source; the fix (one clock on both sides of that comparison) belongs to Q-12
+     and is recorded there as an addendum rather than folded into this item.
+
+  Files: `docs/perf/baseline.md` (the report), `docs/perf/summary.json` (32 combos: medians, spreads,
+  LCP element, shifts, per-audit failures, largest scripts, budget verdicts, 96 rows),
+  `docs/perf/bundle.json`, `docs/perf/db-timing.json`. The 96 raw Lighthouse reports (~80 MB) and
+  `docs/perf/runs.jsonl` stay on disk and out of git — `.gitignore` now carries `/docs/perf/raw/`,
+  `/docs/perf/runs.jsonl` and `/docs/perf/db-timing.jsonl`, the same rule `docs/baseline/*.png`
+  follows: the committed summary is the deliverable, the pixels and traces are the evidence.
+
+  **The guard this item ships is the fixture, not a test.** 0b changes no behaviour, so there is no
+  new assertion to write and none was faked. `docs/perf/summary.json` carries a `budgets` block —
+  `mobile`/`desktop` × `performance 90 / 95`, `accessibility`/`best-practices`/`seo` 95,
+  `lcpMs 2500`, `cls 0.05`, `tbtMs 200`, `inpMs 200` — beside the 32 measured `combos` and the 18
+  `belowTarget` entries with their `why` strings; the **size** budgets (first-load JS ≤ 170 KB gzip,
+  CSS ≤ 60 KB, LCP image ≤ 120 KB, page weight ≤ 1.5 MB) are in `baseline.md`'s headline table and
+  measured in `bundle.json`/`summary.json`'s per-combo fields, not duplicated into `budgets`. Item
+  7's script has to read all three files and fail `npm run build` on any breach; this item's job was
+  to leave it a machine-readable floor to compare against, which it now has.
+
+  Lighthouse 12.8.2 lives out of the repo at `%TEMP%\shamah-lh` (repo `package.json`/lockfile
+  untouched) and needs `CHROME_PATH` at Playwright's `chromium-1248` Chrome `148.0.7778.96`. It has
+  **no lab `interaction-to-next-page` audit in these reports**, so INP is recorded as the
+  `max-potential-fid` proxy plus long-task count/longest, stated in the report and in the budget
+  table rather than presented as a measured INP. Scratch scripts (`shamah-lh-run.cjs`,
+  `shamah-perf-summary.cjs`, `shamah-bundle.cjs`, `shamah-dbq.cjs`, `shamah-rsc.cjs`, `shamah-fill.cjs`
+  and the two `.cmd` wrappers) ran from `%TEMP%` and were deleted after the commit, together with the
+  server PIDs this item started; `%TEMP%\shamah-lh` is kept because re-measuring needs it.
+  Servers stopped: 31324 (3430), 37916/32868 (3431), 23604 (3430 gate). MariaDB 38072 on 3307 never
+  touched; the owner's 3100 was up through the matrix and is gone now, which is theirs, not mine.
+
 - [ ] MB-1 … MB-7 — pending, in the brief's order, after §0 is reported
 
 ## Known gaps / notes
