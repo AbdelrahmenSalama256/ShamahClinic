@@ -1,4 +1,9 @@
 @import "tailwindcss";
+/* The two faces the site is drawn in, declared here rather than generated at build
+ * time — see the header of the file. It must be imported by anything that paints
+ * site type, which is why it sits with the other shared layers instead of beside a
+ * single page. */
+@import "../styles/fonts.css";
 /* The control layer both surfaces read, bundled here rather than imported by each
  * document root: a primitive that has to be remembered twice is a primitive that gets
  * forgotten on the third surface. Position is fixed by the cascade, not by this file's
@@ -126,10 +131,11 @@ html[data-theme="dark"] textarea {
   }
 }
 
-/* Digits that hold a column, or hold still while they count. The face cannot do this
-   from OpenType — no `tnum`, and unequal digits in both scripts — so the space is
-   reserved geometrically instead: `--num-digits` is the longest the value ever gets,
-   the run is centred inside that floor, and the result reads the same at
+/* Digits that hold a column, or hold still while they count. The two faces disagree
+   about OpenType — Montserrat has a `tnum` feature and Readex Pro has none, so the
+   declaration would align half the site and leave the other half jittering — so the
+   space is reserved geometrically instead: `--num-digits` is the longest the value ever
+   gets, the run is centred inside that floor, and the result reads the same at
    dir="rtl" as at dir="ltr" because an inline-size has no side. A utility rather
    than a base rule, so it never outranks the component that names its own alignment. */
 @utility num {

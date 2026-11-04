@@ -4718,7 +4718,155 @@ says plainly "Never hide a page that is below target." Rows live in
   Servers stopped: 31324 (3430), 37916/32868 (3431), 23604 (3430 gate). MariaDB 38072 on 3307 never
   touched; the owner's 3100 was up through the matrix and is gone now, which is theirs, not mine.
 
-- [ ] MB-1 … MB-7 — pending, in the brief's order, after §0 is reported
+- [x] **MB-1 — the site paints the original site's faces** — browser-verified
+
+  **What changed.** The public site is drawn in Readex Pro (Arabic) and Montserrat (Latin) —
+  `D:\shamah`'s two families, with that tree's own compiled descriptors — and Tajawal is left to
+  the console alone. `src/styles/fonts.css` (new) declares all 11 `@font-face` rules; the nine
+  binaries live in `public/fonts/` and both SIL licenses sit beside the console's face in
+  `src/lib/fonts/`. Both site roots stopped applying `tajawal.variable` and now inherit the faces
+  from `globals.css`, which `@import`s the new sheet; `src/styles/tokens.css` carries
+  `--font-readex-pro` / `--font-montserrat` and picks between them under `[dir="ltr"]`, so no
+  component names a family. `src/lib/fonts/index.ts` is now the console's module only.
+
+  **The mechanism conflict, resolved rather than argued.** The reference gets its faces from
+  `next/font/google`, which downloads at build time; BK-0.2/BK-11 forbid that here (a host without
+  outbound DNS fails the whole build), and this fork's `next/font/local` validator accepts
+  `src/display/weight/style/fallback/preload/variable/adjustFontFallback/declarations` and has no
+  `unicode-range` or `subsets` option — so it cannot produce a subset-split family set at all. The
+  faces are therefore plain CSS `@font-face` over files in `public/`: same rendering path, no
+  network at build time, `tests/typography.test.ts` keeps the ban and proves the offline property
+  from the tree. One consequence is real and is logged as Q-22: this path emits no
+  `rel=preload as="font"`, and the reference emitted none either (its saved `ar.html` preloads one
+  script and no font), so item 1 kept parity and item 7 owns the decision.
+
+  **`npm run fonts:diff` is this item's next action** ("a diff script over both sites").
+  `scripts/fonts-diff.mjs` reads `D:\shamah\.tmp\built.css` — the reference's compiled stylesheet,
+  read-only; its dev build and its binaries are gone, and starting its `next dev` would write into
+  a tree the brief forbids touching — and compares the two face sets by family, weight range,
+  canonicalised `unicode-range` (so `u+6??` and `U+0600-06FF` match), `font-display`, the four
+  metric overrides of the fallback faces and the `local()`/remote split of `src`. The file name is
+  printed, not compared, because `/_next/static/media/<hash>.woff2` → `/fonts/<name>.woff2` is the
+  one intended rewrite. On the current build: `OK: 11 faces, every family, weight range,
+  unicode-range, metric override and font-display identical to the reference.` The gate was proved
+  to bite, not just to pass: a copy with `ascent-override:85.79%` → `90.00%` and one range end
+  shifted by one codepoint exits 1 naming all three differences.
+
+  **Two claims in the tree were measured again and one was wrong.** The digit cell:
+  `--num-cell` was `max(1ch, 0.64em)`, a floor derived from Tajawal. Measured at 100 px against the
+  faces that now paint — and every `.num` call site is `font-black`, with `font-bold` on the
+  journal badge — the widest Latin digit is **71.2 units at Montserrat 900** and 67.2 at Readex Pro
+  700 (its ceiling; a 900 request there is synthetic bold over the 700 outlines and adds no width),
+  the widest Arabic-Indic ٣ is 67.0, and `1ch` runs 66.2–69.2 across that range, so it understates
+  the widest digit by up to two units. The floor is now **0.72em**. The second claim, that "neither
+  Readex Pro nor Montserrat carries a `tnum` feature", is false: probing the same page with and
+  without `font-variant-numeric: tabular-nums`, Montserrat snaps all ten digits to 70.0 units
+  (`628.3 → 700.0` for `0123456789` at 900) and Readex Pro does not move a pixel
+  (`591.41 → 591.41`). That asymmetry is the reason the reservation stays geometric: one
+  declaration would align the English counters and leave the Arabic ones jittering. Playwright on
+  the production server: the numbered list markers on `/ar/blogs/laser-underarm-hair-removal` are
+  29 `.num` spans, Readex Pro 700 at 10 px, `min-inline-size: 14.4px` painted as `14.39px` —
+  exactly 2 × 0.72em, where `1ch` would have given 13.44 px — and the same component on `/en/…`
+  paints Montserrat at the same 14.39 px.
+
+  **Browser evidence, on the build this commit ships.** `NEXT_DIST_DIR=.next-build npm run build`
+  exit 0 (`Compiled successfully in 78s`, 285 static pages in 69s), `BUILD_ID
+  iD0Fhk5kiUizYmdtpUT1J`, disposable `next start` on **3430**, **PID 9744**, started
+  **2026-11-04 21:25:22**, stopped at the end of this record. Content DB `shamah_cms`, test DB
+  `shamah_cms_test`, both on 127.0.0.1:3307; MariaDB's own PID 38072 never touched.
+  - `/ar` (dir=rtl): `body` computes to `"Readex Pro", "Readex Pro Fallback", "Segoe UI", Tahoma,
+    Arial, sans-serif`; `h1/h2/h3` 28/22/14 px at weight 900, `p`/`a` 12 px 400, `button` 12 px
+    500, `nav` 16 px 400; `--ls-heading` resolves to `0` in RTL (Chrome reports the computed value
+    as `normal`, which is the same thing) and to `-.015em` in LTR, where `/en/services` `h1`
+    measures `letter-spacing: -0.42px` at 28 px = 0.015 em ✓ and `line-height: 29.68px`.
+  - `/en/services` (dir=ltr): `body` computes to `Montserrat, "Montserrat Fallback", …`; 11 faces
+    registered on the page, **none of them tajawal** (`tajawalOnPage: false`), and the console
+    still gets its own — `console.css` reads `--c-font: var(--font-tajawal)` and its layout still
+    applies `tajawal.variable`, which `tests/typography.test.ts` and
+    `tests/console-isolation.test.ts` now prove from the tree and `built-css` proves from the build.
+  - Requests actually made: `/ar` pulls `readex-pro-arabic.woff2` + `readex-pro-latin.woff2`
+    (22,864 + 31,428 B), `/en/services` pulls `montserrat-latin.woff2` (37,956 B) — subsets load
+    on demand exactly as they do in the reference, all 200, `mimeType=font/woff2`, zero failed
+    requests and zero console messages on either page. All nine files ship (264,972 B); what a
+    visitor downloads is 53.0 KiB on an Arabic page and 37.1 KiB on a Latin one, against the 83.4
+    KiB of four Tajawal faces MB-0b measured on **every** page in **both** locales.
+  - The in-app browser could not settle painted geometry (its hidden page reports
+    `getBoundingClientRect().width = 0`); those numbers came from headless Playwright at 1440×900
+    instead, and the pixels are the 68 golden shots below.
+
+  **The golden set is re-based by this item, on purpose.** Fonts are the one change that moves
+  every page, so `docs/baseline/capture.json` was rewritten from the same 68-route walk on
+  `iD0Fhk5kiUizYmdtpUT1J`: `shots=68 non200=0 bytes=53618827 (~51.1 MB) errors=0
+  prefetchAborts=610`, and **68 of 68 SHA-256s differ from the §0a set, 0 identical, 0 added, 0
+  dropped** — which is the expected shape, and the reason §0a's hashes had to be replaced rather
+  than kept: an item-4c pixel diff against pre-MB-1 hashes would read the font swap as design
+  drift on every page. `docs/baseline/errors.json` was not rewritten (it is only written in
+  `BASELINE_SKIP_SHOTS=1` mode); the per-route error ledger for this build is inside
+  `capture.json`, where all 68 records carry `pageErrors: []`.
+
+  Gates, raw, on this tree:
+
+  ```
+  npm run typecheck                                    → exit 0, no output
+  npm run lint                                         → exit 0, ✖ 6 problems (0 errors, 6 warnings)
+     (the same six as MB-0b: api.ts:37 ×2, wp/treatments.ts:12, results-photos.test.ts:2 …)
+  npx vitest run                                       → exit 1
+     Test Files  3 failed | 55 passed (58)
+          Tests  970 passed | 154 skipped (1124)   Duration 185.02s
+     FAIL content.test.ts / copy-api.test.ts / roles.test.ts — "Hook timed out in 10000ms"
+     (all three beforeAll: purge()/syncRoles(), i.e. the Q-12 contention signature, while the
+      68-shot golden capture was still running against 3430)
+  npx vitest run tests/content.test.ts tests/copy-api.test.ts tests/roles.test.ts
+                                                       → exit 0, Test Files 3 passed (3)
+                                                            Tests 154 passed (154), 28.52s
+     → so MB-1's real total is 1124 tests, 0 failing, and the three timeouts are Q-12 (d)
+       (`hookTimeout` unset) still unfixed, reported here rather than hidden by the rerun.
+  npm run copy:check                                   → exit 0, 234 entries current; 97 data-driven calls skipped
+  NEXT_DIST_DIR=.next-build npm run build              → exit 0 (BUILD_ID iD0Fhk5kiUizYmdtpUT1J)
+  npm run --silent prove:no-wp                         → exit 0, 5 checks passed, 0 failed, 0 WordPress requests
+  npm run --silent fonts:diff                          → exit 0, OK: 11 faces … identical to the reference
+  node scripts/verify-style-isolation.mjs --base http://127.0.0.1:3430 → exit 0
+     OK: the public pages load site CSS only; the console loads console CSS only.
+     (public routes: one chunk, d2333c21b6824094.css, 116,533 B, classified `site`;
+      /console/login: 82fea4fc13b0b2fa.css 18,285 B + eebf12bc9240245e.css 71,427 B, both `console`)
+  node scripts/verify-render.mjs http://127.0.0.1:3430 → exit 1, 249 checks passed, 4 failed
+     the same four as §0a and MB-0b: Q-16's faker `mens-aesthetic-services`, both locales —
+     content, not code, and unchanged by MB-1.
+  ```
+
+  **A build-output fact worth recording, because it retires an exemption.** Before MB-1 the public
+  layout also applied `tajawal.variable`, so `next/font`'s emitted chunk was the single stylesheet
+  both roots loaded and `tests/built-css.test.ts` had to allow it in three places. Now the site's
+  faces are inside the site chunk and Tajawal's are merged into the console's, so that shared chunk
+  is gone — the suite's `'fonts'` exemption is deleted and replaced by a positive assertion
+  (`the site sheet still loads a next/font binary` → no `static/media` in any site chunk; `the
+  console loads a site font file` → no `/fonts/` in any console chunk), and the "no chunk claimed
+  by both surfaces" test now runs with no exception at all.
+
+  **What MB-1 deliberately did not do.** It did not revert the CMS's `--fs-*` scale, its `--lh-*`
+  or its `[dir="rtl"]` tracking zeroing to chase a literal "zero computed-typography diffs": the
+  reference has no `@layer base` font-size block at all, and those tokens are BK-19.2 work with
+  tests of their own — the reading is written up as Q-21, together with the fact that
+  `D:\shamah\.tmp\live-home.html` shows the *live* site in PT Serif / Montserrat / Roboto / Cairo,
+  so "the original" is not one answer. It did not add a font preload (Q-22). It did not copy one
+  reference defect: `D:\shamah` declares `"Readex Pro Fallback"` with a measured
+  `size-adjust: 108.34%` and then re-declares `--font-readex-pro` from an unlayered `:root` that
+  comes later in the sheet, so its own `:root` wins by document order and the fallback never
+  paints; here the fallback stays in the stack, which is Q-23 for the owner to overrule.
+
+  Files: `src/styles/fonts.css` (new), `public/fonts/*.woff2` (9, sha-pinned by the test),
+  `src/lib/fonts/OFL-Readex-Pro.txt` + `OFL-Montserrat.txt` (new), `src/styles/tokens.css`,
+  `src/app/globals.css`, `src/app/[lang]/layout.tsx`,
+  `src/components/pages/NotFoundDocument.tsx`, `src/lib/fonts/index.ts`, `package.json`
+  (`fonts:diff`), `scripts/fonts-diff.mjs` (new), `tests/typography.test.ts` (rewritten, 13
+  tests), `tests/console-isolation.test.ts` (site graph is four sheets now),
+  `tests/built-css.test.ts` (fonts-chunk exemption removed), `docs/baseline/capture.json`
+  (re-based), this record,
+  `docs/OPEN-QUESTIONS.md` Q-21/Q-22/Q-23 and a Q-19 addendum. Scratch (`shamah-fonts-map.cjs`,
+  `shamah-hash.cjs`, `shamah-ref-cascade.cjs`, `shamah-start-3430.ps1`, `shamah-db-ping.cjs`,
+  `shamah-mb1-num.mjs` and the run logs) lived outside the repo and is deleted; PID 9744 stopped.
+
+- [ ] MB-2 … MB-7 — pending, in the brief's order
 
 ## Known gaps / notes
 

@@ -12,6 +12,7 @@
     "copy:check": "node scripts/copy-catalog.mjs --check",
     "sync:wp": "node scripts/sync-wp.mjs",
     "prove:no-wp": "node scripts/prove-no-wp.mjs",
+    "fonts:diff": "node scripts/fonts-diff.mjs",
     "db:local:start": "node scripts/db/local-server.mjs",
     "db:local:stop": "node --env-file=.env.local scripts/db/local-stop.mjs",
     "db:local:provision": "node scripts/db/provision-local.mjs",

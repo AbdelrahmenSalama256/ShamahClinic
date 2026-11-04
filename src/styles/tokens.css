@@ -255,36 +255,45 @@
   --tw-leading: var(--line-height);
 
   /* --------------------------------------------
-     Type (BK-19.2). One family, both scripts, and the scale both surfaces read.
+     Type (MB-1). The original site's two faces, and the scale both surfaces read.
 
-     `--font-tajawal` is owned by `src/lib/fonts` — `next/font/local` declares it on
-     the document root with a measured, size-adjusted fallback so the swap costs no
-     layout shift. `--font-ui` is what everything else consumes: it names that family
-     when the class is there and a real system stack when it is not. The two are
-     deliberately different names, because the stack has to work in a document that
-     never loaded the stylesheet at all — the console's preview `srcdoc` frame, an email
-     template, a print sheet — and `@font-face` rules do not cross into those, so the
-     only Tajawal there is one the visitor's own system happens to have.
+     `src/styles/fonts.css` declares the families themselves — Readex Pro `160 700`
+     and Montserrat `100 900`, subset by unicode-range, with the two measured
+     fallback faces the reference's own compiled CSS declares. These two variables
+     name them for the cascade, and `--font-ui` is what every site rule consumes: the
+     Arabic pages take Readex Pro, the Latin pages take Montserrat, exactly as
+     `body` / `[dir="ltr"] body` split the reference.
 
-     Readex Pro and Montserrat are gone: one family carrying Arabic and Latin in a
-     single cmap means a mixed run inside one paragraph gets matching metrics, and
-     the old `[dir="ltr"] body` override had no reason to exist.
+     The reference names `"Readex Pro Fallback"` in a @font-face rule and then points
+     `--font-readex-pro` at `"Readex Pro", "Segoe UI", …` — its `:root` block is
+     unlayered and comes after the generated `.readex_pro_…__variable` class, so it
+     wins and the size-adjusted face never paints. Here the fallback is in the stack,
+     because a swap that costs no layout shift is the whole reason the reference's
+     build measured it (and the reason `docs/perf/baseline.md` names "Web font
+     loaded" as the worst CLS shift on 17 of 32 combinations).
+
+     Tajawal stays, but only as far as the console: `--c-font` in `console.css` keeps
+     its own `next/font/local` face, which is what "console fonts independent" asks
+     for and what `tests/console-isolation.test.ts` proves.
 
      Arabic is why the tracking tokens are split. Tight, negative tracking on Latin
      display type is the house style; on Arabic it collides with the joining
      letters and the kashida, so it applies under `[dir="ltr"]` only, and RTL gets
      the leading instead.
 
-     `tabular-nums` is a dead declaration on this face and the components proved it:
-     Tajawal ships no `tnum` at any weight, and its digits were never equal — measured
-     off the upstream binaries, the Latin ten span 375 units (the 1) to 553 (the 4) of a
-     1000 upem, and the Arabic-Indic ones the site renders in Arabic span 207 (١) to 633
-     (٣). So equal digits are geometry, not OpenType: `--num-cell` is the widest single
-     digit in either script and `.num` reserves that much inline size per digit. A
-     counter that changes while you watch it — the results pager now, the dashboard
-     count-ups in 19.5 — takes `.num` with `--num-digits` at the call site.
+     `tabular-nums` cannot be the mechanism, because the two faces disagree about it.
+     Measured in Chromium against the shipped files: Montserrat does carry a `tnum`
+     feature — ask for it and all ten digits snap to 0.70em at every weight — and Readex
+     Pro does not, where the declaration changes nothing at all. A call site that trusted
+     the feature would align the English counters and leave the Arabic ones jittering, so
+     equal digits are geometry instead: `--num-cell` is the widest single digit either
+     face paints and `.num` reserves that much inline size per digit. A counter
+     that changes while you watch it — the results pager, the dashboard count-ups in
+     19.5 — takes `.num` with `--num-digits` at the call site.
      -------------------------------------------- */
-  --font-ui: var(--font-tajawal, "Segoe UI", Tahoma, Arial, sans-serif);
+  --font-readex-pro: "Readex Pro", "Readex Pro Fallback", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-montserrat: "Montserrat", "Montserrat Fallback", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-ui: var(--font-readex-pro);
 
   /* The scale, in rem so it follows the visitor's own font size — the px ladder on
      the controls further down is a different thing and does not scale these. */
@@ -303,9 +312,22 @@
   --ls-soft: 0.02em;
 
   /* One digit's share of the line, for anything whose digits must line up or hold
-     still. `1ch` is the Latin 0 (0.552em here), which understates both the Latin 4 and
-     the Arabic-Indic ٣ (0.633em at ExtraBold), so the floor is the wider of the two. */
-  --num-cell: max(1ch, 0.64em);
+     still. Measured at 100px off the shipped files, at the weights the call sites
+     actually use (`font-black`, with `font-bold` on the journal badge): the widest Latin
+     digit is 71.2 units in Montserrat 900 and 67.2 in Readex Pro 700 — that is its
+     ceiling, so a 900 request is synthetic bold over the 700 outlines and adds no width —
+     and the widest Arabic-Indic ٣ is 67.0. `1ch` is the same face's own 0, which runs
+     66.2 to 69.2 across that range, so it understates the widest digit by up to two
+     units; the floor is the wider of the two. */
+  --num-cell: max(1ch, 0.72em);
+}
+
+/* The family splits the way the reading direction does — the reference writes it as
+   `body` then `[dir="ltr"] body`, and here the same pair is one token so a component
+   never has to know which face its page is in. Unlayered with the rule below, because
+   `:root` above is unlayered too and a layered twin would lose to it. */
+[dir="ltr"] {
+  --font-ui: var(--font-montserrat);
 }
 
 /* Arabic joins, and joined letters cannot be spaced: the negative kind separates the

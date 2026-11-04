@@ -38,8 +38,9 @@ function kindOf(css: string): Kind {
   if (/@layer reset, tokens, kit, screens;/.test(css)) return 'console';
   if (/tailwindcss v4|--tw-/.test(css)) return 'site';
   // `next/font` emits the faces plus two utility classes (`. __className_…` for the family,
-  // `.__variable_…` for the font variable). Both surfaces get this chunk, so it is the one
-  // legitimate share — only a chunk made of faces and those two rules counts as fonts.
+  // `.__variable_…` for the font variable). A chunk that is only those is what one surface
+  // importing `next/font` on its own looks like; the suite below names it as a regression,
+  // because since MB-1 the faces that used to share a chunk are declared per surface.
   const withoutFacesAndVars = css
     .replace(/@font-face\{[^}]*\}/g, '')
     .replace(/\.__className_[\w]+\{[^}]*\}/g, '')
@@ -87,11 +88,33 @@ const consoleRoutes = manifests.filter((path) => routeOf(path).startsWith('(cons
 const siteRoutes = manifests.filter((path) => routeOf(path).startsWith('[lang]/'));
 
 describe.skipIf(!hasBuild)('the built CSS keeps the two surfaces apart (S2)', () => {
-  it('emits a console chunk, a site chunk and the shared font chunk', () => {
+  it('emits a console chunk and a site chunk, and no chunk that is only fonts', () => {
     const found = [...kinds.values()];
     expect(found, 'the console sheet is missing from the build').toContain('console');
     expect(found, 'the site sheet is missing from the build').toContain('site');
-    expect(found, 'the font chunk is missing from the build').toContain('fonts');
+    // Before MB-1 the public layout also applied `tajawal.variable`, so next/font's chunk
+    // was the one stylesheet both roots loaded and the tests below had to allow for it.
+    // Each surface declares its own faces inside its own sheet now, so a faces-only chunk
+    // would mean a `next/font` family had been re-imported across the boundary.
+    expect(found, 'a faces-only chunk is shared by the two surfaces').not.toContain('fonts');
+  });
+
+  it('keeps each surface’s faces inside that surface’s chunk', () => {
+    const read = (name: string) => readFileSync(join(CSS_DIR, name), 'utf8');
+    const site = cssFiles.filter((name) => kinds.get(`static/css/${name}`) === 'site').map(read).join('\n');
+    const console_ = cssFiles.filter((name) => kinds.get(`static/css/${name}`) === 'console').map(read).join('\n');
+    expect(site, 'no site chunk to read the faces from').not.toBe('');
+    expect(console_, 'no console chunk to read the faces from').not.toBe('');
+    // The site declares the reference's two families and reaches them through the files in
+    // `public/fonts`, so nothing of next/font's hashed media pipeline is in its sheet.
+    expect(site, 'the site sheet declares no Readex Pro').toMatch(/@font-face\{[^}]*font-family:Readex Pro;/);
+    expect(site, 'the site sheet declares no Montserrat').toMatch(/@font-face\{[^}]*font-family:Montserrat;/);
+    expect(site, 'the site sheet still loads a next/font binary').not.toMatch(/static\/media/);
+    expect(site, 'a public page loads the console face').not.toMatch(/font-family:tajawal/);
+    // …and the console is the mirror image: its own face, no site face, no site file.
+    expect(console_, 'the console sheet declares no Tajawal').toMatch(/font-family:tajawal;/);
+    expect(console_, 'the console reads a site face').not.toMatch(/font-family:(Readex Pro|Montserrat)/);
+    expect(console_, 'the console loads a site font file').not.toMatch(/\/fonts\//);
   });
 
   it('never mixes a console rule with a Tailwind or site token in one chunk', () => {
@@ -115,11 +138,11 @@ describe.skipIf(!hasBuild)('the built CSS keeps the two surfaces apart (S2)', ()
         if (!owner.endsWith('/console/layout')) continue;
         for (const chunk of chunks) {
           const kind = kinds.get(chunk);
-          if (kind !== 'console' && kind !== 'fonts') offenders.push(`${relative(APP_DIR, manifest)} → ${owner} → ${chunk} (${kind})`);
+          if (kind !== 'console') offenders.push(`${relative(APP_DIR, manifest)} → ${owner} → ${chunk} (${kind})`);
         }
       }
     }
-    expect(offenders, 'a console route loads a stylesheet that is not the console kit or the font').toEqual([]);
+    expect(offenders, 'a console route loads a stylesheet that is not the console kit').toEqual([]);
   });
 
   it('gives every public route a site-only layout chunk list', () => {
@@ -130,11 +153,11 @@ describe.skipIf(!hasBuild)('the built CSS keeps the two surfaces apart (S2)', ()
         if (!owner.endsWith('/[lang]/layout')) continue;
         for (const chunk of chunks) {
           const kind = kinds.get(chunk);
-          if (kind !== 'site' && kind !== 'fonts') offenders.push(`${relative(APP_DIR, manifest)} → ${owner} → ${chunk} (${kind})`);
+          if (kind !== 'site') offenders.push(`${relative(APP_DIR, manifest)} → ${owner} → ${chunk} (${kind})`);
         }
       }
     }
-    expect(offenders, 'a public route loads a stylesheet that is not the site sheets or the font').toEqual([]);
+    expect(offenders, 'a public route loads a stylesheet that is not the site sheets').toEqual([]);
   });
 
   it('lets no chunk be claimed by both surfaces', () => {
@@ -147,7 +170,8 @@ describe.skipIf(!hasBuild)('the built CSS keeps the two surfaces apart (S2)', ()
       }
     }
     for (const chunk of consoleLayouts) {
-      if (kinds.get(chunk) === 'fonts') continue;
+      // No exemption here, and none in the two route tests above: MB-1 removed the last
+      // stylesheet the two roots had in common, so a shared chunk is now a regression.
       expect(siteLayouts.has(chunk), `${chunk} is loaded by both root layouts`).toBe(false);
     }
   });

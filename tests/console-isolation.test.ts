@@ -34,7 +34,12 @@ const stripSource = (source: string): string =>
 
 const CONSOLE = 'src/app/(console)/console';
 const CONSOLE_SHEETS = [`${CONSOLE}/console.css`, `${CONSOLE}/console-kit.css`];
-const SITE_SHEETS = ['src/app/globals.css', 'src/components/ui/ui.css', 'src/styles/tokens.css'];
+const SITE_SHEETS = [
+  'src/app/globals.css',
+  'src/components/ui/ui.css',
+  'src/styles/fonts.css',
+  'src/styles/tokens.css',
+];
 const SITE_TOKEN_FILE = 'src/styles/tokens.css';
 
 /** The one variable the console reads without declaring it: `next/font` writes it on the
@@ -149,7 +154,7 @@ describe('the two roots never share a stylesheet (S0.4)', () => {
     }
   });
 
-  it('leaves the site graph on its own three sheets', () => {
+  it('leaves the site graph on its own four sheets', () => {
     expect([...siteGraph].sort()).toEqual([...SITE_SHEETS].sort());
     for (const consoleSheet of CONSOLE_SHEETS) {
       expect(siteGraph.has(consoleSheet), `${consoleSheet} is not in the site graph`).toBe(false);

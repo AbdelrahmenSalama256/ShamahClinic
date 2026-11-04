@@ -1,13 +1,18 @@
 import localFont from "next/font/local";
 
 /**
- * Tajawal — the one face both surfaces and both scripts are drawn in (BK-19.2).
+ * Tajawal — the console's own face, and nothing else's (MB-1).
+ *
+ * The site paints the original site's two families, declared in
+ * `src/styles/fonts.css`; this module is what `--c-font` in `console.css` reads, so
+ * the console keeps a face of its own and cannot be moved by a change to site
+ * typography. `tests/console-isolation.test.ts` is the guard that says so.
  *
  * Four static weights, because the family has no variable version: a request for
  * 600 (`font-semibold`) resolves to 700 and for 900 (`font-black`) to 800, which is
- * where the console and the site already sit. Each file carries the Arabic and the
- * Latin in one cmap, so a mixed run inside one `<p>` gets one family and matching
- * metrics — which is why there is no `[dir="ltr"]` override any more.
+ * where the console already sits. Each file carries the Arabic and the Latin in one
+ * cmap, so a mixed run inside one console field gets one family and matching
+ * metrics — which is why the console has no `[dir="ltr"]` override either.
  *
  * `next/font/local` rather than `next/font/google` for two reasons: `npm run build`
  * stops needing `fonts.googleapis.com` (BK-0.2 recorded that a build with no
