@@ -4320,7 +4320,59 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
       `n.labelAr`/`n.noteAr` straight into `t()`, which the copy scanner can neither address nor
       skip, so `copy:check` and `build` both failed (`c0be395`). Reproduced in a pristine HEAD
       worktree before either was touched.
-- [ ] CHART-1 — Overview charts must be real interactive charts, not CSS bars — pending
+- [x] CHART-1 — "all charts you built in overview not for real at all, i need it interactive chart not css built" — **browser-verified**
+      commit `8814112` (`src/components/console/OverviewScreen.tsx` + `src/app/(console)/console/console.css`).
+
+      **What changed.** Every plot on the Overview is now a Recharts chart drawn from the numbers the
+      aggregate returns; the coloured-box-sized-by-a-CSS-percentage markup is gone. 15 Recharts
+      surfaces render on `/console` at 30 days: the visits/leads area+bar pair, the traffic-source
+      donut, the engagement pair, the conversion-rate area, four ranked bar panels, the devices
+      paired-bar panel, the KPI sparklines and the weekday×hour heatmap (a ScatterChart, so a cell
+      is a plotted point, not a table cell).
+
+      **Three defects the first screenshots showed, and what they cost to see.** (1) The donut
+      ignored the pointer: `Pie` takes `activeShape`, and Recharts swaps the shape in place inside
+      `.recharts-pie-sector` (Pie.js `renderSectorsStatically`), so the hovered slice now grows 5px —
+      measured as outer-arc radius 62 → 67, answering 23 of 24 points swept around the ring. (2) The
+      devices panel ticked `9/18/27/36` down the *side*: in `layout="vertical"` the numeric axis is
+      the XAxis, so a `YAxis type="number"` drew a scale no bar was read against. Leads is now a
+      second XAxis across the top (`xAxisId="leads"`, `orientation="top"`) and the leads bar is bound
+      to it — 193 views reads against 0–1,800, 7 leads against 0–36, and the two bars sit side by
+      side in the band (offset 17px, 13px tall each). (3) The ranked bars were a rank with no scale,
+      so the value axis is drawn: Lead status 0–20, Campaigns 0–16, Services 0–12, Branches 0–32.
+
+      **The tooltip bug that hid longest.** A ScatterChart hands the tooltip one entry **per axis**
+      (`dataKey: "hour"`, `dataKey: "weekday"`), never one for the value key, so the `only: "views"`
+      filter dropped every row and the heatmap painted an empty box while its cross cursor drew
+      correctly. The row limit replaced the dataKey filter and `describeHeat` reads the cell's own
+      payload. The tip header now reads like the axis it points at (`10/15`, not `2026-10-15`).
+
+      **Browser proof, production build on `localhost:3121`** (BUILD_ID `HD0JR1um0DWc2cvL-7Ahk`
+      grepped out of the served HTML before anything was judged). 11 plots, 10 with axis text, 9 with
+      grid lines, 168 heat cells; **11/11 hover tooltips painted with real values** — `10/15 Visitors
+      57`, `instagram 4 · 5.9%`, `Done leads 11`, `Tablet views 193 · 8.0% / leads 7`, and the heat
+      cell `Thu · 11:00 → 41` read off the painted card. Cursors differ by chart type as they must: `recharts-curve` (line/area, stroke
+      `rgb(133,100,15)`), `recharts-rectangle` (bar band, same colour at 0.08 fill), `recharts-cross`
+      (scatter), and `Pie` draws no cursor at all — its answer is the grown slice. Active dots appear
+      on the line charts. All 11 legend toggles remove their series (`aria-pressed=false`,
+      `line-through`, leads −30 bar rectangles, devices −4). Print emulation: `svgW == wrapW` on every
+      plot, `overflow: clip`, `clipped: 0`. Screenshots were read for EN and AR, light and dark, and
+      at 430px; page errors `[]`.
+      **Not seen as pixels:** nothing on this screen is unproven, but the heat *levels* were judged
+      from the swatches and the painted cells, not from a hand-checked count per bucket.
+
+      **Gates.** `npm run typecheck` exit 0 · `npm run lint` exit 0, `6 problems (0 errors, 6
+      warnings)`, none in the two files touched · `npm run copy:check` → `227 entries current; 98
+      data-driven calls skipped.` · `npm run build` exit 0 · `npm test` → `Tests 20 failed | 1088
+      passed (1108)`, the same 20 OFFER-1 recorded as already failing at HEAD · `npm run prove:no-wp`
+      → `5 checks passed, 0 failed`, `275 routes rendered, 0 failed`, `0 request(s) to the WordPress
+      origin` · `node scripts/verify-render.mjs http://127.0.0.1:3121` → `249 checks passed, 4
+      failed`, the same four `mens-aesthetic-services` rows.
+
+      **One thing the charts exposed, not caused.** The Engagement conversion-rate plot draws a day
+      above 100% (axis scaled to 400%). The chart is faithfully plotting what the aggregate returns —
+      a day with leads and no recorded views — so the defect is in the rollup, and it is listed under
+      Known gaps for the owner to decide on.
 - [ ] SVC-1 — service add-from-CMS must carry the full detail set — pending
 - [ ] AB-2 — About page: repair the seed, typed editor fields, public read path — pending
 - [ ] RES-1 — Results page shows results only (no blog cards) — pending
@@ -4348,6 +4400,12 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
   Ellison"`, `name_en "Neil Hoff"`-class values — left by the import, so the check is right and the
   data is wrong. Fixing it means writing real Arabic/English names into the dev database, which is
   the owner's call, not something to invent.
+- **The Overview conversion-rate chart plots a day above 100%** (axis reaches 400%). CHART-1 found
+  it, did not cause it: the line is drawn from what `overview` returns, and that day carries leads
+  with no recorded views — leads come from the leads table on their Cairo day, views from the events
+  table, so a lead whose visit was never tracked (or tracked on a different day) divides by a small
+  or zero denominator. Either the rollup clamps the ratio or the two series need the same day
+  boundary; both change a number the owner reads, so it is a decision, not a fix to make quietly.
 - **The About screen is registered but has no page file.** `CONSOLE_SCREENS` carries
   `{ key: 'about', path: '/console/pages/about' }` (`src/lib/console/screens.ts:78`) while
   `src/app/(console)/console/(workspace)/pages/` holds only `page.tsx`, so the nav row 404s — and
