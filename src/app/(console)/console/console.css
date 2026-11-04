@@ -2910,21 +2910,9 @@
   .console-ov-spark {
     display: block;
     inline-size: 100%;
-    block-size: 1.9rem;
+    block-size: 2.1rem;
     margin-block-start: auto;
     overflow: visible;
-  }
-
-  .console-ov-spark-area {
-    fill: var(--c-tint);
-  }
-
-  .console-ov-spark-line {
-    fill: none;
-    stroke: var(--c-accent);
-    stroke-width: 1.5;
-    stroke-linejoin: round;
-    stroke-linecap: round;
   }
 
   /* --- layout ---------------------------------------------------------------- */
@@ -2986,84 +2974,113 @@
     font-weight: 600;
   }
 
-  /* --- charts ---------------------------------------------------------------- */
+  /* --- charts ----------------------------------------------------------------
+     Recharts owns the plot: its scales, its axis ticks, its pointer. This sheet only
+     says what the parts are made of. A series carries a class, the class carries a
+     `color`, and the shape paints itself with `currentColor` — which is why one set of
+     rules covers light, dark and print without any of them reading the theme in JS. */
   .console-ov-plot {
     position: relative;
     min-inline-size: 0;
+    color: var(--c-text-2);
   }
 
-  .console-ov-chart {
+  .console-ov-plot svg {
     display: block;
-    inline-size: 100%;
-    block-size: 9.5rem;
     overflow: visible;
   }
 
-  .console-ov-plot[data-pane="leads"] .console-ov-chart {
-    block-size: 5.5rem;
+  .console-ov-s1 {
+    color: var(--c-ov-1);
+  }
+  .console-ov-s2 {
+    color: var(--c-ov-2);
+  }
+  .console-ov-s3 {
+    color: var(--c-ov-3);
+  }
+  .console-ov-s4 {
+    color: var(--c-ov-4);
+  }
+  .console-ov-s5 {
+    color: var(--c-ov-5);
+  }
+  .console-ov-s6 {
+    color: var(--c-ov-6);
+  }
+  .console-ov-s7 {
+    color: var(--c-ov-7);
   }
 
-  .console-ov-plot[data-pane="rate"] .console-ov-chart {
-    block-size: 4.5rem;
+  /* Everything written inside a plot is an axis tick until proven otherwise. */
+  .console-ov-plot text {
+    fill: currentColor;
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+    font-variant-numeric: tabular-nums;
   }
 
-  .console-ov-grid {
+  .console-ov-plot .recharts-cartesian-grid line {
     stroke: var(--c-line);
-    stroke-width: 1;
   }
 
-  .console-ov-base {
-    stroke: var(--c-line-strong);
-    stroke-width: 1;
+  .console-ov-plot .recharts-tooltip-cursor {
+    color: var(--c-accent);
   }
 
-  .console-ov-area {
-    fill: var(--c-tint);
-  }
-
-  .console-ov-line {
-    fill: none;
-    stroke: var(--c-accent);
-    stroke-width: 2;
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
-
-  .console-ov-line[data-kind="previous"] {
-    stroke: var(--c-text-3);
-    stroke-width: 1.5;
-    stroke-dasharray: 5 4;
-  }
-
-  .console-ov-line[data-kind="submit"] {
-    stroke: var(--c-success);
-  }
-
-  .console-ov-line[data-kind="rate"] {
-    stroke: var(--c-success);
-  }
-
-  .console-ov-bar {
-    fill: color-mix(in srgb, var(--c-accent) 55%, transparent);
-  }
-
-  .console-ov-max {
-    position: absolute;
-    inset-block-start: 0;
-    inset-inline-end: 0;
-    color: var(--c-text-3);
+  /* --- the tooltip ----------------------------------------------------------- */
+  /* Recharts floats this one in a wrapper of its own, so it is painted here rather
+     than left to the library's default grey box. */
+  .console-ov-tip {
+    min-inline-size: 8rem;
+    padding: var(--c-sp-2) var(--c-sp-3);
+    background: var(--c-surface);
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--c-r-sm);
+    box-shadow: var(--c-ring), var(--c-lift);
+    color: var(--c-text);
     font-size: var(--c-font-micro);
-    font-variant-numeric: tabular-nums;
-    pointer-events: none;
+    unicode-bidi: isolate;
   }
 
-  .console-ov-axis {
+  .console-ov-tip ul {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-tip li {
     display: flex;
-    justify-content: space-between;
+    align-items: baseline;
     gap: var(--c-sp-2);
+    min-inline-size: 0;
+  }
+
+  .console-ov-tip-label {
+    margin: 0 0 0.2rem;
     color: var(--c-text-3);
-    font-size: var(--c-font-micro);
+    font-family: var(--c-font-mono);
+  }
+
+  .console-ov-tip-dot {
+    flex: none;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-radius: var(--c-r-pill);
+    background: currentColor;
+  }
+
+  .console-ov-tip-name {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    color: var(--c-text-2);
+  }
+
+  .console-ov-tip-value {
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
   }
 
   .console-ov-rate {
@@ -3076,41 +3093,60 @@
   }
 
   /* --- legend ---------------------------------------------------------------- */
+  /* The legend is the chart's control, not its caption: each entry is a button that
+     takes its series off the plot, so one line can be read against the axis instead of
+     untangled from the ones beside it. */
   .console-ov-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--c-gap-tight) var(--c-gap);
+    gap: var(--c-sp-2);
     margin: 0;
     padding: 0;
     list-style: none;
-    color: var(--c-text-2);
-    font-size: var(--c-font-micro);
   }
 
-  .console-ov-legend li {
+  .console-ov-legend-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+    padding: 0.15rem var(--c-sp-2);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-pill);
+    background: transparent;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+    cursor: pointer;
+    transition: color var(--c-dur-base) var(--c-ease-soft), border-color var(--c-dur-base) var(--c-ease-soft),
+      background-color var(--c-dur-base) var(--c-ease-soft);
   }
 
-  .console-ov-legend i {
+  .console-ov-legend-btn:hover {
+    border-color: var(--c-line-strong);
+    color: var(--c-text);
+  }
+
+  .console-ov-legend-btn:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+
+  .console-ov-legend-btn[aria-pressed="false"] {
+    color: var(--c-text-3);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+
+  .console-ov-legend-dot {
+    flex: none;
     inline-size: 0.6rem;
     block-size: 0.6rem;
     border-radius: var(--c-r-pill);
-    background: var(--c-accent);
+    background: currentColor;
   }
 
-  .console-ov-legend li[data-kind="previous"] i {
-    background: var(--c-text-3);
-  }
-
-  .console-ov-legend li[data-kind="submit"] i,
-  .console-ov-legend li[data-kind="rate"] i {
-    background: var(--c-success);
-  }
-
-  .console-ov-legend li[data-kind="leads"] i {
-    background: color-mix(in srgb, var(--c-accent) 55%, transparent);
+  .console-ov-legend-btn[aria-pressed="false"] .console-ov-legend-dot {
+    opacity: 0.35;
   }
 
   /* --- donut ----------------------------------------------------------------- */
@@ -3126,55 +3162,14 @@
     flex: none;
     inline-size: 9rem;
     aspect-ratio: 1;
+    color: var(--c-text-2);
   }
 
   .console-ov-donut svg {
     display: block;
     inline-size: 100%;
     block-size: 100%;
-  }
-
-  .console-ov-donut-track,
-  .console-ov-donut-seg {
-    fill: none;
-    stroke-width: 12;
-  }
-
-  .console-ov-donut-track {
-    stroke: var(--c-fill);
-  }
-
-  .console-ov-donut-seg {
-    stroke: var(--c-ov-c, var(--c-accent));
-  }
-
-  .console-ov-donut-seg[data-index="0"],
-  .console-ov-slices i[data-index="0"] {
-    --c-ov-c: var(--c-ov-1);
-  }
-  .console-ov-donut-seg[data-index="1"],
-  .console-ov-slices i[data-index="1"] {
-    --c-ov-c: var(--c-ov-2);
-  }
-  .console-ov-donut-seg[data-index="2"],
-  .console-ov-slices i[data-index="2"] {
-    --c-ov-c: var(--c-ov-3);
-  }
-  .console-ov-donut-seg[data-index="3"],
-  .console-ov-slices i[data-index="3"] {
-    --c-ov-c: var(--c-ov-4);
-  }
-  .console-ov-donut-seg[data-index="4"],
-  .console-ov-slices i[data-index="4"] {
-    --c-ov-c: var(--c-ov-5);
-  }
-  .console-ov-donut-seg[data-index="5"],
-  .console-ov-slices i[data-index="5"] {
-    --c-ov-c: var(--c-ov-6);
-  }
-  .console-ov-donut-seg[data-index="6"],
-  .console-ov-slices i[data-index="6"] {
-    --c-ov-c: var(--c-ov-7);
+    overflow: visible;
   }
 
   .console-ov-donut-total {
@@ -3220,11 +3215,20 @@
     font-size: var(--c-font-small);
   }
 
-  .console-ov-slices i {
+  .console-ov-slice-dot {
     inline-size: 0.6rem;
     block-size: 0.6rem;
     border-radius: var(--c-r-pill);
-    background: var(--c-ov-c, var(--c-accent));
+    background: currentColor;
+  }
+
+  /* A slice the legend switched off still lists its number, only quieter. */
+  .console-ov-slices li[data-off] {
+    color: var(--c-text-3);
+  }
+
+  .console-ov-slices li[data-off] .console-ov-slice-dot {
+    opacity: 0.35;
   }
 
   .console-ov-slice-name {
@@ -3237,64 +3241,10 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* --- horizontal bars (funnel, campaigns, devices) -------------------------- */
-  .console-ov-bars {
-    display: flex;
-    flex-direction: column;
-    gap: var(--c-gap-tight);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-
-  .console-ov-bars li {
-    display: grid;
-    grid-template-columns: minmax(4.5rem, 38%) minmax(0, 1fr) auto;
-    align-items: center;
-    gap: var(--c-sp-2);
-    min-inline-size: 0;
-    font-size: var(--c-font-small);
-  }
-
-  .console-ov-bar-label {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: var(--c-text-2);
-  }
-
-  .console-ov-bar-track {
-    display: block;
-    block-size: 0.45rem;
-    border-radius: var(--c-r-pill);
-    background: var(--c-fill);
-    overflow: hidden;
-  }
-
-  .console-ov-bar-track i {
-    display: block;
-    block-size: 100%;
-    border-radius: inherit;
-    background: var(--c-accent);
-  }
-
-  .console-ov-bars[data-kind="funnel"] .console-ov-bar-track i {
-    background: var(--c-success);
-  }
-
-  .console-ov-bar-value {
-    font-variant-numeric: tabular-nums;
-    text-align: end;
-    white-space: nowrap;
-  }
-
-  .console-ov-bar-value small {
-    display: block;
-    color: var(--c-text-3);
-    font-size: var(--c-font-micro);
-  }
-
   /* --- heatmap ---------------------------------------------------------------- */
+  /* The grid is a Recharts scatter: two number axes pick the hour and the weekday, and
+     each cell is a rectangle drawn at that position. Only the cell size is measured in
+     the screen, because a grid of squares has to fit the width it was given. */
   .console-ov-heat-wrap {
     display: flex;
     flex-direction: column;
@@ -3302,56 +3252,60 @@
     min-inline-size: 0;
   }
 
-  .console-ov-heat {
-    display: grid;
-    grid-template-columns: 3.1rem repeat(24, minmax(0.7rem, 1fr));
-    gap: 2px;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
+  .console-ov-plot-heat .recharts-scatter-symbol {
+    stroke: none;
   }
 
-  .console-ov-heat-row {
-    display: contents;
-  }
-
-  .console-ov-heat-hour {
-    color: var(--c-text-3);
-    font-size: 0.6rem;
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .console-ov-heat-day {
-    padding-inline-end: 0.4rem;
-    color: var(--c-text-2);
-    font-size: var(--c-font-micro);
-    text-align: end;
-    white-space: nowrap;
-  }
-
+  /* One custom property per level: the plot paints it as an SVG `fill`, the key
+     below the plot paints the same value as an HTML `background`. */
   .console-ov-heat-cell {
-    display: block;
-    aspect-ratio: 1;
-    min-block-size: 0.7rem;
+    --c-heat: var(--c-fill);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-l1 {
+    --c-heat: color-mix(in srgb, var(--c-accent) 24%, transparent);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-l2 {
+    --c-heat: color-mix(in srgb, var(--c-accent) 42%, transparent);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-l3 {
+    --c-heat: color-mix(in srgb, var(--c-accent) 62%, transparent);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-l4 {
+    --c-heat: color-mix(in srgb, var(--c-accent) 85%, transparent);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-key {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-heat-key li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--c-sp-1);
+  }
+
+  .console-ov-heat-key i {
+    inline-size: 0.7rem;
+    block-size: 0.7rem;
     border-radius: 2px;
-    background: var(--c-fill);
-  }
-
-  .console-ov-heat-cell[data-level="1"] {
-    background: color-mix(in srgb, var(--c-accent) 24%, transparent);
-  }
-
-  .console-ov-heat-cell[data-level="2"] {
-    background: color-mix(in srgb, var(--c-accent) 42%, transparent);
-  }
-
-  .console-ov-heat-cell[data-level="3"] {
-    background: color-mix(in srgb, var(--c-accent) 62%, transparent);
-  }
-
-  .console-ov-heat-cell[data-level="4"] {
-    background: color-mix(in srgb, var(--c-accent) 85%, transparent);
+    background: var(--c-heat);
   }
 
   .console-ov-note {
@@ -4724,9 +4678,15 @@
     .console-ov-card,
     .console-ov-kpi,
     .console-ov-recent li,
-    .console-ov-heat,
+    .console-ov-heat-wrap,
     .console-ov-ranked li {
       break-inside: avoid;
+    }
+
+    /* On paper the legend is a caption, not a control. */
+    .console-ov-legend-btn {
+      padding-inline: 0;
+      border-color: transparent;
     }
 
     .console-ov-card,
@@ -4750,10 +4710,11 @@
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
 
-    /* An SVG that stretches to the page height is a blob; a fixed plot keeps
-       the shape the reader is meant to read. */
+    /* A Recharts surface is painted at the width it measured, and the printer does not
+       re-measure it: clipping the plot keeps a wide chart from widening the page. */
         .console-ov-plot {
-          height: 8rem;
+          max-inline-size: 100%;
+          overflow: clip;
         }
   }
 }
