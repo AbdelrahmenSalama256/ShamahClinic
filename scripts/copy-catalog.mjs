@@ -184,7 +184,10 @@ if (result.unexpected.length > 0) {
 if (check) {
   let current = '';
   try {
-    current = readFileSync(outFile, 'utf8');
+    // The generated text is LF and a checkout with `core.autocrlf` hands the file back as
+    // CRLF, so comparing raw would fail the gate on its own output — `npm run build` would
+    // refuse a clone whose catalog was never touched.
+    current = readFileSync(outFile, 'utf8').replace(/\r\n?/g, '\n');
   } catch {
     /* missing is stale */
   }
