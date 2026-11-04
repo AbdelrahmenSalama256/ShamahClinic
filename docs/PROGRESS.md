@@ -4510,6 +4510,93 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
 - [ ] RES-1 — Results page shows results only (no blog cards) — pending
 - [ ] CRAWL-1 — crawl the front end, report a wiring pass rate — pending
 
+## MB — the owner's master brief of 2026-11-04 (baseline first, then items 1-7)
+
+The brief is a new session's document: §0 baseline **before any fix**, then fonts, transitions, CSS
+separation, backend-fed articles with pixel parity, every text editable, the About final check, and
+performance with budgets. Its status vocabulary is `code only` / `browser-verified` / `broken`, and it
+says plainly "Never hide a page that is below target." Rows live in
+`docs/MASTER-REQUIREMENTS.md` under "MASTER BRIEF (2026-11-04)".
+
+- [x] **MB-0a — the visual golden set** — browser-verified
+
+  **What it is.** 68 full-page PNGs: 17 routes × 2 viewports (1440×900, 390×844) × AR + EN, from a
+  real production build (`NEXT_DIST_DIR=.next-build npm run build`, `BUILD_ID MP2ZcyrA23IARTLbv9aHa`)
+  served by a disposable `next start` on port 3430, PID 14800. 51,106,253 bytes of pixels on disk,
+  git-ignored as `/docs/baseline/*.png`; `docs/baseline/capture.json` (67 KB, committed) carries every
+  route, status, byte count and SHA-256, and `docs/baseline/README.md` carries the picks and why.
+  `scripts/baseline-capture.mjs` is committed, because items 4c and 6 have to re-run the same walk and
+  diff it — a scratch script would have to be re-derived exactly, which is how a pixel comparison lies.
+
+  **The picks are measured, not guessed.** Service and article slugs were read out of the rendered
+  `/en/services`, `/en/branches`, `/en/blogs` hrefs rather than typed from memory. The five article
+  representatives were chosen by querying every published body for length, `<table>`, `<h2>`, `<ul>`,
+  `<img>` and cover: `hifu-facial-skin-tightening` (short), `laser-underarm-hair-removal` (long + 1
+  table), `morpheus-8-sessions` (2 tables), `best-laser-clinics-near-me` (list-rich, authored),
+  `laser-hair-removal-egypt-price` (price table). **The brief's "imported-with-images" representative
+  does not exist:** across 94 published articles the count of `<img>` inside a body is zero, so the
+  fifth slot went to the closest real shape instead of to a page that would pretend (Q-15).
+
+  **Two passes, because one manifest was not trustworthy.** The golden pass wrote the PNGs and logged
+  errors, but it kept only the last eight error lines per shot and sliced URLs at 160 characters. Both
+  choices hid something: seven `requestfailed` lines looked like broken links, and they were RSC
+  prefetches whose `?_rsc=` suffix had been cut off mid-percent-escape. Chasing that artifact produced
+  a fake finding — I fetched the truncated URL and got 404 (AR) and **500** (EN) for links that the
+  page never contains. Reading the untruncated hrefs and fetching all 14 distinct `/offers/<slug>`
+  targets showed every one 200. So the script now drains the listeners per route, never truncates a
+  URL, counts `?_rsc=` aborts separately, writes `errors.json`, and exits non-zero if any route logs a
+  console error — the brief's "zero console errors on pages touched" is a gate in the tool, not a
+  sentence in a doc. The ledger pass then re-walked all 68 routes: `errors=0`, 1,935 prefetch aborts.
+  The 500-on-a-malformed-escape is still real and is logged as Q-17 (a crawler that shortens a link can
+  hit it); §0 is "report before any fix", so nothing was patched for it here.
+
+  **What the baseline photographs that is not content.** The dev database still publishes faker rows and
+  they are inside the golden PNGs: services `tewst`, `new-bs`, `mens-aesthetic-services` (all 200 with
+  lorem `<h1>`), articles `testttttt` and `Sed exercitationem l` (a slug with a literal space; empty
+  `content_ar` on both), offers `begneh`, `doloremque-consectetur-…` (currency string `"Velit a"`) and
+  `ازاله-شعر-بالليزر`; and one real promotion shipped as four rows at two prices (899.00 and 500.00,
+  `legacy_id` 785/781/780/581), three of them holding Arabic in `name_en`, which is why `/en/offers`
+  prints Arabic titles. All measured, all in `docs/baseline/README.md`, none deleted or renamed — Q-16.
+  Two consequences worth stating now: item 4c's pixel diff must ignore those regions or it will read
+  faker text as design drift, and `/blogs/testttttt` printing the same English title in both locales is
+  the silent cross-language fallback the brief complains about in item 4a, already visible in data.
+
+  **Environment, measured.** The owner's dev server was already running on **3100** (PID 21528) and this
+  Next fork refuses a second `next dev` — it prints the live instance's port and tells you to `taskkill`
+  it. So the brief's 3001 was not started, and 3100 was used read-only (Q-14). MariaDB answered on
+  127.0.0.1:3307 throughout; the golden set is served from the dev database `shamah_cms` (the test DB
+  `shamah_cms_test` served nothing). Lighthouse 12 was installed out-of-tree at `$TEMP/shamah-lh` so the
+  repo's `package.json` and lockfile stayed untouched, which is all MB-0b needs next.
+
+  **Tree hygiene.** The build wrote `.next-build/**` entries into `tsconfig.json` and reformatted its
+  arrays; reverted with `git checkout -- tsconfig.json` after confirming the file was unmodified before
+  my build. Four files in the working tree belong to other passes and were **not** staged:
+  `src/components/pages/TreatmentDetailClient.tsx`, `tests/service-page.test.ts`,
+  `src/lib/copy/catalog.ts`, and the `nul` accident (Q-13). `docs/MASTER-REQUIREMENTS.md` carried
+  uncommitted rows from the AB-2 pass; its 23 malformed `|| ` row prefixes (which render as a shifted
+  table) are normalized here, and the stale AB-2 / AB-2-res rows now say `browser-verified` with their
+  commits, because "no commit yet (PENDING)" beside `09f231f` is a lie the next session would believe.
+
+  **Gates, as measured on this tree.** `npm run typecheck` exit 0 · `npm run lint` `6 problems (0
+  errors, 6 warnings)` (the two named in the tail are `'serviceDocOf'` in `src/lib/wp/treatments.ts`
+  and `'KindSpec'` in `tests/results-photos.test.ts`) · `npm run copy:check` → `234 entries current;
+  97 data-driven calls skipped` — note **97, not the brief's 98**, measured on this working tree, and
+  item 5 has to account for that list whatever its length · `npm run prove:no-wp` → `5 checks passed,
+  0 failed` (`275 routes rendered, 0 failed`, `0 request(s) to the WordPress origin`) ·
+  `node scripts/verify-style-isolation.mjs --base http://127.0.0.1:3430` → `OK: the public pages load
+  site CSS only; the console loads console CSS only` (and it prints the byte weights item 3 starts
+  from: a 113,062 B site stylesheet on `/ar/results`, 890 B fonts, 88,822 B of console CSS on
+  `/console/login`) · `NEXT_DIST_DIR=.next-build npm run build` exit 0 (`BUILD_ID 02zpKI9iZLsh9fg1CxUyc`) ·
+  `npx vitest run` → `4 failed | 1117 passed (1121)` in `151.58s`, all four inside
+  `tests/delivery.test.ts`. Not green: `node scripts/verify-render.mjs` → `249 checks passed, 4 failed`,
+  both on the dev server (3100) and on the production build (3430), and all four name
+  `mens-aesthetic-services` — the Q-16 faker row whose name equals a WordPress-era service, so the
+  no-WordPress check trips on *content*, not on code. Reported as failing, not smoothed; deleting a
+  row the owner has not agreed to delete is not this item's call.
+
+- [ ] MB-0b — Lighthouse baseline (mobile + desktop, 3 runs, median, 8 pages × AR/EN) + bundle + DB timing — pending
+- [ ] MB-1 … MB-7 — pending, in the brief's order, after §0 is reported
+
 ## Known gaps / notes
 
 ### Opened by the Job C pass, for the owner to decide on (none of these is caused by OFFER-1)
@@ -4594,6 +4681,23 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
   produced itself (found by checking out the commit into a temporary worktree rather than trusting the
   working copy — see AB-2's catalog paragraph; fixed in `6e1821e`). The same trap is why the test suite
   reads its own sources through `tests/source-text.ts`.
+- **A proof script that trims its own evidence can invent a bug.** MB-0a's capture kept the last eight
+  error lines per shot and sliced URLs at 160 characters, which cut `?_rsc=` off long Arabic offer slugs
+  and turned seven benign prefetch aborts into what looked like broken links. Fetching the sliced URL
+  then produced a 404 and a 500 for a link the site does not contain. Drain listeners per route, never
+  truncate a URL you are about to quote, and re-read the untruncated form before filing a defect.
+- **`sed -i` cannot edit a file in the OS temp folder from a repo cwd** — Git Bash writes its temp next
+  to the cwd and Windows refuses the rename across drives: `sed: cannot rename ./sedXXXXXX: Invalid
+  cross-device link`. Use the Edit tool (or write the scratch script fresh) instead of reaching for sed.
+- **`node -e` inside a double-quoted bash string loses `!`.** History expansion escapes `!==` into
+  `\!==`, which node reports as "Expected unicode escape" — a regex or comparison in a one-liner is
+  worth a named `.cjs` file in `$TEMP`, run by absolute path. Same for a `$` inside a SQL JSON path
+  (`JSON_EXTRACT(…,'$.slug')`) that bash eats first.
+- **A mysql2 probe that throws leaves the socket open** and the process hangs until the tool timeout,
+  which looks like a slow database. `try { … } finally { await c.end() }`, and print `SHOW COLUMNS`
+  before selecting from a table whose shape you are guessing (`articles` is `content_ar`/`title_ar`,
+  not `body_ar`/`name_ar`; `offers` is `name_ar`; `list_items` has no slug column at all — the route
+  key lives inside `published` as `href` for imported rows).
 
 ### Things MariaDB and Kysely do differently (each one cost debugging time)
 - **No `INSERT … ON CONFLICT (cols) DO NOTHING`.** That is Postgres syntax; Kysely's

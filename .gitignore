@@ -54,6 +54,11 @@ next-env.d.ts
 # name from docs/contrast-report.md instead of being committed
 /docs/screenshots/
 
+# The §0a golden set: 68 full-page PNGs (~49 MB) that items 4c and 6 diff against. The
+# files stay on disk and out of git; docs/baseline/capture.json + errors.json carry each
+# name, byte count and SHA-256, so a later run proves identity without committing pixels.
+/docs/baseline/*.png
+
 # browser screenshots taken while verifying a row in the built app: the evidence stays
 # on disk for the run, and the PROGRESS row says what it showed
 /.shots/

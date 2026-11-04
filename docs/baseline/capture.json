@@ -1,0 +1,1305 @@
+{
+  "base": "http://127.0.0.1:3430",
+  "capturedAt": "2026-11-04T15:41:21.638Z",
+  "widths": [
+    {
+      "w": 1440,
+      "h": 900,
+      "tag": "desktop-1440"
+    },
+    {
+      "w": 390,
+      "h": 844,
+      "tag": "phone-390"
+    }
+  ],
+  "records": [
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar",
+      "name": "home",
+      "status": "200",
+      "ms": 37233,
+      "file": "docs/baseline/ar-desktop-1440-home.png",
+      "bytes": 1294855,
+      "sha256": "f1ec347da15bbec6ba1bfe65724adb88f29be2caa7ff5381ed8848386f3fb297",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/services",
+      "name": "services",
+      "status": "200",
+      "ms": 10236,
+      "file": "docs/baseline/ar-desktop-1440-services.png",
+      "bytes": 942405,
+      "sha256": "13fa1f0a221042d177b92e7de456076120f55405690f2d41882ceea2e4843fa5",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/skincare?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/laser-hair-removal?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/botox-injections?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/services/skincare",
+      "name": "service-skincare",
+      "status": "200",
+      "ms": 6172,
+      "file": "docs/baseline/ar-desktop-1440-service-skincare.png",
+      "bytes": 704324,
+      "sha256": "7cf9181325796d641258422bfcde459f0c0fe1253de961cedd14bbacbf7e280a",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/services/laser-hair-removal",
+      "name": "service-laser-hair-removal",
+      "status": "200",
+      "ms": 6092,
+      "file": "docs/baseline/ar-desktop-1440-service-laser-hair-removal.png",
+      "bytes": 692201,
+      "sha256": "d097623b79de023c08f24436b203af398f720c1daeb6cc0129efbdfe296cee4e",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/services/botox-injections",
+      "name": "service-botox-injections",
+      "status": "200",
+      "ms": 5595,
+      "file": "docs/baseline/ar-desktop-1440-service-botox-injections.png",
+      "bytes": 696081,
+      "sha256": "66c868849c0094a35f5a04b71b2d1fc23bc0ccf2b5d482be6898b8792c945109",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/offers",
+      "name": "offers",
+      "status": "200",
+      "ms": 6854,
+      "file": "docs/baseline/ar-desktop-1440-offers.png",
+      "bytes": 1080810,
+      "sha256": "2acc4e605fbe43556c33c027df7b809779d8413032d3f52c0146adc755a5d311",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=U_DogDNCYXMu9Qxo net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=U_DogDNCYXMu9Qxo net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=U_DogDNCYXMu9Qxo net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers/%D9%A4-%D8%AC%D9%84%D8%B3%D8%A7%D8%AA-%D8%AC%D8%B3%D9%85-%D9%83%D8%A7%D9%85%D9%84-%D8%AA%D8%B4%D9%82%D9%8A%D8%B1-%D9%88%D8%AC%D9%87 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers/%D9%A4-%D8%AC%D9%84%D8%B3%D8%A7%D8%AA-%D8%AC%D8%B3%D9%85-%D9%83%D8%A7%D9%85%D9%84-%D8%AA%D8%B4%D9%82%D9%8A%D8%B1-%D9%88%D8%AC%D9%87 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers/%D9%A4-%D8%AC%D9%84%D8%B3%D8%A7%D8%AA-%D8%AC%D8%B3%D9%85-%D9%83%D8%A7%D9%85%D9%84-%D8%AA%D8%B4%D9%82%D9%8A%D8%B1-%D9%88%D8%AC%D9%87 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/results",
+      "name": "cases-results",
+      "status": "200",
+      "ms": 7389,
+      "file": "docs/baseline/ar-desktop-1440-cases-results.png",
+      "bytes": 847695,
+      "sha256": "0f338a379f1277bc9d742c0db737c641f25915e8bcc57efe300fc0428cd560aa",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/hifu-facial-skin-tightening-3?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/dermapen-with-stem-cells?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/doctors",
+      "name": "doctors",
+      "status": "200",
+      "ms": 7839,
+      "file": "docs/baseline/ar-desktop-1440-doctors.png",
+      "bytes": 1217243,
+      "sha256": "928438228f27a3039cd2cfc43441e9bcb107776a4248c6e51983e2d26c560cd5",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=0Ag-NO1cWHv9WQjm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=0Ag-NO1cWHv9WQjm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=0Ag-NO1cWHv9WQjm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=0Ag-NO1cWHv9WQjm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=0Ag-NO1cWHv9WQjm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=0Ag-NO1cWHv9WQjm net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/branches",
+      "name": "branches",
+      "status": "200",
+      "ms": 5796,
+      "file": "docs/baseline/ar-desktop-1440-branches.png",
+      "bytes": 810708,
+      "sha256": "9e310cf8e56a4437c732f79d474cfdae26b7b8bde6dfaff5f746f0b7af58196b",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/nasr-city?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/new-cairo?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/sheikh-zayed?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/contact",
+      "name": "contact",
+      "status": "200",
+      "ms": 5424,
+      "file": "docs/baseline/ar-desktop-1440-contact.png",
+      "bytes": 729888,
+      "sha256": "75b20095330db4338775ad4d9e81eee4cd555e5d092ad25e4869bf0e098832cd",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=9ok2CeFKR2p_b5bX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=9ok2CeFKR2p_b5bX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=9ok2CeFKR2p_b5bX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=9ok2CeFKR2p_b5bX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=9ok2CeFKR2p_b5bX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=9ok2CeFKR2p_b5bX net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/about",
+      "name": "about",
+      "status": "200",
+      "ms": 6231,
+      "file": "docs/baseline/ar-desktop-1440-about.png",
+      "bytes": 1007890,
+      "sha256": "5efc8c7d8dfccb25d2c8e2ff6da0a840cd6427afb0fe2a877fe8748b84708831",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=OL2FwMtv2knkJHv1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=OL2FwMtv2knkJHv1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=OL2FwMtv2knkJHv1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=OL2FwMtv2knkJHv1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=OL2FwMtv2knkJHv1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=OL2FwMtv2knkJHv1 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/blogs",
+      "name": "blog-list",
+      "status": "200",
+      "ms": 7019,
+      "file": "docs/baseline/ar-desktop-1440-blog-list.png",
+      "bytes": 1024626,
+      "sha256": "dfc0ef273e13e1983f128bccb7768aad6756788a528b681f7227d4c8eb510a9c",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/derma-pen-with-mesotherapy-fusion?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/Sed%20exercitationem%20l?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/fractional-laser-for-the-face-my-experience-with-shama-clinic-renewed-skin-with-complete-confidence?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/blogs/hifu-facial-skin-tightening",
+      "name": "article-short-hifu",
+      "status": "200",
+      "ms": 6728,
+      "file": "docs/baseline/ar-desktop-1440-article-short-hifu.png",
+      "bytes": 1100775,
+      "sha256": "1e2868a1fe1343db7ed6c73382392cd0667777a5eafca2f28297c2dc12615ed1",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/blogs/laser-underarm-hair-removal",
+      "name": "article-long-table-underarm",
+      "status": "200",
+      "ms": 10032,
+      "file": "docs/baseline/ar-desktop-1440-article-long-table-underarm.png",
+      "bytes": 1208222,
+      "sha256": "28033cfe0618a35b1272bfd13b35214e956b705045322125fd9fd94b3ba74469",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/blogs/morpheus-8-sessions",
+      "name": "article-two-tables-morpheus",
+      "status": "200",
+      "ms": 10695,
+      "file": "docs/baseline/ar-desktop-1440-article-two-tables-morpheus.png",
+      "bytes": 1109922,
+      "sha256": "6ae771a116a72e42d420edb50be7b32c48645f70b276dfd84a52a0ca08386a05",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/blogs/best-laser-clinics-near-me",
+      "name": "article-lists-clinics-near-me",
+      "status": "200",
+      "ms": 10059,
+      "file": "docs/baseline/ar-desktop-1440-article-lists-clinics-near-me.png",
+      "bytes": 963747,
+      "sha256": "6699c837f62e528bf2ddc48c764de4a09251eecb8dc254954cf2efad92160bdf",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "desktop-1440",
+      "route": "/ar/blogs/laser-hair-removal-egypt-price",
+      "name": "article-price-table",
+      "status": "200",
+      "ms": 8640,
+      "file": "docs/baseline/ar-desktop-1440-article-price-table.png",
+      "bytes": 1218945,
+      "sha256": "5b5a002c77b18c176a290571351314ab80a71fa4ae53e649f8189f953fc5c5ad",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=53cZAtg_FhW5l_kF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/doctors?_rsc=53cZAtg_FhW5l_kF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers?_rsc=53cZAtg_FhW5l_kF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/results?_rsc=53cZAtg_FhW5l_kF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=53cZAtg_FhW5l_kF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/contact?_rsc=53cZAtg_FhW5l_kF net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar",
+      "name": "home",
+      "status": "200",
+      "ms": 30698,
+      "file": "docs/baseline/ar-phone-390-home.png",
+      "bytes": 436728,
+      "sha256": "7790e60070906d0033972a3fd7173c51ac416e975ae28323e9447446a6045be2",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/about?_rsc=SDmtiWM5AYQMkhhI net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/services",
+      "name": "services",
+      "status": "200",
+      "ms": 3077,
+      "file": "docs/baseline/ar-phone-390-services.png",
+      "bytes": 392653,
+      "sha256": "5c9f673fe82940fe1e56c56a24c5ed3463bc1b73f394910738a54f41b722e5b5",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services/filler-injections?_rsc=L7Q9OL3sBlUQYmq6 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/skincare?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/laser-hair-removal?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/botox-injections?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/filler-injections?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/services/skincare",
+      "name": "service-skincare",
+      "status": "200",
+      "ms": 2177,
+      "file": "docs/baseline/ar-phone-390-service-skincare.png",
+      "bytes": 376308,
+      "sha256": "d127560698318139dd1b2771697c6ee772a834bd5e35e90743cac3c9ca0edc9a",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services/skincare?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/laser-hair-removal?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/botox-injections?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/filler-injections?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/services/laser-hair-removal",
+      "name": "service-laser-hair-removal",
+      "status": "200",
+      "ms": 2199,
+      "file": "docs/baseline/ar-phone-390-service-laser-hair-removal.png",
+      "bytes": 372282,
+      "sha256": "b1bb773f1e666b6f580494e30a7f86193ee95baac293b5fa70f040066aabb863",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services/botox-injections?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services/filler-injections?_rsc=N8ZF8N_YBOqADOSD net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/services/botox-injections",
+      "name": "service-botox-injections",
+      "status": "200",
+      "ms": 2558,
+      "file": "docs/baseline/ar-phone-390-service-botox-injections.png",
+      "bytes": 374553,
+      "sha256": "a108db62022bb0af6637942dd2ec15cfdde78b405efcf6e48f75eaceee0737dd",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=vHrglfICQP78eB5Q net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/offers",
+      "name": "offers",
+      "status": "200",
+      "ms": 2785,
+      "file": "docs/baseline/ar-phone-390-offers.png",
+      "bytes": 502371,
+      "sha256": "4c245acc087877ef3eaa5c549b46219faaf67f23b26e7845cf2b1b8762944fd1",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=HO0ujA6MJvlVedn1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=OazNfgFF8nNyXtVZ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=U_DogDNCYXMu9Qxo net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/offers/%D9%A4-%D8%AC%D9%84%D8%B3%D8%A7%D8%AA-%D8%AC%D8%B3%D9%85-%D9%83%D8%A7%D9%85%D9%84-%D8%AA%D8%B4%D9%82%D9%8A%D8%B1-%D9%88%D8%AC%D9%87 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/results",
+      "name": "cases-results",
+      "status": "200",
+      "ms": 3019,
+      "file": "docs/baseline/ar-phone-390-cases-results.png",
+      "bytes": 445811,
+      "sha256": "517eeabd0c268325960d51b2b933e11288f4f81c55c04465abeede4a237aeb7f",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/?_rsc=oW4vit0wZG7xtoDF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/dermapen-with-stem-cells?_rsc=oW4vit0wZG7xtoDF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=oW4vit0wZG7xtoDF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/dermapen-with-stem-cells?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/doctors",
+      "name": "doctors",
+      "status": "200",
+      "ms": 2166,
+      "file": "docs/baseline/ar-phone-390-doctors.png",
+      "bytes": 455826,
+      "sha256": "eb266cbb078f4c8b12856785ab2c79b8e414a248729487d87626c71a203a8fe7",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/?_rsc=oW4vit0wZG7xtoDF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/dermapen-with-stem-cells?_rsc=oW4vit0wZG7xtoDF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=oW4vit0wZG7xtoDF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/services?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/dermapen-with-stem-cells?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/branches",
+      "name": "branches",
+      "status": "200",
+      "ms": 2208,
+      "file": "docs/baseline/ar-phone-390-branches.png",
+      "bytes": 397778,
+      "sha256": "6722f21f496de39d48529644144f2d896603028b54eaacdd0b84d404314231b1",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/?_rsc=qJzFYB_JFqXIxFwi net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=deeyTNkx8d38D9j9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/nasr-city?_rsc=deeyTNkx8d38D9j9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/nasr-city?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/new-cairo?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/contact",
+      "name": "contact",
+      "status": "200",
+      "ms": 2354,
+      "file": "docs/baseline/ar-phone-390-contact.png",
+      "bytes": 435461,
+      "sha256": "182c5d2c67e2434ce6568c46a1f497e227fd98a32d9be51d492479a988f06cd4",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/?_rsc=deeyTNkx8d38D9j9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/nasr-city?_rsc=deeyTNkx8d38D9j9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/nasr-city?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/new-cairo?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=9ok2CeFKR2p_b5bX net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/about",
+      "name": "about",
+      "status": "200",
+      "ms": 2077,
+      "file": "docs/baseline/ar-phone-390-about.png",
+      "bytes": 405813,
+      "sha256": "987503e738fca0b4a67181d63e59cf763824f6e7298462e2dfeabbd9370e10b6",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/branches/nasr-city?_rsc=deeyTNkx8d38D9j9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/nasr-city?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/branches/new-cairo?_rsc=QixRTTcOvWM5_1gL net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=9ok2CeFKR2p_b5bX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=OL2FwMtv2knkJHv1 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/blogs",
+      "name": "blog-list",
+      "status": "200",
+      "ms": 3064,
+      "file": "docs/baseline/ar-phone-390-blog-list.png",
+      "bytes": 428051,
+      "sha256": "573bb0fd23e0e62c7a0e7b6f5ea5146d51900030f49734391d1e3de8964cee99",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/blogs/best-laser-clinics-near-me?_rsc=ao_I74GcL50q8j1T net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/derma-pen-with-mesotherapy-fusion?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/Sed%20exercitationem%20l?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/fractional-laser-for-the-face-my-experience-with-shama-clinic-renewed-skin-with-complete-confidence?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/best-laser-clinics-near-me?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/blogs/hifu-facial-skin-tightening",
+      "name": "article-short-hifu",
+      "status": "200",
+      "ms": 2737,
+      "file": "docs/baseline/ar-phone-390-article-short-hifu.png",
+      "bytes": 641000,
+      "sha256": "c05cee3a468f8244bfb82abc50544d9095519e556d77ae7945e226903061f31f",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/blogs/derma-pen-with-mesotherapy-fusion?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/Sed%20exercitationem%20l?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/fractional-laser-for-the-face-my-experience-with-shama-clinic-renewed-skin-with-complete-confidence?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/best-laser-clinics-near-me?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/blogs/laser-underarm-hair-removal",
+      "name": "article-long-table-underarm",
+      "status": "200",
+      "ms": 4088,
+      "file": "docs/baseline/ar-phone-390-article-long-table-underarm.png",
+      "bytes": 725420,
+      "sha256": "14226cba70d1506f94a533ceb9c9a11f6a3834f61f27516b3d3372a96d140911",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/blogs/fractional-laser-for-the-face-my-experience-with-shama-clinic-renewed-skin-with-complete-confidence?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs/best-laser-clinics-near-me?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/blogs/morpheus-8-sessions",
+      "name": "article-two-tables-morpheus",
+      "status": "200",
+      "ms": 4005,
+      "file": "docs/baseline/ar-phone-390-article-two-tables-morpheus.png",
+      "bytes": 709283,
+      "sha256": "88efa3e53586b3b514f8014e9b122173e0cb624b4c6268647e1a7f87d0bda874",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/blogs/best-laser-clinics-near-me?_rsc=90u3IzP50o6TCO1f net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/blogs/best-laser-clinics-near-me",
+      "name": "article-lists-clinics-near-me",
+      "status": "200",
+      "ms": 3007,
+      "file": "docs/baseline/ar-phone-390-article-lists-clinics-near-me.png",
+      "bytes": 637409,
+      "sha256": "f90aef8cb72d6f1ed2b5584c888530270c216d689bb827848a1e9d04d72a1977",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=xEA-KMcyJRCxrgTE net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "ar",
+      "viewport": "phone-390",
+      "route": "/ar/blogs/laser-hair-removal-egypt-price",
+      "name": "article-price-table",
+      "status": "200",
+      "ms": 3568,
+      "file": "docs/baseline/ar-phone-390-article-price-table.png",
+      "bytes": 664204,
+      "sha256": "c2b98b46f0f673d517d9522e7f8d901c1c10c526b603ebb68e6469dbd5bbe901",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=HJJ_77io2Z7uR8q9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=sU56kmtq9Q0C5aAg net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=lZiSgPyJIMMlAEr_ net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/?_rsc=53cZAtg_FhW5l_kF net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/blogs?_rsc=53cZAtg_FhW5l_kF net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en",
+      "name": "home",
+      "status": "200",
+      "ms": 6177,
+      "file": "docs/baseline/en-desktop-1440-home.png",
+      "bytes": 1420340,
+      "sha256": "b28dd1ebcb6112d44d51508009dfef6fc7203060cf29eece08d82b4703939114",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=1vwYfVB7_E9t4fEj net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=1vwYfVB7_E9t4fEj net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=1vwYfVB7_E9t4fEj net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=1vwYfVB7_E9t4fEj net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=1vwYfVB7_E9t4fEj net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=1vwYfVB7_E9t4fEj net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/services",
+      "name": "services",
+      "status": "200",
+      "ms": 4770,
+      "file": "docs/baseline/en-desktop-1440-services.png",
+      "bytes": 941360,
+      "sha256": "b101e1c0a5aeb51c82b42f23c674141b7633a7fb28e599506b90b95a86d6c728",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/skincare?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/laser-hair-removal?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/botox-injections?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/services/skincare",
+      "name": "service-skincare",
+      "status": "200",
+      "ms": 9460,
+      "file": "docs/baseline/en-desktop-1440-service-skincare.png",
+      "bytes": 706673,
+      "sha256": "33a69ce2fbe8d673cd793d7b2d72260ed786f0d3afc37ee4d649d76160e7cf5b",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/services/laser-hair-removal",
+      "name": "service-laser-hair-removal",
+      "status": "200",
+      "ms": 6211,
+      "file": "docs/baseline/en-desktop-1440-service-laser-hair-removal.png",
+      "bytes": 694759,
+      "sha256": "1a58e8d521f3554721bad6dd8ea9d71f2cc9acc51a2f75ceb18247fde803933a",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/services/botox-injections",
+      "name": "service-botox-injections",
+      "status": "200",
+      "ms": 7430,
+      "file": "docs/baseline/en-desktop-1440-service-botox-injections.png",
+      "bytes": 1139335,
+      "sha256": "9cc6de4cdd1882626c400969fdfd9c75119ab11b96a9eafe6db5d86149cbaf1c",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/offers",
+      "name": "offers",
+      "status": "200",
+      "ms": 7526,
+      "file": "docs/baseline/en-desktop-1440-offers.png",
+      "bytes": 1083443,
+      "sha256": "2959f6aab82d8642a55970624534fc41a9e60185adedd528058c66c9f26b2bf5",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=_BUl7oMmwS3GYWt1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=_BUl7oMmwS3GYWt1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=_BUl7oMmwS3GYWt1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers/%D9%A4-%D8%AC%D9%84%D8%B3%D8%A7%D8%AA-%D8%AC%D8%B3%D9%85-%D9%83%D8%A7%D9%85%D9%84-%D8%AA%D8%B4%D9%82%D9%8A%D8%B1-%D9%88%D8%AC%D9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers/%D9%A4-%D8%AC%D9%84%D8%B3%D8%A7%D8%AA-%D8%AC%D8%B3%D9%85-%D9%83%D8%A7%D9%85%D9%84-%D8%AA%D8%B4%D9%82%D9%8A%D8%B1-%D9%88%D8%AC%D9 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers/%D9%A4-%D8%AC%D9%84%D8%B3%D8%A7%D8%AA-%D8%AC%D8%B3%D9%85-%D9%83%D8%A7%D9%85%D9%84-%D8%AA%D8%B4%D9%82%D9%8A%D8%B1-%D9%88%D8%AC%D9 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/results",
+      "name": "cases-results",
+      "status": "200",
+      "ms": 7850,
+      "file": "docs/baseline/en-desktop-1440-cases-results.png",
+      "bytes": 854632,
+      "sha256": "3d8728f48a0c3b45988706e5ec9de35a111cdac54256dc045b6c20eafd15d202",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/dermapen-with-stem-cells?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/hifu-facial-skin-tightening-3?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/doctors",
+      "name": "doctors",
+      "status": "200",
+      "ms": 7336,
+      "file": "docs/baseline/en-desktop-1440-doctors.png",
+      "bytes": 1218101,
+      "sha256": "d9e08768a93fad0b9c920af0f01428d02ea74c736356587a7bcd0c5239097921",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/branches",
+      "name": "branches",
+      "status": "200",
+      "ms": 5241,
+      "file": "docs/baseline/en-desktop-1440-branches.png",
+      "bytes": 813286,
+      "sha256": "bbdf7e74acd478f059b85689a49e597847739de7928371bf82a2d31dbfe743c3",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/nasr-city?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/new-cairo?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/sheikh-zayed?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/contact",
+      "name": "contact",
+      "status": "200",
+      "ms": 5353,
+      "file": "docs/baseline/en-desktop-1440-contact.png",
+      "bytes": 731644,
+      "sha256": "47f88b179d6fd08a81a0d89c54c533158eef09e8f1da0741e0d679da4b9acb9d",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=bQfaZETtmDBiuz93 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=bQfaZETtmDBiuz93 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=bQfaZETtmDBiuz93 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=bQfaZETtmDBiuz93 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=bQfaZETtmDBiuz93 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=bQfaZETtmDBiuz93 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/about",
+      "name": "about",
+      "status": "200",
+      "ms": 6030,
+      "file": "docs/baseline/en-desktop-1440-about.png",
+      "bytes": 1031420,
+      "sha256": "54c016b5b72da4e0dde6298e5b420b8cc0344aa0cf855189e2678aa8bc07528e",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=bjHU_RPjWm8GTK-2 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=bjHU_RPjWm8GTK-2 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=bjHU_RPjWm8GTK-2 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=bjHU_RPjWm8GTK-2 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=bjHU_RPjWm8GTK-2 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=bjHU_RPjWm8GTK-2 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/blogs",
+      "name": "blog-list",
+      "status": "200",
+      "ms": 9862,
+      "file": "docs/baseline/en-desktop-1440-blog-list.png",
+      "bytes": 1030914,
+      "sha256": "d9d5d4ad36ea93ea9f03b35f3d6b05bb8a8e6a7aac7aca2aea2e230925546ae0",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/derma-pen-with-mesotherapy-fusion?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/fractional-laser-for-the-face-my-experience-with-shama-clinic-renewed-skin-with-complete-confidence?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/Sed%20exercitationem%20l?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/blogs/hifu-facial-skin-tightening",
+      "name": "article-short-hifu",
+      "status": "200",
+      "ms": 7983,
+      "file": "docs/baseline/en-desktop-1440-article-short-hifu.png",
+      "bytes": 1105527,
+      "sha256": "28571a77ac6e6dfc1642a48fcbf5d737b305768243e14c7be706d9d399445856",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/blogs/laser-underarm-hair-removal",
+      "name": "article-long-table-underarm",
+      "status": "200",
+      "ms": 9280,
+      "file": "docs/baseline/en-desktop-1440-article-long-table-underarm.png",
+      "bytes": 1241534,
+      "sha256": "2371f5733ee74d22675f6999869fa52ef0bc3733a9b137fd4690ecf2edab1c88",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/blogs/morpheus-8-sessions",
+      "name": "article-two-tables-morpheus",
+      "status": "200",
+      "ms": 8304,
+      "file": "docs/baseline/en-desktop-1440-article-two-tables-morpheus.png",
+      "bytes": 1121543,
+      "sha256": "7a4fe6e99fd740bae72de9591389a8269c0e9f5077c877eca258ed62568165e3",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/blogs/best-laser-clinics-near-me",
+      "name": "article-lists-clinics-near-me",
+      "status": "200",
+      "ms": 4947,
+      "file": "docs/baseline/en-desktop-1440-article-lists-clinics-near-me.png",
+      "bytes": 956007,
+      "sha256": "26c5da69eb956135ab41c7010249034e6c59df6cfe97188e210213c05b6392c6",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=efFss8ETznvilHQG net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=efFss8ETznvilHQG net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=efFss8ETznvilHQG net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=efFss8ETznvilHQG net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=efFss8ETznvilHQG net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=efFss8ETznvilHQG net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "desktop-1440",
+      "route": "/en/blogs/laser-hair-removal-egypt-price",
+      "name": "article-price-table",
+      "status": "200",
+      "ms": 3436,
+      "file": "docs/baseline/en-desktop-1440-article-price-table.png",
+      "bytes": 1225141,
+      "sha256": "a060f49319b0e6488999f3eaab0a1a3ef2fd67171a8e66a322e05f0f5336631f",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=gjxJMOoh2ZnuYXEC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/results?_rsc=gjxJMOoh2ZnuYXEC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/doctors?_rsc=gjxJMOoh2ZnuYXEC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/offers?_rsc=gjxJMOoh2ZnuYXEC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=gjxJMOoh2ZnuYXEC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/contact?_rsc=gjxJMOoh2ZnuYXEC net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en",
+      "name": "home",
+      "status": "200",
+      "ms": 3053,
+      "file": "docs/baseline/en-phone-390-home.png",
+      "bytes": 407773,
+      "sha256": "a9bdf0d2a56c1e2b36447f986b5fb51ecad6daab7aacb060731dd81d7d465e7d",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/about?_rsc=1vwYfVB7_E9t4fEj net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/services",
+      "name": "services",
+      "status": "200",
+      "ms": 1898,
+      "file": "docs/baseline/en-phone-390-services.png",
+      "bytes": 397460,
+      "sha256": "df05447e9f37ba2ef1502a2c8927e69ace7192539ffc510f6278088bdb9b5ba5",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/services/botox-injections?_rsc=QJggzmfiYOrO-GVC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=QJggzmfiYOrO-GVC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/skincare?_rsc=QJggzmfiYOrO-GVC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/skincare?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/laser-hair-removal?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/services/skincare",
+      "name": "service-skincare",
+      "status": "200",
+      "ms": 1610,
+      "file": "docs/baseline/en-phone-390-service-skincare.png",
+      "bytes": 379948,
+      "sha256": "ae08a57fd24111cfc30cfef295b2ab3f13984e871e5b39724100e4fcbe0ef983",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/services/skincare?_rsc=QJggzmfiYOrO-GVC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/skincare?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/laser-hair-removal?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/services/laser-hair-removal",
+      "name": "service-laser-hair-removal",
+      "status": "200",
+      "ms": 1574,
+      "file": "docs/baseline/en-phone-390-service-laser-hair-removal.png",
+      "bytes": 376500,
+      "sha256": "dbb795fa5c7b6397e8d8899a1a2c56d09d30872b0484d1c30f958db7ce4605f9",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/services/skincare?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services/laser-hair-removal?_rsc=cmkwg8RnUOogM8kv net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/services/botox-injections",
+      "name": "service-botox-injections",
+      "status": "200",
+      "ms": 1913,
+      "file": "docs/baseline/en-phone-390-service-botox-injections.png",
+      "bytes": 601965,
+      "sha256": "7dd07c4c7757f9cc66f1f3e1d48cc9d5ab43c00f60ec4b1b018426eb094170d4",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/offers",
+      "name": "offers",
+      "status": "200",
+      "ms": 1975,
+      "file": "docs/baseline/en-phone-390-offers.png",
+      "bytes": 505960,
+      "sha256": "ac049a066342963f9c4e959ba3dd48ad48c97a306d287eaf41b44eb49cf68c35",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=lRgXqyzu8yLZIXze net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=na3NRl1ITP-2YEG- net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=yA135CVjb1x8GT6o net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=_BUl7oMmwS3GYWt1 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/results",
+      "name": "cases-results",
+      "status": "200",
+      "ms": 1698,
+      "file": "docs/baseline/en-phone-390-cases-results.png",
+      "bytes": 466308,
+      "sha256": "a12be93392c07b86086a4dc3b215a1d83433f47dcf0c5ca7dc9f9766eaab2942",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=_BUl7oMmwS3GYWt1 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/dermapen-with-stem-cells?_rsc=nCS-ERLtD6ItTSpe net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=nCS-ERLtD6ItTSpe net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/dermapen-with-stem-cells?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/doctors",
+      "name": "doctors",
+      "status": "200",
+      "ms": 1756,
+      "file": "docs/baseline/en-phone-390-doctors.png",
+      "bytes": 458263,
+      "sha256": "cd8c4f60c2a99a9a41cb6275c486a362956f93a56ad8edf4345b9ab3a6112aeb",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/blogs/dermapen-with-stem-cells?_rsc=nCS-ERLtD6ItTSpe net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=nCS-ERLtD6ItTSpe net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/dermapen-with-stem-cells?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/branches",
+      "name": "branches",
+      "status": "200",
+      "ms": 1533,
+      "file": "docs/baseline/en-phone-390-branches.png",
+      "bytes": 404175,
+      "sha256": "443d846a74ef470d05586a50608b889aea3b006252531aaaa270bc75083edcb4",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/services?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/dermapen-with-stem-cells?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/nasr-city?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/new-cairo?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/contact",
+      "name": "contact",
+      "status": "200",
+      "ms": 1615,
+      "file": "docs/baseline/en-phone-390-contact.png",
+      "bytes": 440176,
+      "sha256": "edf57a98561eb5bdd17c12db559398117fe2fc37c2287cbc94c5cb00b35db9a0",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/blogs/dermapen-with-stem-cells?_rsc=vuN0hvl2PVvV_xfl net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/nasr-city?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/new-cairo?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=bQfaZETtmDBiuz93 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/about",
+      "name": "about",
+      "status": "200",
+      "ms": 1788,
+      "file": "docs/baseline/en-phone-390-about.png",
+      "bytes": 416522,
+      "sha256": "1ee5ec0729a7307b666c22505d3967ebbb4ced64dc5c8a1776e3957bb0230fc8",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=wD_l_IyhHY9I63Xm net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/nasr-city?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/branches/new-cairo?_rsc=BRPFNAHitYerr2bS net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=bQfaZETtmDBiuz93 net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=bjHU_RPjWm8GTK-2 net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/blogs",
+      "name": "blog-list",
+      "status": "200",
+      "ms": 1928,
+      "file": "docs/baseline/en-phone-390-blog-list.png",
+      "bytes": 434005,
+      "sha256": "ddeaacacf44dd3fbebb56b7cb7d3ed48fbe6c82355c135be2a979f82fedbd660",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/blogs/best-laser-clinics-near-me?_rsc=CL53Lys-rUdkgk_W net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/derma-pen-with-mesotherapy-fusion?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/Sed%20exercitationem%20l?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/fractional-laser-for-the-face-my-experience-with-shama-clinic-renewed-skin-with-complete-confidence?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/best-laser-clinics-near-me?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/blogs/hifu-facial-skin-tightening",
+      "name": "article-short-hifu",
+      "status": "200",
+      "ms": 2174,
+      "file": "docs/baseline/en-phone-390-article-short-hifu.png",
+      "bytes": 652287,
+      "sha256": "4179d876e81bd0bd76f478d99f810bd9672b8a094c9e803718ee9679c5af03a0",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/blogs/derma-pen-with-mesotherapy-fusion?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/Sed%20exercitationem%20l?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/fractional-laser-for-the-face-my-experience-with-shama-clinic-renewed-skin-with-complete-confidence?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/best-laser-clinics-near-me?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/blogs/laser-underarm-hair-removal",
+      "name": "article-long-table-underarm",
+      "status": "200",
+      "ms": 2825,
+      "file": "docs/baseline/en-phone-390-article-long-table-underarm.png",
+      "bytes": 748963,
+      "sha256": "241403322c32456a2286b330c0d9a210627e9102c9f50f2a0fad28ea9796672c",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en/blogs/fractional-laser-for-the-face-my-experience-with-shama-clinic-renewed-skin-with-complete-confidence?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs/best-laser-clinics-near-me?_rsc=dJf19j2vpHjAkzwX net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/blogs/morpheus-8-sessions",
+      "name": "article-two-tables-morpheus",
+      "status": "200",
+      "ms": 2487,
+      "file": "docs/baseline/en-phone-390-article-two-tables-morpheus.png",
+      "bytes": 726492,
+      "sha256": "d1bc9b2a2a2afd0ebe95b779f7749731775506a2137f5d1d3da2674ebbaa7e8f",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=2wzTbDDYFmtRWwuO net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/blogs/best-laser-clinics-near-me",
+      "name": "article-lists-clinics-near-me",
+      "status": "200",
+      "ms": 2065,
+      "file": "docs/baseline/en-phone-390-article-lists-clinics-near-me.png",
+      "bytes": 643359,
+      "sha256": "80b26f4817673201be7700fe0c3c09373ffb52d986956826c3415df765730342",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=ARfvjHE1WABbJZ_i net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=efFss8ETznvilHQG net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=efFss8ETznvilHQG net::ERR_ABORTED"
+      ]
+    },
+    {
+      "locale": "en",
+      "viewport": "phone-390",
+      "route": "/en/blogs/laser-hair-removal-egypt-price",
+      "name": "article-price-table",
+      "status": "200",
+      "ms": 2132,
+      "file": "docs/baseline/en-phone-390-article-price-table.png",
+      "bytes": 679150,
+      "sha256": "d2ff6f70a46fbcb5a7733b01a55002a232334ac018a9c9ef1280680ed95f4cd6",
+      "pageErrors": [
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=N1CuEoa-uh0rvO6e net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=efFss8ETznvilHQG net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=efFss8ETznvilHQG net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en?_rsc=gjxJMOoh2ZnuYXEC net::ERR_ABORTED",
+        "requestfailed: http://127.0.0.1:3430/en/blogs?_rsc=gjxJMOoh2ZnuYXEC net::ERR_ABORTED"
+      ]
+    }
+  ]
+}
