@@ -4439,6 +4439,32 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
       component actually prints (`ترفع`, not `يرفع`). `ConsoleEditor`'s JSON refusal lost its
       `tone="warn"`, which two regexes in the editor suites require of that block.
 
+      **The catalog, split honestly.** `npm run copy:catalog` regenerates `src/lib/copy/catalog.ts`
+      from whatever is on disk, and the shared working copy held another pass's unfinished
+      `TreatmentDetailClient.tsx` (1100 lines, uncommitted) — so the generated file carried 7 new
+      entries and 4 line moves for a component this row does not own. Committing that would have made
+      the commit's catalog describe source the commit does not contain. The staged version is HEAD's
+      catalog with only the 8 `AboutClient` line moves applied — 227 entries, not 234 — and the working
+      copy was restored to the generated 234 right after, so the other pass's `copy:check` stays green
+      and nothing of its work was thrown away. Then the committed tree was *proved*, not assumed: this
+      branch's head was checked out into a temporary worktree and the generator run against those files,
+      which reported one real difference — the header's component count. `result.files` is the length of
+      the `src/components` + `src/app` walk, so the new console screen file moves 127 → 128 by itself;
+      `da9760c` carries that line, because `npm run build` runs `copy:check` and the row's own commit had
+      to pass it. That run also exposed a second, older defect: `--check` compared the LF text it had
+      generated against the file read raw, and a `core.autocrlf` checkout hands it CRLF — a fresh clone
+      fails the gate on a catalog that is exactly what the generator wrote. `scripts/copy-catalog.mjs`
+      normalises before comparing now (`6e1821e`), verified both ways: CRLF checkout reports
+      `227 entries current`, the LF working copy still reports `234`.
+
+      **Commit.** `09f231f` (the row), `da9760c` (catalog header count), `6e1821e` (the gate's line
+      endings) on `wip/snapshot-nov3`. The brief names `feature/cms-migration-redesign`, and that branch
+      exists at `80c53f7` — but this worktree's HEAD is `wip/snapshot-nov3` and AB-2's own predecessors
+      (`0cf2a9a`, `b20213c`, `c0be395`) are commits on it, so the row continues the line it was built on.
+      Moving it would mean checking a second branch out from under an uncommitted 1100-line change in the
+      same shared working copy, which is not this row's call; nothing was pushed and `main` was not
+      touched.
+
       **Tests.** `tests/about-page.test.ts` **13** (new): the seed parses clean and equals what the
       console writes, every field the form draws has a value except the deliberately empty numbers
       block, the row is the schema's own (`pageDocSchema('/about') === ABOUT`, `listSchemaOfRow(row) ===
@@ -4458,6 +4484,13 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
       site CSS only, the console loads console CSS only · `node scripts/verify-render.mjs` →
       `249 checks passed, 4 failed`, the same four `mens-aesthetic-services` rows (demo junk — the
       defect list, not this row).
+
+      Re-run after the catalog split and the gate fix: `npm run typecheck` exit 0 · `npm run lint`
+      `6 problems (0 errors, 6 warnings)` · `npm run copy:check` green on both shapes of the tree — the
+      working copy at `234 entries current`, a clean checkout of the commit at `227 entries current` ·
+      `npx vitest run` → `1118 passed | 3 failed (1121)`, all three inside `tests/delivery.test.ts` and
+      all three Q-12's contention (the same file passes `13 passed (13)` alone four minutes later, and
+      the run before these commits was `1121 passed`). Reported as measured, not smoothed.
 
       **Browser pass.** `/ar/about` and `/en/about` on the built server, measured rather than admired:
       `lang`/`dir` correct both ways, H1 `About Shamah`, the four row headings, 2 story and 5 process
@@ -4496,8 +4529,11 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
   test database at the moment of failure (`outbox rows: 0`, `integrations rows: 0`, `recent leads:
   []`) so leftovers were ruled out; the content is then the single shared `integrations` row plus
   the whole-table `drainOutbox()` / `resendFailed()` under two processes writing the same schema.
-  Q-12 holds the options — a suite whose result depends on the last process to touch the test
-  database cannot be used as a gate.
+  The same contention now reaches a setup hook: `tests/copy-api.test.ts` timed out its `beforeAll`
+  (`syncRoles`) at vitest's 10s default — `vitest.config.ts:15` sets `testTimeout` and leaves
+  `hookTimeout` unset — and passed 21/21 in 7.0s minutes later on the same database. Q-12 holds the
+  options — a suite whose result depends on the last process to touch the test database cannot be
+  used as a gate.
 - **`verify-render` fails 4 checks on `mens-aesthetic-services`** (rendered name, schema.org
   `Offer`, both locales). The published JSON of that row is demo junk — `name_ar "India
   Ellison"`, `name_en "Neil Hoff"`-class values — left by the import, so the check is right and the
@@ -4546,6 +4582,18 @@ Status vocabulary is the owner's: **code only** / **browser-verified** / **broke
   `src/lib/jsonld.ts` reads `next/root-params`, so any test that renders structured data — or imports anything
   reaching it — has to `vi.mock` both; see `tests/clinic-words.test.ts`. Mock `next/cache` wholesale rather than
   with `importOriginal`, which loads the same throwing shim.
+- **The catalog header's second number is not a count of copy.** `scripts/copy-catalog.mjs` writes
+  `${entries} entries from ${result.files} components`, and `result.files` is the length of the whole
+  `src/components` + `src/app` walk — every file it parsed, copy or none. Adding any file under those
+  trees moves the header, so a commit that adds a screen and ships the old number fails
+  `npm run copy:check`, and `npm run build` with it: `227 entries from 127 components` had to become
+  `from 128` when `/console/pages/about` appeared (`da9760c`). Read a stale-catalog failure as a file
+  count first, then as wording.
+- **`copy:check` compared LF output to a CRLF file.** The generator writes `\n`; a `core.autocrlf`
+  checkout hands the same file back as `\r\n`, so a clean clone failed a gate against text it had
+  produced itself (found by checking out the commit into a temporary worktree rather than trusting the
+  working copy — see AB-2's catalog paragraph; fixed in `6e1821e`). The same trap is why the test suite
+  reads its own sources through `tests/source-text.ts`.
 
 ### Things MariaDB and Kysely do differently (each one cost debugging time)
 - **No `INSERT … ON CONFLICT (cols) DO NOTHING`.** That is Postgres syntax; Kysely's
