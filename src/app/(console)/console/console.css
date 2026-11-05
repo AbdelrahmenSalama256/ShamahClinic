@@ -1,0 +1,4759 @@
+/*
+ * Console chrome: tokens, reset, frame and screens.
+ *
+ * Self-contained: every custom property is declared below under the `--c-` prefix.
+ * No site stylesheet is imported and no site token is read.
+ *
+ * One attribute sets the look, written by the server from the prefs cookie:
+ *   data-theme='light'|'dark'
+ *
+ * ---------------------------------------------------------------------------
+ * TWO SHEETS, FOUR LAYERS, ONE PAINTER PER OBJECT
+ *   `console-kit.css` paints every control, chip, badge, alert, note and count.
+ *   This sheet says where those objects sit and paints only the screens of its
+ *   own (bars, panels, tables, lead cards, settings grids).
+ *   Both sheets declare the same order, so the bundle cannot invert it:
+ *     reset    scoped element defaults, under every class a component writes
+ *     tokens   the --c-* palette, light and dark
+ *     kit      one look per shared object, driven by data-* attributes
+ *     screens  the frame, the bars and the screens
+ *   Variants are data attributes, never new classes:
+ *     .console-btn[data-variant="primary|ghost|danger"], [data-size="sm|icon"]
+ *   Every bar (pager, editor bar, list bar) shares one glass shell; every soft
+ *   panel (status, rows, settings cards) shares one surface.
+ *   To re-brand the primary action change --c-primary-* only.
+ *
+  * Breakpoints (px, because a media query cannot read a custom property):
+  *   1024  sidebar column  |  below: off-canvas drawer
+ * 480   phone-form: single-column forms, no horizontal scroll, long text never breaks layout
+
+ /*
+ * Textareas grow to the content up to a hard max, so a 5,000-word Arabic or English
+ * field never collapses the editor or spills the bar off screen.
+ *
+ * Logical properties throughout so the file works in RTL.
+ * ---------------------------------------------------------------------------
+ */
+
+@layer reset, tokens, kit, screens;
+
+@layer tokens {
+  /* =========================================================================
+     1. TOKENS
+     ========================================================================= */
+  [data-surface="console"] {
+    color-scheme: light;
+
+    /* Colour */
+    --c-bg: #faf7f2;
+    --c-bg-alt: #f4ece4;
+    --c-canvas: #f4ece4;
+    --c-surface: #fffcf8;
+    --c-surface-soft: #fdfbf8;
+    --c-hover: rgba(33, 26, 22, 0.045);
+    --c-active: rgba(33, 26, 22, 0.09);
+    --c-text: #211a16;
+    --c-text-2: #6b5e57;
+    --c-text-3: #6e675c;
+    --c-accent: #85640f;
+    --c-success: #0a6636;
+    --c-danger: #b3261e;
+    --c-on-danger: #ffffff;
+    --c-on-fill: #fffaf0;
+    --c-warn: #94631c;
+    --c-warn-bg: #fbf1dc;
+    --c-warn-line: #ead5a9;
+    --c-line: rgba(33, 26, 22, 0.1);
+    --c-line-strong: rgba(33, 26, 22, 0.16);
+    --c-focus: #85640f;
+    --c-overlay: rgb(20 14 10 / 0.45);
+    --c-backdrop: rgb(0 0 0 / 45%);
+
+    /* Primary action (the only non-theme colour; change here to re-brand) */
+    --c-primary-a: #637cff;
+    --c-primary-b: #7868e9;
+    --c-primary-a-hover: #7890ff;
+    --c-primary-b-hover: #8b7aff;
+    --c-primary-line: rgb(145 155 255 / 0.55);
+    --c-primary-glow: #818cf8;
+
+    /* Type */
+    --c-font: var(--font-tajawal), "Segoe UI", Tahoma, Arial, sans-serif;
+    --c-font-mono: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --c-font-size: 0.9rem;
+    --c-font-ctl: 0.8125rem;
+    --c-font-small: 0.8rem;
+    --c-font-micro: 0.75rem;
+    --c-font-title: 1.5rem;
+    --c-line-height: 1.5;
+
+    /* Space */
+    --c-sp-1: 0.25rem;
+    --c-sp-2: 0.5rem;
+    --c-sp-3: 0.75rem;
+    --c-sp-4: 1rem;
+    --c-sp-5: 1.25rem;
+    --c-sp-6: 1.5rem;
+    --c-sp-8: 2rem;
+    --c-gap-tight: 0.35rem;
+    --c-gap: 0.85rem;
+    --c-pad: 1.1rem;
+    --c-stack: 1rem;
+
+    /* Frame */
+    --c-page-pad: 1.75rem;
+    --c-side-w: 16rem;
+    --c-topbar-h: 3.75rem;
+    --c-content-w: 78rem;
+    --c-panel-w: 32rem;
+    --c-list-h: 36rem;
+    --c-off: translateX(-100%);
+
+    /* Targets */
+    --c-tap: 2.75rem;
+    --c-ctl-h: 2.5rem;
+    --c-ctl-h-sm: 2.05rem;
+    --c-tap-field: 2.75rem;
+
+    /* Radii */
+    --c-r-xs: 0.35rem;
+    --c-r-sm: 0.55rem;
+    --c-r-ctl: 0.65rem;
+    --c-r-md: 0.85rem;
+    --c-r-panel: 1rem;
+    --c-r-lg: 1.15rem;
+    --c-r-pill: 999px;
+
+    /* Depth */
+    --c-ring: 0 0 0 1px var(--c-line);
+    --c-lift: 0 1px 2px rgb(0 0 0 / 0.04), 0 10px 24px -14px rgb(0 0 0 / 0.18);
+    --c-lift-sm: 0 6px 16px rgb(0 0 0 / 0.1);
+    --c-lift-lg: 0 14px 32px -12px rgb(0 0 0 / 0.3);
+    --c-sheen: rgb(255 255 255 / 0.6);
+    --c-bar-shadow: 0 8px 24px rgb(0 0 0 / 0.07), inset 0 1px 0 var(--c-sheen);
+    --c-bar-shadow-hover:
+      0 12px 30px rgb(0 0 0 / 0.1), inset 0 1px 0 var(--c-sheen);
+    --c-tint: color-mix(in srgb, var(--c-accent) 13%, transparent);
+    --c-tint-strong: color-mix(in srgb, var(--c-accent) 24%, transparent);
+    --c-fill: color-mix(in srgb, var(--c-text) 4%, transparent);
+    --c-glass:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--c-text) 5%, transparent),
+        color-mix(in srgb, var(--c-text) 1.5%, transparent)
+      ),
+      color-mix(in srgb, var(--c-surface) 86%, transparent);
+
+    /* Stacking */
+    --c-z-sticky: 30;
+    --c-z-scrim: 35;
+    --c-z-drawer: 40;
+    --c-z-drop: 60;
+    --c-z-modal: 70;
+    --c-z-palette: 75;
+    --c-z-toast: 80;
+
+    /* Motion */
+    --c-dur-fast: 140ms;
+    --c-dur-base: 160ms;
+    --c-dur-slow: 240ms;
+    --c-dur-shine: 450ms;
+    --c-dur-shimmer: 1100ms;
+    --c-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+    --c-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+    --c-ease-soft: cubic-bezier(0.25, 0.8, 0.3, 1);
+  }
+
+  [data-surface="console"][data-theme="dark"] {
+    color-scheme: dark;
+
+    --c-bg: #171513;
+    --c-bg-alt: #24211e;
+    --c-canvas: #171513;
+    --c-surface: #211e1b;
+    --c-surface-soft: #292522;
+    --c-hover: rgba(245, 238, 230, 0.07);
+    --c-active: rgba(245, 238, 230, 0.13);
+    --c-text: #f5eee6;
+    --c-text-2: #c9bdb1;
+    --c-text-3: #b8aa9a;
+    --c-accent: #e1c15b;
+    --c-success: #3ddc84;
+    --c-danger: #f2a0a0;
+    --c-on-danger: #211a16;
+    --c-on-fill: #211a16;
+    --c-warn: #f0ca83;
+    --c-warn-bg: #3b3020;
+    --c-warn-line: #65502e;
+    --c-line: rgba(245, 238, 230, 0.12);
+    --c-line-strong: rgba(245, 238, 230, 0.2);
+    --c-focus: #e1c15b;
+    --c-overlay: rgb(0 0 0 / 0.6);
+    --c-backdrop: rgb(0 0 0 / 55%);
+    --c-sheen: rgb(255 255 255 / 0.05);
+    --c-lift: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 24px -14px rgb(0 0 0 / 0.5);
+    --c-lift-sm: 0 6px 16px rgb(0 0 0 / 0.3);
+    --c-lift-lg: 0 14px 32px -12px rgb(0 0 0 / 0.55);
+    --c-bar-shadow: 0 8px 24px rgb(0 0 0 / 0.25), inset 0 1px 0 var(--c-sheen);
+    --c-bar-shadow-hover:
+      0 12px 30px rgb(0 0 0 / 0.35), inset 0 1px 0 var(--c-sheen);
+  }
+
+  [data-surface="console"][dir="rtl"] {
+    --c-off: translateX(100%);
+  }
+}
+
+@layer reset {
+  /* =========================================================================
+     2. BASE + SCOPED RESET
+     ========================================================================= */
+  .console-body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--c-canvas);
+    color: var(--c-text);
+    font-family: var(--c-font);
+    font-size: var(--c-font-size);
+    line-height: var(--c-line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* The reset lives in a layer so every class a component writes outranks it. */
+  [data-surface="console"],
+  [data-surface="console"] *,
+  [data-surface="console"] *::before,
+  [data-surface="console"] *::after {
+    box-sizing: border-box;
+  }
+
+  [data-surface="console"]
+    :where(h1, h2, h3, h4, h5, h6, p, figure, blockquote, dl, dd, ul, ol) {
+    margin: 0;
+  }
+
+  [data-surface="console"] :where(h1, h2, h3, h4, h5, h6) {
+    font-weight: 650;
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+  }
+
+  [data-surface="console"] h1 {
+    font-size: var(--c-font-title);
+  }
+  [data-surface="console"] h2 {
+    font-size: 1.25rem;
+  }
+  [data-surface="console"] h3 {
+    font-size: 1.1rem;
+  }
+  [data-surface="console"] h4 {
+    font-size: 1rem;
+  }
+  [data-surface="console"] h5 {
+    font-size: var(--c-font-small);
+  }
+  [data-surface="console"] h6 {
+    font-size: var(--c-font-micro);
+  }
+
+  [data-surface="console"] :where(p, li, dd, dt) {
+    line-height: var(--c-line-height);
+  }
+
+  [data-surface="console"] :where(ul, ol) {
+    padding-inline-start: 1.25rem;
+  }
+
+  [data-surface="console"] :where(a) {
+    color: var(--c-accent);
+    text-decoration: none;
+  }
+
+  [data-surface="console"] :where(button) {
+    margin: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+
+  /* Raw form elements already look like a .console-control. */
+  [data-surface="console"] :where(input, select, textarea) {
+    margin: 0;
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--c-r-ctl);
+    background: var(--c-surface);
+    color: var(--c-text);
+    font: inherit;
+    min-block-size: var(--c-tap-field);
+    padding-block: 0.35rem;
+    padding-inline: 0.7rem;
+  }
+
+  [data-surface="console"] :where(textarea) {
+    min-block-size: 6rem;
+    padding-block: 0.6rem;
+    resize: vertical;
+  }
+
+  [data-surface="console"] :where(input[type="checkbox"], input[type="radio"]) {
+    inline-size: 1rem;
+    block-size: 1rem;
+    min-block-size: 0;
+    accent-color: var(--c-accent);
+  }
+
+  [data-surface="console"] :where(input[type="file"]) {
+    min-block-size: 0;
+    padding: 0.35rem;
+  }
+
+  [data-surface="console"] :where(select) {
+    padding-inline-end: 1.75rem;
+  }
+
+  [data-surface="console"] :where(input, select, textarea)::placeholder {
+    color: var(--c-text-3);
+  }
+
+  [data-surface="console"] :where(table) {
+    border-collapse: collapse;
+    inline-size: 100%;
+  }
+
+  [data-surface="console"] :where(th, td) {
+    text-align: start;
+  }
+
+  [data-surface="console"] :where(code, kbd, samp, pre) {
+    font-family: var(--c-font-mono);
+  }
+
+  [data-surface="console"] :where(hr) {
+    border: 0;
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  /* Photos fill their box; inline icons are just blocks (they size themselves). */
+  [data-surface="console"] :where(img, video) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    object-fit: cover;
+  }
+
+  [data-surface="console"] :where(svg) {
+    display: block;
+    max-inline-size: 100%;
+  }
+
+  /* The UA outline is the one thing two sheets cannot draw twice: the ring below is the
+       keyboard indicator, and each component adds its own focus shadow. */
+  [data-surface="console"] :where(input, select, textarea) {
+    outline: none;
+  }
+
+  [data-surface="console"]
+    :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+
+  /* Soft default transition for interactive elements. It replaces the old
+       global `a, button, div { transition: .3s all ease !important }`: it is
+       scoped, specific to the properties that change, and any component that
+       writes its own transition simply overrides it. */
+  [data-surface="console"] :where(a, button, input, select, textarea, summary) {
+    transition-property:
+      color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--c-dur-base);
+    transition-timing-function: var(--c-ease-soft);
+  }
+
+  [data-surface="console"] ::selection {
+    background: var(--c-tint-strong);
+    color: var(--c-text);
+  }
+
+  [data-surface="console"] ::-webkit-scrollbar {
+    inline-size: 6px;
+    block-size: 6px;
+  }
+
+  [data-surface="console"] ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  [data-surface="console"] ::-webkit-scrollbar-thumb {
+    border-radius: var(--c-r-pill);
+    background: var(--c-line-strong);
+  }
+
+  [data-surface="console"] ::-webkit-scrollbar-thumb:hover {
+    background: var(--c-text-3);
+  }
+}
+
+@layer screens {
+  /* --- Console forms placement ---
+     Single-column forms on a phone, wrapping toolbars. The control's own paint is
+     `console-kit.css`'s, so nothing here names a field class. --- */
+  @media (min-width: 480px) {
+    @media (max-width: 640px) {
+      .console-detail .console-fields {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .console-doc-field {
+        flex-direction: column;
+      }
+
+      .console-doc-label {
+        margin-bottom: 0.25rem;
+      }
+
+      .console-picker-frame {
+        width: 100%;
+      }
+
+      .console-editor-bar {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+    }
+
+    @media (min-width: 641px) and (max-width: 1024px) {
+      .console-detail .console-fields {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  }
+
+  /* =========================================================================
+     3. KIT PLACEMENT
+     `console-kit.css` paints every button, chip, badge, note, alert and count.
+     This sheet only says where those objects sit: no colour, border, radius,
+     shadow or type size of its own on a class the kit already paints.
+     ========================================================================= */
+
+  /* --- a button is as wide as its own writing until a bar says otherwise ------ */
+  .console-btn {
+    max-inline-size: 100%;
+    white-space: nowrap;
+  }
+
+  .console-btn svg {
+    inline-size: 1rem;
+    block-size: 1rem;
+    flex: none;
+    margin: 0;
+  }
+
+  .console-btn[data-size="sm"] {
+    min-block-size: var(--c-ctl-h-sm);
+  }
+
+  /* --- placements around a control -------------------------------------------- */
+  .console-search {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+    max-inline-size: 27.5rem;
+  }
+
+  .console-search::-webkit-search-cancel-button {
+    cursor: pointer;
+  }
+
+  .console-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  /* --- a count belongs to the far edge of the bar that counts ----------------- */
+  .console-count {
+    margin-inline-start: auto;
+  }
+
+  /* --- soft panels: one surface ---------------------------------------------- */
+  .console-detail-status,
+  .console-doc-unknown,
+  .console-doc-row,
+  .console-doc-child,
+  .settings-page,
+  .settings-banner {
+    background: var(--c-surface-soft);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+  }
+
+  /* --- glass bars: one shell for pager, editor bar and list bar ---------------- */
+  :is(.console-pager, .console-editor-bar, .console-list-bar) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    inline-size: 100%;
+    min-inline-size: 0;
+    padding: 0.85rem 1rem;
+    background: var(--c-glass);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-panel);
+    box-shadow: var(--c-bar-shadow);
+    transition:
+      border-color 250ms ease,
+      box-shadow 250ms ease;
+  }
+
+  :is(.console-pager, .console-editor-bar, .console-list-bar):hover {
+    border-color: color-mix(in srgb, var(--c-accent) 30%, var(--c-line));
+    box-shadow: var(--c-bar-shadow-hover);
+  }
+
+  /* =========================================================================
+     4. THE FRAME
+     ========================================================================= */
+  .console-frame {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    min-height: 100vh;
+  }
+
+  .console-topbar {
+    grid-column: 1 / -1;
+    position: sticky;
+    top: 0;
+    z-index: var(--c-z-sticky);
+    background: color-mix(in srgb, var(--c-surface) 88%, transparent);
+    -webkit-backdrop-filter: saturate(1.4) blur(14px);
+    backdrop-filter: saturate(1.4) blur(14px);
+    border-block-end: 1px solid var(--c-line);
+  }
+
+  .console-header {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: var(--c-gap);
+    padding: 0 var(--c-page-pad);
+    min-height: var(--c-topbar-h);
+  }
+
+  .console-brand {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    margin-inline-end: auto;
+    min-width: 0;
+    line-height: 1.15;
+  }
+
+  .console-brand strong {
+    font-size: 1.02rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .console-brand span {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--c-text-3);
+  }
+
+  /* Square utilities: size only; the skin is the shared button above. */
+  .console-tool {
+    inline-size: var(--c-tap);
+    min-inline-size: var(--c-tap);
+    block-size: var(--c-tap);
+    padding: 0;
+  }
+
+  .console-tool svg {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    margin: 0;
+  }
+
+  .console-toggle-mark {
+    display: inline-flex;
+  }
+
+  .console-toggle-mark svg {
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+  }
+
+  .console-main {
+    grid-column: 1;
+    grid-row: 2;
+    padding: 2rem var(--c-page-pad) 5rem;
+    min-width: 0;
+  }
+
+  .console-content {
+    width: 100%;
+    max-width: var(--c-content-w);
+    margin-inline: auto;
+  }
+
+  [data-surface="console"] .brand-loading-splash {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 1rem;
+    min-block-size: min(60svh, 36rem);
+    color: var(--c-accent);
+  }
+
+  [data-surface="console"] .brand-loading-splash__spinner {
+    inline-size: 2rem;
+    aspect-ratio: 1;
+    border: 2px solid var(--c-line-strong);
+    border-block-start-color: var(--c-accent);
+    border-radius: 50%;
+    animation: brand-loading-spin 0.9s linear infinite;
+  }
+
+  [data-surface="console"] .brand-loading-splash__logo {
+    inline-size: min(13.75rem, 58vw);
+    block-size: auto;
+    object-fit: contain;
+    animation: brand-loading-breathe 1.8s ease-in-out infinite;
+  }
+
+  @keyframes brand-loading-spin {
+    to { transform: rotate(1turn); }
+  }
+
+  @keyframes brand-loading-breathe {
+    50% { opacity: 0.72; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    [data-surface="console"] .brand-loading-splash__spinner,
+    [data-surface="console"] .brand-loading-splash__logo {
+      animation: none;
+    }
+  }
+
+  /* --- the sidebar: column, drawer, or both ---------------------------------- */
+  .console-side {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--c-z-drawer);
+    width: min(19rem, 88vw);
+    padding: 1.1rem 0 2rem;
+    background: var(--c-surface);
+    box-shadow:
+      0 0 0 1px var(--c-line),
+      12px 0 40px -16px rgb(0 0 0 / 0.3);
+    overflow-y: auto;
+    transform: var(--c-off);
+    visibility: hidden;
+    transition: transform var(--c-dur-slow) var(--c-ease-soft);
+  }
+
+  .console-frame[data-nav="open"] .console-side,
+  .console-side:target {
+    visibility: visible;
+    transform: none;
+  }
+
+  .console-side:focus {
+    outline: none;
+  }
+
+  .console-side-head {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 1.1rem 0.9rem;
+    margin-block-end: 0.5rem;
+  }
+
+  .console-side-heading {
+    margin: 0;
+    margin-inline-end: auto;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--c-text-3);
+  }
+
+  /* skin = the kit's shared button; this only makes it the small size */
+  .console-side-close {
+    min-block-size: var(--c-ctl-h-sm);
+    padding: 0 0.85rem;
+  }
+
+  .console-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0 0.75rem;
+  }
+
+  .console-nav a,
+  .console-nav button.console-nav-link {
+    display: flex;
+    align-items: center;
+    position: relative;
+    min-height: 2.25rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--c-r-sm);
+    color: var(--c-text-2);
+    text-decoration: none;
+    font-size: var(--c-font-size);
+    transition:
+      background var(--c-dur-base) var(--c-ease-soft),
+      color var(--c-dur-base) var(--c-ease-soft);
+  }
+
+  /* Sign-out acts instead of navigating, but keeps the row's shape. */
+  .console-nav button.console-nav-link {
+    inline-size: 100%;
+    border: 0;
+    background: transparent;
+    font-family: var(--c-font);
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .console-nav button.console-nav-link:disabled {
+    cursor: progress;
+  }
+
+  .console-nav a:hover,
+  .console-nav button.console-nav-link:hover:not(:disabled) {
+    background: var(--c-surface);
+    color: var(--c-text);
+  }
+
+  .console-nav a[aria-current="page"] {
+    background: var(--c-tint);
+    color: var(--c-text);
+    font-weight: 600;
+  }
+
+  .console-nav a[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-end: 0.8rem;
+    inline-size: 0.4rem;
+    block-size: 0.4rem;
+    margin-block-start: -0.2rem;
+    border-radius: 50%;
+    background: var(--c-accent);
+  }
+
+  /* --- the phone tab bar ----------------------------------------------------- */
+  .console-nav-strip {
+    display: none;
+    flex-direction: row;
+    gap: 0.35rem;
+    padding: 0.5rem var(--c-page-pad);
+    overflow-x: auto;
+    scrollbar-width: none;
+    border-block-end: 1px solid var(--c-line);
+    background: var(--c-surface);
+  }
+
+  .console-nav-strip::-webkit-scrollbar {
+    display: none;
+  }
+
+  .console-nav-strip .console-nav-list {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .console-nav-strip a,
+  .console-nav-strip button.console-nav-link {
+    position: relative;
+    min-height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 1rem;
+    white-space: nowrap;
+    border: 0;
+    border-radius: var(--c-r-pill);
+    background: transparent;
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+    font-weight: 600;
+    text-decoration: none;
+    transition: background var(--c-dur-base) var(--c-ease-soft);
+  }
+
+  .console-nav-strip button.console-nav-link {
+    font-family: var(--c-font);
+    cursor: pointer;
+  }
+
+  .console-nav-strip a[aria-current="page"] {
+    color: var(--c-text);
+    background: var(--c-tint-strong);
+  }
+
+  .console-nav-strip a[aria-current="page"]::after {
+    content: none;
+  }
+
+  /* --- the permission tree --------------------------------------------------- */
+  .console-nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+
+  .console-nav-heading {
+    margin: 1.25rem 0 0.3rem;
+    padding-inline: 0.85rem;
+    color: var(--c-text-3);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .console-nav-group:first-child .console-nav-heading {
+    margin-block-start: 0.25rem;
+  }
+
+  .console-nav-list,
+  .console-nav-leaves {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    margin: 0;
+    list-style: none;
+  }
+
+  .console-nav-leaves {
+    margin-block: 0.15rem 0.3rem;
+    margin-inline-start: 1.1rem;
+    padding-inline-start: 0.4rem;
+    border-inline-start: 2px solid var(--c-line);
+    border-radius: 1px;
+  }
+
+  .console-nav-head {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .console-nav-head::-webkit-details-marker {
+    display: none;
+  }
+
+  .console-nav-head .console-nav-link {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .console-nav-caret {
+    flex: none;
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    margin-inline: 0.6rem;
+    border-inline-end: 2px solid var(--c-text-2);
+    border-block-end: 2px solid var(--c-text-2);
+    border-end-end-radius: 1px;
+    transform: rotate(-45deg);
+    transition: transform 180ms var(--c-ease-soft);
+  }
+
+  [dir="rtl"] .console-nav-caret {
+    transform: rotate(135deg);
+  }
+
+  details[open] > .console-nav-head .console-nav-caret {
+    transform: rotate(45deg);
+  }
+
+  .console-nav-leaf {
+    font-size: var(--c-font-small);
+  }
+
+  .console-nav a[data-locked="true"],
+  .console-palette-row[data-locked="true"] {
+    color: var(--c-text-3);
+    text-decoration: none;
+    opacity: 0.7;
+  }
+
+  .console-nav-confirm {
+    border-color: var(--c-danger);
+  }
+
+  /* --- the command palette --------------------------------------------------- */
+  .console-palette {
+    inline-size: min(38rem, 92vw);
+    max-block-size: none;
+    margin: 10vh auto auto;
+    color: var(--c-text);
+    background: var(--c-surface);
+    border: 0;
+    border-radius: var(--c-r-lg);
+    box-shadow:
+      0 0 0 1px var(--c-line-strong),
+      0 32px 64px -20px rgb(0 0 0 / 0.45);
+    overflow: hidden;
+  }
+
+  .console-palette::backdrop {
+    background: var(--c-overlay);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+
+  .console-palette-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.8rem;
+    padding: 1rem 1.15rem;
+    border-block-end: 1px solid var(--c-line);
+  }
+
+  .console-palette-input {
+    flex: 1 1 14rem;
+    min-inline-size: 0;
+  }
+
+  .console-palette-hint {
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+  }
+
+  .console-palette-list {
+    max-block-size: 55vh;
+    overflow-y: auto;
+    padding: 0.5rem 0.65rem 0.75rem;
+    scrollbar-width: thin;
+  }
+
+  .console-palette-list section {
+    margin: 0;
+  }
+
+  .console-palette-section {
+    margin: 0.9rem 0 0.3rem;
+    padding-inline: 0.5rem;
+    color: var(--c-text-3);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+
+  .console-palette-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 2.4rem;
+    padding: 0.4rem 0.65rem;
+    border-radius: var(--c-r-sm);
+    color: var(--c-text-2);
+    text-decoration: none;
+    transition:
+      background 140ms var(--c-ease-soft),
+      color 140ms var(--c-ease-soft);
+  }
+
+  .console-palette-row:hover,
+  .console-palette-row:focus-visible {
+    background: var(--c-tint);
+    color: var(--c-text);
+  }
+
+  .console-palette-group {
+    flex: none;
+    max-inline-size: 11rem;
+    overflow: hidden;
+    color: var(--c-text-3);
+    font-size: var(--c-font-small);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .console-palette-label {
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .console-palette-list > .console-note {
+    display: block;
+    margin-block: 0.9rem 0.25rem;
+  }
+
+  .console-scrim {
+    display: none;
+  }
+
+  /* =========================================================================
+     5. SHARED PRIMITIVES
+     ========================================================================= */
+  .console-heading {
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  .console-subheading {
+    margin: 0 0 0.65rem;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .console-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: var(--c-gap);
+  }
+
+  .console-stat dt {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--c-text-3);
+  }
+
+  .console-stat dd {
+    margin: 0.35rem 0 0;
+    font-size: 1.75rem;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-panel {
+    margin-block-end: var(--c-stack);
+    max-width: var(--c-panel-w);
+  }
+
+  .console-panel > .console-note,
+  .console-content > .console-note {
+    display: block;
+    margin-block-start: var(--c-stack);
+  }
+
+  .console-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-2);
+    min-inline-size: 0;
+  }
+
+  .console-account-site {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--c-tap);
+    color: var(--c-accent);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .console-account-site:hover {
+    text-decoration: underline;
+  }
+
+  .console-account {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-block-start: 1.5rem;
+    margin-inline: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--c-r-md);
+    background: var(--c-bg-alt);
+    font-size: var(--c-font-small);
+    overflow-wrap: anywhere;
+  }
+
+  .console-account-roles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-center {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: 2rem var(--c-page-pad);
+  }
+
+  .console-login {
+    width: min(25rem, 100%);
+  }
+
+  /* =========================================================================
+     6. BARS: only what is specific to each (the shell is in section 3)
+     ========================================================================= */
+
+  /* list bar */
+  .console-list-bar .console-controls {
+    flex: 0 1 auto;
+    justify-content: flex-end;
+    margin-inline-start: auto;
+  }
+
+  /* pager */
+  .console-pager {
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-block-start: 1.1rem;
+  }
+
+  .console-pager .console-note {
+    white-space: nowrap;
+  }
+
+  .console-pager .console-count {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-inline-start: 0;
+  }
+
+  .console-pager .console-controls {
+    justify-content: center;
+    gap: 0.75rem;
+    margin-inline-start: auto;
+  }
+
+  .console-pager .console-controls > .console-note {
+    padding: 0.5rem 0.7rem;
+    text-align: center;
+  }
+
+  .console-pager .console-btn svg {
+    inline-size: 0.95rem;
+    block-size: 0.95rem;
+    flex: 0 0 0.95rem;
+    transition: transform var(--c-dur-base) ease;
+  }
+
+  .console-pager .console-btn:first-child:hover svg {
+    transform: translateX(-3px);
+  }
+
+  .console-pager .console-btn:last-child:hover svg {
+    transform: translateX(3px);
+  }
+
+  /* editor bar */
+  .console-editor-bar {
+    position: sticky;
+    bottom: 0.9rem;
+    z-index: 6;
+    min-block-size: var(--c-tap);
+    margin-block: 1.1rem;
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+  }
+
+  .console-editor-bar .console-count {
+    margin-inline-start: auto;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .console-editor-bar > .console-note {
+    margin-inline-start: auto;
+    padding: 0.5rem 0.7rem;
+  }
+
+  /* =========================================================================
+     7. CONTENT SCREENS: work, list, table, cards
+     ========================================================================= */
+  .console-work {
+    display: block;
+  }
+
+  .console-work-list {
+    min-width: 0;
+    container-type: inline-size;
+    container-name: console-list;
+  }
+
+  .console-work-bar {
+    align-items: center;
+    margin-block-end: 1rem;
+  }
+
+  .console-rows {
+    list-style: none;
+    margin: 0;
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    max-height: var(--c-list-h);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    background: var(--c-surface);
+    box-shadow: var(--c-ring), var(--c-lift);
+    border-radius: var(--c-r-lg);
+  }
+
+  .console-tabs {
+    margin-block-end: var(--c-stack);
+  }
+
+  .console-history {
+    margin-block-start: var(--c-stack);
+  }
+
+  .console-revision {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: var(--c-font-small);
+    color: var(--c-text-2);
+    overflow-wrap: anywhere;
+  }
+
+  .console-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-width: 0;
+  }
+
+  .console-bulk {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight);
+    padding: 0.6rem 0.9rem;
+    border-radius: var(--c-r-md);
+    background: var(--c-tint);
+    box-shadow: 0 0 0 1px var(--c-tint-strong);
+  }
+
+  .console-bulk .console-count {
+    margin-inline-start: 0;
+    margin-inline-end: auto;
+  }
+
+  .console-table-wrap {
+    max-block-size: var(--c-list-h);
+    overflow: auto;
+    scrollbar-width: thin;
+    border-radius: var(--c-r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--c-ring), var(--c-lift);
+  }
+
+  .console-cell-check {
+    inline-size: var(--c-tap);
+    text-align: center;
+  }
+
+  .console-cell-extra {
+    display: none;
+  }
+
+  .console-table th,
+  .console-table td {
+    vertical-align: middle;
+    position: relative;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .console-table thead th {
+    white-space: nowrap;
+  }
+
+  .console-table .console-cell-title {
+    inline-size: 25%;
+    min-inline-size: 10rem;
+  }
+
+  .console-row-link {
+    margin: -0.35rem -0.45rem;
+    padding: 0.35rem 0.45rem;
+  }
+
+  .console-row-text,
+  .console-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .console-thumb {
+    display: block;
+    flex: none;
+    inline-size: 2.75rem;
+    block-size: 2.75rem;
+    border-radius: var(--c-r-sm);
+    background: var(--c-bg-alt);
+    box-shadow: var(--c-ring);
+    object-fit: cover;
+  }
+
+  span.console-thumb[data-empty] {
+    display: grid;
+    place-items: center;
+    color: var(--c-text-2);
+  }
+
+  .console-cell-date {
+    white-space: nowrap;
+    font-size: var(--c-font-small);
+    color: var(--c-text-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  @container console-list (max-width: 30rem) {
+    .console-thumb {
+      inline-size: 2.4rem;
+      block-size: 2.4rem;
+    }
+  }
+
+  @container console-list (min-width: 34rem) {
+    .console-cell-extra {
+      display: table-cell;
+    }
+  }
+
+  .console-create {
+    display: grid;
+    gap: var(--c-gap);
+    max-inline-size: 42rem;
+  }
+
+  .console-create .console-lede,
+  .console-create .console-note {
+    margin: 0;
+  }
+
+  .console-cards-head {
+    display: flex;
+    min-block-size: var(--c-tap);
+    align-items: center;
+    padding-inline: 0.5rem;
+  }
+
+  .console-cards {
+    list-style: none;
+    margin: 0;
+    padding: 0.2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: var(--c-gap);
+    max-block-size: var(--c-list-h);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .console-cards .console-card {
+    display: block;
+    align-items: center;
+    gap: var(--c-sp-2);
+    position: relative;
+  }
+
+  .console-cards .console-card-link {
+    flex: 1;
+    display: block;
+  }
+
+  .console-cards .console-card-link > .console-badge {
+    margin-inline-start: auto;
+  }
+
+  /* =========================================================================
+     8. THE CONTENT EDITOR
+     ========================================================================= */
+  .console-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-stack);
+    container-type: inline-size;
+    container-name: console-edit;
+  }
+
+  .console-detail-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--c-gap);
+    padding-block-end: 1.1rem;
+  }
+
+  .console-detail-id {
+    display: flex;
+    flex: 1 1 18rem;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+  }
+
+  .console-detail-id .console-heading {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .console-detail-key {
+    overflow-wrap: anywhere;
+    font-family: var(--c-font-mono);
+    font-size: 0.78rem;
+    color: var(--c-text-3);
+  }
+
+  .console-detail-status {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem 0.9rem;
+    min-width: 0;
+    padding: 0.8rem 1rem;
+  }
+
+  .console-detail-status .console-note {
+    flex: 1 1 16rem;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .console-detail-status bdi {
+    color: var(--c-text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-editor {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--c-stack);
+    align-items: start;
+  }
+
+  .console-editor-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+    min-width: 0;
+    color: var(--c-text);
+  }
+
+  .console-editor-side {
+    min-width: 0;
+  }
+
+  .console-editor-side .console-panel {
+    max-width: none;
+  }
+
+  @container console-edit (min-width: 54rem) {
+    .console-editor {
+      grid-template-columns: minmax(0, 1fr) minmax(23rem, 27rem);
+    }
+  }
+
+  .console-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+    padding: clamp(1rem, 2.5vw, 1.6rem);
+    background: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: calc(var(--c-r-md) + 3px);
+    box-shadow: var(--c-lift);
+  }
+
+  .console-preview-frame {
+    inline-size: 100%;
+    min-height: 20rem;
+    border: 0;
+    border-radius: var(--c-r-md);
+    background: var(--c-surface);
+    box-shadow: var(--c-ring), var(--c-lift);
+  }
+
+  /* The width a preview is drawn at is the preview's subject, not the rail's. A service page is
+     written for a desktop and a phone, and this rail is about 25rem of both — so the editor lays
+     the document out at the width the site would use for it (`PREVIEW_LAYOUTS`) and scales the
+     frame into the space it has. Hence the stage clips, and hence it starts at the left in either
+     language: the page inside carries its own direction, and the scale has to run from the corner
+     the frame is drawn into. The heights come from the editor too, so the rail reserves exactly
+     what the frame shows and a long page scrolls inside its own frame instead of stretching the
+     editor. A card frame gets none of this — it has no desktop layout to pretend at, and the
+     sheet's own `inline-size: 100%` still sizes it. */
+  .console-preview-stage {
+    direction: ltr;
+    inline-size: 100%;
+    overflow: hidden;
+    border-radius: var(--c-r-md);
+  }
+
+  .console-preview-stage .console-preview-frame {
+    transform-origin: top left;
+  }
+
+  /* --- the comparison the editor drags --------------------------------------------------- */
+  /* The sandboxed frame cannot host this: it runs no scripts, which is what makes it safe to
+     hand it HTML exactly as typed. The two pictures and the divide are painted here instead,
+     over the same files the site loads. Where the line sits is decided by `useCompareSlider`,
+     the one implementation the home band calls too — nothing below invents a second geometry. */
+  .console-compare-frame {
+    position: relative;
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--c-r-md);
+    background: var(--c-bg-alt);
+    cursor: ew-resize;
+  }
+
+  .console-compare-img {
+    position: absolute;
+    inset: 0;
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .console-compare-clip {
+    position: absolute;
+    inset: 0;
+  }
+
+  .console-compare-line {
+    position: absolute;
+    inset-block: 0;
+    inline-size: 2px;
+    background: var(--c-surface);
+    box-shadow: 0 0 10px var(--c-overlay);
+    pointer-events: none;
+  }
+
+  .console-compare-handle {
+    position: absolute;
+    inset-block-start: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: var(--c-tap);
+    block-size: var(--c-tap);
+    border: 2px solid var(--c-surface);
+    border-radius: var(--c-r-pill);
+    background: var(--c-accent);
+    color: var(--c-on-fill);
+    box-shadow: var(--c-lift-sm);
+    outline: none;
+    cursor: ew-resize;
+  }
+
+  .console-compare-handle:focus-visible {
+    box-shadow: 0 0 0 3px var(--c-focus);
+  }
+
+  .console-compare-glyph {
+    inline-size: 1.05rem;
+    block-size: 1.05rem;
+  }
+
+  .console-compare-corner {
+    position: absolute;
+    inset-block-end: 0.4rem;
+    inset-inline-start: 0.4rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-overlay);
+    color: var(--c-on-fill);
+    font-size: var(--c-font-micro);
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  .console-compare-corner.is-after {
+    inset-inline-start: auto;
+    inset-inline-end: 0.4rem;
+  }
+
+  .console-preview h3,
+  .console-seo h3 {
+    margin: 0 0 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .console-media {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .console-media h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .console-media-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin: 0;
+    list-style: none;
+  }
+
+  .console-media-list img {
+    display: block;
+    inline-size: 7.5rem;
+    block-size: 5.5rem;
+    margin: 0;
+    border-radius: var(--c-r-md);
+    background: var(--c-bg-alt);
+    box-shadow: var(--c-ring);
+    object-fit: cover;
+  }
+
+  .console-seo-title,
+  .console-seo-desc,
+  .console-seo-path {
+    margin: 0 0 0.4rem;
+    overflow-wrap: anywhere;
+  }
+
+  .console-seo-path {
+    font-family: var(--c-font-mono);
+    font-size: 0.75rem;
+    color: var(--c-accent);
+  }
+
+  .console-seo-desc {
+    font-size: var(--c-font-small);
+    color: var(--c-text-2);
+  }
+
+  /* --- typed list form ------------------------------------------------------- */
+  .console-doc-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.375rem;
+    min-width: 0;
+  }
+
+  .console-doc-label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-2);
+    color: var(--c-text);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  /* Two languages of one field, side by side until the column turns to a phone. */
+  .console-doc-pair {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.875rem;
+    min-width: 0;
+    margin-block-start: 3px;
+    align-items: start;
+  }
+
+  .console-doc-pair .console-field {
+    gap: 0.45rem;
+    padding: 0.875rem;
+  }
+
+  .console-doc-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+    min-width: 0;
+  }
+
+  .console-doc-row,
+  .console-doc-child {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+    gap: var(--c-sp-2);
+    align-items: end;
+    padding: var(--c-gap-tight);
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-doc-row > .console-field,
+  .console-doc-child > .console-field {
+    margin-block-end: 0;
+  }
+
+  .console-doc-add {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding-block-start: 3px;
+  }
+
+  /* One disclosure per field group. The fields stay in the document while the group is
+     closed, so collapsing a section costs nobody a sentence they typed. */
+  .console-doc-group-box {
+    margin: 0;
+    padding: 0;
+  }
+
+  .console-doc-group-box + .console-doc-group-box {
+    padding-block-start: 0.35rem;
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  .console-doc-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    padding-block-end: 0.4rem;
+    font-size: var(--c-font-small);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--c-text-2);
+  }
+
+  .console-doc-group::-webkit-details-marker {
+    display: none;
+  }
+
+  .console-doc-group:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+
+  .console-doc-group-caret {
+    flex: none;
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    border-inline-end: 2px solid var(--c-text-3);
+    border-block-end: 2px solid var(--c-text-3);
+    border-end-end-radius: 1px;
+    transform: rotate(-45deg);
+    transition: transform 180ms var(--c-ease-soft);
+  }
+
+  [dir="rtl"] .console-doc-group-caret {
+    transform: rotate(135deg);
+  }
+
+  details[open] > .console-doc-group .console-doc-group-caret {
+    transform: rotate(45deg);
+  }
+
+  details[open] > .console-doc-group[dir="rtl"] .console-doc-group-caret,
+  [dir="rtl"] details[open] > .console-doc-group .console-doc-group-caret {
+    transform: rotate(-135deg);
+  }
+
+  .console-doc-group-name {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .console-doc-group-count {
+    flex: none;
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--c-text-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-doc-group-error {
+    flex: none;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--c-warn);
+  }
+
+  .console-doc-group-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 1.375rem;
+    padding-block: 0.35rem 0.25rem;
+  }
+
+  /* The service meter. The basics take the warning colour because a page without its own
+     sentence, picture, body or booking button is a page the site shows badly; a missing
+     optional section stays grey, because nothing is wrong and a save waits for neither. */
+  .console-meter {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-sp-2);
+    padding: var(--c-sp-3) var(--c-sp-4);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-sm);
+    background: var(--c-surface-soft);
+  }
+
+  .console-meter h3 {
+    margin: 0;
+    font-size: var(--c-font-small);
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--c-text-2);
+  }
+
+  .console-meter-line {
+    margin: 0;
+    font-size: var(--c-font-ctl);
+    font-weight: 600;
+    color: var(--c-text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-meter-bar {
+    display: block;
+    block-size: 0.4rem;
+    overflow: hidden;
+    border-radius: var(--c-r-pill);
+    background: var(--c-line);
+  }
+
+  .console-meter-fill {
+    display: block;
+    block-size: 100%;
+    border-radius: inherit;
+    background: var(--c-accent);
+    transition: inline-size var(--c-dur-base) var(--c-ease-soft);
+  }
+
+  .console-meter-part {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-sp-1);
+  }
+
+  .console-meter-part-name {
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+    color: var(--c-text-3);
+  }
+
+  .console-meter-part.is-core .console-meter-part-name {
+    color: var(--c-warn);
+  }
+
+  .console-meter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-meter-chips li {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-pill);
+    font-size: var(--c-font-micro);
+    color: var(--c-text-2);
+    background: var(--c-surface);
+  }
+
+  .console-meter-part.is-core .console-meter-chips li {
+    border-color: var(--c-warn-line);
+    background: var(--c-warn-bg);
+    color: var(--c-warn);
+  }
+
+  .console-doc-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-doc-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+    padding: 0.4rem 0.6rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-doc-section[data-hidden] {
+    opacity: 0.62;
+    border-style: dashed;
+  }
+
+  .console-doc-section-name {
+    display: flex;
+    align-items: center;
+    gap: var(--c-sp-2);
+    font-weight: 500;
+  }
+
+  .console-doc-section-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .console-doc-refs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-sp-2) var(--c-gap);
+  }
+
+  .console-doc-unknown {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    padding: var(--c-gap);
+  }
+
+  .console-doc-unknown-heading {
+    margin: 0;
+    font-size: var(--c-font-small);
+    font-weight: 600;
+  }
+
+  .console-doc-unknown-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-doc-unknown-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+  }
+
+  .console-doc-unknown-key {
+    color: var(--c-text-2);
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-small);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  /* An offer's services. The answer rides on the label so it is readable before the list
+     is; the list stays on screen in every mode, because it is the only place the service
+     names appear — hiding it in "all" would hide what "all" actually covers. */
+  .console-offer-services {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-width: 0;
+  }
+
+  .console-offer-services-head {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-2);
+  }
+
+  .console-offer-services-modes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-sp-2);
+  }
+
+  .console-offer-services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+    max-block-size: min(21rem, 45dvh);
+    overflow: auto;
+    padding: var(--c-gap-tight) var(--c-gap);
+    background: var(--c-surface-soft);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-offer-services-list .console-check {
+    min-block-size: var(--c-tap);
+  }
+
+  /* A chosen service that has left the list: kept, named, and removable one at a time. */
+  .console-offer-services-gone {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    padding: var(--c-gap-tight) var(--c-gap);
+    border: 1px dashed var(--c-line-strong);
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-offer-services-gone-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+  }
+
+  .console-offer-services-gone-key {
+    color: var(--c-text-2);
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-small);
+    overflow-wrap: anywhere;
+  }
+
+  /* =========================================================================
+     9. THE SEO CENTER, AND THE TEXTS SCREEN BUILT BESIDE IT
+
+     The `console-screen-*` rules are the shape both share: a search box and a filter
+     beside it, then tables in named groups, with one inline field per row. Only the
+     column widths stay per screen, because the two tables count different columns.
+     ========================================================================= */
+  .console-screen-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap);
+    margin-block-end: var(--c-stack);
+  }
+
+  .console-screen-search {
+    flex: 1 1 16rem;
+    min-inline-size: 0;
+  }
+
+  .console-screen-filter {
+    flex: 0 0 auto;
+  }
+
+  .console-screen-readonly {
+    display: block;
+    margin-block-end: var(--c-stack);
+  }
+
+  .console-screen-section {
+    margin-block-end: var(--c-sp-6);
+  }
+
+  .console-screen-section .console-table-wrap {
+    max-block-size: none;
+  }
+
+  .console-seo-table {
+    table-layout: fixed;
+    min-inline-size: 48rem;
+    font-variant-numeric: normal;
+  }
+
+  .console-seo-table th:nth-child(1) {
+    inline-size: 18%;
+  }
+  .console-seo-table th:nth-child(2) {
+    inline-size: 31%;
+  }
+  .console-seo-table th:nth-child(3) {
+    inline-size: 36%;
+  }
+  .console-seo-table th:nth-child(4) {
+    inline-size: 15%;
+  }
+
+  .console-seo-table th,
+  .console-seo-table td {
+    vertical-align: top;
+  }
+
+  .console-screen-cell-name {
+    font-weight: 500;
+  }
+
+  .console-seo-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    margin: -0.35rem -0.45rem;
+    padding: 0.35rem 0.45rem;
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-seo-link:hover {
+    background: var(--c-hover);
+  }
+
+  .console-screen-cell-name > .console-note {
+    display: block;
+    margin-block-start: 0.25rem;
+  }
+
+  .console-screen-input {
+    inline-size: 100%;
+  }
+
+  .console-screen-textarea {
+    min-block-size: 4.5rem;
+  }
+
+  .console-screen-meter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-1) var(--c-sp-2);
+    margin-block-start: var(--c-sp-1);
+  }
+
+  .console-screen-cell-status > * {
+    margin-block-end: var(--c-sp-1);
+  }
+
+  .console-screen-cell-status > *:last-child {
+    margin-block-end: 0;
+  }
+
+  .console-seo-fields {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .console-seo-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-gap-tight) var(--c-gap);
+  }
+
+  .console-seo-actions > .console-note {
+    flex: 1 1 12rem;
+  }
+
+  .console-screen-notice {
+    display: block;
+    margin-block-start: var(--c-sp-1);
+  }
+
+  .console-seo-edit .console-seo-path {
+    margin-block-end: var(--c-stack);
+  }
+
+  /* --- the texts screen's own table ----------------------------------------- */
+  .console-texts-table {
+    table-layout: fixed;
+    min-inline-size: 46rem;
+    font-variant-numeric: normal;
+  }
+
+  .console-texts-table th:nth-child(1) {
+    inline-size: 32%;
+  }
+  .console-texts-table th:nth-child(2) {
+    inline-size: 53%;
+  }
+  .console-texts-table th:nth-child(3) {
+    inline-size: 15%;
+  }
+
+  .console-texts-table th,
+  .console-texts-table td {
+    vertical-align: top;
+  }
+
+  /* The sentence a row edits, quoted so it reads as text rather than as a field label. */
+  .console-texts-word {
+    display: block;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+  }
+
+  .console-texts-source {
+    display: block;
+    margin-block-start: 0.25rem;
+    font-family: var(--c-font-mono);
+    font-size: 0.72rem;
+    color: var(--c-text-3);
+    overflow-wrap: anywhere;
+  }
+
+  /* =========================================================================
+     10. LEADS
+     ========================================================================= */
+  .console-leads {
+    --c-lead-dir: 1;
+    --c-lead-ease: cubic-bezier(0.25, 0.8, 0.3, 1);
+    --c-lead-accent: var(--c-accent);
+    --c-lead-new: var(--c-accent);
+    --c-lead-contacted: var(--c-text-2);
+    --c-lead-booked: var(--c-success);
+    --c-lead-done: color-mix(in srgb, var(--c-lead-booked) 70%, var(--c-text));
+    --c-lead-lost: var(--c-danger);
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-width: 0;
+  }
+
+  :where([dir="rtl"]) .console-leads {
+    --c-lead-dir: -1;
+  }
+
+  .console-leads [data-status="new"] {
+    --c-lead-c: var(--c-lead-new);
+  }
+  .console-leads [data-status="contacted"] {
+    --c-lead-c: var(--c-lead-contacted);
+  }
+  .console-leads [data-status="booked"] {
+    --c-lead-c: var(--c-lead-booked);
+  }
+  .console-leads [data-status="done"] {
+    --c-lead-c: var(--c-lead-done);
+  }
+  .console-leads [data-status="lost"] {
+    --c-lead-c: var(--c-lead-lost);
+  }
+
+  .console-leads > .console-lede {
+    margin-block-end: 0;
+  }
+
+  /* Pipeline: rounded capsules sharing one track, widths follow the counts. */
+  .console-leads-pipeline {
+    display: flex;
+    gap: 3px;
+    block-size: 0.5rem;
+    overflow: hidden;
+    border-radius: var(--c-r-pill);
+    background: var(--c-bg-alt);
+  }
+
+  .console-leads-pipeline > span {
+    flex: 1 1 0;
+    min-inline-size: 0.5rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-lead-c);
+    transition: flex-grow 420ms var(--c-lead-ease);
+  }
+
+  .console-lead-dot {
+    display: inline-block;
+    flex: none;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    margin-inline-end: 0.45rem;
+    border-radius: 50%;
+    background: var(--c-lead-c);
+  }
+
+  /* The downloads sit at the far edge of the filter bar, a step quieter than it. */
+  .console-leads-export {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-inline-start: auto;
+  }
+
+  /* Layout */
+  .console-leads-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--c-stack);
+    align-items: start;
+  }
+
+  .console-leads-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-width: 0;
+    container-type: inline-size;
+    container-name: leads-list;
+  }
+
+  /* The list: each lead is its own tile */
+  .console-lead-list {
+    margin: 0;
+    padding: 0.2rem;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  .console-lead-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.15rem 0.85rem;
+    inline-size: 100%;
+    min-block-size: 3.25rem;
+    margin: 0;
+    padding: 0.65rem 0.9rem;
+    border: 0;
+    border-radius: var(--c-r-md);
+    background: var(--c-surface);
+    box-shadow: var(--c-ring);
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+    transition:
+      background var(--c-dur-base) var(--c-ease-soft),
+      box-shadow var(--c-dur-base) var(--c-ease-soft);
+  }
+
+  .console-lead-row:hover {
+    box-shadow:
+      0 0 0 1px var(--c-line-strong),
+      var(--c-lift);
+  }
+
+  .console-lead-row[data-active] {
+    background: var(--c-tint);
+    box-shadow: 0 0 0 1.5px var(--c-lead-accent);
+  }
+
+  .console-lead-row:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+
+  .console-lead-avatar {
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: 2.25rem;
+    block-size: 2.25rem;
+    border-radius: 50%;
+    background: color-mix(
+      in srgb,
+      var(--c-lead-c, var(--c-line-strong)) 14%,
+      var(--c-surface)
+    );
+    box-shadow: inset 0 0 0 1.5px var(--c-lead-c, var(--c-line-strong));
+    color: var(--c-text);
+    font-size: 0.82rem;
+    font-weight: 650;
+    line-height: 1;
+  }
+
+  .console-lead-avatar-lg {
+    inline-size: 3.6rem;
+    block-size: 3.6rem;
+    border-radius: 50%;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+    color: var(--c-lead-c);
+    border: 1.5px solid var(--c-lead-c);
+  }
+
+  .console-lead-who {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+  }
+
+  .console-lead-name,
+  .console-lead-sub {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .console-lead-name {
+    font-size: 0.92rem;
+    font-weight: 500;
+  }
+
+  .console-lead-row[data-fresh] .console-lead-name {
+    font-weight: 700;
+  }
+
+  .console-lead-sub {
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: 0.78rem;
+  }
+
+  .console-lead-col {
+    display: none;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.8rem;
+  }
+
+  .console-lead-phone {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-lead-when {
+    color: var(--c-text-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-lead-when > span {
+    display: block;
+  }
+
+  @container leads-list (min-width: 36rem) {
+    .console-lead-row {
+      grid-template-columns:
+        auto minmax(0, 1.5fr) minmax(5rem, 1fr) minmax(7.5rem, 1fr)
+        auto auto;
+      gap: 0 1.1rem;
+    }
+    .console-lead-col {
+      display: block;
+    }
+    .console-lead-row .console-lead-sub {
+      display: none;
+    }
+  }
+
+  /* The detail */
+  .console-lead-detail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-stack);
+    min-width: 0;
+    padding: var(--c-pad);
+    border-radius: var(--c-r-lg);
+    background: var(--c-surface);
+    box-shadow: var(--c-ring), var(--c-lift);
+  }
+
+  .console-lead-detail:focus {
+    outline: none;
+  }
+
+  .console-lead-stage {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 0.75rem;
+    min-block-size: 16rem;
+    padding: 2rem 1.25rem;
+    border-radius: var(--c-r-lg);
+    background: var(--c-tint);
+    text-align: center;
+  }
+
+  .console-lead-stage p {
+    max-inline-size: 28ch;
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .console-lead-arch {
+    inline-size: 3.25rem;
+    block-size: 4rem;
+    border-radius: 999px 999px 0.5rem 0.5rem;
+    border: 0;
+    background: linear-gradient(
+      to bottom,
+      var(--c-tint-strong),
+      color-mix(in srgb, var(--c-accent) 4%, transparent)
+    );
+    box-shadow: inset 0 0 0 1.5px var(--c-accent);
+  }
+
+  .console-lead-bar {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: calc(-1 * var(--c-pad)) calc(-1 * var(--c-pad)) 0;
+    padding: 0.65rem var(--c-pad);
+    border-start-start-radius: var(--c-r-lg);
+    border-start-end-radius: var(--c-r-lg);
+    background: color-mix(in srgb, var(--c-surface) 92%, transparent);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  .console-lead-state {
+    margin-inline-start: auto;
+  }
+
+  .console-lead-id {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+    margin-top: 10px;
+  }
+
+  .console-lead-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    overflow-wrap: anywhere;
+  }
+
+  .console-lead-id .console-lead-sub {
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .console-lead-contact {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    list-style: none;
+  }
+
+  .console-lead-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-block-size: var(--c-tap);
+    padding: 0.55rem 0.85rem;
+    border-radius: var(--c-r-md);
+    background: var(--c-bg-alt);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      background var(--c-dur-base) var(--c-ease-soft),
+      box-shadow var(--c-dur-base) var(--c-ease-soft);
+  }
+
+  .console-lead-link:hover {
+    background: var(--c-tint);
+    box-shadow: inset 0 0 0 1px var(--c-tint-strong);
+  }
+
+  .console-lead-link > svg {
+    flex: none;
+    inline-size: 1.15rem;
+    block-size: 1.15rem;
+    color: var(--c-accent);
+  }
+
+  .console-lead-label,
+  .console-lead-value {
+    display: block;
+  }
+
+  .console-lead-label {
+    color: var(--c-text-3);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+
+  .console-lead-value {
+    font-size: 0.92rem;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .console-lead-caption {
+    margin: 0 0 0.4rem;
+    color: var(--c-text-3);
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
+  .console-lead-message,
+  .console-lead-actions {
+    min-width: 0;
+  }
+
+  .console-lead-quote {
+    margin: 0;
+    padding: 0.65rem 0.9rem;
+    border-radius: var(--c-r-md);
+    background: var(--c-bg-alt);
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .console-lead-meta {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, auto) minmax(0, 1fr);
+    gap: var(--c-gap-tight) var(--c-gap);
+    margin: 0;
+    font-size: var(--c-font-small);
+    overflow-wrap: anywhere;
+  }
+
+  .console-lead-meta dt {
+    color: var(--c-text-3);
+  }
+
+  .console-lead-meta dd {
+    margin: 0;
+  }
+
+  /* A verdict that is not "ok" carries the line that says the booking still arrived. */
+  .console-lead-meta-note {
+    display: block;
+    margin-block-start: 0.25rem;
+    color: var(--c-text-3);
+  }
+
+  /* Notes: a thread */
+  .console-lead-notes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    padding-block-start: var(--c-gap);
+  }
+
+  .console-lead-notes .console-lead-caption {
+    margin: 0;
+  }
+
+  .console-lead-timeline {
+    margin: 0;
+    list-style: none;
+  }
+
+  .console-lead-timeline > li {
+    position: relative;
+    margin-inline-start: 0.35rem;
+    padding-block-end: var(--c-gap);
+    padding-inline-start: 1rem;
+    border-inline-start: 2px solid var(--c-line);
+  }
+
+  .console-lead-timeline > li:last-child {
+    padding-block-end: 0;
+    border-color: transparent;
+  }
+
+  .console-lead-timeline > li::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 0.35rem;
+    inset-inline-start: -6px;
+    inline-size: 10px;
+    block-size: 10px;
+    border-radius: 50%;
+    background: var(--c-accent);
+    box-shadow: 0 0 0 3px var(--c-surface);
+  }
+
+  .console-lead-timeline p {
+    margin: 0 0 0.25rem;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    font-size: 0.88rem;
+  }
+
+  .console-lead-note-form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-lead-note-input {
+    inline-size: 100%;
+  }
+
+  /* Source / context */
+  .console-lead-context {
+    padding: 0 0.9rem var(--c-gap-tight);
+    border-radius: var(--c-r-md);
+    background: var(--c-bg-alt);
+  }
+
+  .console-lead-context > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-block-size: var(--c-tap);
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .console-lead-context > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .console-lead-context > summary:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-lead-context > summary::after {
+    content: "";
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    margin-inline-start: auto;
+    border-inline-end: 2px solid var(--c-text-2);
+    border-block-end: 2px solid var(--c-text-2);
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform 180ms var(--c-ease-soft);
+  }
+
+  .console-lead-context[open] > summary::after {
+    transform: translateY(2px) rotate(-135deg);
+  }
+
+  .console-lead-context .console-lead-meta {
+    padding-block-end: var(--c-gap-tight);
+  }
+
+  .console-lead-scrim {
+    display: none;
+  }
+
+  /* Toast */
+  .console-leads-toast {
+    position: fixed;
+    inset-block-end: 20px;
+    inset-inline-end: 20px;
+    z-index: var(--c-z-toast);
+    inline-size: min(360px, calc(100vw - 40px));
+    filter: drop-shadow(0 14px 28px rgb(0 0 0 / 0.22));
+    animation: console-lead-toast 260ms var(--c-lead-ease) both;
+  }
+
+  @keyframes console-lead-sheet {
+    from {
+      translate: calc(var(--c-lead-dir) * 100%) 0;
+    }
+  }
+
+  @keyframes console-lead-fade {
+    from {
+      opacity: 0;
+    }
+  }
+
+  @keyframes console-lead-toast {
+    from {
+      opacity: 0;
+      translate: calc(var(--c-lead-dir) * 12px) 12px;
+    }
+  }
+
+  /* =========================================================================
+     10b. THE OVERVIEW
+     A dashboard of server aggregates: four KPI cards, a traffic plot with the
+     previous period behind it, and the small panels that answer "from where"
+     and "when". It is numbered after Leads because it sits beside it in the
+     frame; the periods, the panels and the print rules are the screen's own.
+     ========================================================================= */
+  .console-ov {
+    /* One palette for the donut and its slice list, so a colour is written once. */
+    --c-ov-1: var(--c-accent);
+    --c-ov-2: color-mix(in srgb, var(--c-accent) 65%, var(--c-text));
+    --c-ov-3: var(--c-success);
+    --c-ov-4: color-mix(in srgb, var(--c-success) 55%, var(--c-text));
+    --c-ov-5: var(--c-warn);
+    --c-ov-6: color-mix(in srgb, var(--c-text) 55%, var(--c-surface));
+    --c-ov-7: color-mix(in srgb, var(--c-danger) 70%, var(--c-text));
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+  }
+
+  .console-ov[data-busy] {
+    cursor: progress;
+  }
+
+  /* --- head ------------------------------------------------------------------ */
+  .console-ov-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--c-gap);
+  }
+
+  .console-ov-heading {
+    min-inline-size: 0;
+  }
+
+  .console-ov-stamp {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight) var(--c-sp-3);
+  }
+
+  .console-ov-span {
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+    color: var(--c-text-2);
+    letter-spacing: -0.01em;
+    unicode-bidi: isolate;
+  }
+
+  /* --- controls -------------------------------------------------------------- */
+  .console-ov-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-2);
+    min-inline-size: 0;
+  }
+
+  .console-ov-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: var(--c-sp-2);
+    margin-inline-start: auto;
+  }
+
+  .console-ov-custom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--c-gap);
+    padding: var(--c-gap);
+    background: var(--c-surface-soft);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+  }
+
+  .console-ov-loading {
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+  }
+
+  /* --- KPI ------------------------------------------------------------------- */
+  .console-ov-kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+    gap: var(--c-gap);
+  }
+
+  .console-ov-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-inline-size: 0;
+    padding: var(--c-pad);
+    background: var(--c-surface);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-lg);
+    box-shadow: var(--c-ring);
+  }
+
+  .console-ov-kpi-label {
+    margin: 0;
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+  }
+
+  .console-ov-kpi-value {
+    margin: 0;
+    font-size: 1.85rem;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-ov-kpi-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--c-gap-tight) var(--c-sp-2);
+    min-block-size: 1.2rem;
+  }
+
+  .console-ov-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-text-2);
+  }
+
+  .console-ov-delta[data-trend="up"] {
+    color: var(--c-success);
+  }
+
+  .console-ov-delta[data-trend="down"] {
+    color: var(--c-danger);
+  }
+
+  .console-ov-spark {
+    display: block;
+    inline-size: 100%;
+    block-size: 2.1rem;
+    margin-block-start: auto;
+    overflow: visible;
+  }
+
+  /* --- layout ---------------------------------------------------------------- */
+  .console-ov-main,
+  .console-ov-split,
+  .console-ov-trio {
+    display: grid;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+  }
+
+  .console-ov-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .console-ov-trio {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .console-ov-side {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+  }
+
+  /* --- a panel ---------------------------------------------------------------- */
+  .console-ov-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+  }
+
+  .console-ov-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-ov-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .console-ov-intro {
+    margin: 0.2rem 0 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-caption {
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+  }
+
+  /* --- charts ----------------------------------------------------------------
+     Recharts owns the plot: its scales, its axis ticks, its pointer. This sheet only
+     says what the parts are made of. A series carries a class, the class carries a
+     `color`, and the shape paints itself with `currentColor` — which is why one set of
+     rules covers light, dark and print without any of them reading the theme in JS. */
+  .console-ov-plot {
+    position: relative;
+    min-inline-size: 0;
+    color: var(--c-text-2);
+  }
+
+  .console-ov-plot svg {
+    display: block;
+    overflow: visible;
+  }
+
+  .console-ov-s1 {
+    color: var(--c-ov-1);
+  }
+  .console-ov-s2 {
+    color: var(--c-ov-2);
+  }
+  .console-ov-s3 {
+    color: var(--c-ov-3);
+  }
+  .console-ov-s4 {
+    color: var(--c-ov-4);
+  }
+  .console-ov-s5 {
+    color: var(--c-ov-5);
+  }
+  .console-ov-s6 {
+    color: var(--c-ov-6);
+  }
+  .console-ov-s7 {
+    color: var(--c-ov-7);
+  }
+
+  /* Everything written inside a plot is an axis tick until proven otherwise. */
+  .console-ov-plot text {
+    fill: currentColor;
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-ov-plot .recharts-cartesian-grid line {
+    stroke: var(--c-line);
+  }
+
+  .console-ov-plot .recharts-tooltip-cursor {
+    color: var(--c-accent);
+  }
+
+  /* --- the tooltip ----------------------------------------------------------- */
+  /* Recharts floats this one in a wrapper of its own, so it is painted here rather
+     than left to the library's default grey box. */
+  .console-ov-tip {
+    min-inline-size: 8rem;
+    padding: var(--c-sp-2) var(--c-sp-3);
+    background: var(--c-surface);
+    border: 1px solid var(--c-line-strong);
+    border-radius: var(--c-r-sm);
+    box-shadow: var(--c-ring), var(--c-lift);
+    color: var(--c-text);
+    font-size: var(--c-font-micro);
+    unicode-bidi: isolate;
+  }
+
+  .console-ov-tip ul {
+    display: grid;
+    gap: 0.15rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-tip li {
+    display: flex;
+    align-items: baseline;
+    gap: var(--c-sp-2);
+    min-inline-size: 0;
+  }
+
+  .console-ov-tip-label {
+    margin: 0 0 0.2rem;
+    color: var(--c-text-3);
+    font-family: var(--c-font-mono);
+  }
+
+  .console-ov-tip-dot {
+    flex: none;
+    inline-size: 0.5rem;
+    block-size: 0.5rem;
+    border-radius: var(--c-r-pill);
+    background: currentColor;
+  }
+
+  .console-ov-tip-name {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    color: var(--c-text-2);
+  }
+
+  .console-ov-tip-value {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  .console-ov-rate {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    margin-block-start: var(--c-gap-tight);
+    padding-block-start: var(--c-gap-tight);
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  /* --- legend ---------------------------------------------------------------- */
+  /* The legend is the chart's control, not its caption: each entry is a button that
+     takes its series off the plot, so one line can be read against the axis instead of
+     untangled from the ones beside it. */
+  .console-ov-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-sp-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-legend-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.15rem var(--c-sp-2);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-pill);
+    background: transparent;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      color var(--c-dur-base) var(--c-ease-soft),
+      border-color var(--c-dur-base) var(--c-ease-soft),
+      background-color var(--c-dur-base) var(--c-ease-soft);
+  }
+
+  .console-ov-legend-btn:hover {
+    border-color: var(--c-line-strong);
+    color: var(--c-text);
+  }
+
+  .console-ov-legend-btn:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+  }
+
+  .console-ov-legend-btn[aria-pressed="false"] {
+    color: var(--c-text-3);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+  }
+
+  .console-ov-legend-dot {
+    flex: none;
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
+    border-radius: var(--c-r-pill);
+    background: currentColor;
+  }
+
+  .console-ov-legend-btn[aria-pressed="false"] .console-ov-legend-dot {
+    opacity: 0.35;
+  }
+
+  /* --- donut ----------------------------------------------------------------- */
+  .console-ov-donut-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap);
+  }
+
+  .console-ov-donut {
+    position: relative;
+    flex: none;
+    inline-size: 9rem;
+    aspect-ratio: 1;
+    color: var(--c-text-2);
+  }
+
+  .console-ov-donut svg {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: visible;
+  }
+
+  .console-ov-donut-total {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.1rem;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .console-ov-donut-total b {
+    font-size: 1.45rem;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .console-ov-donut-total small {
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-slices {
+    flex: 1 1 9rem;
+    min-inline-size: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-ov-slices li {
+    display: grid;
+    grid-template-columns: 0.6rem minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--c-sp-2);
+    min-inline-size: 0;
+    font-size: var(--c-font-small);
+  }
+
+  .console-ov-slice-dot {
+    inline-size: 0.6rem;
+    block-size: 0.6rem;
+    border-radius: var(--c-r-pill);
+    background: currentColor;
+  }
+
+  /* A slice the legend switched off still lists its number, only quieter. */
+  .console-ov-slices li[data-off] {
+    color: var(--c-text-3);
+  }
+
+  .console-ov-slices li[data-off] .console-ov-slice-dot {
+    opacity: 0.35;
+  }
+
+  .console-ov-slice-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .console-ov-slices b {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- heatmap ---------------------------------------------------------------- */
+  /* The grid is a Recharts scatter: two number axes pick the hour and the weekday, and
+     each cell is a rectangle drawn at that position. Only the cell size is measured in
+     the screen, because a grid of squares has to fit the width it was given. */
+  .console-ov-heat-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-inline-size: 0;
+  }
+
+  .console-ov-plot-heat .recharts-scatter-symbol {
+    stroke: none;
+  }
+
+  /* One custom property per level: the plot paints it as an SVG `fill`, the key
+     below the plot paints the same value as an HTML `background`. */
+  .console-ov-heat-cell {
+    --c-heat: var(--c-fill);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-l1 {
+    --c-heat: color-mix(in srgb, var(--c-accent) 24%, transparent);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-l2 {
+    --c-heat: color-mix(in srgb, var(--c-accent) 42%, transparent);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-l3 {
+    --c-heat: color-mix(in srgb, var(--c-accent) 62%, transparent);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-l4 {
+    --c-heat: color-mix(in srgb, var(--c-accent) 85%, transparent);
+    fill: var(--c-heat);
+  }
+
+  .console-ov-heat-key {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-heat-key li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--c-sp-1);
+  }
+
+  .console-ov-heat-key i {
+    inline-size: 0.7rem;
+    block-size: 0.7rem;
+    border-radius: 2px;
+    background: var(--c-heat);
+  }
+
+  .console-ov-note {
+    margin: 0;
+    color: var(--c-text-2);
+    font-size: var(--c-font-micro);
+  }
+
+  /* --- ranked lists ----------------------------------------------------------- */
+  .console-ov-ranked {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-ranked li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--c-sp-3);
+    padding-block: 0.5rem;
+    border-block-end: 1px solid var(--c-line);
+    min-inline-size: 0;
+  }
+
+  .console-ov-ranked li:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .console-ov-rank-name {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    font-size: var(--c-font-small);
+  }
+
+  .console-ov-rank-name bdi {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .console-ov-rank-name small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-rank-values {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex: none;
+    font-size: var(--c-font-small);
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+  }
+
+  /* --- latest leads ----------------------------------------------------------- */
+  .console-ov-recent {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-recent li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+    padding-block: 0.55rem;
+    border-block-end: 1px solid var(--c-line);
+    min-inline-size: 0;
+  }
+
+  .console-ov-recent li:last-child {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .console-ov-recent-who {
+    display: flex;
+    flex-direction: column;
+    min-inline-size: 0;
+    font-size: var(--c-font-small);
+  }
+
+  .console-ov-recent-who b {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .console-ov-recent-who small {
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-recent-status {
+    inline-size: 9rem;
+    flex: none;
+  }
+
+  /* --- needs attention -------------------------------------------------------- */
+  .console-ov-attention {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-attention a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+    padding-block: 0.5rem;
+    border-block-end: 1px solid var(--c-line);
+    color: inherit;
+    font-size: var(--c-font-small);
+    text-decoration: none;
+  }
+
+  .console-ov-attention li:last-child a {
+    border-block-end: 0;
+    padding-block-end: 0;
+  }
+
+  .console-ov-attention a:hover {
+    color: var(--c-accent);
+  }
+
+  .console-ov-attention a:focus-visible {
+    outline: 2px solid var(--c-focus);
+    outline-offset: 2px;
+    border-radius: var(--c-r-xs);
+  }
+
+  .console-ov-attention b {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- the content library ---------------------------------------------------- */
+  .console-ov-library {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+    gap: var(--c-gap);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .console-ov-library li {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface-soft);
+  }
+
+  .console-ov-library span {
+    color: var(--c-text-3);
+    font-size: var(--c-font-micro);
+  }
+
+  .console-ov-library b {
+    font-size: 1.2rem;
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* =========================================================================
+     11. SETTINGS
+     ========================================================================= */
+  .settings-workspace {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-stack);
+    max-inline-size: 100%;
+  }
+
+  /* Each section is one card in three bands: head, body (owns the grid), foot. */
+  .settings-section {
+    inline-size: 100%;
+    max-inline-size: none; /* breaks out of --c-panel-w */
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .settings-section-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-sp-2);
+    padding: var(--c-pad) var(--c-pad) 0;
+  }
+
+  .settings-section-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-sp-2) var(--c-sp-3);
+    min-inline-size: 0;
+  }
+
+  .settings-section-title .console-subheading {
+    margin: 0;
+  }
+
+  .settings-section-index {
+    display: inline-grid;
+    place-items: center;
+    min-inline-size: 2rem;
+    block-size: 2rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-tint);
+    color: var(--c-accent);
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+    font-weight: 650;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .settings-section-head .console-lede {
+    margin: 0;
+  }
+
+  .settings-section-body {
+    min-inline-size: 0;
+    padding: var(--c-pad);
+  }
+
+  .settings-section-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: var(--c-gap);
+    padding: var(--c-pad);
+    background: var(--c-surface-soft);
+  }
+
+  .settings-section-foot > .console-note {
+    margin-inline-end: auto;
+  }
+
+  /* Grids: page list, banner list, field list */
+  .settings-pages,
+  .settings-banner-grid,
+  .settings-field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+    gap: 15px;
+    list-style: none;
+    margin: 0;
+    padding: var(--c-pad);
+    align-items: start;
+  }
+
+  .settings-field-grid {
+    grid-template-columns: repeat(auto-fill, minmax(20rem, 1fr));
+    max-inline-size: none;
+  }
+
+  /* Inside a padded body the grid must not add a second gutter. */
+  .settings-section-body > .settings-pages,
+  .settings-section-body > .settings-banner-grid,
+  .settings-section-body > .settings-field-grid {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Page row (surface shared in section 3) */
+  .settings-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    padding: var(--c-gap);
+  }
+
+  .settings-page,
+  .settings-banner {
+    min-inline-size: 0;
+    transition: box-shadow var(--c-dur-base) var(--c-ease-soft);
+  }
+
+  .settings-page-id {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .settings-page-label {
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .settings-page-path {
+    font-family: var(--c-font-mono);
+    font-size: 0.75rem;
+    color: var(--c-text-3);
+  }
+
+  .settings-page-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    margin-block: 0.5rem;
+  }
+
+  .settings-page-actions,
+  .settings-banner-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--c-gap-tight);
+  }
+
+  /* Banner card (surface shared in section 3) */
+  .settings-banner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    padding: var(--c-gap);
+  }
+
+  .settings-banner-frame {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--c-r-sm);
+    background: var(--c-bg-alt);
+    aspect-ratio: 16 / 9;
+  }
+
+  .settings-banner-photo {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    object-fit: cover;
+  }
+
+  .settings-banner-meta {
+    position: absolute;
+    inset-block-end: var(--c-sp-2);
+    inset-inline: var(--c-sp-2);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+  }
+
+  .settings-banner-meta .settings-dirty {
+    background: color-mix(in srgb, var(--c-accent) 18%, var(--c-surface));
+    box-shadow: var(--c-ring);
+  }
+
+  .settings-banner-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+    margin-block: 15px 10px;
+  }
+
+  /* The unsaved flag: one object in a section head, a banner overlay and a raw row. */
+  .settings-dirty {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--c-sp-2);
+    padding: 0.15rem 0.55rem;
+    border-radius: var(--c-r-pill);
+    background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface));
+    color: var(--c-accent);
+    font-size: var(--c-font-micro);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .settings-dirty-dot {
+    inline-size: 0.4rem;
+    block-size: 0.4rem;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* A row that differs from what is saved lifts out by its ring, not a second border. */
+  .settings-page[data-dirty],
+  .settings-banner[data-dirty] {
+    box-shadow: 0 0 0 1.5px var(--c-accent);
+  }
+
+  /* Notice */
+  .settings-notice {
+    position: sticky;
+    inset-block-end: var(--c-pad);
+    z-index: var(--c-z-sticky);
+  }
+
+  /* =========================================================================
+     12. TRACKING (the Marketing & tracking screen)
+     ========================================================================= */
+  .tracking-provider {
+    min-inline-size: 0;
+  }
+
+  .tracking-provider-fields {
+    display: grid;
+    gap: var(--c-gap-tight);
+    padding: 0;
+    background: none;
+    border: 0;
+  }
+
+  .tracking-plan {
+    display: grid;
+    grid-template-columns: minmax(9rem, max-content) minmax(0, 1fr);
+    gap: var(--c-gap-tight) var(--c-gap);
+    margin: 0;
+  }
+
+  .tracking-plan dt {
+    color: var(--c-text-3);
+    font-size: var(--c-font-small);
+  }
+
+  .tracking-plan dd {
+    margin: 0;
+    min-inline-size: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .tracking-plan dd code {
+    font-family: var(--c-font-mono);
+    font-size: 0.8rem;
+  }
+
+  .tracking-plan-vendor + .tracking-plan-vendor::before {
+    content: " · ";
+    color: var(--c-text-3);
+  }
+
+  .tracking-consent {
+    margin: 0;
+    max-inline-size: 74ch;
+    color: var(--c-text-2);
+    line-height: 1.7;
+  }
+
+  .tracking-sheet-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight);
+    margin-block-end: var(--c-gap);
+  }
+
+  .tracking-steps {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0 0 var(--c-pad);
+    padding-inline-start: 1.35rem;
+    max-inline-size: 74ch;
+    color: var(--c-text-2);
+    line-height: 1.65;
+  }
+
+  .tracking-sheet-form {
+    display: grid;
+    gap: var(--c-gap);
+    max-inline-size: 46rem;
+  }
+
+  .tracking-token {
+    margin: 0;
+    padding-block-start: var(--c-gap);
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  .tracking-token summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  .tracking-token[open] summary {
+    margin-block-end: var(--c-gap);
+  }
+
+  .tracking-script-block,
+  .tracking-headers-block {
+    margin-block-start: var(--c-pad);
+  }
+
+  .tracking-copy-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-gap-tight);
+    margin-block-end: var(--c-sp-2);
+  }
+
+  .tracking-copy-row .console-subheading {
+    margin: 0;
+  }
+
+  /* The script is read-only text: it scrolls sideways rather than wrapping, so a line a
+     person copies is the line the Apps Script editor receives. */
+  .tracking-script {
+    direction: ltr;
+    text-align: start;
+    margin: 0 0 var(--c-sp-2);
+    padding: var(--c-gap);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface-soft);
+    max-block-size: 22rem;
+    overflow: auto;
+    font-family: var(--c-font-mono);
+    font-size: 0.78rem;
+    line-height: 1.55;
+  }
+
+  .tracking-script code {
+    white-space: pre;
+  }
+
+  .tracking-headers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  .tracking-header {
+    padding: 0.2rem 0.55rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-pill);
+    background: var(--c-tint);
+    font-size: var(--c-font-micro);
+  }
+
+  .tracking-last-test {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight) var(--c-gap);
+    margin-block: var(--c-pad) var(--c-gap);
+  }
+
+  .tracking-log-title {
+    margin-block: 0 var(--c-sp-2);
+  }
+
+  .tracking-log {
+    margin-block-start: var(--c-gap);
+  }
+
+  .tracking-log td {
+    max-inline-size: 20rem;
+    overflow-wrap: anywhere;
+  }
+
+  .tracking-log-error {
+    color: var(--c-danger);
+    font-size: var(--c-font-small);
+  }
+
+  /* The history is a list of deltas, not a diff view: one line per value a person set,
+     so the row a person restores is chosen from what it will undo. */
+  .tracking-history {
+    display: grid;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tracking-history-row {
+    display: grid;
+    gap: 0.35rem;
+    padding-block: var(--c-gap);
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  .tracking-history-row:first-child {
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
+
+  .tracking-history-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight) var(--c-gap);
+  }
+
+  .tracking-history-head time {
+    color: var(--c-text-3);
+    font-size: var(--c-font-small);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tracking-history-actor {
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+    overflow-wrap: anywhere;
+  }
+
+  .tracking-history-head .console-btn {
+    margin-inline-start: auto;
+  }
+
+  .tracking-history-changes {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    padding-inline-start: 1.1rem;
+    color: var(--c-text-2);
+    font-size: var(--c-font-small);
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  /* =========================================================================
+     12b. THE HERO SLIDER (the rail of slides and the slide being edited)
+     ========================================================================= */
+  .hero-workspace {
+    display: grid;
+    grid-template-columns: minmax(15rem, 19rem) minmax(0, 1fr);
+    gap: var(--c-gap);
+    align-items: start;
+  }
+
+  .hero-rail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-inline-size: 0;
+  }
+
+  .hero-rail-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+  }
+
+  .hero-rail-head .console-note {
+    margin: 0;
+  }
+
+  .hero-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .hero-slide-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--c-sp-2);
+    padding: 0.5rem;
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-sm);
+    background: var(--c-surface);
+    cursor: grab;
+  }
+
+  .hero-slide-row[data-selected] {
+    box-shadow: 0 0 0 1.5px var(--c-accent);
+  }
+
+  /* Where the row would land while it is being dragged over. */
+  .hero-slide-row[data-over] {
+    box-shadow: inset 0 3px 0 var(--c-accent);
+  }
+
+  .hero-slide-row[data-dragging] {
+    cursor: grabbing;
+    opacity: 0.6;
+  }
+
+  .hero-slide-row[data-inactive] .hero-slide-thumb,
+  .hero-slide-row[data-inactive] .hero-slide-name {
+    opacity: 0.6;
+  }
+
+  .hero-slide-select {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.6rem;
+    min-inline-size: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-align: start;
+    cursor: pointer;
+  }
+
+  .hero-slide-thumb {
+    display: grid;
+    place-items: center;
+    inline-size: 4.5rem;
+    block-size: 3rem;
+    overflow: hidden;
+    border-radius: 6px;
+    background: var(--c-bg-alt);
+    color: var(--c-text-3);
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+  }
+
+  .hero-slide-photo {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .hero-slide-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-inline-size: 0;
+  }
+
+  .hero-slide-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .hero-slide-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+  }
+
+  .hero-slide-window {
+    color: var(--c-text-3);
+    font-family: var(--c-font-mono);
+    font-size: var(--c-font-micro);
+  }
+
+  .hero-slide-tools {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .hero-detail,
+  .hero-detail-empty {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap);
+    min-inline-size: 0;
+    padding: var(--c-gap);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface);
+  }
+
+  .hero-detail-empty {
+    align-items: center;
+    justify-content: center;
+    min-block-size: 16rem;
+  }
+
+  .hero-detail-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-sp-2);
+  }
+
+  .hero-detail-head .console-subheading {
+    margin: 0;
+  }
+
+  /* The selected slide, drawn the way the site draws it: photograph, dark foot, copy. */
+  .hero-preview {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--c-r-sm);
+    background: var(--c-bg-alt);
+    aspect-ratio: 16 / 7;
+  }
+
+  .hero-preview-photo {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .hero-preview-shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgb(0 0 0 / 0.85),
+      rgb(0 0 0 / 0.55) 45%,
+      rgb(0 0 0 / 0.3)
+    );
+  }
+
+  .hero-preview-copy {
+    position: absolute;
+    inset-block-end: 1rem;
+    inset-inline: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.35rem;
+    color: #fff;
+  }
+
+  .hero-preview-heading {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 800;
+    line-height: 1.15;
+  }
+
+  .hero-preview-authored {
+    margin: 0;
+    color: rgb(255 255 255 / 0.75);
+    font-size: 0.8125rem;
+    font-style: italic;
+  }
+
+  .hero-preview-sub {
+    max-inline-size: 36rem;
+    margin: 0;
+    color: rgb(255 255 255 / 0.85);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+  }
+
+  .hero-preview-cta {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.9rem;
+    border-radius: var(--c-r-pill);
+    background: var(--c-accent);
+    color: var(--c-on-fill);
+    font-size: var(--c-font-small);
+    font-weight: 700;
+  }
+
+  .hero-image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--c-gap);
+  }
+
+  .hero-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--c-gap-tight);
+    min-inline-size: 0;
+  }
+
+  .hero-field-group .console-note {
+    margin: 0;
+  }
+
+  .hero-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: var(--c-gap);
+    align-items: start;
+  }
+
+  .hero-toggle {
+    display: flex;
+    align-items: center;
+    min-block-size: 2.75rem;
+    padding-inline: 0.25rem;
+  }
+
+  .hero-issue-list {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    padding-inline-start: 1.1rem;
+  }
+
+  /* =========================================================================
+     13. RESPONSIVE (in breakpoint order)
+     ========================================================================= */
+
+  /* >= 1024: the sidebar is a column */
+  @media (min-width: 1024px) {
+    .console-frame {
+      grid-template-columns: var(--c-side-w) minmax(0, 1fr);
+    }
+    .console-side {
+      grid-column: 1;
+      grid-row: 2;
+      position: sticky;
+      top: var(--c-topbar-h);
+      align-self: start;
+      width: auto;
+      max-height: calc(100vh - var(--c-topbar-h));
+      padding: 1rem 0 2rem;
+      background: transparent;
+      box-shadow: none;
+      transform: none;
+      visibility: visible;
+    }
+    .console-main {
+      grid-column: 2;
+      grid-row: 2;
+    }
+    .console-toggle,
+    .console-side-head,
+    .console-nav-strip,
+    .console-scrim {
+      display: none;
+    }
+
+    .console-leads-split {
+      grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem);
+    }
+    /* The plot keeps the width; the donut and the attention list sit beside it. */
+    .console-ov-main {
+      grid-template-columns: minmax(0, 1.6fr) minmax(18rem, 1fr);
+    }
+    .console-lead-list {
+      max-block-size: var(--c-list-h);
+    }
+    .console-lead-detail {
+      position: sticky;
+      inset-block-start: calc(var(--c-topbar-h) + 0.75rem);
+      max-block-size: calc(100dvh - var(--c-topbar-h) - 1.5rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-width: thin;
+    }
+    .console-lead-back,
+    .console-lead-scrim {
+      display: none;
+    }
+  }
+
+  /* 640 to 1023: drawer only, no strip */
+  @media (min-width: 640px) and (max-width: 1023.98px) {
+    .console-nav-strip {
+      display: none;
+    }
+  }
+
+  /* < 1024: drawer scrim + lead detail as a sheet */
+  @media (max-width: 1023.98px) {
+    /* The slide rail sits above the editor once there is no room beside it. */
+    .hero-workspace {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .console-frame[data-nav="open"] .console-scrim,
+    .console-side:target ~ .console-scrim {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: var(--c-z-scrim);
+      background: var(--c-backdrop);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+    }
+
+    .console-lead-detail {
+      display: none;
+    }
+    .console-lead-detail[data-sheet="open"] {
+      display: flex;
+      position: fixed;
+      inset-block: 0;
+      inset-inline-end: 0;
+      z-index: var(--c-z-drawer);
+      inline-size: min(32rem, 100%);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      border-radius: var(--c-r-lg) 0 0 var(--c-r-lg);
+      box-shadow: -16px 0 48px -12px rgb(0 0 0 / 0.35);
+      animation: console-lead-sheet var(--c-dur-slow) var(--c-lead-ease) both;
+    }
+    :where([dir="rtl"]) .console-lead-detail[data-sheet="open"] {
+      border-radius: 0 var(--c-r-lg) var(--c-r-lg) 0;
+    }
+    .console-lead-scrim {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: var(--c-z-scrim);
+      margin: 0;
+      border: 0;
+      background: var(--c-backdrop);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      animation: console-lead-fade var(--c-dur-slow) var(--c-lead-ease) both;
+    }
+  }
+
+  /* <= 900: list bar stacks */
+  @media (max-width: 900px) {
+    /* Three panels across 900px is three columns of captions; stack them instead. */
+    .console-ov-trio {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .console-list-bar {
+      gap: 0.65rem;
+    }
+    .console-list-bar .console-chip-row {
+      flex: 1 1 100%;
+      inline-size: 100%;
+    }
+    .console-list-bar .console-search {
+      flex: 1 1 100%;
+      max-inline-size: none;
+    }
+    .console-list-bar .console-controls {
+      flex: 1 1 100%;
+      justify-content: flex-start;
+      margin-inline-start: 0;
+    }
+    .console-list-bar .console-leads-export {
+      flex: 1 1 100%;
+      margin-inline-start: 0;
+    }
+  }
+
+  /* <= 700: editor bar */
+  @media (max-width: 700px) {
+    /* Two plots side by side at this width are two columns of noise. */
+    .console-ov-split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .console-ov-head {
+      align-items: flex-start;
+    }
+    .console-ov-stamp {
+      inline-size: 100%;
+      justify-content: space-between;
+    }
+    .console-ov-controls {
+      align-items: stretch;
+    }
+    .console-ov-actions {
+      inline-size: 100%;
+      margin-inline-start: 0;
+    }
+    .console-editor-bar {
+      gap: 0.5rem;
+      padding: 0.75rem;
+      border-radius: 0.875rem;
+    }
+    .console-editor-bar > .console-btn {
+      flex: 1 1 calc(50% - 0.5rem);
+      min-block-size: 2.4rem;
+      padding: 0 0.75rem;
+      font-size: var(--c-font-micro);
+    }
+    .console-editor-bar .console-count,
+    .console-editor-bar > .console-note {
+      flex: 1 1 100%;
+      margin-inline-start: 0;
+      text-align: center;
+    }
+  }
+
+  /* <= 680: editor form */
+  @media (max-width: 680px) {
+    .console-editor-main {
+      gap: 1rem;
+    }
+    .console-detail-status {
+      align-items: flex-start;
+      padding: 0.75rem;
+    }
+    .console-detail-status .console-note {
+      flex-basis: 100%;
+    }
+    .console-fields {
+      gap: 1.05rem;
+      padding: 0.875rem;
+    }
+    .console-doc-form {
+      gap: 1.125rem;
+    }
+    .console-doc-group-fields {
+      gap: 1.125rem;
+    }
+    .console-doc-pair {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.625rem;
+    }
+  }
+
+  /* < 640: tab bar and compact header */
+  @media (max-width: 639.98px) {
+    .console-nav-strip {
+      display: flex;
+    }
+    .console-header {
+      gap: var(--c-sp-2);
+      padding-inline: var(--c-sp-3);
+    }
+    /* The drawer toggle becomes a square glyph so the row fits a 360px phone. */
+    .console-toggle {
+      inline-size: var(--c-tap);
+      min-inline-size: var(--c-tap);
+      justify-content: center;
+      padding: 0;
+      font-size: 0;
+    }
+    .console-brand strong {
+      font-size: 0.95rem;
+    }
+    .console-brand span {
+      display: none;
+    }
+    .console-main {
+      padding-block-start: 1.25rem;
+    }
+    .console-grid {
+      grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    }
+    .console-leads .console-search {
+      flex-basis: 100%;
+    }
+    .console-screen-tools {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .settings-pages,
+    .settings-banner-grid,
+    .settings-field-grid {
+      grid-template-columns: 1fr;
+    }
+    .settings-section-head,
+    .settings-section-body,
+    .settings-section-foot {
+      padding-inline: var(--c-gap);
+    }
+    /* A phone thumb reaches the section's own save without aiming. */
+    .settings-section-foot > .console-btn {
+      inline-size: 100%;
+    }
+
+    .hero-preview {
+      aspect-ratio: 4 / 3;
+    }
+  }
+
+  /* <= 560: pager */
+  @media (max-width: 560px) {
+    .console-ov-kpis {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .console-ov-custom {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .console-ov-donut {
+      inline-size: 8rem;
+    }
+    .console-ov-recent-status {
+      inline-size: 100%;
+    }
+    .console-pager {
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      padding: 0.8rem;
+      border-radius: 0.875rem;
+    }
+    .console-pager .console-count {
+      inline-size: 100%;
+    }
+    .console-pager .console-controls {
+      inline-size: 100%;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+    .console-pager .console-btn {
+      min-block-size: 2.25rem;
+      gap: 0.4rem;
+      padding: 0 0.65rem;
+    }
+    .console-pager .console-controls > .console-note {
+      padding: 0.5rem;
+      font-size: 0.6875rem;
+    }
+  }
+
+  /* <= 520: list bar on small phones */
+  @media (max-width: 520px) {
+    .console-list-bar {
+      padding: 0.6rem;
+      gap: 0.55rem;
+      border-radius: 0.8rem;
+    }
+    .console-list-bar .console-chip-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.25rem;
+    }
+    .console-list-bar .console-chip {
+      inline-size: 100%;
+      min-inline-size: 0;
+      padding-inline: 0.5rem;
+      white-space: normal;
+      text-align: center;
+    }
+    .console-list-bar .console-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: stretch;
+      gap: 0.5rem;
+    }
+    .console-list-bar .console-inline {
+      grid-column: 1 / -1;
+      justify-content: space-between;
+    }
+    .console-list-bar .console-btn {
+      inline-size: 100%;
+      white-space: normal;
+    }
+  }
+
+  /* <= 420: editor bar buttons may wrap their label */
+  @media (max-width: 420px) {
+    .console-editor-bar > .console-btn {
+      padding-inline: 0.5rem;
+      white-space: normal;
+    }
+  }
+
+  /* =========================================================================
+     14. REDUCED MOTION (one block for the whole console)
+     ========================================================================= */
+  @media (prefers-reduced-motion: reduce) {
+    [data-surface="console"] *,
+    [data-surface="console"] *::before,
+    [data-surface="console"] *::after,
+    .console-leads-toast,
+    .console-lead-scrim {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* =========================================================================
+     15. PRINT (the Overview's "Print / PDF")
+     A print job is a document, not a screen: the frame collapses to one column,
+     the chrome that only exists to be clicked is gone, and the period, the
+     timestamp and every panel stay. Paper is white in either theme, so the
+     dark palette is answered with the light values rather than left to print
+     light text on a white page. Charts keep their colour (`print-color-adjust`)
+     because a grey donut conveys nothing, and a panel is never cut in half.
+     ========================================================================= */
+  @media print {
+    [data-surface="console"] {
+      --c-bg: #ffffff;
+      --c-bg-alt: #ffffff;
+      --c-canvas: #ffffff;
+      --c-surface: #ffffff;
+      --c-surface-soft: #ffffff;
+      --c-hover: transparent;
+      --c-active: transparent;
+      --c-sheen: transparent;
+      --c-lift: none;
+      --c-lift-sm: none;
+      --c-lift-lg: none;
+      --c-bar-shadow: none;
+      --c-bar-shadow-hover: none;
+      --c-backdrop: transparent;
+    }
+
+    /* Same selector as the dark palette, so its specificity is answered. */
+    [data-surface="console"][data-theme="dark"] {
+      --c-bg: #ffffff;
+      --c-bg-alt: #ffffff;
+      --c-canvas: #ffffff;
+      --c-surface: #ffffff;
+      --c-surface-soft: #ffffff;
+      --c-text: #1b1714;
+      --c-text-2: #3b342e;
+      --c-text-3: #4a423a;
+      --c-accent: #6b500c;
+      --c-success: #0a6636;
+      --c-danger: #8f1d17;
+      --c-warn: #6f4a12;
+      --c-warn-bg: #fbf1dc;
+      --c-warn-line: #c9b183;
+      --c-line: rgba(20, 14, 10, 0.2);
+      --c-line-strong: rgba(20, 14, 10, 0.34);
+      --c-focus: #6b500c;
+      --c-hover: transparent;
+      --c-active: transparent;
+      --c-sheen: transparent;
+      --c-lift: none;
+      --c-lift-sm: none;
+      --c-lift-lg: none;
+      --c-bar-shadow: none;
+      --c-bar-shadow-hover: none;
+    }
+
+    .console-frame {
+      display: block;
+      min-height: 0;
+    }
+
+    .console-main {
+      padding: 0;
+      min-height: 0;
+    }
+
+    .console-content {
+      max-width: none;
+    }
+
+    /* Only clickable on a screen; the printed page has no pointer. */
+    .console-topbar,
+    .console-toggle,
+    .console-side,
+    .console-scrim,
+    .console-ov-controls,
+    .console-ov-custom,
+    .console-ov-quick,
+    .console-ov-loading,
+    .console-ov-stamp .console-btn {
+      display: none;
+    }
+
+    .console-ov {
+      gap: 0.75rem;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .console-ov-head {
+      break-after: avoid;
+      border-block-end: 1px solid var(--c-line);
+      padding-block-end: 0.5rem;
+    }
+
+    .console-ov-card,
+    .console-ov-kpi,
+    .console-ov-recent li,
+    .console-ov-heat-wrap,
+    .console-ov-ranked li {
+      break-inside: avoid;
+    }
+
+    /* On paper the legend is a caption, not a control. */
+    .console-ov-legend-btn {
+      padding-inline: 0;
+      border-color: transparent;
+    }
+
+    .console-ov-card,
+    .console-ov-kpi {
+      box-shadow: none;
+    }
+
+    /* The printed page is 794px wide at A4: the tablet grids would stack the
+       overview into a scroll of single cards. Two columns keep the comparison
+       (traffic beside sources) that is the point of the screen. */
+    .console-ov-kpis {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .console-ov-main,
+    .console-ov-split {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .console-ov-trio {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    /* A Recharts surface is painted at the width it measured, and the printer does not
+       re-measure it: clipping the plot keeps a wide chart from widening the page. */
+    .console-ov-plot {
+      max-inline-size: 100%;
+      overflow: clip;
+    }
+  }
+}
+i,
+div,
+a,
+button,
+span {
+  transition: 0.3s all ease !important;
+}

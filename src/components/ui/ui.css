@@ -1,0 +1,1242 @@
+/*
+ * The control layer: one definition per primitive, read by both surfaces.
+ *
+ * `globals.css` imports this file, and every document root already imports
+ * `globals.css`, so a `Button` paints the same on a public page and in the console
+ * without either of them having to remember a second stylesheet. It is a separate file
+ * because a control library grows a rule at a time and a token layer should not.
+ *
+ * Rules here are **unlayered**, the same choice `globals.css` makes for its tokens and
+ * for the focus ring. That is not laziness about the cascade, it is the cascade: an
+ * unlayered `.ui-button` outranks every Tailwind utility, so the 44px tap floor a WCAG
+ * success criterion depends on cannot be undone by a `py-1` at a call site, and a
+ * component that wants a different size asks the primitive for one (`size="sm"`,
+ * `variant="ghost"`) instead of fighting a utility it will lose. The cost is symmetric
+ * and known: restyling a primitive from a surface stylesheet means another unlayered
+ * rule later in the document, which is why the whitelist in `tests/ui-primitives.test.ts`
+ * allows a surface override to name a placement — `display`, a margin, a measure — and
+ * never a colour or a size.
+ *
+ * No physical direction anywhere in here — `inline-size`, `padding-inline`,
+ * `border-block-start` — so Arabic needs no override, and no raw number where a token
+ * exists: `--tap`, `--ui-font`, `--radius-control`, `--dur-*`, `--ease-*`.
+ */
+
+/* ----------------------------------------------
+   Button (BK-19.3a). Five states a control can be in, and every one of them is named:
+   hover, focus-visible (from the single ring in `globals.css`), active-pressed,
+   disabled, loading.
+
+   The variant is a `data-variant` attribute rather than a modifier class because the
+   primitive renders it from a prop and nothing else may set it; the pressed state reuses
+   the `data-active` attribute the console already had, so a toggle keeps the same hook.
+
+   `primary` is the brand gold. The sweep runs `#f5e6a8 → #a8801f` in light and is lifted
+   in dark, and the ink is `--btn-gold-fg` (`#17120f`) in both, so the measured floor is
+   the darkest stop: 5.11:1 on light and 5.19:1 on dark, past AA for a normal-weight
+   label. The boundary is a separate problem from the label — a mid-tone gold reaches
+   only 2.26:1 against cream — so the fill carries `--border-control` (5.36:1) and stays
+   legible as a control even where the gradient is at its palest.
+
+   Every variant names its own hover. `console.css` used to have none for
+   `.console-button-primary`, which meant a filled button took the default's
+   `background: var(--bg-secondary)` and inverted to a light one under a cursor.
+   ---------------------------------------------- */
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: var(--tap);
+  padding: var(--sp-1) var(--sp-4);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--ui-font);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.ui-button:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  box-shadow: var(--elev-1);
+  transform: translateY(-1px);
+}
+
+/* The press. Transform only, so it costs a compositor frame and no reflow. */
+.ui-button:active:not(:disabled) {
+  transform: translateY(0) scale(0.99);
+  box-shadow: none;
+}
+
+.ui-button[data-variant='primary'] {
+  background: var(--gold-gradient);
+  border-color: var(--border-control);
+  color: var(--btn-gold-fg);
+  font-weight: 600;
+}
+
+/* A gradient cannot be hovered by changing one colour, so the fill holds and the control
+   gains presence instead: the brand glow behind the lift. */
+.ui-button[data-variant='primary']:hover:not(:disabled) {
+  background: var(--gold-gradient);
+  box-shadow: var(--glow-gold), var(--elev-1);
+}
+
+.ui-button[data-variant='ghost'] {
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  padding-inline: var(--sp-2);
+}
+
+.ui-button[data-variant='ghost']:hover:not(:disabled) {
+  background: var(--bg-secondary);
+  box-shadow: none;
+  color: var(--text-primary);
+}
+
+/* A destructive action is filled in both themes because the pair is what travels:
+   `--text-danger` on cream is `#b3261e`, on charcoal it is the lifted `#f2a0a0`, and
+   `--bg-card` is the ink that clears AA against either (6.39:1 light, 8.14:1 dark). */
+.ui-button[data-variant='danger'] {
+  background: var(--text-danger);
+  border-color: transparent;
+  color: var(--bg-card);
+  font-weight: 600;
+}
+
+.ui-button[data-variant='danger']:hover:not(:disabled) {
+  background: var(--text-danger);
+  box-shadow: var(--elev-2);
+}
+
+/* Pressed toggle — a filter that is on, the mode the list is in, the panel that is open.
+   Same hook `console.css` already used, so `aria-pressed` stays the consumer's business
+   and this rule only answers to what the primitive was told. */
+.ui-button[data-active] {
+  border-color: var(--text-primary);
+  background: var(--bg-secondary);
+  font-weight: 600;
+}
+
+.ui-button[data-size='sm'] {
+  font-size: var(--ui-font-small);
+  padding: var(--sp-1) var(--sp-2);
+}
+
+/* Icon-only keeps the floor on both axes: a 44px square, not a 44px-tall pill, because
+   a lone chevron on the edge of a toolbar is the hardest target to hit. */
+.ui-button[data-size='icon'] {
+  min-inline-size: var(--tap);
+  padding-inline: var(--sp-1);
+  gap: 0;
+}
+
+.ui-button[data-block] {
+  display: flex;
+  inline-size: 100%;
+}
+
+.ui-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* After `:disabled`, and deliberately: a button in flight is disabled — one click, one
+   request — but the cursor says why. */
+.ui-button[data-loading] {
+  cursor: progress;
+  opacity: 1;
+}
+
+.ui-button svg {
+  flex-shrink: 0;
+}
+
+.ui-button-spin {
+  flex-shrink: 0;
+  inline-size: 1em;
+  block-size: 1em;
+  border: 2px solid currentColor;
+  border-block-start-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: ui-spin var(--dur-spin) linear infinite;
+}
+
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A lift on hover is a movement the visitor did not ask for. The spinner needs no
+     mention here: `globals.css` zeroes every animation duration under this query, which
+     leaves the ring standing still as a mark beside a label that already says "Saving…",
+     and `aria-busy` says it to a screen reader. Overriding that here would mean
+     out-`!important`-ing the one rule whose whole job is to be unbeatable. */
+  .ui-button:hover:not(:disabled),
+  .ui-button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ----------------------------------------------
+   Field (BK-19.3b). The label, the control, the message — three parts every form on
+   either surface needs, and they belonged to one primitive because they were already one
+   on the console: `.console-field` painted its own input, textarea, focus ring, radius
+   and disabled step, and the site's forms painted the same properties again somewhere
+   else with different numbers.
+
+   The floor is `--tap-field`, not `--tap`: a text field's target is the box you aim at
+   rather than a control you can miss and press twice, so it is the one number the
+   console's dense mode is allowed to lower (44px → 36px). `bar` is the exception and is
+   named for where the control sits — a search box or a per-page select in a row of
+   buttons — because two floors in one line is one floor too many, and `--tap` is the one
+   density never touches. The attribute is `data-bar` rather than `data-size`: `size` is a
+   native attribute of both `input` and `select` and a primitive must not answer to a name
+   the element already means something else by.
+   ---------------------------------------------- */
+.ui-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-gap-tight);
+  margin-block-end: var(--ui-stack);
+}
+
+/* The stack keeps its rhythm from the field's own margin, not a `gap` of its own, so a
+   field in a bare `<form>` measures the same as one in the editor's stack. Dense lowers
+   `--ui-stack` with everything else, which is what makes the editor's 20 fields fit. */
+.ui-fields {
+  display: flex;
+  flex-direction: column;
+}
+
+.ui-field > label {
+  font-size: var(--ui-font-small);
+  color: var(--text-secondary);
+}
+
+/* The caption takes the error colour too. A red box and a red line beneath it are two
+   marks for one fact; the label is the one a person scanning a long form already reads. */
+.ui-field[data-invalid] > label {
+  color: var(--text-danger);
+}
+
+/* The small word inside a label — which locale a bilingual field is being edited in. */
+.ui-label-note {
+  margin-inline-start: var(--sp-1);
+  font-size: var(--ui-font-small);
+  color: var(--text-secondary);
+}
+
+.ui-control {
+  min-height: var(--tap-field);
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-control);
+  background: var(--bg-card-subtle);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--ui-font);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+/* Two steps on the boundary and nothing else: the soft gold the console already used, and
+   `--border-control` — the ≥3:1 one — for attention. The focus ring itself is the single
+   site-wide one in `globals.css`, so this file declares no `outline` at all.
+
+   `:where()` is load-bearing, not tidiness. Written as two rules with `:not(:disabled)`,
+   the hover selector weighs (0,3,0) and the invalid one below it (0,2,0), so a red field
+   would turn gold the moment a cursor crossed it — and the order in the file, which is
+   what the pair below appears to rely on, would not save it. */
+.ui-control:where(:hover:not(:disabled), :focus) {
+  border-color: var(--border-control);
+}
+
+/* The element rule in `globals.css` paints every `input`, `select` and `textarea` in dark
+   with `--bg-card`, and its selector outranks `.ui-control`. That was written for the
+   site's utility-styled forms; here the well is the point — `--bg-card-subtle` is a step
+   *above* the card in dark, so a field reads as a raised slot instead of a hole cut in
+   the panel it sits on. The primitive names the theme it is correcting rather than
+   leaving the decision to which selector happens to be heavier. */
+html[data-theme='dark'] .ui-control {
+  background: var(--bg-card-subtle);
+}
+
+textarea.ui-control {
+  min-height: var(--sp-24);
+  inline-size: 100%;
+  resize: vertical;
+  overflow-wrap: anywhere;
+}
+
+/* A `select` keeps its native arrow. `appearance: none` plus a drawn chevron means a
+   `background-position: right …`, and background positions have no logical keyword every
+   engine honours, so Arabic would need a `[dir='rtl']` rule this file otherwise never
+   has to write. The operating system draws the arrow on the reading side in both. */
+select.ui-control {
+  padding-inline-end: var(--sp-2);
+}
+
+.ui-control[data-bar] {
+  min-height: var(--tap);
+  padding: var(--sp-1) var(--sp-2);
+}
+
+/* A search field filters as it is typed, so the browser's own clear glyph is a second way
+   to do what is already done — it sits on the reading end, cannot be moved or restyled,
+   and on a narrow bar it overlaps the text. */
+.ui-control[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ui-control:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Read-only is not disabled: the words are still there to be read, selected and copied,
+   which is what the settings pane is for when a role cannot write. It dims, and the
+   cursor stays an arrow. */
+.ui-control[readonly] {
+  opacity: 0.7;
+}
+
+/* Heavier than the hover/focus step above and last in the file, so an invalid field stays
+   red under a cursor and inside a focus ring — the ring says where you are, the border says
+   what is wrong. `aria-invalid` is the hook because it is the attribute the control already
+   has to carry for a screen reader; a second `data-invalid` on the same element would be a
+   second answer to the same question. */
+.ui-control[aria-invalid='true'] {
+  border-color: var(--text-danger);
+}
+
+.ui-field-error {
+  color: var(--text-danger);
+  font-size: var(--ui-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Checkbox (BK-19.3b). One skin for every native box in the product.
+
+   The label is the target, not the 20-pixel graphic — the finding BK-13.3 measured on the
+   list's row checkboxes, applied here to all six call sites including the editor's flags,
+   which had no floor at all. `display` has to be a flex container: on an inline label a
+   `min-block-size` is ignored and the 44px written here measures 16.
+
+   `accent-color` takes `--focus-ring` because that token is the theme's own "this control
+   is attentive" gold, and the check glyph stays the user agent's contrast pick rather
+   than a colour this file would have to re-point for dark, for `.on-dark` and for
+   `.on-gold` in turn.
+   ---------------------------------------------- */
+.ui-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-inline-size: var(--tap);
+  min-block-size: var(--tap);
+  color: var(--text-primary);
+  font-size: var(--ui-font);
+  cursor: pointer;
+}
+
+.ui-check input {
+  flex-shrink: 0;
+  inline-size: var(--sp-5);
+  block-size: var(--sp-5);
+  margin: 0;
+  accent-color: var(--focus-ring);
+}
+
+.ui-check[data-disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------
+   Tone (BK-19.3c). One answer to "how much does this matter", read by the badge, the
+   alert and the note alike.
+
+   The console had it three ways: `.console-alert[data-tone='error']` recoloured the *text*
+   only, so an error box and an information box were the same box; `.console-chip` had no
+   error or ok tone at all, only a `warn` one painted from the *danger* pair — a name that
+   lied about its colour; and `.console-count` had a third subset. Each member now reads
+   the same three variables, and a member that has no use for one simply does not ask:
+   a note has no fill to tint.
+
+   `--tone-*` are declared with no fallback here, so the neutral default lives in the
+   consumer's own `var(--tone-fg, …)` line. That is what lets a badge and an alert disagree
+   about what "no tone" looks like — `--text-secondary` on a pill is a label, `--text-primary`
+   in a box is a sentence — without either of them needing a selector to win.
+
+   The pairs are measured, both themes, text against its own fill:
+   neutral 5.34 light / 8.69 dark · ok 6.15 / 7.63 · danger 5.62 / 7.46 · warn 4.69 / 9.14
+   (all past AA at 0.8rem). The tone borders sit on their own soft fills at 6.15 / 5.62
+   light and 7.63 / 7.46 dark, and the warn border is `--border-control` at 3.58 / 6.76 —
+   past the 3:1 a boundary needs. Neutral keeps `--border-control-soft`, which is the same
+   quiet gold the fields and the panels already use: a badge is identified by its word, not
+   by its edge, so the edge is reinforcement. `warn` has no soft fill of its own in either
+   palette, and inventing a fourth colour would put the brand's champagne next to a colour
+   that means "not the brand" — so it takes the neutral fill and the two signals nobody can
+   confuse: the brand's own ink and a 3.58:1 boundary.
+   ---------------------------------------------- */
+.ui-badge[data-tone='ok'],
+.ui-alert[data-tone='ok'],
+.ui-note[data-tone='ok'] {
+  --tone-fg: var(--text-success);
+  --tone-bg: var(--bg-success-soft);
+  --tone-border: var(--border-success);
+}
+
+.ui-badge[data-tone='warn'],
+.ui-alert[data-tone='warn'],
+.ui-note[data-tone='warn'] {
+  --tone-fg: var(--text-gold);
+  --tone-bg: var(--bg-secondary);
+  --tone-border: var(--border-control);
+}
+
+.ui-badge[data-tone='danger'],
+.ui-alert[data-tone='danger'],
+.ui-note[data-tone='danger'] {
+  --tone-fg: var(--text-danger);
+  --tone-bg: var(--bg-danger-soft);
+  --tone-border: var(--border-danger);
+}
+
+/* ----------------------------------------------
+   Badge (BK-19.3c). The state of one row, one role, one field — a word in a pill.
+
+   `.console-chip` spelled its radius as `999px` while `--radius-pill` (9999px) sat
+   unconsumed three files away, and it carried `margin-inline-end: 0.3rem` of its own,
+   which is a group's layout living inside a member: two chips side by side got a trailing
+   gap after the last one, and a chip in a heading got a margin nothing asked for. Spacing
+   between chips is now the group's (`gap` on `.console-chips`, on the editor's header and
+   on the pager row).
+
+   It breaks no word, and it has to say so out loud. `overflow-wrap` inherits, and the list's
+   cells declare `anywhere` to keep a long slug inside the table, so a badge that named
+   nothing inherited the break — and the articles table read the state column's minimum as one
+   character, gave it 65px and printed "منشور" on three lines in a 99px-tall row. Measured in
+   the built app, the badge's own value is the one the column reads: cell `normal` with the
+   badge `anywhere` still collapses to 65px, and the fix is the badge's `normal` — which leaves
+   the cell free to break a slug (83px column, 26px badge, one line).
+
+   Not `white-space: nowrap`, which measures the same here and is wrong: a two-word role name
+   in the 16rem sidebar needs its space break and would otherwise run out of the box.
+   ---------------------------------------------- */
+.ui-badge {
+  display: inline-block;
+  padding: var(--sp-1) var(--sp-3);
+  border: 1px solid var(--tone-border, var(--border-control-soft));
+  border-radius: var(--radius-pill);
+  background: var(--tone-bg, var(--bg-secondary));
+  color: var(--tone-fg, var(--text-secondary));
+  font-size: var(--ui-font-small);
+  line-height: 1.3;
+  overflow-wrap: normal;
+}
+
+/* ----------------------------------------------
+   Alert (BK-19.3c). A paragraph the person needs to read, with the tone of the news.
+
+   `role` is derived, not typed at every call site: bad news interrupts (`alert`),
+   confirmation is polite (`status`), and a box that explains a standing fact — the
+   read-only editor's banner — is neither and gets nothing, because a live region that
+   never changes teaches people to ignore live regions. A call site may still name its own
+   role; the primitive's default is only what the console already had written by hand at
+   eight of them, in the same words.
+   ---------------------------------------------- */
+.ui-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-block: var(--sp-3) 0;
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--tone-border, var(--border-control-soft));
+  border-radius: var(--radius-control);
+  background: var(--tone-bg, var(--bg-secondary));
+  color: var(--tone-fg, var(--text-primary));
+  font-size: var(--ui-font);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Note (BK-19.3c). The caption-strength line under something: a hint, a count, a label
+   for a row of chips.
+
+   This is the fourth name for one thing that `console.css` had: `.console-note` (with
+   `margin-block-start: 1.5rem`, which inside a field is a mile), `.console-count` (the same
+   three declarations plus `margin-inline-start: auto`), `.console-meta` (the same three and
+   no margin) and `.console-account-label` (the same three). They differed only in the space
+   around them, so the space is what the surface keeps and the type is what lives here once.
+   ---------------------------------------------- */
+.ui-note {
+  margin: 0;
+  color: var(--tone-fg, var(--text-secondary));
+  font-size: var(--ui-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Skeleton (BK-19.3c). The shape of what has not arrived yet.
+
+   `.console-row-skeleton` swept a `background-position` across a three-stop gradient, and
+   `--dur-shimmer` — declared in `globals.css` for exactly this — was never read by
+   anything. A position sweep is the one animation that cannot be expressed as a transform,
+   so it repaints on every frame, and it is the motion the brief's "transform/opacity only"
+   line was written to keep out.
+
+   It is replaced by a breath rather than by the same sweep moved to a
+   `translateX`-ing pseudo-element, and the reason is Arabic. A band anchored with
+   `inset-inline-start` travels the *box* correctly but the translate itself is physical, so
+   the two disagree in RTL and the sweep either starts mid-box or leaves it immediately —
+   which needs a `[dir='rtl'] keyframe to fix, and this file's rule since 19.2 is that it
+   never writes one. An opacity change is the same animation in both readings, costs no
+   paint, and 19.1's reduced-motion block stops it by zeroing the duration, which leaves the
+   well at full strength instead of frozen half-transparent.
+
+   The stack is the component's, not the caller's: `rows` is the number of wells and the gap
+   between them is `--ui-gap-tight`, the same rhythm the real list puts between its rows — so
+   a loading list already measures the height of the list it is waiting for, and the caller
+   does not have to remember to wrap it in a class that means "rows".
+   ---------------------------------------------- */
+.ui-skeletons {
+  display: grid;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-skeleton {
+  min-block-size: var(--tap);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--bg-card-subtle);
+  animation: ui-skeleton var(--dur-shimmer) var(--ease-in-out) infinite;
+}
+
+@keyframes ui-skeleton {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+/* ----------------------------------------------
+   Empty (BK-19.3c). The honest answer to "this list has nothing in it".
+
+   Two states, two different accidents: the palette's empty was `.console-palette-empty`
+   (a secondary line at whatever size the dialog's body is) and the list's was
+   `.console-lede` — the class that 15 other paragraphs use for their opening sentence, so
+   the emptiest state on the screen was wearing the loudest one. An empty is a block with
+   its own edge, because "nothing here" and "still loading" and "the page is broken" have
+   to be three different things at a glance.
+   ---------------------------------------------- */
+.ui-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-8) var(--sp-4);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-surface);
+  color: var(--text-secondary);
+  font-size: var(--ui-font);
+  text-align: center;
+}
+
+/* ----------------------------------------------
+   Value mark (BK-19.3c). A cell whose whole content is yes, no, or nothing.
+
+   `cellText` returned a string and the string was a glyph: `●`, `○`, `—`. In a table read
+   aloud, three columns of glyphs are three columns of silence — a screen reader says
+   "black circle" at best and nothing at the usual punctuation setting. The mark keeps its
+   shape (a date column and a tick column measure differently, and the column is narrow) and
+   puts the word beside it where only the voice can reach it. The glyph is `aria-hidden` so
+   it is not read twice.
+   ---------------------------------------------- */
+.ui-mark {
+  font-size: var(--ui-font);
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.ui-mark[data-state='yes'] {
+  color: var(--text-success);
+}
+
+/* An absent value is not a false one, so it is the quietest of the three: a column of
+   `—` must never read as a column of `○` from across the room. */
+.ui-mark[data-state='none'] {
+  color: var(--text-muted);
+}
+
+/* ----------------------------------------------
+   Card (BK-19.3d). The one shell either surface raises off the page.
+
+   `console.css` painted `--bg-card` + a `--hairline` + `--radius-surface` + `--elev-1`
+   five times under five names — the overview's stat card, the panel behind every form,
+   the card-mode row, the login's card and, minus the shadow, the list's scroll box. Four
+   were the same declarations with different class names, which is how one screen's card
+   ends up 1px rounder than its neighbour's. The fifth added
+   `padding: var(--ui-pad) calc(var(--ui-pad) + 0.05rem)`: a 0.05rem nobody owned and no
+   comment explained, and the card-mode row hard-pinned `padding: 0.7rem`, which is what
+   `--ui-pad` already says in dense — a density stop written as a constant, so the
+   comfortable surface got the dense card.
+
+   Two attributes, each with a real consumer: `data-flush` for a shell whose children pad
+   themselves (a table's scroll box, whose cells carry the padding), `data-flat` for a
+   shell that cannot lift (a list that scrolls inside itself — a shadow under it would read
+   as something the page is holding up). `data-active` is the row the editor is showing.
+   ---------------------------------------------- */
+.ui-card {
+  padding: var(--ui-pad);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card);
+  box-shadow: var(--elev-1);
+}
+
+.ui-card[data-flat] {
+  box-shadow: none;
+}
+
+.ui-card[data-flush] {
+  padding: 0;
+}
+
+.ui-card[data-active] {
+  border-color: var(--text-primary);
+  background: var(--bg-active);
+}
+
+/* ----------------------------------------------
+   Lede (BK-19.3d). The sentence under a heading.
+
+   It was `.console-lede` and it is the class five screens' opening paragraphs wear, the
+   login's and the editor's "you have unsaved changes" among them — so it moves whole,
+   because a public section's subtitle is the same role said in the same voice.
+   `margin-block-end` is `--sp-6`, the 1.5rem it already had, named.
+   ---------------------------------------------- */
+.ui-lede {
+  margin-block: 0 var(--sp-6);
+  color: var(--text-secondary);
+  font-size: var(--ui-font);
+}
+
+/* ----------------------------------------------
+   Table (BK-19.3d). Rows you read across, in a box that scrolls.
+
+   The behaviour is the list's and does not move: a sticky head, a sortable column, a row
+   that is selected rather than hovered. What moves is the paint, and three things about it
+   were wrong.
+
+   `border-collapse: separate` is load-bearing and stays: a collapsed table drops the
+   border off a sticky header, so the head loses its edge the moment the body scrolls under
+   it. The comment that said so lived in `console.css`, where a second surface would never
+   have found it.
+
+   The cell padding was `0.5rem 0.7rem` — two literals, one of which (`0.7rem`) is
+   `--ui-pad` in dense and nothing in comfortable. They are `--sp-2` and `--sp-3` now,
+   which is what they always were: half a space, three quarters of one.
+
+   There was no row hover. The brief asks for one and the list has nine columns to read
+   across, so a cursor that loses its place is the defect. It is a tint, not a pointer: the
+   row is not the target — the title action and the checkbox inside it are, and they keep
+   their own cursors — so the hover is a reading aid and `[data-active]` still outranks it,
+   by source order at equal weight, because "this row is open in the editor" has to beat
+   "the cursor is on it".
+   ---------------------------------------------- */
+.ui-table {
+  inline-size: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--ui-font);
+}
+
+/* `anywhere`, not `break-word`: only `anywhere` lets auto layout compute a column's
+   min-content as one character, which is what keeps a 60-slug from widening the table.
+   It is inherited, so everything inside a cell that must not break — a badge, a chip —
+   declares that for itself (see `.ui-badge`). */
+.ui-table th,
+.ui-table td {
+  padding: var(--sp-2) var(--sp-3);
+  text-align: start;
+  vertical-align: baseline;
+  border-block-end: 1px solid var(--border-control-soft);
+  overflow-wrap: anywhere;
+}
+
+/* Local to this scroll box: the head sits above the cells that pass under it, and one is
+   all it takes. `--z-*` is the page's scale — sticky, scrim, drawer, drop, modal — and a
+   header inside a table is not on it; borrowing `--z-sticky` here would put a table head in
+   the same argument as the top bar and the drawer. */
+.ui-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--ui-font-small);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.ui-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+.ui-table tbody tr:last-child td {
+  border-block-end: 0;
+}
+
+/* The row the editor is holding. A head has a border to say it is open and a row has
+   nothing but its fill, so this one takes the step above the hover rather than
+   `--bg-secondary` — which is 3 units from the card in the dark theme, less than the
+   cursor's own wash. Later than `:hover` on purpose: equal specificity, so the order is
+   the tie-break, and "open" has to beat "under the cursor". */
+.ui-table tbody tr[data-active] {
+  background: var(--bg-active);
+}
+
+/* A column head is the most-clicked control on a list, so it gets the tap floor and not
+   the text height — 13.1's rule, restated where the primitive can keep it. */
+.ui-table-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-block-size: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--ui-font-small);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.ui-table-sort:hover,
+.ui-table-sort[data-active] {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ----------------------------------------------
+   Row action (BK-19.3d). The one thing in a row or a card that opens it.
+
+   `.console-row` and `.console-card-body` were the same button written twice — a block
+   that fills its cell, no border, no fill, the pointer, and the title underlined when the
+   cursor is on it — with the card's copy adding a column. The underline is on the title,
+   not on the whole row, because the row is not the target: the title is.
+   ---------------------------------------------- */
+.ui-row-action {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--ui-font);
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.ui-row-action:hover .ui-row-title {
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+.ui-row-link:hover .ui-row-title {
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+/* The same row when opening it leaves the page. A document has its own address now, so
+   the thing that opens a row is an anchor — and an anchor has to give back the two things
+   the browser paints on it: the blue ink and the underline. The layout is shared with the
+   action so a row is the same row whichever element it is. */
+.ui-row-link {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-block-size: var(--tap);
+  color: inherit;
+  text-decoration: none;
+}
+
+.ui-row-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ui-row-key {
+  font-size: var(--ui-font-small);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Chip (BK-19.3d). A filter that is also a toggle, and a saved view that is also deletable.
+
+   `.console-chip-button`, `.console-view-chip` and `.console-chip-x` each wrote
+   `border-radius: 999px` while `--radius-pill` (9999px) sat in `globals.css` with one
+   consumer, the spinner. A literal that is 999px and a token that is 9999px draw the same
+   capsule today and diverge the day the token is retuned, which is the whole complaint.
+
+   The padding is the button's (`--sp-1 --sp-4`), not the chip's own `0.3rem 0.8rem`: a chip
+   is the button's shape in a smaller voice, and two paddings for one shape is how a filter
+   row stops aligning with the save bar under it.
+
+   `overflow-wrap: normal` is 19.3c's lesson carried to the rest of the pill family: the
+   property is inherited, so the first chip that lands in a table cell — the tag column
+   BK-17's leads list is built for — would otherwise inherit the cell's `anywhere` and set
+   its own column's width by character.
+
+   `data-active` is the filter that is on. The removable chip is a capsule with two
+   separately tappable halves inside it, which is why the capsule is `content-box`: it draws
+   the 1px border, and the floor is the *tappable* height, not the box's.
+   ---------------------------------------------- */
+.ui-chip {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--tap);
+  padding: var(--sp-1) var(--sp-4);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--ui-font-small);
+  overflow-wrap: normal;
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.ui-chip:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.ui-chip[data-active] {
+  border-color: var(--text-primary);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.ui-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ui-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-chip-tag {
+  display: inline-flex;
+  box-sizing: content-box;
+  align-items: stretch;
+  min-block-size: var(--tap);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+}
+
+/* The half inside the capsule is the same control with the capsule's border removed; it is
+   the primitive reaching into its own composition, not a surface re-painting it. */
+.ui-chip-tag .ui-chip {
+  min-block-size: 100%;
+  border: 0;
+  background: transparent;
+}
+
+.ui-chip-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--tap);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+/* Deleting a view is not a destructive act — no row goes with it — so the red is the
+   cursor's answer, not the control's resting colour. */
+.ui-chip-x:hover {
+  color: var(--text-danger);
+}
+
+.ui-chip-x:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------
+   Tabs (BK-19.3d). The group; the control inside it is the button.
+
+   `console.css` owned `.console-tabs` as a flex row with `gap: 0.35rem` written out, and
+   the header of this file used the tabs as its example of a surface overriding a primitive.
+   The group is two declarations, so that is what moves — and the tabs themselves stay
+   `Button`s, because a tab is a control with hover, pressed, disabled and focus-visible
+   states, and the button has had all four since 19.3a. A second pill-shaped tab skin would
+   have been a second definition of the thing this row exists to remove; what `Tabs.tsx`
+   adds is the wiring a `role="tablist"` promises and the console's did not have.
+   ---------------------------------------------- */
+.ui-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-gap-tight);
+}
+
+/* ----------------------------------------------
+   Image picker (BK-14a). The one control that puts a picture on the site.
+
+   There is no text box here on purpose, so the box's whole job is to show a picture and to
+   be hit. The `<input type="file">` is the control the row's `<label>` names, and it is
+   stretched invisibly over the frame instead of hidden with `opacity` or `clip`: the focus
+   ring is the single one in `globals.css` and this file declares no `outline`, so the ring
+   has to land on an element that still draws — and a click anywhere on the frame opening
+   the file dialog is the behaviour the brief asked for, not a side effect.
+
+   `data-ratio` is the shape of the slot the picture fills — a banner is wide, a specialist
+   portrait is not — and `data-empty` is the only reason the border goes dashed: an empty
+   well and a broken address must not be the same sentence. Both sit on the frame rather than
+   the picker, because the gallery reuses the frame on its own.
+   ---------------------------------------------- */
+.ui-picker {
+  display: grid;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-picker-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card-subtle);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.ui-picker-frame[data-empty='true'] {
+  border-style: dashed;
+}
+
+.ui-picker-frame:where(:hover, :focus-within) {
+  border-color: var(--border-control);
+}
+
+.ui-picker-frame[data-ratio='wide'] {
+  aspect-ratio: 16 / 9;
+}
+
+.ui-picker-frame[data-ratio='square'] {
+  aspect-ratio: 1 / 1;
+}
+
+.ui-picker-frame[data-ratio='tall'] {
+  aspect-ratio: 3 / 4;
+}
+
+.ui-picker-frame img {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.ui-picker-empty {
+  padding: var(--sp-4);
+  color: var(--text-muted);
+  font-size: var(--ui-font-small);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.ui-picker-input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: transparent;
+  font-size: var(--ui-font);
+  cursor: pointer;
+}
+
+.ui-picker-input::file-selector-button {
+  display: none;
+}
+
+.ui-picker-input:disabled {
+  cursor: default;
+}
+
+.ui-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-picker-library {
+  display: grid;
+  gap: var(--ui-gap-tight);
+  border-block-start: 1px solid var(--hairline);
+  padding-block-start: var(--sp-2);
+}
+
+.ui-picker-library > summary {
+  min-height: var(--tap);
+  padding-block: var(--sp-2);
+  color: var(--text-secondary);
+  font-size: var(--ui-font);
+  cursor: pointer;
+}
+
+.ui-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--ui-gap-tight);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ui-picker-grid > li {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.ui-picker-tile {
+  display: grid;
+  gap: var(--ui-gap-tight);
+  min-inline-size: 0;
+  padding: var(--sp-2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.ui-picker-tile:where(:hover, :focus-visible) {
+  border-color: var(--border-control);
+}
+
+.ui-picker-tile[data-active='true'] {
+  border-color: var(--border-control);
+  background: var(--bg-active);
+}
+
+.ui-picker-tile:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.ui-picker-tile img {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--radius-control);
+}
+
+.ui-picker-tile-meta {
+  display: grid;
+  gap: var(--ui-gap-tight);
+  font-size: var(--ui-font-small);
+  overflow-wrap: anywhere;
+}
+
+/* ----------------------------------------------
+   Image gallery (BK-14a). The pictures a JSON field already holds.
+
+   The picker paints one picture; this arranges many, and reuses the picker's frame and file
+   input for each of them so a tile in a gallery and a field's own picture are the same
+   object. Only the arrangement is here: a grid of frames and the two buttons that change
+   the list. The list itself is the document's — this adds to an array that already carries
+   a picture and never invents a key to hold one.
+   ---------------------------------------------- */
+.ui-gallery {
+  display: grid;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-gallery-item {
+  display: grid;
+  gap: var(--ui-gap-tight);
+  min-inline-size: 0;
+}
+
+.ui-gallery-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap-tight);
+}
+
+/* ----------------------------------------------
+   Body editor (#246). The one place the site's prose is written.
+
+   The surface is a document, not a box of text: the tags it holds are the tags the site
+   prints, and the person typing in them sees a heading, a list and a quote — never a
+   bracket. So the sheet's job is to make the *rendered* markup legible inside a console card,
+   at console scale, without reaching for the public site's prose stylesheet (which is sized
+   for a page and would make an article body taller than the screen it is edited on).
+
+   `min-block-size` is a token, not a fixed box: an empty body still reads as somewhere to
+   write, and a long one grows instead of hiding its own tail behind a scroll.
+
+   The file input is `display: none` here and *is not* the control the row's label names — the
+   toolbar's photo button is, which is the arrangement `ImagePicker` deliberately is not
+   allowed to use. A button that opens a dialog is reachable; an input nobody can see is only
+   ever a target.
+   ---------------------------------------------- */
+.ui-rich {
+  display: grid;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-rich-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+}
+
+.ui-rich-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-gap-tight);
+}
+
+.ui-rich-surface {
+  min-block-size: var(--sp-20);
+  padding: var(--ui-pad);
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-control);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: var(--ui-font);
+  line-height: var(--lh-body);
+}
+
+.ui-rich-surface:empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-muted);
+}
+
+.ui-rich-surface[data-disabled='true'] {
+  background: var(--bg-card-subtle);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.ui-rich-surface > :first-child {
+  margin-block-start: 0;
+}
+
+.ui-rich-surface > :last-child {
+  margin-block-end: 0;
+}
+
+.ui-rich-surface p,
+.ui-rich-surface ul,
+.ui-rich-surface ol,
+.ui-rich-surface blockquote,
+.ui-rich-surface figure,
+.ui-rich-surface table {
+  margin-block: var(--sp-2);
+}
+
+.ui-rich-surface h2,
+.ui-rich-surface h3,
+.ui-rich-surface h4 {
+  margin-block: var(--sp-4) var(--sp-2);
+  font-weight: 700;
+  line-height: var(--lh-tight);
+}
+
+.ui-rich-surface ul,
+.ui-rich-surface ol {
+  padding-inline-start: var(--sp-5);
+}
+
+.ui-rich-surface blockquote {
+  margin-inline: 0;
+  padding-inline-start: var(--sp-3);
+  border-inline-start: 2px solid var(--hairline-strong);
+  color: var(--text-secondary);
+}
+
+.ui-rich-surface a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: var(--sp-1);
+}
+
+.ui-rich-surface img {
+  max-inline-size: 100%;
+  border-radius: var(--radius-control);
+}
+
+.ui-rich-surface th,
+.ui-rich-surface td {
+  padding: var(--sp-1);
+  border: 1px solid var(--hairline);
+  text-align: start;
+}
+
+.ui-rich-file {
+  display: none;
+}
+i,
+div,
+a,
+button,
+span {
+  transition: 0.3s all ease !important;
+}
+a{
+  text-decoration: none;
+  
+}

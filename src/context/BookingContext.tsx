@@ -1,0 +1,89 @@
+"use client";
+
+import React, { createContext, useCallback, useContext, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import type { BranchLite } from "@/data/branches";
+import type { Specialist } from "@/data/specialists";
+import type { TreatmentOption } from "@/data/treatments";
+
+// Split out of the initial bundle: the wizard is only reached by a click, and its
+// framer-motion + form code was otherwise parsed on every page of the site.
+const BookingModal = dynamic(
+  () => import("@/components/booking/BookingModal").then((m) => m.BookingModal),
+  { ssr: false, loading: () => null },
+);
+
+/**
+ * The offer a booking started from.
+ *
+ * It carries the slug as well as the name so the lead can be checked against the row
+ * rather than against a title somebody typed, and `services` so the wizard can narrow
+ * its own picker. `null` is "nobody has configured this offer yet", which is not the
+ * same answer as `[]`; `@/lib/content/offer-services` is what reads the difference.
+ */
+export interface BookingOffer {
+  slug: string;
+  name: { ar: string; en: string };
+  services: string[] | null;
+}
+
+interface BookingOptions {
+  treatmentId?: string;
+  specialistId?: string;
+  /** Offer the booking started from, shown prefilled in the summary. */
+  offer?: BookingOffer;
+}
+
+interface BookingContextType {
+  openBooking: (opts?: BookingOptions) => void;
+  /** True while the wizard is on screen, so fixed controls can stand aside. */
+  isBookingOpen: boolean;
+}
+
+const BookingContext = createContext<BookingContextType | undefined>(undefined);
+
+export const BookingProvider: React.FC<{
+  children: React.ReactNode;
+  branches: BranchLite[];
+  treatments: TreatmentOption[];
+  specialists: Specialist[];
+}> = ({ children, branches, treatments, specialists }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [bookingSession, setBookingSession] = useState(0);
+  const [options, setOptions] = useState<BookingOptions>({});
+
+  const openBooking = useCallback((opts?: BookingOptions) => {
+    setOptions(opts ?? {});
+    setBookingSession((session) => session + 1);
+    setIsOpen(true);
+  }, []);
+
+  const close = useCallback(() => setIsOpen(false), []);
+
+  const value = useMemo(() => ({ openBooking, isBookingOpen: isOpen }), [openBooking, isOpen]);
+
+  return (
+    <BookingContext.Provider value={value}>
+      {children}
+      {bookingSession > 0 ? (
+        <BookingModal
+          key={bookingSession}
+          isOpen={isOpen}
+          onClose={close}
+          branches={branches}
+          treatments={treatments}
+          specialists={specialists}
+          preSelectedTreatmentId={options.treatmentId}
+          preSelectedSpecialistId={options.specialistId}
+          offer={options.offer}
+        />
+      ) : null}
+    </BookingContext.Provider>
+  );
+};
+
+export const useBooking = (): BookingContextType => {
+  const ctx = useContext(BookingContext);
+  if (!ctx) throw new Error("useBooking must be used within BookingProvider");
+  return ctx;
+};

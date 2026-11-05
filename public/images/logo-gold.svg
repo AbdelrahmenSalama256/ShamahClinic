@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="100%" height="100%">
+  <defs>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E5C358"/>
+      <stop offset="50%" stop-color="#C9A227"/>
+      <stop offset="100%" stop-color="#8B6914"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF5D6" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#C9A227" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Emblem Icon: Luxury Botanical / Sparkle Petal -->
+  <g transform="translate(15, 12)">
+    <circle cx="28" cy="28" r="26" fill="url(#glowGrad)" stroke="url(#goldGradient)" stroke-width="1.5" stroke-dasharray="2 3"/>
+    <!-- Outer delicate ring -->
+    <circle cx="28" cy="28" r="22" fill="none" stroke="url(#goldGradient)" stroke-width="1"/>
+    
+    <!-- Central stylized flame / petal of Shamah (شامة) -->
+    <path d="M28 10 C32 18, 38 24, 38 31 C38 37, 33 42, 28 42 C23 42, 18 37, 18 31 C18 24, 24 18, 28 10 Z" fill="url(#goldGradient)"/>
+    <path d="M28 20 C30 25, 33 28, 33 32 C33 35, 30.5 37, 28 37 C25.5 37, 23 35, 23 32 C23 28, 26 25, 28 20 Z" fill="#FAF7F2"/>
+    
+    <!-- Sparkles -->
+    <circle cx="28" cy="8" r="1.5" fill="#E5C358"/>
+    <circle cx="44" cy="28" r="1" fill="#C9A227"/>
+    <circle cx="12" cy="28" r="1" fill="#C9A227"/>
+  </g>
+
+  <!-- Bilingual Brand Typography -->
+  <g transform="translate(85, 25)">
+    <!-- Arabic Main Wordmark -->
+    <text x="0" y="20" font-family="'Tajawal', 'Segoe UI', Arial, sans-serif" font-size="26" font-weight="800" fill="#211A16" letter-spacing="0.5">
+      عيادات <tspan fill="url(#goldGradient)">شامه</tspan>
+    </text>
+    <!-- Subtitle English -->
+    <text x="2" y="38" font-family="'Inter', sans-serif" font-size="10" font-weight="600" fill="#8B6914" letter-spacing="4">
+      SHAMAH CLINICS
+    </text>
+  </g>
+</svg>

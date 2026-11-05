@@ -1,0 +1,120 @@
+/* MB-1 — the original site's two faces, self-hosted.
+ *
+ * Every descriptor below is copied out of `D:\shamah\.tmp\built.css`, the reference
+ * site's own compiled stylesheet: the family names, the variable weight ranges
+ * (Readex Pro `160 700`, Montserrat `100 900`), `font-display: swap`, the
+ * unicode-ranges in the minifier's wildcard form, and the two measured fallback
+ * faces with their `size-adjust` / ascent / descent overrides. Only the `src:`
+ * targets changed — from `/_next/static/media/<hash>.woff2` to `/fonts/<subset>`,
+ * the same binaries pulled from the same gstatic files Google serves for those
+ * ranges. `tests/typography.test.ts` pins each file by SHA-256 so a future swap
+ * cannot quietly change the metrics behind a "same fonts" claim.
+ *
+ * One deliberate difference: the reference declares these fallback faces and then
+ * leaves them unreferenced, because its `:root` re-declaration of `--font-readex-pro`
+ * outranks the generated class. `--font-ui` in `src/styles/tokens.css` names them, so
+ * the swap costs no layout shift instead of reflowing the whole page when it lands.
+ *
+ * Self-hosted rather than `next/font/google` for the reason BK-0.2 recorded: a build
+ * host without outbound DNS fails outright on that import, and `next/font/local`
+ * cannot carry the subset split (no `unicode-range` in its `src` entries), which is
+ * what keeps an Arabic page from downloading Montserrat's Cyrillic. */
+
+@font-face {
+  font-family: "Readex Pro";
+  font-style: normal;
+  font-weight: 160 700;
+  font-display: swap;
+  src: url("/fonts/readex-pro-arabic.woff2") format("woff2");
+  unicode-range: U+6??,U+750-77F,U+870-891,U+897-8E1,U+8E3-8FF,U+200C-200E,U+2010-2011,U+204F,U+2E41,U+FB50-FDFF,U+FE70-FE74,U+FE76-FEFC,U+102E0-102FB,U+10E60-10E7E,U+10EC2-10EC7,U+10EC9-10EEE,U+10EF?,U+1EE00-1EE03,U+1EE05-1EE1F,U+1EE21-1EE22,U+1EE24,U+1EE27,U+1EE29-1EE32,U+1EE34-1EE37,U+1EE39,U+1EE3B,U+1EE42,U+1EE47,U+1EE49,U+1EE4B,U+1EE4D-1EE4F,U+1EE51-1EE52,U+1EE54,U+1EE57,U+1EE59,U+1EE5B,U+1EE5D,U+1EE5F,U+1EE61-1EE62,U+1EE64,U+1EE67-1EE6A,U+1EE6C-1EE72,U+1EE74-1EE77,U+1EE79-1EE7C,U+1EE7E,U+1EE80-1EE89,U+1EE8B-1EE9B,U+1EEA1-1EEA3,U+1EEA5-1EEA9,U+1EEAB-1EEBB,U+1EEF0-1EEF1;
+}
+
+@font-face {
+  font-family: "Readex Pro";
+  font-style: normal;
+  font-weight: 160 700;
+  font-display: swap;
+  src: url("/fonts/readex-pro-vietnamese.woff2") format("woff2");
+  unicode-range: U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB;
+}
+
+@font-face {
+  font-family: "Readex Pro";
+  font-style: normal;
+  font-weight: 160 700;
+  font-display: swap;
+  src: url("/fonts/readex-pro-latin-ext.woff2") format("woff2");
+  unicode-range: U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Readex Pro";
+  font-style: normal;
+  font-weight: 160 700;
+  font-display: swap;
+  src: url("/fonts/readex-pro-latin.woff2") format("woff2");
+  unicode-range: U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+@font-face {
+  font-family: "Readex Pro Fallback";
+  src: local("Arial");
+  ascent-override: 92.3%;
+  descent-override: 23.07%;
+  line-gap-override: 0.0%;
+  size-adjust: 108.34%;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/montserrat-cyrillic-ext.woff2") format("woff2");
+  unicode-range: U+460-52F,U+1C80-1C8A,U+20B4,U+2DE0-2DFF,U+A640-A69F,U+FE2E-FE2F;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/montserrat-cyrillic.woff2") format("woff2");
+  unicode-range: U+301,U+400-45F,U+490-491,U+4B0-4B1,U+2116;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/montserrat-vietnamese.woff2") format("woff2");
+  unicode-range: U+102-103,U+110-111,U+128-129,U+168-169,U+1A0-1A1,U+1AF-1B0,U+300-301,U+303-304,U+308-309,U+323,U+329,U+1EA0-1EF9,U+20AB;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/montserrat-latin-ext.woff2") format("woff2");
+  unicode-range: U+100-2BA,U+2BD-2C5,U+2C7-2CC,U+2CE-2D7,U+2DD-2FF,U+304,U+308,U+329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C4,U+2113,U+2C60-2C7F,U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("/fonts/montserrat-latin.woff2") format("woff2");
+  unicode-range: U+??,U+131,U+152-153,U+2BB-2BC,U+2C6,U+2DA,U+2DC,U+304,U+308,U+329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;
+}
+
+@font-face {
+  font-family: "Montserrat Fallback";
+  src: local("Arial");
+  ascent-override: 85.79%;
+  descent-override: 22.25%;
+  line-gap-override: 0.0%;
+  size-adjust: 112.83%;
+}

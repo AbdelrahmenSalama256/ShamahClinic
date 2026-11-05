@@ -1,0 +1,99 @@
+import type { ConsoleUser } from '@/lib/auth/sessions';
+import { message } from '@/lib/console/messages';
+import type { ConsolePrefs } from '@/lib/console/prefs';
+import { navItems, palettePlaces } from '@/lib/console/screens';
+import { ConsoleControls } from './ConsoleControls';
+import { ConsoleFrame } from './ConsoleFrame';
+import { Badge, Note } from '@/components/console/kit';
+
+/**
+ * The console's frame: brand, the signed-in account, and the screens this role may
+ * read. Deliberately none of the site's header, footer or providers — marketing gets
+ * a work surface, not the brochure.
+ *
+ * This half only decides *what* the chrome says: every label is read here, on the
+ * server, in the console's own locale, and handed to `ConsoleFrame`, whose only job is
+ * where those labels live at each width.
+ *
+ * The navigation comes from the grants, not from a list of screens: what the role may
+ * read decides which rows exist at all, and what it may write decides which are greyed.
+ * See `navItems`.
+ */
+export function ConsoleShell({
+  prefs,
+  user,
+  children,
+}: Readonly<{
+  prefs: ConsolePrefs;
+  user: ConsoleUser;
+  children: React.ReactNode;
+}>) {
+  const items = navItems(user.grants, prefs.locale);
+  const places = palettePlaces(user.grants, prefs.locale);
+
+  const brand = (
+    <span className="console-brand">
+      <strong>{message('brand.title', prefs.locale)}</strong>
+      <span>{message('brand.subtitle', prefs.locale)}</span>
+    </span>
+  );
+
+  const controls = (
+    <ConsoleControls
+      prefs={prefs}
+      labels={{
+        toLight: message('shell.theme.light', prefs.locale),
+        toDark: message('shell.theme.dark', prefs.locale),
+        switchLocale: message('shell.locale.switch', prefs.locale),
+      }}
+    />
+  );
+
+  const account = (
+    <div className="console-account">
+      <Note>{message('shell.signed_in_as', prefs.locale)}</Note>
+      <strong>{user.name || user.email}</strong>
+      <Note>{message('shell.roles', prefs.locale)}</Note>
+      {/* The roles are spaced by their group, not by each chip: a chip that carried its own
+          trailing margin left one alone in a heading with a gap nothing asked for. */}
+      <span className="console-account-roles">
+        {user.roles.map((role) => (
+          <Badge key={role}>{role}</Badge>
+        ))}
+      </span>
+      {/* The site link moved out of the header when the header became three tools. It
+          lives with the account because it leaves the console, like signing out. */}
+      <a className="console-account-site" href="/" target="_blank" rel="noreferrer">
+        {message('shell.view_site', prefs.locale)}
+      </a>
+    </div>
+  );
+
+  return (
+    <ConsoleFrame
+      items={items}
+      places={places}
+      labels={{
+        screens: message('shell.screens', prefs.locale),
+        close: message('shell.close', prefs.locale),
+        readOnly: message('nav.readonly', prefs.locale),
+        signOut: message('shell.sign_out', prefs.locale),
+        palette: {
+          open: message('palette.open', prefs.locale),
+          placeholder: message('palette.placeholder', prefs.locale),
+          screens: message('palette.screens', prefs.locale),
+          records: message('palette.records', prefs.locale),
+          searching: message('palette.searching', prefs.locale),
+          empty: message('palette.empty', prefs.locale),
+          shortcut: message('palette.shortcut', prefs.locale),
+          readOnly: message('nav.readonly', prefs.locale),
+        },
+      }}
+      brand={brand}
+      controls={controls}
+      account={account}
+    >
+      {children}
+    </ConsoleFrame>
+  );
+}

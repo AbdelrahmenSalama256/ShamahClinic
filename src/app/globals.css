@@ -1,0 +1,822 @@
+@import "tailwindcss";
+/* The two faces the site is drawn in, declared here rather than generated at build
+ * time — see the header of the file. It must be imported by anything that paints
+ * site type, which is why it sits with the other shared layers instead of beside a
+ * single page. */
+@import "../styles/fonts.css";
+/* The control layer both surfaces read, bundled here rather than imported by each
+ * document root: a primitive that has to be remembered twice is a primitive that gets
+ * forgotten on the third surface. Position is fixed by the cascade, not by this file's
+ * order — see the header of the file itself. */
+@import "../components/ui/ui.css";
+@import "../styles/tokens.css";
+
+/* Tailwind's tracking namespace re-pointed at the house scale, so the two names the
+   components already write — `tracking-tight` on a heading, `tracking-eyebrow` on an
+   eyebrow — are the tokens above and flat in Arabic with no component change. */
+@theme {
+  --tracking-tight: var(--ls-heading);
+  --tracking-eyebrow: var(--ls-eyebrow);
+}
+
+@theme inline {
+  --color-brand-cream: var(--bg-primary);
+  --color-brand-sand: var(--bg-secondary);
+  --color-brand-dark: var(--bg-dark);
+  --color-brand-dark-card: var(--bg-dark-card);
+  --color-brand-text: var(--text-primary);
+  --color-brand-muted: var(--text-secondary);
+  --color-brand-gold: var(--gold-mid);
+  --color-brand-blush: var(--blush-accent);
+
+  /* Motion (MB-2): the two Tailwind namespaces that read `src/styles/tokens.css`, so a
+     component asks for a role — `duration-hover`, `ease-brand` — and never for a number.
+     `inline` is what makes that a rule rather than a duplicate: the generated utility
+     emits `transition-duration: var(--dur-hover)` instead of baking `.3s` into the sheet,
+     so the token table stays the only place a duration is written and a surface can still
+     re-scope it. `duration-300` could do neither, which is why the site no longer writes
+     it. The easing aliases under `brand-` for the same reason the colours do — the tokens
+     file owns the number, the class is the site's name for it. */
+  --transition-duration-fast: var(--dur-fast);
+  --transition-duration-quick: var(--dur-quick);
+  --transition-duration-ui: var(--dur-ui);
+  --transition-duration-hover: var(--dur-hover);
+  --transition-duration-fade: var(--dur-fade);
+  --transition-duration-reveal: var(--dur-reveal);
+  --ease-brand: var(--ease-signature);
+}
+
+/* MB-2 found this in the sheet, not in the design: the polish rule below sat unlayered,
+   and an unlayered declaration outranks every rule inside `@layer utilities` — so for a
+   year the site's own `transition-colors duration-hover ease-brand` on a link or a button
+   computed to nothing, and the blanket won. That is the same defect as the reference's
+   `!important` blanket, only quieter, and fixing it is what "restored" means here: the
+   timing the components ask for is now the timing that paints.
+   Two numbers make that true for the controls that ask for nothing. The reference's
+   blanket is `.3s` on its house curve, and Tailwind resolves a bare `transition-colors`
+   from `--default-transition-duration` / `-timing-function` at the element, so the site
+   surface sets both: 300 ms, one curve, every control — without a rule that a component
+   cannot override. */
+[data-surface="site"] {
+  --default-transition-duration: var(--dur-hover);
+  --default-transition-timing-function: var(--ease-signature);
+}
+
+* {
+  box-sizing: border-box;
+}
+/* Hover polish. The original site writes a blanket over every element — `.3s`,
+   `!important`, and `all` for the property list — which outranks each of the 131 numeric
+   duration utilities its own components write and animates `width`, `padding` and
+   `visibility`, so every state change costs a reflow and a drawer cannot stop transitioning
+   a property it never meant to. What is worth keeping from it is the timing and the
+   population — every control changes state in colour, fill, border, shadow, transform and
+   opacity — so those six are named and the list sits in `@layer base`, where a component's
+   own utility can still outrank it. MB-2 found the previous version of this rule doing
+   neither: it was unlayered, and an unlayered declaration beats everything inside
+   `@layer utilities`, which is how the site came to have 110 `duration-300` classes that
+   computed to nothing on the links and buttons that wrote them. The scoping marker is the
+   other half: this sheet is the site's, and the console's polish has always lived in
+   `console.css` at its own numbers. */
+@layer base {
+  [data-surface="site"]
+    :is(
+      a,
+      button,
+      input,
+      select,
+      textarea,
+      summary,
+      label,
+      [role="button"],
+      [role="link"],
+      [tabindex]
+    ) {
+    transition:
+      color var(--dur-hover) var(--ease-signature),
+      background-color var(--dur-hover) var(--ease-signature),
+      border-color var(--dur-hover) var(--ease-signature),
+      box-shadow var(--dur-hover) var(--ease-signature),
+      transform var(--dur-hover) var(--ease-signature),
+      opacity var(--dur-hover) var(--ease-signature);
+  }
+}
+
+img {
+  width: 100% !important;
+  height: auto;
+}
+html {
+  scroll-behavior: smooth;
+  /* Anchors and focus jumps must land below the sticky header. */
+  scroll-padding-top: calc(var(--nav-height) + 0.5rem);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  overflow-x: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+[data-surface="site"] .site-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-3);
+  max-inline-size: 48rem;
+  margin-inline: auto;
+  padding: clamp(2rem, 6vw, 3.5rem) clamp(1.25rem, 5vw, 3rem);
+  border: 1px dashed var(--border-control-soft);
+  border-radius: var(--radius-2xl);
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--gold-glow), transparent 68%),
+    var(--bg-card);
+  text-align: center;
+}
+
+[data-surface="site"] .site-empty-state__icon {
+  display: grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  aspect-ratio: 1;
+  border: 1px solid var(--border-control-soft);
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-gold);
+}
+
+[data-surface="site"] .site-empty-state h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-h3);
+  font-weight: 800;
+}
+
+[data-surface="site"] .site-empty-state p {
+  max-inline-size: 36rem;
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: var(--lh-body);
+}
+
+[data-surface="site"] .brand-loading-splash {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--sp-4);
+  min-block-size: min(68svh, 42rem);
+  color: var(--text-gold);
+}
+
+[data-surface="site"] .brand-loading-splash__spinner {
+  inline-size: 2rem;
+  aspect-ratio: 1;
+  border: 2px solid var(--border-control-soft);
+  border-block-start-color: var(--gold-end);
+  border-radius: 50%;
+  animation: brand-loading-spin 0.9s linear infinite;
+}
+
+[data-surface="site"] .brand-loading-splash__logo {
+  inline-size: min(13.75rem, 58vw) !important;
+  block-size: auto;
+  object-fit: contain;
+  animation: brand-loading-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes brand-loading-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes brand-loading-breathe {
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-surface="site"] .brand-loading-splash__spinner,
+  [data-surface="site"] .brand-loading-splash__logo {
+    animation: none;
+  }
+}
+
+html[data-theme="dark"] body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] select,
+html[data-theme="dark"] textarea {
+  color-scheme: dark;
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+/* The type scale, in `@layer base` on purpose: unlayered rules outrank every
+   Tailwind utility, so an unlayered `h1 { font-size }` would have flattened every
+   `text-4xl md:text-6xl` on the site into these four steps in one unverifiable
+   sweep. Here a component that names its own size or leading still wins, and the
+   scale is what a heading gets when it does not — which is how 19.3–19.7 can take
+   these names one section at a time. */
+@layer base {
+  h1 {
+    font-size: var(--fs-h1);
+  }
+  h2 {
+    font-size: var(--fs-h2);
+  }
+  h3 {
+    font-size: var(--fs-h3);
+  }
+  h4 {
+    font-size: var(--fs-h4);
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    line-height: var(--lh-tight);
+    text-wrap: balance;
+  }
+
+  /* Tight tracking is a Latin move only, and the token is what enforces it: this asks
+     for `--ls-heading` on every heading, and Arabic resolves it to nothing. */
+  h1,
+  h2 {
+    letter-spacing: var(--ls-heading);
+  }
+  [dir="rtl"] body {
+    line-height: var(--lh-body);
+  }
+}
+
+/* Digits that hold a column, or hold still while they count. The two faces disagree
+   about OpenType — Montserrat has a `tnum` feature and Readex Pro has none, so the
+   declaration would align half the site and leave the other half jittering — so the
+   space is reserved geometrically instead: `--num-digits` is the longest the value ever
+   gets, the run is centred inside that floor, and the result reads the same at
+   dir="rtl" as at dir="ltr" because an inline-size has no side. A utility rather
+   than a base rule, so it never outranks the component that names its own alignment. */
+@utility num {
+  display: inline-block;
+  min-inline-size: calc(var(--num-digits, 1) * var(--num-cell));
+  text-align: center;
+}
+
+/* A container that is dark in both themes (footer, CTA band, 404, photo panels)
+   re-points every surface-relative token: the ring, the hairline and the gold
+   label are all tuned for cream and read at 2:1 on near-black. */
+.on-dark {
+  --focus-ring: var(--focus-ring-on-dark);
+  --border-control: var(--border-control-on-dark);
+  --border-control-soft: rgba(216, 178, 55, 0.55);
+  --gold-border: rgba(216, 178, 55, 0.8);
+  --text-gold: var(--text-gold-on-dark);
+  /* Ink too, not just the accents: anything here that inherits a colour instead
+     of naming one would otherwise take the light theme's near-black and vanish. */
+  --text-primary: var(--text-on-dark);
+  --text-secondary: var(--text-on-dark-muted);
+  --text-muted: var(--text-on-dark-muted);
+}
+
+/* The gold band is light in both themes, so a cream-tuned ring or hairline vanishes
+   into it. Inside .on-gold those roles take the band's own ink. */
+.on-gold {
+  --focus-ring: var(--ink-on-gold);
+  --border-control: var(--ink-on-gold);
+}
+
+/* One focus ring site-wide. Unlayered, so it wins over `focus:outline-none`
+   utilities and stays visible on light, dark and always-dark surfaces. */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* A placeholder is suggested text, not decoration: it stays at caption strength. */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  opacity: 1;
+}
+
+/* Glassmorphism — the header must stay readable while content scrolls under it. */
+.glass-nav {
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  background: var(--nav-surface);
+  border-bottom: 1px solid var(--gold-border);
+}
+
+.glass-nav-scrolled {
+  background: var(--nav-surface-scrolled);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--gold-border);
+  box-shadow: 0 10px 30px var(--nav-shadow);
+}
+
+/* ============================================
+   Signature Gold Gradient — animated
+   ============================================ */
+
+.bg-gold-gradient {
+  background: var(--gold-gradient);
+  background-size: 220% 220%;
+  animation: goldShift var(--dur-gold) ease-in-out infinite;
+  color: var(--btn-gold-fg);
+  position: relative;
+  overflow: hidden;
+}
+.bg-gold-gradient:hover {
+  color: var(--btn-gold-fg-hover);
+}
+.absolute {
+  position: absolute;
+}
+/* Shine sweep — a soft highlight that glides across */
+.bg-gold-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: goldShine var(--dur-shine) ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes goldShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes goldShine {
+  0% {
+    transform: translateX(-120%);
+  }
+  60% {
+    transform: translateX(120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+/* Hover: speed the shine up a bit */
+.bg-gold-gradient:hover::before {
+  animation-duration: var(--dur-shine-hover);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .bg-gold-gradient {
+    animation: none;
+  }
+  .bg-gold-gradient::before {
+    animation: none;
+    display: none;
+  }
+}
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: #faf7f2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4ac2d;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #8b6914;
+}
+
+/* Marquee strip */
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marqueeScroll var(--dur-marquee) linear infinite;
+}
+
+[dir="rtl"] .animate-marquee {
+  animation-direction: reverse;
+}
+
+/* Image curtain reveal: vertical on mobile, horizontal on desktop. */
+.photo-curtain {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path var(--dur-enter) var(--ease-signature);
+}
+
+.photo-curtain.is-revealed {
+  clip-path: inset(0);
+}
+
+@media (min-width: 1024px) {
+  .photo-curtain {
+    clip-path: inset(0 100% 0 0);
+  }
+}
+
+.photo-curtain img {
+  transform: scale(1.08);
+  transition: transform var(--dur-pan) var(--ease-signature);
+}
+
+.photo-curtain.is-revealed img {
+  transform: scale(1);
+}
+
+/* Above-the-fold reveals: the same fade + rise as the scroll <Reveal>, but in CSS so
+   the hero copy and LCP image paint on first render instead of waiting for hydration.
+   The prefers-reduced-motion block below shortens these to a single frame. */
+@keyframes reveal-mount-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-mount-down {
+  from {
+    opacity: 0;
+    transform: translateY(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-mount-start {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-mount-end {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-mount-none {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+[class*="reveal-mount-"] {
+  animation-duration: var(--dur-reveal);
+  animation-timing-function: var(--ease-signature);
+  animation-fill-mode: both;
+}
+
+/* Scroll reveals. `.reveal-scroll` is the only class present in the server HTML, and
+   it paints nothing: the hidden state is added by the client for elements the user
+   cannot see yet, then removed when they enter the viewport. Same length as the mount
+   animation above, because the reference gives both the same one. */
+.reveal-scroll {
+  transition:
+    opacity var(--dur-reveal) var(--ease-signature),
+    transform var(--dur-reveal) var(--ease-signature);
+}
+
+.reveal-armed {
+  opacity: 0;
+}
+
+.reveal-arm-up {
+  transform: translateY(28px);
+}
+
+.reveal-arm-down {
+  transform: translateY(-28px);
+}
+
+.reveal-arm-start {
+  transform: translateX(-28px);
+}
+
+.reveal-arm-end {
+  transform: translateX(28px);
+}
+
+.reveal-mount-up {
+  animation-name: reveal-mount-up;
+}
+
+.reveal-mount-down {
+  animation-name: reveal-mount-down;
+}
+
+.reveal-mount-start {
+  animation-name: reveal-mount-start;
+}
+
+.reveal-mount-end {
+  animation-name: reveal-mount-end;
+}
+
+.reveal-mount-none {
+  animation-name: reveal-mount-none;
+}
+
+/* Respect reduced motion: disable all animation and smooth scrolling. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .photo-curtain,
+  .photo-curtain.is-revealed {
+    clip-path: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+
+  .animate-marquee {
+    animation: none !important;
+  }
+}
+
+.call-button-phone {
+  border: 0.2px solid #695850;
+  border-radius: 100px;
+}
+/* ============================================
+   Global button font-size overrides
+   Applies to <button>, <a> with button-like classes
+   ============================================ */
+
+button,
+a[class*="rounded-full"]:has(> svg, span),
+a[class*="items-center"]:has(> svg, span) {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (min-width: 480px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 640px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 17px;
+  }
+}
+
+@media (min-width: 1280px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  button,
+  a[class*="rounded-full"]:has(> svg, span),
+  a[class*="items-center"]:has(> svg, span) {
+    font-size: 19px;
+  }
+}
+/* ============================================
+   Shamah-style DatePicker (react-day-picker)
+   ============================================ */
+
+.rdp-shamah {
+  --rdp-cell-size: 38px;
+  --rdp-accent-color: var(--gold-mid);
+  --rdp-accent-background-color: var(--blush-light);
+  --rdp-background-color: var(--blush-light);
+  --rdp-outline: 2px solid var(--gold-mid);
+  --rdp-outline-selected: 2px solid var(--gold-end);
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+}
+
+/* Header (month + nav arrows) */
+.rdp-shamah .rdp-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 4px 12px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--gold-border);
+}
+
+.rdp-shamah .rdp-caption_label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: var(--ls-soft);
+}
+
+.rdp-shamah .rdp-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.rdp-shamah .rdp-nav_button {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold-end);
+  background: transparent;
+  border: 1px solid transparent;
+  /* The reference writes `transition: all .25s` here. `all` bought nothing: the hover
+     rule below changes two properties, and both are named — a cell that also animated
+     `width` would reflow the month grid on every pointer move. */
+  transition:
+    background-color var(--dur-ui) var(--ease-signature),
+    border-color var(--dur-ui) var(--ease-signature);
+  cursor: pointer;
+}
+
+.rdp-shamah .rdp-nav_button:hover {
+  background: var(--blush-light);
+  border-color: var(--gold-border);
+}
+
+/* Weekday labels */
+.rdp-shamah .rdp-head_cell {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--ls-label);
+  padding-bottom: 6px;
+}
+
+/* Days */
+.rdp-shamah .rdp-day {
+  width: var(--rdp-cell-size);
+  height: var(--rdp-cell-size);
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  /* `all .2s ease` in the reference; the three properties a day cell can be in a
+     different state for are colour, its fill, and the selected ring. The gradient the
+     selected day takes is a background-*image*, so no timing could ever have animated it
+     — naming the list says so out loud instead of leaving it to `all`. */
+  transition:
+    color var(--dur-quick) ease,
+    background-color var(--dur-quick) ease,
+    box-shadow var(--dur-quick) ease;
+  cursor: pointer;
+}
+
+.rdp-shamah .rdp-day:hover:not(.rdp-day_selected):not(.rdp-day_disabled) {
+  background: var(--blush-light);
+  color: var(--gold-end);
+}
+
+/* Selected day */
+.rdp-shamah .rdp-day_selected,
+.rdp-shamah .rdp-day_selected:hover {
+  background: var(--gold-gradient);
+  color: #ffffff;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(201, 162, 39, 0.35);
+}
+
+/* Today (not selected) */
+.rdp-shamah .rdp-day_today:not(.rdp-day_selected) {
+  color: var(--gold-end);
+  font-weight: 800;
+  position: relative;
+}
+
+.rdp-shamah .rdp-day_today:not(.rdp-day_selected)::after {
+  content: "";
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--gold-mid);
+}
+
+/* Disabled days */
+.rdp-shamah .rdp-day_disabled {
+  color: var(--text-muted);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Outside days */
+.rdp-shamah .rdp-day_outside {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.rdp-shamah[dir="rtl"] .rdp-nav_button svg {
+  transform: scaleX(-1);
+}
+@keyframes dropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.dropdown-panel {
+  animation: dropdownIn var(--dur-menu) var(--ease-signature) both;
+  transform-origin: top center;
+}
+@keyframes dropdownOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+.dropdown-panel-out {
+  animation: dropdownOut var(--dur-menu) var(--ease-signature) both;
+  transform-origin: top center;
+}
+a {
+  text-decoration: none;
+} 
