@@ -95,3 +95,7 @@ next-env.d.ts
 
 # Local credential scratch file; never publish credentials from this path.
 /src/lib/db/senstive.txt
+
+# Private cPanel deployment copy and generated archive are published separately.
+/cpanel-upload/
+/shamah-cpanel-newshamah.zip
