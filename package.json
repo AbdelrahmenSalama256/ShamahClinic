@@ -33,6 +33,11 @@
     "track:maintain": "tsx scripts/tracking-maintain.ts"
   },
   "dependencies": {
+    "@tiptap/extension-image": "^3.33.0",
+    "@tiptap/extension-link": "^3.33.0",
+    "@tiptap/extension-table": "^3.33.0",
+    "@tiptap/react": "^3.33.0",
+    "@tiptap/starter-kit": "^3.33.0",
     "bcryptjs": "^3.0.2",
     "cheerio": "^1.2.0",
     "clsx": "^2.1.1",
@@ -62,6 +67,7 @@
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.6",
+    "jsdom": "^31.0.0",
     "tailwindcss": "^4",
     "tsx": "^4.20.6",
     "typescript": "^5",
