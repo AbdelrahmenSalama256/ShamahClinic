@@ -86,7 +86,6 @@ function article(over: Partial<Article>): Article {
     readMinutes: 4,
     image: slot,
     tags: { ar: [], en: [] },
-    sections: [],
     ...over,
   };
 }

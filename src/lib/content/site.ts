@@ -28,6 +28,8 @@ import { db } from '../db';
 import { SITE_URL } from '../site';
 import { getLocalizedHref } from '../locale';
 import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
+import { readMissingTextRule, resolveMissingText, type MissingText } from './language-fill';
+import { teaserPair } from './teaser';
 import { offerLiveOn } from './offer-services';
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
@@ -76,7 +78,11 @@ async function rung<T>(kind: ContentKind, fromDb: () => Promise<T>, empty: T): P
 function pair(row: PublicRow, name: string): Bi {
   const value: PublicValue | undefined = row.values[name];
   if (!value || value.kind !== 'bi') return { ar: '', en: '' };
-  return { ar: value.ar || value.en, en: value.en || value.ar };
+  // No `|| value.en` here, and none belongs: the row arrived already answered by
+  // `./language-fill.ts`, which fills the other locale only when the owner switched that
+  // on. A reader that re-cross-filled would render English on `/ar` past a switch that
+  // says it is off.
+  return { ar: value.ar, en: value.en };
 }
 
 /** WordPress hands the site HTML-encoded titles; an editor's text is already decoded. */
@@ -88,6 +94,17 @@ function decoded(source: Bi): Bi {
 function htmlPair(row: PublicRow, name: string): Bi {
   const value = pair(row, name);
   return { ar: htmlToText(value.ar), en: htmlToText(value.en) };
+}
+
+/**
+ * A teaser in the language the page is rendered in.
+ *
+ * The rule itself is `./teaser.ts`, beside the reason it exists; this only lifts the two
+ * pairs out of the row. `stripBuilderNoise()` and not the full render pipeline, because a
+ * list asks this of every card and a teaser needs the words, not the markup.
+ */
+function excerptPair(row: PublicRow, bodyName: string): Bi {
+  return teaserPair(htmlPair(row, 'excerpt'), pair(row, bodyName));
 }
 
 function text(row: PublicRow, name: string): string | null {
@@ -175,12 +192,15 @@ interface CategoryRef {
 
 /** The `categories` rows an article's `category_id` can point at. One per render. */
 const categoryIndex = cache(async (): Promise<Map<string, CategoryRef>> => {
-  const rows = await db
-    .selectFrom('categories')
-    .select(['id', 'slug', 'name_ar', 'name_en'])
-    .where('deleted_at', 'is', null)
-    .execute();
-  return new Map(rows.map((row) => [row.id, { slug: row.slug, name: { ar: row.name_ar || row.name_en, en: row.name_en || row.name_ar } }]));
+  const [rows, missingText] = await Promise.all([
+    db
+      .selectFrom('categories')
+      .select(['id', 'slug', 'name_ar', 'name_en'])
+      .where('deleted_at', 'is', null)
+      .execute(),
+    readMissingTextRule(),
+  ]);
+  return new Map(rows.map((row) => [row.id, { slug: row.slug, name: resolveMissingText(missingText, { ar: row.name_ar, en: row.name_en }) }]));
 });
 
 function articleCard(row: PublicRow, index: number, categories: Map<string, CategoryRef>): ArticleCard {
@@ -191,7 +211,7 @@ function articleCard(row: PublicRow, index: number, categories: Map<string, Cate
     id: numericId(row, index),
     slug: row.key,
     title,
-    excerpt: htmlPair(row, 'excerpt'),
+    excerpt: excerptPair(row, 'content'),
     image: text(row, 'image'),
     imageAlt: decoded(pair(row, 'imageAlt')),
     date: row.publishedAt ?? row.updatedAt,
@@ -233,12 +253,9 @@ export async function getPost(slug: string): Promise<WithSeo<Article> | null> {
       const content = body(row, 'content');
       const article: Article = {
         ...card,
-        // A card with no teaser still needs one, and the body's first paragraph is
-        // what the site shows beside it.
-        excerpt: {
-          ar: card.excerpt.ar || firstParagraph(content.ar),
-          en: card.excerpt.en || firstParagraph(content.en),
-        },
+        // `card.excerpt` is already the Arabic sentence when the article has one: the
+        // same rule `excerptPair()` applied to the body, so the card on the journal page
+        // and the line under this headline cannot disagree about what the article says.
         content,
       };
       return { item: article, seo: publicSeo('article', card.slug, article.title, article.excerpt, article.image) };
@@ -249,7 +266,7 @@ export async function getPost(slug: string): Promise<WithSeo<Article> | null> {
 
 export async function getCategories(): Promise<CategoryTerm[]> {
   try {
-    const [rows, counts] = await Promise.all([
+    const [rows, counts, missingText] = await Promise.all([
       db
         .selectFrom('categories')
         .select(['id', 'slug', 'name_ar', 'name_en'])
@@ -258,6 +275,7 @@ export async function getCategories(): Promise<CategoryTerm[]> {
         .orderBy('position', 'asc')
         .execute(),
       articleCategoryCounts(),
+      readMissingTextRule(),
     ]);
     if (rows.length) {
       note('db', 'category');
@@ -265,7 +283,7 @@ export async function getCategories(): Promise<CategoryTerm[]> {
         .map((row, index) => ({
           id: index + 1,
           slug: row.slug,
-          name: { ar: row.name_ar || row.name_en, en: row.name_en || row.name_ar },
+          name: resolveMissingText(missingText, { ar: row.name_ar, en: row.name_en }),
           count: counts.get(row.id) ?? 0,
         }))
         .sort((a, b) => b.count - a.count);
@@ -296,7 +314,7 @@ const articleCategoryCounts = cache(async (): Promise<Map<string, number>> => {
 // --- offers -------------------------------------------------------------------
 
 /** An authored image entry: a URL, or an object with the alt text in both languages. */
-function offerImages(value: unknown, name: Bi): Array<{ src: string; alt: Bi }> {
+function offerImages(value: unknown, name: Bi, missingText: MissingText): Array<{ src: string; alt: Bi }> {
   if (!Array.isArray(value)) return [];
   const out: Array<{ src: string; alt: Bi }> = [];
   for (const entry of value) {
@@ -312,7 +330,7 @@ function offerImages(value: unknown, name: Bi): Array<{ src: string; alt: Bi }> 
     const alt = typeof raw.alt === 'string' ? raw.alt.trim() : '';
     // WooCommerce prints an empty alt for most product images, so the product's own
     // name stands in — an image with no text at all is unreadable to a screen reader.
-    out.push({ src, alt: { ar: alt || name.ar || name.en, en: alt || name.en || name.ar } });
+    out.push({ src, alt: resolveMissingText(missingText, { ar: alt || name.ar, en: alt || name.en }) });
   }
   return out;
 }
@@ -323,12 +341,12 @@ function offer(row: PublicRow, index: number): Offer {
   const regular = number(row, 'regularPrice') || price;
   const onSale = flag(row, 'onSale');
   const discount = onSale && regular > price && price > 0 ? Math.round(((regular - price) / regular) * 100) : null;
-  const images = offerImages(json(row, 'images'), name);
+  const images = offerImages(json(row, 'images'), name, row.missingText);
   return {
     id: numericId(row, index),
     slug: row.key,
     name,
-    excerpt: htmlPair(row, 'excerpt'),
+    excerpt: excerptPair(row, 'body'),
     price,
     regularPrice: regular,
     currency: text(row, 'currency') || 'EGP',

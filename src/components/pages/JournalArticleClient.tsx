@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
@@ -12,6 +12,9 @@ import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
 import { useSpecialist } from "@/context/SpecialistsContext";
+import { ArticleCtaBox } from "@/components/pages/ArticleCtaBox";
+import { ArticleTocView, useArticleToc } from "@/components/pages/ArticleToc";
+import type { BodySegment, TocEntry } from "@/lib/content/article-body";
 import {
   Clock,
   CalendarDays,
@@ -21,14 +24,25 @@ import {
   Link2,
   Check,
   ChevronUp,
-  List,
   BookOpen,
 } from "lucide-react";
 
+/**
+ * The public article page.
+ *
+ * The body arrives as server-prepared segments (`article-body.ts`), in the language the
+ * route is served in: the HTML already carries its heading ids, its FAQ pairs are split
+ * into question and answer, and its call-to-action blocks are already the site's own.
+ * Nothing here parses markup, counts sections by index, or decides what an anchor is
+ * called — that all happened before a byte reached the browser, which is why the table of
+ * contents cannot shift the layout and works with JavaScript switched off.
+ */
 export const JournalArticleClient: React.FC<{
   article: Article;
+  body: BodySegment[];
+  toc: TocEntry[];
   related?: Article[];
-}> = ({ article, related = [] }) => {
+}> = ({ article, body, toc, related = [] }) => {
   const { t, language, formatNumber } = useLanguage();
   const author = useSpecialist(article.authorId);
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
@@ -44,19 +58,9 @@ export const JournalArticleClient: React.FC<{
       ? article.title
       : { ar: untitled, en: untitled };
 
-  // ── Build TOC from sections ──
-  const toc = useMemo(
-    () =>
-      article.sections
-        .map((s, i) => ({
-          id: `section-${i}`,
-          heading: s.heading,
-        }))
-        .filter((s) => s.heading),
-    [article.sections],
-  );
+  const scroll = useArticleToc(toc);
 
-  // ── Reading progress ──
+  // Reading progress
   const [progress, setProgress] = useState(0);
   useEffect(() => {
     const onScroll = () => {
@@ -69,7 +73,7 @@ export const JournalArticleClient: React.FC<{
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // ── Share ──
+  // Share
   const [copied, setCopied] = useState(false);
   const pageUrl = typeof window !== "undefined" ? window.location.href : "";
   const shareText = language === "ar" ? title.ar : title.en;
@@ -86,13 +90,17 @@ export const JournalArticleClient: React.FC<{
     } catch {}
   };
 
-  // ── Sticky "back to top" ──
+  // Sticky "back to top"
   const [showTop, setShowTop] = useState(false);
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 600);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  // An article the author put a CTA inside never gets the template one as well; the
+  // fixed box is only the fallback for bodies that carry no block of their own.
+  const hasCtaBlock = body.some((segment) => segment.kind === "cta");
 
   return (
     <>
@@ -153,62 +161,60 @@ export const JournalArticleClient: React.FC<{
                 )}
               </Reveal>
 
+              {/* Mobile table of contents, above the body it describes */}
+              {toc.length > 0 && (
+                <div className="lg:hidden mb-8">
+                  <ArticleTocView toc={toc} scroll={scroll} variant="fold" />
+                </div>
+              )}
+
               {/* Body */}
-              <div className="space-y-10">
-                {article.sections.map((sec, i) => (
-                  <Reveal key={i} className="scroll-mt-28">
-                    <section id={`section-${i}`}>
-                      {sec.heading && (
-                        <h2 className="text-xl sm:text-2xl lg:text-[28px] font-black text-[var(--text-primary)] mb-4 leading-snug">
-                          {t(sec.heading.ar, sec.heading.en)}
-                        </h2>
-                      )}
-                      <div className="space-y-4">
-                        {sec.paragraphs[language].map((p, j) => (
-                          <p
-                            key={j}
-                            className="text-[15px] sm:text-base lg:text-[17px] leading-[1.9] text-[var(--text-secondary)]"
-                          >
-                            {p}
-                          </p>
-                        ))}
-                      </div>
-                      {sec.bullets && (
-                        <ul className="mt-5 space-y-2.5 border-s-2 border-[var(--gold-border)] ps-5">
-                          {sec.bullets[language].map((b) => (
-                            <li
-                              key={b}
-                              className="text-[15px] sm:text-base leading-relaxed text-[var(--text-primary)]"
-                            >
-                              {b}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </section>
-                  </Reveal>
-                ))}
+              <div className="space-y-8">
+                {body.map((segment, index) => {
+                  if (segment.kind === "html") {
+                    return (
+                      <div
+                        key={index}
+                        className="article-prose"
+                        dangerouslySetInnerHTML={{ __html: segment.html }}
+                      />
+                    );
+                  }
+                  if (segment.kind === "faq") {
+                    return (
+                      <details key={segment.id} id={segment.id} className="article-faq">
+                        <summary className="article-faq-question">{segment.question}</summary>
+                        <div
+                          className="article-faq-answer"
+                          dangerouslySetInnerHTML={{ __html: segment.answerHtml }}
+                        />
+                      </details>
+                    );
+                  }
+                  return <ArticleCtaBox key={index} variant={segment.variant} />;
+                })}
               </div>
 
-              {/* Inline CTA — mid-article */}
-              <Reveal className="on-gold my-12 rounded-2xl bg-gold-gradient p-6 sm:p-8 text-center shadow-lg">
-                <h3 className="text-lg sm:text-xl font-black text-[var(--ink-on-gold)] mb-2">
-                  {t(
-                    "محتاجة استشارة شخصية لحالتكِ؟",
-                    "Need a personal consultation for your case?",
-                  )}
-                </h3>
-                <p className="text-sm text-[var(--ink-on-gold-muted)] mb-5 max-w-lg mx-auto">
-                  {t(
-                    "احجزي موعدكِ مع إحدى طبيباتنا واستلمي خطة مخصصة لبشرتكِ.",
-                    "Book your appointment with one of our doctors and get a plan tailored to your skin.",
-                  )}
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <BookButton size="lg" />
-                  <WhatsAppButton size="lg" />
-                </div>
-              </Reveal>
+              {!hasCtaBlock && (
+                <Reveal className="on-gold my-12 rounded-2xl bg-gold-gradient p-6 sm:p-8 text-center shadow-lg">
+                  <h3 className="text-lg sm:text-xl font-black text-[var(--ink-on-gold)] mb-2">
+                    {t(
+                      "محتاجة استشارة شخصية لحالتكِ؟",
+                      "Need a personal consultation for your case?",
+                    )}
+                  </h3>
+                  <p className="text-sm text-[var(--ink-on-gold-muted)] mb-5 max-w-lg mx-auto">
+                    {t(
+                      "احجزي موعدكِ مع إحدى طبيباتنا واستلمي خطة مخصصة لبشرتكِ.",
+                      "Book your appointment with one of our doctors and get a plan tailored to your skin.",
+                    )}
+                  </p>
+                  <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <BookButton size="lg" />
+                    <WhatsAppButton size="lg" />
+                  </div>
+                </Reveal>
+              )}
 
               {/* Tags */}
               <div className="mt-10 flex flex-wrap gap-2">
@@ -341,38 +347,8 @@ export const JournalArticleClient: React.FC<{
             {/* ══════════════ SIDEBAR ══════════════ */}
             <aside className="hidden lg:block min-w-0">
               <div className="sticky top-28 space-y-8">
-                {/* TOC */}
                 {toc.length > 0 && (
-                  <nav
-                    aria-label="Table of contents"
-                    className="rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-5"
-                  >
-                    <div className="flex items-center gap-2 mb-3 pb-3 border-b border-[var(--border-control)]">
-                      <List className="w-4 h-4 text-[var(--text-gold)]" />
-                      <span className="text-xs font-bold uppercase tracking-wider text-[var(--text-primary)]">
-                        {t("في هذا المقال", "In this article")}
-                      </span>
-                    </div>
-                    <ul className="space-y-2.5">
-                      {toc.map((item, i) => (
-                        <li key={item.id}>
-                          <a
-                            href={`#${item.id}`}
-                            className="group flex items-start gap-2 text-[13px] leading-snug text-[var(--text-secondary)] hover:text-[var(--gold-end)] transition-colors"
-                          >
-                            <span className="text-[10px] font-bold text-[var(--gold-end)] num [--num-digits:2] pt-0.5 shrink-0">
-                              {formatNumber(i + 1)}
-                            </span>
-                            <span className="border-b border-transparent group-hover:border-[var(--gold-border)] transition-colors">
-                              {item.heading
-                                ? t(item.heading.ar, item.heading.en)
-                                : ""}
-                            </span>
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </nav>
+                  <ArticleTocView toc={toc} scroll={scroll} variant="aside" />
                 )}
 
                 {/* Sidebar CTA */}
@@ -421,3 +397,5 @@ export const JournalArticleClient: React.FC<{
     </>
   );
 };
+
+export default JournalArticleClient;

@@ -14,6 +14,9 @@
  * They are plain fields here rather than a JSON box, because the person editing a phone
  * number should not have to quote it.
  *
+ * Language: one switch, and the only place the site is allowed to answer an empty Arabic
+ * field with the English one. Its reader is `./language-fill.ts`.
+ *
  * There is deliberately no fourth way in. An earlier "Advanced" pane listed whatever this
  * screen had no field for and let a person type its JSON; it is gone, because a value
  * posted as JSON is a value nobody can check and any of us can corrupt. A setting that
@@ -39,6 +42,8 @@ import type { MessageKey } from "@/lib/console/messages";
 import type { ConsoleLocale } from "@/lib/console/prefs";
 import type { SettingView } from "@/lib/content/settings";
 import {
+  LANGUAGE_SETTING_GROUP,
+  MISSING_TEXT_SETTING_KEY,
   PAGE_SETTING_GROUP,
   SEO_SETTING_FIELDS,
   SITE_PAGES,
@@ -48,6 +53,7 @@ import {
   type SettingField,
   type SitePageKey,
 } from "@/lib/content/settings-catalog";
+import type { MissingText } from "@/lib/content/language-fill";
 import {
   BANNER_DEFAULTS,
   BANNER_PAGES,
@@ -156,6 +162,7 @@ export function SettingsWorkspace({
   pages,
   banners,
   defaults,
+  missingText,
   locale,
   labels,
   canWrite,
@@ -164,6 +171,8 @@ export function SettingsWorkspace({
   pages: PageStates;
   banners: SavedBanners;
   defaults: Record<string, string>;
+  /** the saved missing-text rule, so the switch shows what the site actually renders */
+  missingText: MissingText;
   locale: ConsoleLocale;
   labels: Record<MessageKey, string>;
   canWrite: boolean;
@@ -177,6 +186,7 @@ export function SettingsWorkspace({
   const [bannerDraft, setBannerDraft] = useState<
     Partial<Record<BannerPageKey, BannerSetting>>
   >({});
+  const [fallbackDraft, setFallbackDraft] = useState<boolean | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const noticeId = useId();
@@ -310,6 +320,32 @@ export function SettingsWorkspace({
         altEn: src ? value.altEn.trim() : "",
       },
     }));
+    router.refresh();
+  }
+
+  /** The switch's live value: the tick the person just made, else what the site renders. */
+  const fallbackSaved = missingText === "other-language";
+  const fallbackOn = fallbackDraft ?? fallbackSaved;
+  const fallbackDirty = fallbackDraft !== null && fallbackDraft !== fallbackSaved;
+
+  async function saveFallback(): Promise<void> {
+    if (!fallbackDirty) {
+      setNotice({ tone: "neutral", text: labels["settings.no_changes"] });
+      return;
+    }
+    setBusy("language");
+    const result = await consoleCall("/api/console/settings", "PATCH", {
+      group: LANGUAGE_SETTING_GROUP,
+      key: MISSING_TEXT_SETTING_KEY,
+      value: fallbackDraft === true,
+    });
+    setBusy(null);
+    if (result.error) {
+      failure(result.error);
+      return;
+    }
+    setNotice({ tone: "ok", text: labels["content.saved"] });
+    setFallbackDraft(null);
     router.refresh();
   }
 
@@ -712,6 +748,44 @@ export function SettingsWorkspace({
               </Field>
             );
           })}
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        id="settings-language"
+        index="05"
+        title={labels["settings.language.heading"]}
+        lede={labels["settings.language.intro"]}
+        detail={labels["settings.language.detail"]}
+        dirty={fallbackDirty}
+        dirtyLabel={dirtyLabel}
+        busy={busy === "language"}
+        footer={
+          canWrite ? (
+            <Button
+              variant="primary"
+              loading={busy === "language"}
+              disabled={
+                (busy !== null && busy !== "language") || !fallbackDirty
+              }
+              onClick={() => void saveFallback()}
+            >
+              {labels["content.save"]}
+            </Button>
+          ) : null
+        }
+      >
+        <div className="console-fields">
+          <div className="console-field">
+            <Checkbox
+              id="settings-missing-text-fallback"
+              checked={fallbackOn}
+              disabled={!canWrite || busy !== null}
+              onChange={(event) => setFallbackDraft(event.target.checked)}
+              label={labels["settings.language.fallback"]}
+            />
+            <Note>{labels["settings.language.fallback_hint"]}</Note>
+          </div>
         </div>
       </SettingsSection>
 

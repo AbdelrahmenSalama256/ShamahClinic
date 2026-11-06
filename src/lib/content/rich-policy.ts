@@ -15,7 +15,7 @@
 export const RICH_ALLOWED_TAGS: readonly string[] = [
   'p', 'br', 'hr', 'h2', 'h3', 'h4', 'h5', 'strong', 'b', 'em', 'i', 'u', 's',
   'ul', 'ol', 'li', 'blockquote', 'a', 'img', 'figure', 'figcaption', 'table',
-  'thead', 'tbody', 'tr', 'th', 'td', 'span', 'div',
+  'thead', 'tbody', 'tr', 'th', 'td', 'span', 'div', 'section',
 ];
 
 /**
@@ -24,11 +24,27 @@ export const RICH_ALLOWED_TAGS: readonly string[] = [
  * `class` is kept because the site's prose styles hang off it (`wp-block-paragraph` and
  * friends), and it carries no behaviour. `style` is not: an inline declaration can
  * overlay the page, hide a cookie banner or data-exfiltrate through a background URL.
+ *
+ * `data-block` / `data-cta` name the two structured blocks the body editor inserts —
+ * an FAQ pair and a call-to-action box — and are the only markers the public renderer
+ * looks for; nothing else reads a `data-*` off a body. `start` is the list number an
+ * ordered list resumes from, and the span/row counts are what keeps a table's shape.
+ *
+ * `id` is kept so an author's own anchor survives — the table of contents honours an id
+ * that was set on purpose instead of renaming it. It is not trusted: `article-body.ts`
+ * re-writes the attribute on every heading it prints, keeping the author's value only
+ * while it is address-shaped and not already taken, so nothing a person types reaches
+ * the page as an id unexamined.
  */
 export const RICH_ALLOWED_ATTRIBUTES: Record<string, readonly string[]> = {
   a: ['href', 'title', 'target', 'rel'],
   img: ['src', 'alt', 'title', 'width', 'height', 'loading'],
-  '*': ['class'],
+  ol: ['start'],
+  td: ['colspan', 'rowspan'],
+  th: ['colspan', 'rowspan'],
+  section: ['data-block', 'data-cta'],
+  div: ['data-faq-answer'],
+  '*': ['class', 'id'],
 };
 
 /** `data:` would let a whole document ride in an `href`; `blob:` dies with the tab. */

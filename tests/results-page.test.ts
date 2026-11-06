@@ -540,7 +540,6 @@ function article(slug: string, title: Record<ContentLocale, string>): Article {
     isoDate: '2026-10-26',
     image: { src: '/uploads/article.jpg', alt: title, width: 1200, height: 800, focal: '50% 50%' },
     tags: { ar: [], en: [] },
-    sections: [],
   };
 }
 

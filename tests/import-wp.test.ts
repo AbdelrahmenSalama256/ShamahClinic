@@ -26,6 +26,8 @@ import { assertTestDb } from '../src/lib/db/guard';
 import { readDbConfig } from '../src/lib/db/index';
 import { plainText } from '../src/lib/content/format';
 import { kindSpec, parseWrites, type ContentLocale } from '../src/lib/content/kinds';
+import { answersIn } from '../src/lib/content/language-fill';
+import { htmlToText } from '../src/lib/wp/sanitize';
 import { importSnapshot, planArticles, planCategories, planDocs, planOffers, planPages, planResultStories, type ImportReport } from '../src/lib/content/import-wp';
 import { syncLists } from '../src/lib/content/lists';
 import { hasPublished } from '../src/lib/content/published';
@@ -219,6 +221,10 @@ describe('the imported rows answer the site', () => {
     const fromDatabase = new Map((await getAllArticles()).map((card) => [card.slug, card]));
     const fromSnapshot = await wp.getAllArticles();
     expect(fromDatabase.size).toBe(fromSnapshot.length);
+    // The live Arabic body, to ask of it the question the teaser rule asks.
+    const bodies = new Map(
+      (await db.selectFrom('articles').select(['slug', 'pub_content_ar']).execute()).map((row) => [row.slug, row.pub_content_ar ?? '']),
+    );
 
     for (const card of fromSnapshot) {
       const mine = fromDatabase.get(card.slug);
@@ -231,7 +237,14 @@ describe('the imported rows answer the site', () => {
       // never prints the doubled space WordPress renders between two runs, so the card
       // it builds is the same sentence either way.
       expect(mine.title).toEqual({ ar: plainText(card.title.ar), en: plainText(card.title.en) });
-      expect(mine.excerpt).toEqual({ ar: plainText(card.excerpt.ar), en: plainText(card.excerpt.en) });
+      // One field is deliberately not the snapshot's: the Arabic teaser. WordPress wrote
+      // 92 auto-excerpts that are English sentences, so `/ar` answers them with the
+      // article's own opening — and where the Arabic body is English too, which the audit
+      // SQL counts, it keeps saying so rather than inventing a translation.
+      const storedAr = plainText(card.excerpt.ar);
+      if (answersIn('ar', storedAr)) expect(mine.excerpt.ar).toBe(storedAr);
+      else expect(answersIn('ar', mine.excerpt.ar)).toBe(answersIn('ar', htmlToText(bodies.get(card.slug) ?? '')));
+      expect(mine.excerpt.en).toBe(plainText(card.excerpt.en));
       expect(mine.image).toBe(card.image);
       expect(mine.imageAlt).toEqual(card.imageAlt);
       expect(mine.categorySlug).toBe(card.categorySlug);
@@ -249,12 +262,20 @@ describe('the imported rows answer the site', () => {
     const fromDatabase = await getAllOffers('en');
     const fromSnapshot = await wp.getAllOffers('en');
     expect(fromDatabase).toHaveLength(fromSnapshot.length);
+    const bodies = new Map(
+      (await db.selectFrom('offers').select(['slug', 'pub_body_ar']).execute()).map((row) => [row.slug, row.pub_body_ar ?? '']),
+    );
 
     fromSnapshot.forEach((card, index) => {
       const mine = fromDatabase[index];
       expect(mine.id).toBe(card.id);
       expect(mine.name).toEqual(card.name);
-      expect(mine.excerpt).toEqual(card.excerpt);
+      // The same teaser rule as the journal, and the same answer: these four Arabic
+      // excerpts are WooCommerce English, their Arabic bodies are English too, so the
+      // card stays English and the audit SQL counts the row.
+      if (answersIn('ar', card.excerpt.ar)) expect(mine.excerpt.ar).toBe(card.excerpt.ar);
+      else expect(answersIn('ar', mine.excerpt.ar)).toBe(answersIn('ar', htmlToText(bodies.get(mine.slug) ?? '')));
+      expect(mine.excerpt.en).toBe(card.excerpt.en);
       expect(mine.price).toBe(card.price);
       expect(mine.regularPrice).toBe(card.regularPrice);
       expect(mine.currency).toBe(card.currency);

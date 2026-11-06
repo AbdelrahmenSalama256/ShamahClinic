@@ -5,7 +5,7 @@
  * console writes and the default the site falls back to. `npm run copy:catalog` rewrites
  * this file; `npm run build` fails when it is stale.
  *
- * 246 entries from 133 components. Data-driven calls
+ * 253 entries from 135 components. Data-driven calls
  * (`t(row.name.ar, row.name.en)`) are console rows, not copy, and are not listed here.
  */
 export interface CopyEntry {
@@ -66,7 +66,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Book",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 328,
+    line: 329,
     uses: 1,
   },
   {
@@ -156,7 +156,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Book appointment",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 323,
+    line: 324,
     uses: 1,
   },
   {
@@ -232,6 +232,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.1762fad55176",
+    ar: "استشارة شخصية",
+    en: "Personal consultation",
+    area: "pages",
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 69,
+    uses: 1,
+  },
+  {
     key: "copy.193b2e820e6a",
     ar: "العروض والباقات",
     en: "Offers and packages",
@@ -301,6 +310,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "pages",
     file: "src/components/pages/DoctorsClient.tsx",
     line: 43,
+    uses: 1,
+  },
+  {
+    key: "copy.20570d9f979e",
+    ar: "أسئلتكِ على واتساب",
+    en: "Ask us on WhatsApp",
+    area: "pages",
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 49,
     uses: 1,
   },
   {
@@ -381,7 +399,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Switch language",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 304,
+    line: 305,
     uses: 1,
   },
   {
@@ -390,7 +408,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Appearance",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 468,
+    line: 469,
     uses: 1,
   },
   {
@@ -417,7 +435,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All treatments",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 265,
+    line: 266,
     uses: 2,
   },
   {
@@ -462,7 +480,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Our services",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 557,
+    line: 558,
     uses: 2,
   },
   {
@@ -489,7 +507,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Current language",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 483,
+    line: 484,
     uses: 1,
   },
   {
@@ -507,7 +525,16 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Navigation menu",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 372,
+    line: 373,
+    uses: 1,
+  },
+  {
+    key: "copy.367d6fdef34a",
+    ar: "اختاري الطبيبة والوقت الذي يناسبكِ، ويصلكِ تأكيد الموعد.",
+    en: "Choose the doctor and the time that suits you, and we confirm the appointment.",
+    area: "pages",
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 33,
     uses: 1,
   },
   {
@@ -547,13 +574,22 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.3bd2f3649b79",
+    ar: "احجزي موعدكِ الآن",
+    en: "Book your appointment now",
+    area: "pages",
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 31,
+    uses: 1,
+  },
+  {
     key: "copy.3c5feabf0459",
     ar: "احجزي موعدكِ مع إحدى طبيباتنا واستلمي خطة مخصصة لبشرتكِ.",
     en: "Book your appointment with one of our doctors and get a plan tailored to your skin.",
     area: "pages",
-    file: "src/components/pages/JournalArticleClient.tsx",
-    line: 202,
-    uses: 1,
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 74,
+    uses: 2,
   },
   {
     key: "copy.3fcac8cb4e3d",
@@ -606,7 +642,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Author",
     area: "pages",
     file: "src/components/pages/JournalArticleClient.tsx",
-    line: 298,
+    line: 304,
     uses: 1,
   },
   {
@@ -633,7 +669,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Light mode",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 290,
+    line: 291,
     uses: 2,
   },
   {
@@ -956,9 +992,9 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     ar: "محتاجة استشارة شخصية لحالتكِ؟",
     en: "Need a personal consultation for your case?",
     area: "pages",
-    file: "src/components/pages/JournalArticleClient.tsx",
-    line: 196,
-    uses: 1,
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 71,
+    uses: 2,
   },
   {
     key: "copy.706b23d9cd88",
@@ -966,7 +1002,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Share this article:",
     area: "pages",
     file: "src/components/pages/JournalArticleClient.tsx",
-    line: 229,
+    line: 235,
     uses: 1,
   },
   {
@@ -975,7 +1011,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Chat on WhatsApp",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 314,
+    line: 315,
     uses: 2,
   },
   {
@@ -1002,7 +1038,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Back to all blogs",
     area: "pages",
     file: "src/components/pages/JournalArticleClient.tsx",
-    line: 402,
+    line: 378,
     uses: 1,
   },
   {
@@ -1047,7 +1083,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Shamah Clinics - Home",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 163,
+    line: 164,
     uses: 1,
   },
   {
@@ -1335,7 +1371,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Primary",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 180,
+    line: 181,
     uses: 2,
   },
   {
@@ -1344,7 +1380,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Switch to light mode",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 285,
+    line: 286,
     uses: 1,
   },
   {
@@ -1370,9 +1406,9 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     ar: "في هذا المقال",
     en: "In this article",
     area: "pages",
-    file: "src/components/pages/JournalArticleClient.tsx",
-    line: 353,
-    uses: 1,
+    file: "src/components/pages/ArticleToc.tsx",
+    line: 232,
+    uses: 4,
   },
   {
     key: "copy.95f60f883a04",
@@ -1398,7 +1434,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Related blogs",
     area: "pages",
     file: "src/components/pages/JournalArticleClient.tsx",
-    line: 322,
+    line: 328,
     uses: 1,
   },
   {
@@ -1434,7 +1470,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Switch to dark mode",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 286,
+    line: 287,
     uses: 1,
   },
   {
@@ -1471,6 +1507,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "home",
     file: "src/components/home/HomeHero.tsx",
     line: 299,
+    uses: 1,
+  },
+  {
+    key: "copy.a3c7a76653f5",
+    ar: "أرسلي لنا صورتكِ وسؤالكِ، ويرد عليكِ فريقنا في ساعات العمل.",
+    en: "Send us your photo and your question, and our team replies during working hours.",
+    area: "pages",
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 52,
     uses: 1,
   },
   {
@@ -1578,7 +1623,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Personal consultation",
     area: "pages",
     file: "src/components/pages/JournalArticleClient.tsx",
-    line: 384,
+    line: 360,
     uses: 1,
   },
   {
@@ -1587,7 +1632,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Nasr City • New Cairo • Zayed",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 515,
+    line: 516,
     uses: 1,
   },
   {
@@ -1686,7 +1731,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Close",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 399,
+    line: 400,
     uses: 2,
   },
   {
@@ -1695,7 +1740,16 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "A treatment plan tailored to your skin with a specialist doctor.",
     area: "pages",
     file: "src/components/pages/JournalArticleClient.tsx",
-    line: 387,
+    line: 363,
+    uses: 1,
+  },
+  {
+    key: "copy.c0ce829a62c9",
+    ar: "احجزي موعدك",
+    en: "Book an appointment",
+    area: "pages",
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 30,
     uses: 1,
   },
   {
@@ -1776,7 +1830,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Book Appointment Now",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 503,
+    line: 504,
     uses: 1,
   },
   {
@@ -1803,7 +1857,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Menu",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 334,
+    line: 335,
     uses: 1,
   },
   {
@@ -1893,7 +1947,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Chat on WhatsApp",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 512,
+    line: 513,
     uses: 1,
   },
   {
@@ -1929,7 +1983,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Meet the medical team",
     area: "pages",
     file: "src/components/pages/JournalArticleClient.tsx",
-    line: 310,
+    line: 316,
     uses: 1,
   },
   {
@@ -1947,7 +2001,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Dark mode",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 291,
+    line: 292,
     uses: 2,
   },
   {
@@ -2073,7 +2127,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Back",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 536,
+    line: 537,
     uses: 2,
   },
   {
@@ -2145,7 +2199,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branches: Nasr City • New Cairo • Sheikh Zayed",
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
-    line: 128,
+    line: 129,
     uses: 1,
   },
   {
@@ -2155,6 +2209,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "pages",
     file: "src/components/pages/AboutClient.tsx",
     line: 149,
+    uses: 1,
+  },
+  {
+    key: "copy.f70b3eb446c1",
+    ar: "تواصلي واتساب",
+    en: "Contact us on WhatsApp",
+    area: "pages",
+    file: "src/components/pages/ArticleCtaBox.tsx",
+    line: 47,
     uses: 1,
   },
   {

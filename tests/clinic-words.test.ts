@@ -26,7 +26,6 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { db, destroyDb, readDbConfig } from '../src/lib/db';
 import { assertTestDb } from '../src/lib/db/guard';
-import { siteConfig } from '../src/config/site';
 import { clinicData } from '../src/data/clinic';
 import type { ClinicWords } from '../src/lib/content/site';
 import { getClinicWords, getBranchList } from '../src/lib/content/site';
@@ -236,10 +235,14 @@ describe('a saved number reaches the reader', () => {
     expect(json.telephone).toBe(PHONE_SAVED);
   });
 
-  it('falls back per key, so an untouched field keeps its shipped value', async () => {
+  it('clears one key without dragging the other down with it', async () => {
     expect((await save('phone', '')).status).toBe(200);
     const blank = await getClinicWords();
-    expect(blank.phone).toBe(siteConfig.contact.phone);
+    // CMS owns the number. A field the operator emptied renders empty rather than
+    // reaching into `config/site.ts` for a value nobody can edit from the console
+    // (`docs/inventory.md` — "Missing values stay blank"). The Settings screen still
+    // *shows* the shipped number as the field's default, which is where config belongs.
+    expect(blank.phone).toBe('');
     // The other field is still saved, so a blank phone cannot drag the link down with it.
     expect(blank.whatsappUrl).toBe(`https://wa.me/${WA_DIGITS}`);
   });

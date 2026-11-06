@@ -33,6 +33,15 @@ export const PAGE_SETTING_GROUP = 'pages';
 export const SEO_SETTING_GROUP = 'seo';
 export const SITE_SETTING_GROUP = 'site';
 
+/**
+ * The one switch the language rule reads, off when no row exists: may the other locale
+ * stand in where this row's own language is empty? `./language-fill.ts` is the only
+ * reader, and the Settings screen is the only writer, so the answer the site renders and
+ * the answer the owner ticks cannot come apart.
+ */
+export const LANGUAGE_SETTING_GROUP = 'language';
+export const MISSING_TEXT_SETTING_KEY = 'missing_text_fallback';
+
 export interface SettingField {
   group: string;
   key: string;

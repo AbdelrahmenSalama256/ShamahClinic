@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import { WP_ORIGIN } from "./config";
 import { mirrorSrc, mirrorHtml } from "./mirror";
 import { RICH_ALLOWED_ATTRIBUTES, RICH_ALLOWED_TAGS } from "../content/rich-policy";
+import { stripEllipsisArtifact } from "../text-script";
 
 const NAMED: Record<string, string> = {
   amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: " ", ndash: "–", mdash: "—",
@@ -68,7 +69,7 @@ export function htmlToText(html: string): string {
   const $ = cheerio.load(`<div>${html || ""}</div>`);
   $("script, style").remove();
   // Tag selector, not `#div` (that would match an element with id="div").
-  return decodeEntities($("div").first().text()).replace(/\s+/g, " ").trim();
+  return stripEllipsisArtifact(decodeEntities($("div").first().text()).replace(/\s+/g, " ").trim());
 }
 
 /** First real paragraph of a body, as a teaser. WordPress auto-excerpts are
@@ -81,6 +82,39 @@ export function firstParagraph(html: string, max = 180): string {
     .map((p) => decodeEntities($(p).text()).replace(/\s+/g, " ").trim())
     .filter((t) => t.length > 40);
   const text = texts[0] || "";
+  if (text.length <= max) return text;
+  return `${text.slice(0, max).replace(/[^ ]*$/, "").trim()}…`;
+}
+
+/**
+ * A teaser for a body, when the excerpt column says nothing usable.
+ *
+ * The excerpt columns of the imported corpus are the broken part, not the bodies: an
+ * Arabic article whose `excerpt_ar` holds an English sentence still opens with the
+ * Arabic paragraph a card should have shown. This reads the body — first paragraph,
+ * else first text — and cuts it at a word boundary, because the alternative is
+ * rendering the other language's sentence under the Arabic headline.
+ */
+/**
+ * A teaser for a body, when the excerpt column says nothing usable.
+ *
+ * The excerpt columns of the imported corpus are the broken part, not the bodies: an
+ * Arabic article whose `excerpt_ar` holds an English sentence still opens with the
+ * Arabic paragraph a card should have shown. This reads the body — first paragraph, else
+ * the first text — and cuts it at a word boundary, because the alternative is rendering
+ * the other language's sentence under the Arabic headline.
+ *
+ * No parser, on purpose: a list of 94 cards asks for this once per card per language, and
+ * loading each body into cheerio to read one paragraph is the difference between a
+ * journal page that renders and one that thinks about it.
+ */
+export function deriveExcerpt(html: string, max = 180): string {
+  const source = html || "";
+  const paragraph = /<p\b[^>]*>([\s\S]*?)<\/p>/i.exec(source.replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, " "));
+  const raw = paragraph ? paragraph[1] : source;
+  const text = stripEllipsisArtifact(
+    decodeEntities(raw.replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim(),
+  );
   if (text.length <= max) return text;
   return `${text.slice(0, max).replace(/[^ ]*$/, "").trim()}…`;
 }

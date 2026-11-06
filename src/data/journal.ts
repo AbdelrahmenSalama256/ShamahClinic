@@ -1,11 +1,5 @@
 import type { PhotoSlot } from "@/lib/images";
 
-export interface JournalSection {
-  heading?: { ar: string; en: string };
-  paragraphs: { ar: string[]; en: string[] };
-  bullets?: { ar: string[]; en: string[] };
-}
-
 export interface Article {
   slug: string;
   title: { ar: string; en: string };
@@ -18,6 +12,5 @@ export interface Article {
   readMinutes?: number;
   image: PhotoSlot;
   tags: { ar: string[]; en: string[] };
-  sections: JournalSection[];
 }
 

@@ -46,6 +46,5 @@ export function apiCardToUI(card: ArticleCard): Article {
       ar: card.category ? [card.category.ar] : [],
       en: card.category ? [card.category.en] : [],
     },
-    sections: [],
   };
 }

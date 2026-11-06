@@ -5,6 +5,7 @@ import { can } from '@/lib/auth/permissions';
 import { catalogFor, message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';
 import { readBanners } from '@/lib/content/banners';
+import { readMissingTextRule } from '@/lib/content/language-fill';
 import { readPageStates } from '@/lib/content/page-visibility';
 import { SEO_SETTING_GROUP, SITE_SETTING_GROUP } from '@/lib/content/settings-catalog';
 import { readSettings } from '@/lib/content/settings';
@@ -28,12 +29,13 @@ export default async function ConsoleSettingsPage() {
   const grants = auth.user.grants;
   if (!can(grants, 'setting', 'read', {})) return <Empty>{message('content.no_permission', prefs.locale)}</Empty>;
 
-  const [rows, pages, site, banners, brand] = await Promise.all([
+  const [rows, pages, site, banners, brand, missingText] = await Promise.all([
     readSettings(),
     readPageStates(),
     getSettings(prefs.locale),
     readBanners(),
     getBrandWords(),
+    readMissingTextRule(),
   ]);
   const defaults: Record<string, string> = {
     [`${SITE_SETTING_GROUP}.name.ar`]: brand.ar,
@@ -57,6 +59,7 @@ export default async function ConsoleSettingsPage() {
         pages={pages}
         banners={banners}
         defaults={defaults}
+        missingText={missingText}
         locale={prefs.locale}
         labels={catalogFor(prefs.locale)}
         canWrite={can(grants, 'setting', 'update', {})}

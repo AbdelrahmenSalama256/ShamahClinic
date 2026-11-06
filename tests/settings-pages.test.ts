@@ -32,7 +32,6 @@ import {
 } from '../src/lib/content/page-visibility';
 import { getSiteMeta } from '../src/lib/content/site';
 import { SEO_SETTING_GROUP, SITE_PAGES, safeRedirect } from '../src/lib/content/settings-catalog';
-import { siteConfig } from '../src/config/site';
 
 const SEO_KEYS = ['title.ar', 'title.en', 'description.ar', 'description.en', 'verification.google'];
 
@@ -147,13 +146,13 @@ describe('the pages group read from the database', () => {
 });
 
 describe('the seo group read by the layout', () => {
-  it('falls back to the authored metadata until a word is saved, then replaces only that word', async () => {
-    const authored = await getSiteMeta('ar');
-    expect(authored).toEqual({
-      title: siteConfig.metadata.title,
-      description: siteConfig.metadata.description,
-      verification: null,
-    });
+  it('answers with the words the console saved, and with nothing beside them', async () => {
+    // `docs/inventory.md` puts the metadata with the rest of the site's words: the CMS
+    // owns them, so a key nobody has saved is empty in the reader. What the operator
+    // sees before the first save is the field's *default* on the Settings screen, which
+    // is where `config/site.ts` belongs — not a second value in the `<head>`.
+    const empty = await getSiteMeta('ar');
+    expect(empty).toEqual({ title: '', description: '', verification: null });
 
     await db
       .insertInto('settings')
@@ -166,22 +165,22 @@ describe('the seo group read by the layout', () => {
 
     expect(await getSiteMeta('ar')).toEqual({
       title: 'عنوان من اللوحة',
-      description: siteConfig.metadata.description,
+      description: '',
       verification: 'google-site-verification=abc',
     });
     expect(await getSiteMeta('en')).toEqual({
-      title: siteConfig.metadata.titleEn,
+      title: '',
       description: 'A description from the console',
       verification: 'google-site-verification=abc',
     });
 
-    // A blank row is not a saved word: `getSiteMeta` reads it as absent and the config wins.
+    // A blank row is not a saved word: the key leaves the answer entirely.
     await db
       .updateTable('settings')
       .set({ value: JSON.stringify('   ') })
       .where('group_name', '=', SEO_SETTING_GROUP)
       .where('setting_key', '=', 'title.ar')
       .execute();
-    expect((await getSiteMeta('ar')).title).toBe(siteConfig.metadata.title);
+    expect((await getSiteMeta('ar')).title).toBe('');
   });
 });

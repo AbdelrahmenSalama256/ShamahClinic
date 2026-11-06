@@ -563,6 +563,12 @@ textarea::placeholder {
     scroll-behavior: auto;
   }
 
+  /* A TOC jump is a navigation, not an animation: land, do not glide. */
+  .article-toc-list,
+  .article-toc-scroll {
+    scroll-behavior: auto;
+  }
+
   .photo-curtain,
   .photo-curtain.is-revealed {
     clip-path: none;
@@ -807,4 +813,359 @@ a[class*="items-center"]:has(> svg, span) {
 }
 a {
   text-decoration: none;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   The article body, its table of contents, and its two blocks.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Where a jumped-to heading lands. The sticky header's clearance comes from
+   `scroll-padding-top` on `html` — the scroll box's own padding, which every anchor on
+   the site already pays — so this adds only the breathing room above it, never the
+   header's height a second time. The ids are on the headings before a browser sees them
+   (the server wrote them), so nothing about the jump depends on JavaScript. */
+.article-prose :is(h2, h3, h4, h5)[id],
+.article-faq[id],
+.article-cta {
+  scroll-margin-top: var(--anchor-breather);
+}
+
+.article-prose {
+  color: var(--text-secondary);
+}
+
+.article-prose > * + * {
+  margin-block-start: var(--sp-5);
+}
+
+.article-prose p {
+  font-size: clamp(0.95rem, 0.9rem + 0.3vw, 1.05rem);
+  line-height: 1.95;
+}
+
+.article-prose :is(h2, h3, h4, h5) {
+  color: var(--text-primary);
+  font-weight: 900;
+  line-height: 1.4;
+  margin-block-start: var(--sp-10);
+  margin-block-end: var(--sp-4);
+}
+
+.article-prose h2 {
+  font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.6rem);
+}
+
+.article-prose h3 {
+  font-size: clamp(1.1rem, 1rem + 0.5vw, 1.35rem);
+}
+
+.article-prose :is(h4, h5) {
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.15rem);
+}
+
+.article-prose :is(ul, ol) {
+  padding-inline-start: var(--sp-6);
+  display: grid;
+  gap: var(--sp-2);
+  line-height: 1.85;
+}
+
+.article-prose ul {
+  list-style: disc;
+}
+
+.article-prose ol {
+  list-style: decimal;
+}
+
+.article-prose li::marker {
+  color: var(--gold-mid);
+  font-weight: 700;
+}
+
+.article-prose a {
+  color: var(--gold-end);
+  text-decoration: underline;
+  text-decoration-color: var(--gold-border);
+  text-underline-offset: 0.2em;
+}
+
+.article-prose a:hover {
+  color: var(--text-gold);
+}
+
+.article-prose img {
+  border-radius: var(--radius-surface);
+  margin-block: var(--sp-6);
+}
+
+.article-prose figure {
+  margin-block: var(--sp-6);
+}
+
+.article-prose figcaption {
+  font-size: var(--ui-font-small);
+  color: var(--text-muted);
+  text-align: center;
+  margin-block-start: var(--sp-2);
+}
+
+.article-prose blockquote {
+  border-inline-start: 3px solid var(--gold-mid);
+  background: var(--bg-secondary);
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+/* A table is documentation, not decoration: it needs its own scroll box on a phone,
+   because a five-column price list squeezed into 360px is unreadable in either script. */
+.article-prose .article-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-surface);
+}
+
+.article-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ui-font);
+}
+
+.article-prose :is(th, td) {
+  border: 1px solid var(--hairline);
+  padding: var(--sp-3) var(--sp-4);
+  text-align: start;
+  vertical-align: top;
+}
+
+.article-prose th {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* ── FAQ block ── */
+.article-faq {
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card);
+  padding: var(--sp-4) var(--sp-5);
+}
+
+.article-faq summary {
+  cursor: pointer;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-size: clamp(1rem, 0.95rem + 0.3vw, 1.15rem);
+  line-height: 1.6;
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+}
+
+.article-faq summary::-webkit-details-marker {
+  display: none;
+}
+
+/* The chevron is drawn from a border so it rotates with the script's direction. */
+.article-faq summary::before {
+  content: "";
+  flex: none;
+  inline-size: 0.5rem;
+  block-size: 0.5rem;
+  margin-block-start: 0.5rem;
+  border-inline-end: 2px solid var(--gold-mid);
+  border-block-end: 2px solid var(--gold-mid);
+  transform: rotate(45deg);
+  transition: transform var(--dur-hover) var(--ease-signature);
+}
+
+.article-faq[open] summary::before {
+  transform: rotate(-135deg);
+}
+
+.article-faq-answer {
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--hairline);
+  color: var(--text-secondary);
+  line-height: 1.9;
+}
+
+.article-faq-answer > * + * {
+  margin-block-start: var(--sp-3);
+}
+
+/* ── In-body CTA ── */
+.article-cta {
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  padding: clamp(1.25rem, 4vw, 2rem);
+  text-align: center;
+}
+
+.article-cta.on-gold {
+  background: var(--gold-gradient);
+  border-color: transparent;
+}
+
+.article-cta-title {
+  color: var(--text-primary);
+  font-weight: 900;
+  font-size: clamp(1.05rem, 1rem + 0.4vw, 1.3rem);
+  margin-block-end: var(--sp-3);
+}
+
+.article-cta.on-gold .article-cta-title,
+.article-cta.on-gold .article-cta-text {
+  color: var(--ink-on-gold);
+}
+
+.article-cta-text {
+  color: var(--text-secondary);
+  font-size: var(--ui-font);
+  max-inline-size: 42rem;
+  margin-inline: auto;
+  margin-block-end: var(--sp-5);
+  line-height: 1.8;
+}
+
+.article-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-3);
+}
+
+.article-cta-note {
+  margin-block-start: var(--sp-3);
+  font-size: var(--ui-font-small);
+  color: var(--text-muted);
+}
+
+/* ── Table of contents ── */
+.article-toc {
+  border: 1px solid var(--border-control-soft);
+  border-radius: var(--radius-surface);
+  background: var(--bg-card);
+  padding: var(--sp-5);
+}
+
+.article-toc-head {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding-block-end: var(--sp-3);
+  margin-block-end: var(--sp-3);
+  border-block-end: 1px solid var(--hairline);
+}
+
+.article-toc-heading {
+  font-size: var(--ui-font-small);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-primary);
+}
+
+/* The mobile fold's summary is the whole control: a `<details>` needs no script to open. */
+.article-toc-toggle {
+  inline-size: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  cursor: pointer;
+  list-style: none;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: var(--ui-font-small);
+}
+
+.article-toc-toggle::-webkit-details-marker {
+  display: none;
+}
+
+/* The chevron is a border, so it points the way the script reads. */
+.article-toc-toggle::after {
+  content: "";
+  margin-inline-start: auto;
+  flex: none;
+  inline-size: 0.45rem;
+  block-size: 0.45rem;
+  border-inline-end: 2px solid var(--gold-mid);
+  border-block-end: 2px solid var(--gold-mid);
+  transform: rotate(45deg);
+  transition: transform var(--dur-hover) var(--ease-signature);
+}
+
+.article-toc-fold details[open] > .article-toc-toggle::after {
+  transform: rotate(-135deg);
+}
+
+.article-toc-fold {
+  padding: var(--sp-4);
+}
+
+.article-toc-fold .article-toc-list {
+  margin-block-start: var(--sp-4);
+  padding-block-start: var(--sp-4);
+  border-block-start: 1px solid var(--hairline);
+}
+
+/* Desktop: the list is its own scroll area, and the active row is kept inside it. */
+.article-toc-aside .article-toc-scroll {
+  max-block-size: min(60vh, 28rem);
+  overflow-y: auto;
+  padding-inline-end: var(--sp-2);
+  scrollbar-gutter: stable;
+}
+
+.article-toc-list {
+  display: grid;
+  gap: var(--sp-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.article-toc-item.is-sub .article-toc-link {
+  padding-inline-start: var(--sp-6);
+  font-size: var(--ui-font-small);
+}
+
+.article-toc-link {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-2);
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-1) var(--sp-2);
+  text-decoration: none;
+  transition: color var(--dur-hover) var(--ease-signature),
+    background-color var(--dur-hover) var(--ease-signature);
+}
+
+.article-toc-link:hover {
+  color: var(--gold-end);
+  background: var(--bg-secondary);
+}
+
+.article-toc-item[data-active] .article-toc-link {
+  color: var(--gold-end);
+  background: var(--bg-secondary);
+  font-weight: 700;
+}
+
+.article-toc-num {
+  flex: none;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--gold-end);
+  padding-block-start: 0.15rem;
 }

@@ -4868,6 +4868,156 @@ says plainly "Never hide a page that is below target." Rows live in
 
 - [ ] MB-2 … MB-7 — pending, in the brief's order
 
+## P1 — the owner's Phase 1 brief of 2026-11-06 (block editor, article TOC, Arabic data)
+
+Three parts against one live page (`/ar/blogs/derma-pen-with-mesotherapy-fusion`): **A** a real block
+editor in the console, **B** a server-built table of contents with scrollspy on the public article,
+**C** the Arabic-language data bugs. Phase 2 (a full-site CMS wiring audit) is the owner's next message
+and is not started. Requirements are in the brief; this is the working checklist.
+
+- [x] **P1-B — server-rendered TOC with scrollspy** — code complete, `typecheck`/`lint`/`copy:check`
+  clean, 21 new tests green, SSR output verified over HTTP.
+
+  **The pipeline.** `src/lib/content/article-body.ts` reads one language's stored body once and returns
+  `{ segments, toc, faqs, plain }`: sanitize → cheerio → drop the `h1` (WordPress repeats the title),
+  wrap bare top-level text in `<p>`, give every `h2`–`h5` an id, cut `section[data-block=faq]` and
+  `section[data-block=cta]` out of the prose stream, and wrap each `<table>` in `.article-table-wrap`
+  (added after sanitizing, never stored). Ids come from `src/lib/slug.ts` — Arabic letters survive,
+  hamza/alef variants fold, `-2`/`-3` on a repeat, an author's own `id` is kept when it matches
+  `AUTHOR_ID` and is free. `tests/fixtures/wp-articles.json` is two real rows from the local database.
+
+  **What replaced what.** `articleToUI(article, lang)` now takes the route's language and counts reading
+  time in that language; `sectionsFor`/`zipSections`/`JournalSection` and `Article.sections` are deleted —
+  the index-zipped bilingual sections were why `/ar` printed English sentences. `JournalArticleClient`
+  renders `body` segments (`.article-prose` + `dangerouslySetInnerHTML` of server-sanitized HTML,
+  `<details>` per FAQ, `ArticleCtaBox` per CTA) and the fixed mid-article CTA only when the body has no
+  CTA block of its own. `articleFaqJsonLd` emits FAQPage for a body's own questions, and the page skips
+  the node entirely when there are none.
+
+  **Two anchors, one landing.** `html { scroll-padding-top: calc(var(--nav-height) + .5rem) }` already
+  reserves the header for every anchor on the site; adding `--nav-height` again as a `scroll-margin-top`
+  put a jumped heading 168px down (measured). The token is now `--anchor-breather: .75rem` and the landing
+  is 92px with a 69px header. `#site-header` was added to the Navbar's fixed element so the scrollspy can
+  *measure* the header instead of trusting a token.
+
+  **Client half.** `src/components/pages/ArticleToc.tsx`: `useArticleToc(toc)` (one owner, called by the
+  page) does the IntersectionObserver band under the measured header, the click jump (`scrollIntoView`,
+  `focus({preventScroll:true})` after `tabindex="-1"`, `pushState` with an encoded fragment, `prefers-reduced-motion`
+  → instant), and the late `#hash` re-jump at 120/400/900ms + `document.fonts.ready` — cancelled the moment
+  the reader touches anything. `ArticleTocView` renders `aside` (sticky, keeps the active row inside its own
+  scroll box) or `fold` (a native `<details>`, so the mobile list opens with no JavaScript and is in the SSR
+  HTML). `sanitize-html` now allows `id` on any element — the renderer re-writes it on every heading it
+  prints, so an author's anchor survives and a typed one is never trusted.
+
+  **Not verifiable here (say so in the report).** The automation browser never boots the app's client React
+  on *any* page — zero `__react*` props on DOM nodes, the back-to-top button never appears after scrolling
+  2000px, `aria-expanded` never flips. So scrollspy highlighting, the sticky list's self-scroll, the focus
+  jump and the smooth-vs-instant choice are verified by construction and by the SSR/HTTP checks only. What
+  the browser *did* prove: the ids are in the served HTML, the fragments encode/decode Arabic correctly, a
+  hash jump lands below the header with no JavaScript, and no `section-N` ids remain.
+
+- [x] **P1-C — Arabic-only reads, excerpt derivation, `[…]` strip, audit SQL** — code complete,
+  `copy:check`/`typecheck`/`lint`/`build` clean, full `npm test` green (62 files / 1187 tests),
+  verified over HTTP against the dev database. No data was written.
+
+  **The rule, in one place.** `src/lib/content/language-fill.ts` owns both halves of the question
+  "the Arabic column is empty — now what?". `resolveMissingText(rule, value)` fills a language's gap
+  from the other one *only* when the rule is `OTHER_LANGUAGE`, i.e. the owner ticked
+  `language.missing_text_fallback` in Settings; with no saved row the rule is `BLANK` and the gap
+  stays a gap. `answersIn('ar', text)` is the second half: a value that exists is never second-guessed
+  *except* when `isMostlyLatin()` says the Arabic column is written in Latin letters, which is not an
+  answer in that language. `readMissingTextRule()` is a single `cache()` read, so every reader on a
+  render asks the same question and gets the same answer.
+
+  **Where it is applied.** At the gateway, not per page: `publicRow()` in `src/lib/content/published.ts`
+  returns `PublicRow.missingText` and resolves each bilingual column through the rule, so `articles`,
+  `offers` and `pages` all answer in the language the page is printed in — including the readers that
+  used to `COALESCE` straight past it (`site.ts`, `wp/ui.ts`, `wp/ui-helpers.ts`, `jsonld.ts`).
+  `rung()` still never substitutes from a snapshot.
+
+  **The excerpt is derived, not translated.** `src/lib/content/teaser.ts` (`teaserIn`/`teaserPair`)
+  keeps a stored excerpt that `answersIn` its locale and otherwise cuts the sentence the same
+  language's own body opens with — `deriveExcerpt(stripBuilderNoise(body))` in
+  `src/lib/wp/sanitize.ts`, which drops markup, `[vc_*]` builder shortcodes and `&…;` entities before
+  it looks for the first sentence. That is why `/ar` is already right for the 89 rows whose
+  `pub_excerpt_ar` is an English copy: the card prints the Arabic body's opening instead. A body
+  that is *itself* English has nothing to derive from, so it keeps saying what the row says and goes
+  into the audit (§4) rather than a generated sentence.
+
+  **The `[…]` artifact.** `src/lib/text-script.ts` is the shared isomorphic half — `scriptCounts`
+  (letters only: digits, punctuation and spaces belong to no script), `isMostlyLatin`
+  (`latin > 0 && (arabic === 0 || latin > arabic * 3)`), `endsWithEllipsisArtifact`,
+  `stripEllipsisArtifact`. The readers strip on the way out; the console warns while a person types,
+  in the browser, from the same file.
+
+  **The switch in the console.** Settings → language (`SettingsWorkspace.tsx`, `settings-catalog.ts`,
+  `console/messages.ts`): one checkbox labelled for both locales, with the count of fields it would
+  touch available before ticking it — that is what the audit SQL's `empty-with-english` verdict counts.
+
+  **The two SQL files, and what they claim.**
+  `docs/sql/audit-arabic-columns.sql` is read-only (SELECT only; `.tmp/p1c-run-sql.cjs` refuses any
+  other statement before it connects). Result set 1 counts every published field by verdict
+  (`arabic` / `mixed` / `latin-only` / `empty-with-english` / `empty-both`), result set 2 lists the rows
+  beside a preview of both columns. It measures the value the site renders — the `pub_*` twin, the same
+  `status IN ('published','changed') AND deleted_at IS NULL` filter as the gateway, visible text for the
+  three HTML fields — and states the rule letter for letter so a DBA can compare it to the code.
+  `docs/sql/fix-arabic-excerps.sql` is the "propose, don't apply" file: §1 previews the 89 candidate
+  rows with `ar_is_a_copy_of_en` and the Arabic body that would stand in, §1b counts them, §2 holds the
+  only writes and they are **commented out** (guarded to live-Latin-only excerpt AND blank-or-Latin draft
+  AND Arabic-dominant body; empties `excerpt_ar` + `pub_excerpt_ar` together; leaves `version` alone; plus
+  a `[…]`-strip pass that matches 0 rows today), §3 re-asks §2's own WHERE clause so the number reads 89
+  before and 0 after, §4 lists the 129 rows no SQL can fix. Measured on the local copy of the live data:
+  94 published articles, 90 of them holding an Arabic excerpt byte-identical to the English one, 89 rows
+  qualifying for §2 (88 copies, 88 ending `[…]`), and 0 Arabic draft excerpts at stake.
+
+  **Numbers from the dev database, for the record.** articles: title 2 `latin-only`, excerpt 91
+  `latin-only` + 2 `empty-with-english`, content 34 arabic / 55 mixed / 3 latin-only, image alt 77
+  `latin-only`; offers: 5 latin excerpts, 4 latin bodies, 2 latin names; pages: 17 latin titles and 16
+  latin bodies, most of them the theme's demo rows. The 2 `latin-only` article titles are
+  `derma-pen-with-mesotherapy-fusion` and `botox-for-facial-wrinkle-tightening` — the reference page the
+  brief names is one of them.
+
+  **Over HTTP** (`node .tmp/p1c-http-check.mjs`, dev server on 3600, cheerio over the served DOM with
+  `<script>` — the RSC payload — removed): `/ar` 2/2 and `/ar/blogs` 7/7 card teasers are
+  Arabic-dominant, 0 end in `[…]`, and `[…]` appears 0 times in either document. The reference article
+  serves `og:description` = the Arabic body's own opening and prose of 7 888 Arabic letters against 19
+  Latin. `botox-for-facial-wrinkle-tightening` still renders English title, teaser and body — that row
+  has no Arabic to derive from, which is the reported case, not a miss.
+
+  **The nine test failures were causes, not regressions.** `clinic-words` and `settings-pages` asserted
+  that a blank CMS setting falls back to `config/site.ts`; `docs/inventory.md:52` and the code say a
+  missing value stays blank, so the tests were stale. `import-wp`'s two parity cases demanded the exact
+  byte the snapshot stored in `excerpt_ar` — the English sentence this change replaces — and now assert
+  parity of *answer*: the stored excerpt when it answers in Arabic, otherwise the same derivation the
+  site performs. `no-wp-network`'s two cases counted rows another suite purges (and an emptied test DB),
+  so the file now seeds its own article, offer, page and branch row and asserts on its own slugs.
+  `site.test`'s second failure was a knock-on of the first, which asserted the old cross-fill for
+  `getPageTitle`. New coverage: `tests/missing-arabic-text.test.ts`.
+  One method note: running the suite twice at once against `shamah_cms_test` produced 13 failures in
+  `auth`/`content`/`import-wp` that vanished when the suite ran alone — the same shared-schema
+  contention the `delivery.test.ts` gap above describes. A gate run must be the only process on the
+  test database.
+
+- [ ] **P1-A — TipTap block editor** — pending
+- [x] **P1-verify — home "why choose us" from the About row** — `getHomeWhyChooseUs()`
+  (`src/lib/content/about-page.ts:209`) reads the published `/about` document, and the served `/ar`
+  home contains `reasonsTitle_ar` ("لماذا تختار العميلات عيادات شامه؟"), `reasonsLead_ar` and all four
+  `reasons_ar` lines while `reasonsTitle_en` appears nowhere on it (`node .tmp/p1c-home-reasons.cjs`).
+  It also measured the one gap that is still open: `bi()`/`lines()` in that file let the two languages
+  stand in for each other inside JSON-document readers, which is the cross-fill `language-fill.ts`
+  removed from the column readers. On today's `/about` row the case does not arise — 0 of 17 bilingual
+  slots are "Arabic blank while English is full" — so the leak is latent, not visible, and the same is
+  true of `list-docs.ts`, `service-doc.ts` and `wp/treatments.ts`. Wiring those four to `resolveMissingText`
+  is a Phase-2-sized change (each owns its own document shape and its own console form) and is listed
+  under "what remains" rather than done quietly here.
+- [x] **P1-gates — copy:catalog/check, typecheck, lint, build, full `npm test`, cpanel-upload sync** —
+  `copy:check` 253 entries current; `tsc --noEmit` clean; `eslint` 0 errors / 9 warnings (all pre-existing
+  `no-unused-vars`, duplicated by the mirror); `next build` compiled in 71s, 38 static pages; `npm test`
+  62 files / 1187 tests green in 102s as the only process on the test database; `cpanel-upload/src`
+  re-synced and verified byte-identical to `src` (376 files, `cmp` clean) — the mirror's stale
+  `settings/page.tsx` was a real typecheck error until the sync, which is the reason the gate is run
+  against the mirror too.
+
 ## Known gaps / notes
 
 ### Opened by the Job C pass, for the owner to decide on (none of these is caused by OFFER-1)

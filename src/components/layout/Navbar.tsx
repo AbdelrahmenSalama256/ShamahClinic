@@ -111,6 +111,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
     <>
       {/* ══════════════ HEADER ══════════════ */}
       <header
+        id="site-header"
         className={`fixed top-0 start-0 end-0 z-40 transition-[padding,background-color,box-shadow] duration-hover ease-brand ${
           isScrolled ? "glass-nav-scrolled py-2" : "glass-nav py-3.5"
         }`}

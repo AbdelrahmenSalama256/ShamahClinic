@@ -123,6 +123,11 @@
   --nav-surface-scrolled: rgba(250, 247, 242, 0.97);
   --nav-shadow: rgba(33, 26, 22, 0.08);
   --nav-height: 4.5rem;
+  /* The air an article's heading keeps above the landing line. The header's own
+     clearance is NOT in here: `scroll-padding-top` on `html` already reserves
+     `--nav-height + 0.5rem` for every anchor on the site, and adding the header a
+     second time as a `scroll-margin` landed a jumped heading 168px down the page. */
+  --anchor-breather: 0.75rem;
   --floating-control-size: 3.5rem;
   --floating-control-gap: 1.5rem;
   /* Height of the sticky mobile action bar (p-3 + 2.75rem control + p-3). */

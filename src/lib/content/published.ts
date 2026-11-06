@@ -15,6 +15,7 @@
 import { cache } from 'react';
 import { db } from '../db';
 import { readStored } from './format';
+import { readMissingTextRule, resolveMissingText, type MissingText } from './language-fill';
 import { calendarDay, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 
 /** A bilingual field's public copy, or `null` when neither locale was ever published. */
@@ -36,6 +37,12 @@ export interface PublicRow {
   updatedAt: string;
   listKey: string | null;
   values: Record<string, PublicValue>;
+  /**
+   * The missing-text rule the site was read under, carried on the row so the readers of a
+   * list's JSON document — where the fields are keys in a document rather than columns, and
+   * the gateway above cannot reach inside them — make the same choice as `values` did.
+   */
+  missingText: MissingText;
 }
 
 type AnyRow = Record<string, unknown>;
@@ -72,13 +79,13 @@ function asJsonValue(value: unknown): unknown {
  * stop printing markup. `html` and `source` keep theirs; a body is the one thing printed
  * as markup, and it is filtered by `sanitizeHtmlBody()` at render.
  */
-function publicValue(spec: KindSpec, row: AnyRow, name: string): PublicValue | null {
+function publicValue(spec: KindSpec, row: AnyRow, name: string, missingText: MissingText): PublicValue | null {
   const bi = spec.bi.find((field) => field.name === name);
   if (bi) {
     // With a published twin the draft is invisible; without one the column is the
     // live value, because saving it was never gated by publishing.
     const [ar, en] = bi.pub ? [row[bi.pub.ar], row[bi.pub.en]] : [row[bi.draft.ar], row[bi.draft.en]];
-    return { kind: 'bi', ar: readStored(bi.format, ar), en: readStored(bi.format, en) };
+    return { kind: 'bi', ...resolveMissingText(missingText, { ar: readStored(bi.format, ar), en: readStored(bi.format, en) }) };
   }
 
   const json = spec.json.find((field) => field.name === name);
@@ -112,10 +119,10 @@ function fieldNames(spec: KindSpec): string[] {
   return [...spec.bi, ...spec.json, ...spec.text, ...spec.date, ...spec.number, ...spec.flag].map((field) => field.name);
 }
 
-function toPublicRow(spec: KindSpec, row: AnyRow, listKey: string | null): PublicRow {
+function toPublicRow(spec: KindSpec, row: AnyRow, listKey: string | null, missingText: MissingText): PublicRow {
   const values: Record<string, PublicValue> = {};
   for (const name of fieldNames(spec)) {
-    const value = publicValue(spec, row, name);
+    const value = publicValue(spec, row, name, missingText);
     if (value) values[name] = value;
   }
   return {
@@ -127,6 +134,7 @@ function toPublicRow(spec: KindSpec, row: AnyRow, listKey: string | null): Publi
     updatedAt: row.updated_at instanceof Date ? row.updated_at.toISOString() : asText(row.updated_at),
     listKey,
     values,
+    missingText,
   };
 }
 
@@ -199,10 +207,10 @@ async function base(kind: ContentKind, listKey: string | undefined): Promise<{ s
  * miss on every call. The exported functions keep their shape and normalise first.
  */
 const rowsOf = cache(async (kind: ContentKind, listKey: string): Promise<PublicRow[]> => {
-  const started = await base(kind, listKey || undefined);
+  const [started, missingText] = await Promise.all([base(kind, listKey || undefined), readMissingTextRule()]);
   if (!started) return [];
   const rows = (await started.query.execute()) as AnyRow[];
-  return rows.map((row) => toPublicRow(started.spec, row, listKey || null));
+  return rows.map((row) => toPublicRow(started.spec, row, listKey || null, missingText));
 });
 
 /** Every published, non-trashed row of a kind, in the order the site renders them. */
@@ -211,13 +219,13 @@ export async function publicRows(kind: ContentKind, options: Options = {}): Prom
 }
 
 const rowOf = cache(async (kind: ContentKind, listKey: string, key: string): Promise<PublicRow | null> => {
-  const started = await base(kind, listKey || undefined);
+  const [started, missingText] = await Promise.all([base(kind, listKey || undefined), readMissingTextRule()]);
   if (!started) return null;
   const bare = key.replace(/^\/+/, '');
   const candidates = [...new Set([key, bare, `/${bare}`])];
   const rows = (await started.query.where(started.spec.keyColumn, 'in', candidates).execute()) as AnyRow[];
   const row = rows.find((r) => String(r[started.spec.keyColumn]) === key) ?? rows[0];
-  return row ? toPublicRow(started.spec, row, listKey || null) : null;
+  return row ? toPublicRow(started.spec, row, listKey || null, missingText) : null;
 });
 
 /**
@@ -247,7 +255,14 @@ export async function hasPublished(kind: ContentKind, options: Options = {}): Pr
   return anyPublished(kind, options.listKey ?? '');
 }
 
-/** The two locales a published row actually carries text in. */
+/**
+ * The two locales a published row actually carries text in.
+ *
+ * `values` holds the copy a visitor sees, which is the authored pair after the
+ * site's missing-text rule (`./language-fill.ts`) — so with the fallback switch on, a
+ * field written in one language reads as written in two. This is the *authored* answer,
+ * for the diagnostics that have to know whether a translation exists.
+ */
 export function localesOf(row: PublicRow, name: string): ContentLocale[] {
   const value = row.values[name];
   if (!value || value.kind !== 'bi') return [];

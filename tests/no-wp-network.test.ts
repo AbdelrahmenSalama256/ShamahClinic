@@ -42,29 +42,104 @@ let restore: (() => void) | null = null;
  * The content half of this file asks that a network-free render still hands back real rows.
  * `getServiceCards()` and the treatment readers lost their snapshot rung at 1A, so the only
  * thing that can answer them is a published row — and a test that leans on whatever the last
- * run left in the database is not an assertion. One service, named for this run, removed
- * again in `afterAll`.
+ * run left in the database is not an assertion. One service, one article, one offer and one
+ * page, all named for this run, removed again in `afterAll`.
+ *
+ * The three content rows matter most in the shared fork: `tests/import-wp.test.ts` runs
+ * first, and its cleanup deletes exactly the snapshot rows it wrote, so a database that was
+ * imported for a manual measurement is empty by the time this file is reached.
  */
 const run = randomUUID().slice(0, 8);
 const fixtureUid = `nowp-${run}`;
+const fixtureIds = { article: randomUUID(), offer: randomUUID(), page: randomUUID() };
+const fixtureSlugs = {
+  article: `nowp-${run}-article`,
+  offer: `nowp-${run}-offer`,
+  page: `/nowp-${run}-page`,
+};
 
-async function seedService(): Promise<void> {
+/** One published row per content kind, with both locales in its live columns. */
+async function seedContent(): Promise<void> {
+  const now = new Date();
+  await db
+    .insertInto('articles')
+    .values({
+      id: fixtureIds.article,
+      slug: fixtureSlugs.article,
+      status: 'published',
+      title_ar: 'ليزر تجريبي',
+      title_en: 'A test service',
+      excerpt_ar: '',
+      excerpt_en: 'Written for the network-free render only',
+      content_ar: '<p>جلسة ليزر مكتوبة لهذا الاختبار وحدها.</p>',
+      content_en: '<p>A laser session written for this test alone.</p>',
+      pub_title_ar: 'ليزر تجريبي',
+      pub_title_en: 'A test service',
+      pub_excerpt_ar: '',
+      pub_excerpt_en: 'Written for the network-free render only',
+      pub_content_ar: '<p>جلسة ليزر مكتوبة لهذا الاختبار وحدها.</p>',
+      pub_content_en: '<p>A laser session written for this test alone.</p>',
+      published_at: now,
+    })
+    .execute();
+  await db
+    .insertInto('offers')
+    .values({
+      id: fixtureIds.offer,
+      slug: fixtureSlugs.offer,
+      status: 'published',
+      name_ar: 'عرض تجريبي',
+      name_en: 'A test offer',
+      excerpt_ar: 'عرض يكتبه هذا الاختبار وحده.',
+      excerpt_en: 'A test offer this file writes for itself',
+      body_ar: '<p>جلستان بخصم.</p>',
+      body_en: '<p>Two sessions at a discount.</p>',
+      pub_name_ar: 'عرض تجريبي',
+      pub_name_en: 'A test offer',
+      pub_excerpt_ar: 'عرض يكتبه هذا الاختبار وحده.',
+      pub_excerpt_en: 'A test offer this file writes for itself',
+      pub_body_ar: '<p>جلستان بخصم.</p>',
+      pub_body_en: '<p>Two sessions at a discount.</p>',
+      price: '900.00',
+      published_at: now,
+    })
+    .execute();
+  await db
+    .insertInto('pages')
+    .values({
+      id: fixtureIds.page,
+      route: fixtureSlugs.page,
+      status: 'published',
+      title_ar: 'صفحة اختبار',
+      title_en: 'A test page',
+      content_ar: '<p>صفحة يكتبها هذا الاختبار وحده.</p>',
+      content_en: '<p>A page this test writes for itself.</p>',
+      pub_title_ar: 'صفحة اختبار',
+      pub_title_en: 'A test page',
+      pub_content_ar: '<p>صفحة يكتبها هذا الاختبار وحده.</p>',
+      pub_content_en: '<p>A page this test writes for itself.</p>',
+      published_at: now,
+    })
+    .execute();
+}
+
+/** One published row in a list, created in that list if the database has none. */
+async function seedListRow(listKey: string, uid: string, doc: Record<string, string>): Promise<void> {
   const listId = randomUUID();
-  const existing = await db.selectFrom('lists').select('id').where('list_key', '=', 'services').executeTakeFirst();
+  const existing = await db.selectFrom('lists').select('id').where('list_key', '=', listKey).executeTakeFirst();
   const key = existing?.id ?? listId;
   if (!existing) {
     await db
       .insertInto('lists')
-      .values({ id: listId, list_key: 'services', label: 'services', item_schema: json({}), reorderable: 1, is_article_collection: 0 })
+      .values({ id: listId, list_key: listKey, label: listKey, item_schema: json({}), reorderable: 1, is_article_collection: 0 })
       .execute();
   }
-  const doc = { name_ar: 'ليزر تجريبي', name_en: 'A test service', intro_ar: 'جلسة', intro_en: 'A session' };
   await db
     .insertInto('list_items')
     .values({
       id: randomUUID(),
       list_id: key,
-      uid: fixtureUid,
+      uid,
       position: 0,
       enabled: 1,
       draft: json(doc),
@@ -78,7 +153,18 @@ async function seedService(): Promise<void> {
 beforeAll(async () => {
   assertTestDb();
   await db.deleteFrom('list_items').where('uid', 'like', 'nowp-%').execute();
-  await seedService();
+  await db.deleteFrom('articles').where('id', '=', fixtureIds.article).execute();
+  await db.deleteFrom('offers').where('id', '=', fixtureIds.offer).execute();
+  await db.deleteFrom('pages').where('id', '=', fixtureIds.page).execute();
+  await seedListRow('services', fixtureUid, { name_ar: 'ليزر تجريبي', name_en: 'A test service', intro_ar: 'جلسة', intro_en: 'A session' });
+  await seedListRow('branches', `${fixtureUid}-branch`, {
+    name_ar: 'فرع تجريبي',
+    name_en: 'A test branch',
+    address_ar: 'مدينة نصر',
+    address_en: 'Nasr City',
+    phone: '01121880908',
+  });
+  await seedContent();
   const original = globalThis.fetch;
   globalThis.fetch = (async (input: unknown) => {
     fetches.push(String(typeof input === 'object' && input && 'url' in input ? (input as Request).url : input));
@@ -91,8 +177,11 @@ beforeAll(async () => {
 
 afterAll(async () => {
   restore?.();
-  await db.deleteFrom('revisions').where('entity_id', '=', fixtureUid).execute();
-  await db.deleteFrom('list_items').where('uid', '=', fixtureUid).execute();
+  await db.deleteFrom('revisions').where('entity_id', 'like', 'nowp-%').execute();
+  await db.deleteFrom('list_items').where('uid', 'like', 'nowp-%').execute();
+  await db.deleteFrom('articles').where('id', '=', fixtureIds.article).execute();
+  await db.deleteFrom('offers').where('id', '=', fixtureIds.offer).execute();
+  await db.deleteFrom('pages').where('id', '=', fixtureIds.page).execute();
   await destroyDb();
 });
 
@@ -153,9 +242,9 @@ describe('the site renders without a network', () => {
       site.getServiceCards(),
       getMergedTreatments(),
     ]);
-    expect(articles.length).toBeGreaterThan(50);
-    expect(offers.length).toBeGreaterThan(0);
-    expect(pages.length).toBeGreaterThan(10);
+    expect(articles.map((card) => card.slug)).toContain(`nowp-${run}-article`);
+    expect(offers.map((offer) => offer.slug)).toContain(`nowp-${run}-offer`);
+    expect(pages.map((card) => card.slug)).toContain(`nowp-${run}-page`);
     expect(branches.length).toBeGreaterThan(0);
     expect(services.length).toBeGreaterThan(0);
     expect(treatments.length).toBeGreaterThan(0);

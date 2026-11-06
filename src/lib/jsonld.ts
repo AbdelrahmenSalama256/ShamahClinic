@@ -9,6 +9,8 @@ import { getMergedTreatments } from "./wp/treatments";
 import { images } from "./images";
 import { getLocalizedHref, type Locale } from "./locale";
 import { routeLang } from "./route-lang";
+import { htmlToText } from "./wp/sanitize";
+import type { FaqEntry } from "./content/article-body";
 
 type Json = Record<string, unknown>;
 
@@ -117,6 +119,35 @@ export async function faqJsonLd(items: FaqItem[] = faqData): Promise<Json> {
       "@type": "Question",
       name: f.question[lang],
       acceptedAnswer: { "@type": "Answer", text: f.answer[lang] },
+    })),
+  };
+}
+
+/**
+ * The FAQ blocks one article's own body carries.
+ *
+ * This is a different node from the `/faq` page's list: the questions were written by
+ * the article's author inside the article, and the answer text is the HTML on the page
+ * — a collapsed `<details>` is still the page's own content, which is what Google
+ * requires a FAQ rich result to be. The language is passed in rather than read from the
+ * route because the strings are already monolingual; only the URL needs the locale.
+ *
+ * The caller skips this node entirely when the article has no FAQ block: an empty
+ * `mainEntity` describes a page that answers nothing.
+ */
+export function articleFaqJsonLd(
+  faqs: readonly FaqEntry[],
+  lang: Locale,
+  path: string,
+): Json {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: htmlToText(f.answerHtml) },
+      url: localized(path, lang),
     })),
   };
 }

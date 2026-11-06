@@ -405,11 +405,14 @@ describe('the database rung', () => {
 
     expect(await getPageTitle(page.key)).toEqual({ ar: 'من نحن', en: 'About us' });
 
-    // A page whose Arabic column holds English keeps the authored Arabic instead.
+    // What the Arabic column holds is what `/ar` prints — including an English string the
+    // import left there. The reader no longer reaches into `title_en` to fill a blank, and
+    // it does not blank this headline either: an empty H1 is a worse page than an
+    // untranslated one. `docs/sql/audit-arabic-columns.sql` lists such rows.
     const stored = await db.selectFrom('pages').select('id').where('route', '=', `/${page.key}`).executeTakeFirstOrThrow();
     unwrap(await saveDraft('page', { id: stored.id, locale: 'ar', fields: { title: 'About us, untranslated' }, actorId: actor.id }), 'write the ar title');
     unwrap(await publishRow('page', { id: stored.id, locales: ['ar'], actor }), 'publish the ar title');
-    expect(await getPageTitle(page.key)).toEqual({ ar: '', en: 'About us, untranslated' });
+    expect(await getPageTitle(page.key)).toEqual({ ar: 'About us, untranslated', en: 'About us' });
 
     unwrap(await saveDraft('page', { id: stored.id, locale: 'en', fields: { enabled: false }, actorId: actor.id }), 'disable');
     expect(await getPage(page.key)).toBeNull();
