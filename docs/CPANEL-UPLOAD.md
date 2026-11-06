@@ -88,6 +88,11 @@ The SQL file records the migration names and checksums, so the app will recogniz
 migrations as applied. **Do not also run** `server-setup.mjs --apply` after importing the
 SQL file.
 
+If you already imported an earlier version of the schema into this database, do not
+re-import the full schema. Instead, open phpMyAdmin's **SQL** tab for the application
+database and run `database/create-owner.sql` to add the Owner account. It does not change
+an existing account with the same email.
+
 In the cPanel terminal, run the following from the application root after importing the
 SQL file. Use the same database credentials as the running application:
 
