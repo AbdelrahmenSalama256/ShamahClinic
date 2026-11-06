@@ -1,12 +1,14 @@
 # cPanel deployment: newshamah.shamahclinics.com
 
-This package contains the application source and a phpMyAdmin SQL file with the schema,
-representative published CMS content. It does not contain
-`.env` credentials, a local database export, leads, uploads, `node_modules`, or a Next.js
-build cache.
+This package contains the application source and a phpMyAdmin SQL file with the schema
+and preserved pre-production website content. The SQL is built from the project's saved
+WordPress snapshots and CMS source data; it is not an export of the inaccessible live
+cPanel database and cannot include changes made there after those snapshots. It does not
+contain `.env` credentials, user accounts, leads, sessions, analytics events, uploads,
+`node_modules`, or a Next.js build cache.
 
-No local database data, real leads, or pre-created login credentials are copied. Create
-an Owner account using the locally generated hash procedure below.
+Create the first Owner account separately after importing the SQL, using the phpMyAdmin
+procedure below.
 
 ## 1. Confirm the hosting plan
 
@@ -73,11 +75,12 @@ file to the cPanel account (for example, `chmod 600 /home/<cpanel-user>/shamah.e
 
 ### Import the schema with phpMyAdmin
 
-The prepared folder includes `database/schema-phpmyadmin.sql`, containing the schema,
-migration seeds, and representative published site content.
-In phpMyAdmin, select the new, empty
-application database, open **Import**, choose that SQL file, and run the import. Do not
-import it into the existing WordPress database. Import it only once into an empty database.
+The prepared folder includes `database/schema-phpmyadmin.sql` (about 25.5 MB), containing
+all 45 application tables, migration records, 92 articles, 4 offers, 28 CMS pages,
+2 categories, and 90 entries across the public site lists. In phpMyAdmin, select the new,
+empty application database, open **Import**, choose that SQL file, and run the import.
+Make sure the server's phpMyAdmin upload limit allows a file of this size. Do not import
+it into the existing WordPress database. Import it only once into an empty database.
 
 The SQL file records the migration names and checksums, so the app will recognize these
 migrations as applied. **Do not also run** `server-setup.mjs --apply` after importing the
@@ -100,15 +103,15 @@ It installs the schema only, not the sample content or Owner.
 
 ## 4. Build and start
 
-The SQL file already includes a published sample article, offer, home page, hero slide,
-category, and one item in each public list. Importing it is all that is needed to load the
-test content; do not run the snapshot import commands afterward.
+The SQL file already contains the preserved website content; do not run the WordPress
+snapshot or list-import commands afterward. It intentionally contains no login accounts,
+so create the first Owner account using the phpMyAdmin guide below.
 
 To make a new Owner account without SSH or a terminal, follow
 [OWNER-PHPMYADMIN.md](./OWNER-PHPMYADMIN.md). Generate the bcrypt hash locally and run
 its SQL in the application database's phpMyAdmin **SQL** tab.
 
-Run the production build after the schema and test content are in place:
+Run the production build after the schema and preserved content are in place:
 
 ```sh
 npm run build
