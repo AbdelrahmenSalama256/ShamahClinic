@@ -79,19 +79,7 @@
    other half: this sheet is the site's, and the console's polish has always lived in
    `console.css` at its own numbers. */
 @layer base {
-  [data-surface="site"]
-    :is(
-      a,
-      button,
-      input,
-      select,
-      textarea,
-      summary,
-      label,
-      [role="button"],
-      [role="link"],
-      [tabindex]
-    ) {
+  [data-surface="site"] :is(a, button, input, select, textarea, summary, label, [role="button"], [role="link"], [tabindex]) {
     transition:
       color var(--dur-hover) var(--ease-signature),
       background-color var(--dur-hover) var(--ease-signature),
@@ -176,14 +164,14 @@ body {
   border: 2px solid var(--border-control-soft);
   border-block-start-color: var(--gold-end);
   border-radius: 50%;
-  animation: brand-loading-spin 0.9s linear infinite;
+  animation: brand-loading-spin var(--dur-pan) linear infinite;
 }
 
 [data-surface="site"] .brand-loading-splash__logo {
   inline-size: min(13.75rem, 58vw) !important;
   block-size: auto;
   object-fit: contain;
-  animation: brand-loading-breathe 1.8s ease-in-out infinite;
+  animation: brand-loading-breathe var(--dur-loader-breathe) ease-in-out infinite;
 }
 
 @keyframes brand-loading-spin {
@@ -819,4 +807,4 @@ a[class*="items-center"]:has(> svg, span) {
 }
 a {
   text-decoration: none;
-} 
+}

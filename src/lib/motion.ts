@@ -30,7 +30,6 @@ export const DUR = {
   settle: 0.35,
   step: 0.4,
   fade: 0.5,
-  reveal: 0.7,
   enter: 0.8,
   count: 1.4,
 } as const;

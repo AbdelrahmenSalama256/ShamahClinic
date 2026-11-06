@@ -278,6 +278,7 @@
      instead of two switches. */
   --dur-enter: 800ms;
   --dur-pan: 900ms;
+  --dur-loader-breathe: 1.8s;
   /* `Counter.tsx` counts up for as long as `.duration-[1400ms]` did in the reference. */
   --dur-count: 1400ms;
   /* Periods of things that never settle. */

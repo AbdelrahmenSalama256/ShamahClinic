@@ -652,13 +652,6 @@
     50% { opacity: 0.72; }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    [data-surface="console"] .brand-loading-splash__spinner,
-    [data-surface="console"] .brand-loading-splash__logo {
-      animation: none;
-    }
-  }
-
   /* --- the sidebar: column, drawer, or both ---------------------------------- */
   .console-side {
     position: fixed;
@@ -4749,11 +4742,4 @@
       overflow: clip;
     }
   }
-}
-i,
-div,
-a,
-button,
-span {
-  transition: 0.3s all ease !important;
 }
