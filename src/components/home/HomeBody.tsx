@@ -38,6 +38,8 @@ interface Localized {
 interface HomeBodyProps {
   /** Home's introduction row, as WordPress publishes it on the homepage. */
   intro: { title: Localized; lead: Localized };
+  /** The published reasons edited in the About page of the console. */
+  whyChooseUs: { title: Localized; lead: Localized; reasons: Localized[] };
   /** The three services picked by the rule in docs/HOME-PRIORITY.md. */
   services: Treatment[];
   /** How many services exist in total — the link appears only past the three shown. */
@@ -71,6 +73,7 @@ const HOME_CARDS = 3;
 
 export const HomeBody: React.FC<HomeBodyProps> = ({
   intro,
+  whyChooseUs,
   services,
   servicesTotal,
   servicesTitle,
@@ -82,9 +85,10 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   const { t, language, formatNumber } = useLanguage();
   const waHref = useWhatsappHref();
   const hasIntro = !!(intro.title.ar || intro.title.en);
+  const hasWhyChooseUs = whyChooseUs.reasons.length > 0;
   const hasServices = !!services.length;
   const hasHomeContent =
-    hasIntro || hasServices || cases.length > 0 || offers.length > 0 || branches.length > 0 || articles.length > 0;
+    hasIntro || hasWhyChooseUs || hasServices || cases.length > 0 || offers.length > 0 || branches.length > 0 || articles.length > 0;
   // The numerals count the bands that actually paint. They used to be written into the page,
   // so a Home with no introduction opened at "02" — and a comparison band, which is there or
   // not there on its own data, would have moved every number after it. This list is the paint
@@ -92,7 +96,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   const paintedBands = [
     hasIntro && "intro",
     hasServices && "services",
-    !!cases.length && "compare",
+    hasWhyChooseUs && "why",
     !!offers.length && "offers",
     !!branches.length && "branches",
     !!articles.length && "articles",
@@ -113,10 +117,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
           />
         </Section>
       )}
-      {/* 01 + 02 — One band, the shape Home has always had: the WordPress
-          introduction row and the three services page 696 leads with. The block the
-          authored reasons list occupied is now the services cards (docs/HOME-PRIORITY.md),
-          so Home keeps four bands and does not grow. */}
+      {/* 01 + 02 — The homepage introduction and its featured services. */}
       {(hasIntro || hasServices) && (
         <Section className="bg-[var(--bg-primary)]">
           <div className="mt-4 grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
@@ -176,11 +177,40 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
         </Section>
       )}
 
-      {/* 03 — Before/after comparison, only from cases the owner put on Home and photographed
+      {/* 03 — CMS-authored About reasons, shown here as well as on /about. */}
+      {hasWhyChooseUs && (
+        <Section id="why-choose-us" className="bg-[var(--bg-secondary)]/60">
+          <SectionHeading
+            index={numeralOf("why")}
+            align="center"
+            title={whyChooseUs.title}
+            lead={whyChooseUs.lead}
+          />
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {whyChooseUs.reasons.map((reason, index) => (
+              <Reveal
+                as="article"
+                key={index}
+                delay={index * 0.08}
+                className="h-full rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-5"
+              >
+                <span className="text-sm font-bold tracking-eyebrow text-[var(--gold-end)] num">
+                  {formatNumber(index + 1)}
+                </span>
+                <h3 className="mt-3 text-lg font-bold leading-relaxed text-[var(--text-primary)]" dir="auto">
+                  {t(reason.ar, reason.en)}
+                </h3>
+              </Reveal>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Before/after comparison, only from cases the owner put on Home and photographed
           twice. The band draws nothing when no case qualifies, and takes no numeral either. */}
       {/* {!!cases.length && <ResultCompareSection cases={cases} index={numeralOf("compare")} />} */}
 
-      {/* 04 — Seasonal offers (console, else the WooCommerce snapshot, max 3) */}
+      {/* Seasonal offers (console, else the WooCommerce snapshot, max 3) */}
       {!!offers.length && (
         <Section id="offers" className="bg-[var(--bg-secondary)]/60">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -208,7 +238,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
         </Section>
       )}
 
-      {/* 05 — Compact branches strip (call / WhatsApp) */}
+      {/* Compact branches strip (call / WhatsApp) */}
       {!!branches.length && (
         <Section id="branches" className="bg-[var(--bg-primary)]">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -298,7 +328,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
         </Section>
       )}
 
-      {/* 06 — Latest journal (console, else the snapshot, max 3) */}
+      {/* Latest journal (console, else the snapshot, max 3) */}
       {!!articles.length && (
         <Section id="blogs" className="bg-[var(--bg-secondary)]/60">
           <div className="flex flex-wrap items-end justify-between gap-4">
