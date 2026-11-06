@@ -21,9 +21,12 @@ export const RICH_ALLOWED_TAGS: readonly string[] = [
 /**
  * What may survive on a tag that is allowed.
  *
- * `class` is kept because the site's prose styles hang off it (`wp-block-paragraph` and
- * friends), and it carries no behaviour. `style` is not: an inline declaration can
- * overlay the page, hide a cookie banner or data-exfiltrate through a background URL.
+ * `class` is kept because it carries no behaviour and the corpus is full of it — 18 444 of them,
+ * `wp-block-paragraph` and friends — so dropping it would rewrite every body on the first save to
+ * change nothing. No stylesheet in this project reads any of those names (see the census in
+ * `./block-schema`); they survive as the author's markup, not as styling. `style` is not kept: an
+ * inline declaration can overlay the page, hide a cookie banner or data-exfiltrate through a
+ * background URL.
  *
  * `data-block` / `data-cta` name the two structured blocks the body editor inserts —
  * an FAQ pair and a call-to-action box — and are the only markers the public renderer

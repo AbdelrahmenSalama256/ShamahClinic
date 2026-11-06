@@ -24,10 +24,7 @@ import * as cheerio from 'cheerio';
 
 import { slugify } from '../slug';
 import { sanitizeHtmlBody } from '../wp/sanitize';
-
-/** The three call-to-action boxes the body editor can insert. */
-export const CTA_VARIANTS = ['consult', 'book', 'whatsapp'] as const;
-export type CtaVariant = (typeof CTA_VARIANTS)[number];
+import { CTA_VARIANTS, type CtaVariant } from './block-contract';
 
 export interface TocEntry {
   id: string;

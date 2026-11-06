@@ -4998,7 +4998,48 @@ and is not started. Requirements are in the brief; this is the working checklist
   contention the `delivery.test.ts` gap above describes. A gate run must be the only process on the
   test database.
 
-- [ ] **P1-A — TipTap block editor** — pending
+- [ ] **P1-A — TipTap block editor** — in progress
+  - [x] **A1 — the document model and the HTML contract** — `src/lib/content/block-schema.ts` is the
+    schema the console edits and the tests parse with, `src/lib/content/block-html.ts` the two pure
+    string passes around it (`openBody()` on the way in, `closeBody()` on the way out), and
+    `src/lib/content/block-contract.ts` the CTA variant list both the editor and the renderer read
+    (it is separate because `article-body.ts` parses with cheerio and the editor is a client
+    component). Decisions worth keeping: the vocabulary is *measured* over 376 stored fields and the
+    header comment records the counts, so nobody adds a block a body has never held; `h1` is not in
+    the schema and becomes `h2` on open, because 48 of them are real section headings in four
+    articles that `sanitizeHtmlBody()` deletes today (`disallowedTagsMode: 'discard'` takes the text
+    with them); `trailingNode` is off so a body ending in a table does not grow an empty paragraph;
+    TipTap's own table `renderHTML` is replaced because it emits `style="min-width: …"` and a
+    `<colgroup>`, which the allowlist drops and a person would read as "my table lost its formatting
+    on save"; `class`/`id` are kept by one global attribute rule rather than fifteen per-node copies.
+    Proven over **every** published body (185 fields, 94 articles, both languages —
+    `node_modules/.bin/tsx .tmp/p1a-kinds.ts`, DB read only): the save door is a no-op on editor
+    output 185/185 apart from three documented serializations (`<br>` → `<br />`, an empty `data-*`
+    loses its `=""`, `rel="noopener"` → `noopener noreferrer`), `roundTrip(roundTrip(x)) ===
+    roundTrip(x)` 185/185, node+mark vocabulary identical 185/185, visible text identical 185/185.
+    The FAQ and CTA blocks have no corpus yet — the editor is their first writer — so their contract
+    is proved the other way (`.tmp/p1a-blocks.ts`): both block forms, an image with `loading`, `ol
+    start`, a nested list, a table in a `figure` and an `h1` go through editor → door → row, re-save
+    stores **the same bytes**, and `prepareArticleBody()` still returns the TOC (including the Arabic
+    id `عنوان-مكرر`), both FAQ entries with their `answerHtml`, and
+    `segments = html faq cta:whatsapp html faq html`.
+    Gates with A1 in: `typecheck` clean, `eslint` 0 errors, `copy:check` 253 current, `next build`
+    green, `npm test` 62 files / 1187 tests passed. Two things moved with it: `@tiptap/core`,
+    `@tiptap/pm` and `@types/jsdom` are now declared (the schema and `tests/helpers/block-io.ts`
+    import them directly — an undeclared transitive is a build that breaks on someone else's bump),
+    and `cpanel-upload` joined the root `tsconfig` `exclude` because the root `@/*` alias resolves
+    into `src/`, so a mirror file typechecked from the root is checked against the *other* tree's
+    modules. The mirror's own `tsconfig` and `scripts/release.ps1` (which compares the two `src/`
+    trees by hash) still cover it.
+  - [ ] **A2 — the editor surface** (toolbar, media-library images with alt, FAQ/CTA node views,
+    paste through `cleanPaste`, RTL) — pending
+  - [ ] **A3 — article screen wiring**: editable Arabic-safe unique slug, live Latin-text and `[…]`
+    warnings — pending
+  - [ ] **A4 — live preview identical to the public page, TOC included** — pending
+  - [ ] **A5 — committed fixtures for ≥3 real articles, `scripts/prove-blocks.ts`, `RichEditor.tsx`
+    deleted** — pending
+  - [ ] **A6 — deployable tree**: TipTap deps in the mirror's `package.json` + lock, fresh `npm ci`
+    and `npm run build` proof, push commands — pending
 - [x] **P1-verify — home "why choose us" from the About row** — `getHomeWhyChooseUs()`
   (`src/lib/content/about-page.ts:209`) reads the published `/about` document, and the served `/ar`
   home contains `reasonsTitle_ar` ("لماذا تختار العميلات عيادات شامه؟"), `reasonsLead_ar` and all four

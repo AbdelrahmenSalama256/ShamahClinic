@@ -4,7 +4,7 @@ import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useClinic } from "@/context/ClinicContext";
 import { BookButton, CallButton, WhatsAppButton } from "@/components/shared/Actions";
-import type { CtaVariant } from "@/lib/content/article-body";
+import type { CtaVariant } from "@/lib/content/block-contract";
 
 /**
  * The call-to-action block an author inserts from the console.
