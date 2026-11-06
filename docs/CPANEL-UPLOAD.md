@@ -4,11 +4,12 @@ This package contains the application source and a phpMyAdmin SQL file with the 
 and preserved pre-production website content. The SQL is built from the project's saved
 WordPress snapshots and CMS source data; it is not an export of the inaccessible live
 cPanel database and cannot include changes made there after those snapshots. It does not
-contain `.env` credentials, user accounts, leads, sessions, analytics events, uploads,
-`node_modules`, or a Next.js build cache.
+contain `.env` credentials, additional user accounts, leads, sessions, analytics events,
+uploads, `node_modules`, or a Next.js build cache.
 
-Create the first Owner account separately after importing the SQL, using the phpMyAdmin
-procedure below.
+The SQL includes the initial Owner account for `owner@newshamah.shamahclinics.com`;
+its password is stored as a bcrypt hash, not plaintext. Change the password after the
+first sign-in.
 
 ## 1. Confirm the hosting plan
 
@@ -77,8 +78,9 @@ file to the cPanel account (for example, `chmod 600 /home/<cpanel-user>/shamah.e
 
 The prepared folder includes `database/schema-phpmyadmin.sql` (about 25.5 MB), containing
 all 45 application tables, migration records, 92 articles, 4 offers, 28 CMS pages,
-2 categories, and 90 entries across the public site lists. In phpMyAdmin, select the new,
-empty application database, open **Import**, choose that SQL file, and run the import.
+2 categories, 90 entries across the public site lists, and the initial Owner account.
+In phpMyAdmin, select the new, empty application database, open **Import**, choose that
+SQL file, and run the import.
 Make sure the server's phpMyAdmin upload limit allows a file of this size. Do not import
 it into the existing WordPress database. Import it only once into an empty database.
 
@@ -104,8 +106,8 @@ It installs the schema only, not the sample content or Owner.
 ## 4. Build and start
 
 The SQL file already contains the preserved website content; do not run the WordPress
-snapshot or list-import commands afterward. It intentionally contains no login accounts,
-so create the first Owner account using the phpMyAdmin guide below.
+snapshot or list-import commands afterward. Sign in with the Owner email above and the
+password you supplied, then change the password.
 
 To make a new Owner account without SSH or a terminal, follow
 [OWNER-PHPMYADMIN.md](./OWNER-PHPMYADMIN.md). Generate the bcrypt hash locally and run
