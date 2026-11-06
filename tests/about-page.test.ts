@@ -35,6 +35,7 @@ import { json } from '../src/lib/db/json';
 import { ABOUT, pageDocSchema, parseListDoc } from '../src/lib/content/list-schema';
 import { getAboutPage, getHomeWhyChooseUs, type AboutPage } from '../src/lib/content/about-page';
 import { getBranchList, getClinicWords, getServiceCards } from '../src/lib/content/site';
+import type { Treatment } from '../src/data/treatments';
 import { getRow, idForRowKey, type ContentRow } from '../src/lib/content/store';
 import { fieldsFromForm, formOf, listSchemaOfRow } from '../src/lib/console/editor-form';
 import { sourceText } from './source-text';
@@ -77,6 +78,23 @@ const PASSWORD = 'Shamah-ab2-2026';
 const email = `ab2-owner-${run}@example.invalid`;
 const DRAFT_REASON = `سبب مسودة ${run}`;
 const userIds: string[] = [];
+
+const HOME_SERVICE: Treatment = {
+  id: 'home-cms-test-service',
+  category: null,
+  categoryName: { ar: '', en: '' },
+  name: { ar: 'خدمة اختبار', en: 'Test homepage service' },
+  tagline: { ar: 'وصف اختبار', en: 'Test service intro' },
+  description: { ar: '', en: '' },
+  benefits: { ar: [], en: [] },
+  steps: { ar: [], en: [] },
+  aftercare: { ar: [], en: [] },
+  idealFor: { ar: '', en: '' },
+  duration: { ar: '', en: '' },
+  sessionsRecommended: { ar: '', en: '' },
+  priceStartingAt: null,
+  image: { src: '/images/interiors/reception.jpg', alt: { ar: '', en: '' }, width: 1600, height: 1000, focal: '50% 50%' },
+};
 
 /** The id `014_about_page_seed.sql` writes, so the migration and this file name one row. */
 const ABOUT_ID = '00000000-0000-0000-0000-000000000001';
@@ -167,9 +185,9 @@ function drawnHome(whyChooseUs: Awaited<ReturnType<typeof getHomeWhyChooseUs>>, 
             children: createElement(HomeBody, {
               intro: { title: { ar: '', en: '' }, lead: { ar: '', en: '' } },
               whyChooseUs,
-              services: [],
-              servicesTotal: 0,
-              servicesTitle: { ar: '', en: '' },
+              services: [HOME_SERVICE],
+              servicesTotal: 1,
+              servicesTitle: { ar: 'خدماتنا', en: 'Our services' },
               cases: [],
               offers: [],
               articles: [],
@@ -326,8 +344,18 @@ describe('the reader answers from the published copy', () => {
 
     const arabic = drawnHome(whyChooseUs, 'ar');
     const english = drawnHome(whyChooseUs, 'en');
-    for (const reason of list('reasons_ar')) expect(arabic).toContain(reason);
-    for (const reason of list('reasons_en')) expect(english).toContain(reason);
+    for (const [markup, language, serviceName] of [
+      [arabic, 'ar', 'خدمة اختبار'],
+      [english, 'en', 'Test homepage service'],
+    ] as const) {
+      const band = markup.match(/<section\b[^>]*>([\s\S]*?)<\/section>/)?.[1];
+      if (!band) throw new Error('The homepage CMS panel and services did not render inside one section.');
+      expect(band).toContain(serviceName);
+      expect(band).toContain(text(`reasonsTitle_${language}`));
+      expect(band).toContain(text(`reasonsLead_${language}`));
+      expect(band).toContain(language === 'ar' ? 'لماذا تختار شامه' : 'Why clients choose Shamah');
+      for (const reason of list(`reasons_${language}`)) expect(band).toContain(reason);
+    }
   });
 
   it('counts the two figures it claims and takes the third from the row', async () => {

@@ -1,8 +1,8 @@
 # Home priority: services and CMS-authored reasons
 
-Home shows the first three featured services and also renders the About page's
-published "Why clients choose us" content. Both are CMS-backed: edit service cards
-under Services, and edit the reasons under Console → Pages → About.
+Home shows the first three featured services beside the About page's published
+"Why clients choose us" heading, lead and reasons. Both are CMS-backed: edit service
+cards under Services, and edit the reasons under Console → Pages → About.
 
 ## 1. The section that was removed, and why its CMS content returned
 
@@ -23,9 +23,9 @@ in `HomeBody.tsx`.
 | Branches | Live WordPress (branch pages: names, areas, addresses, per-branch phones). | Partially with `/branches`, but on Home it is the tap-to-call entry. | Yes — `tel:` and WhatsApp links on every card. | Stays. |
 | Journal | Live WordPress posts (92 EN slugs mirrored in the snapshot). | No. | Indirect — each card is a post, and posts carry the booking CTA. | Stays. |
 
-The Home intro still links to `/about`, and the same CMS-authored reasons also appear in
-a dedicated Home section below the intro/services band. The About page continues to
-render them above "What we stand by."
+The same CMS-authored heading, lead and reasons render in the left column beside the
+featured services, followed by the `/about` button. The About page continues to render
+them above "What we stand by."
 
 ## 2. Which three services, chosen by a deterministic rule
 
@@ -54,16 +54,17 @@ Current result, identical in both languages:
 The services heading is page 696's own title (`getPageTitle("our-services")` →
 `خدماتنا` / `Our Services`). The introduction heading beside it is the homepage's own
 `#about` row heading (`The Best Aesthetic Center` in English; the Arabic row of that
-page is still untranslated English, so the Arabic side keeps the authored
-`لماذا تختار العميلات عيادات شامه؟`, exactly as `getHomeIntro()` documents).
+page is still untranslated English). When the published About page has its reasons,
+their CMS heading and lead fill the side column instead of a blank translated intro.
 `كل الخدمات` / `All services` links to `/services` whenever more than three exist
 (12 merged services do).
 
 ## 3. Home layout
 
 The intro/services band keeps its `Swiper` layout: `mobilePerView 1`, `tabletPerView 2`,
-`desktopPerView 3`, `gap 16`, no autoplay. The Why Choose Us band renders the About
-reasons as numbered cards; it is omitted when the About row has no published reasons.
+`desktopPerView 3`, `gap 16`, no autoplay. The left column reads the published About
+heading, lead and numbered reasons, then links to `/about`. The panel shares the original
+band and does not add another section below the services.
 
 ## 4. Historical measured height before CMS reasons returned to Home
 

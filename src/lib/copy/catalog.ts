@@ -624,7 +624,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All services",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 146,
+    line: 170,
     uses: 1,
   },
   {
@@ -813,7 +813,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Why clients choose Shamah",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 128,
+    line: 152,
     uses: 1,
   },
   {
@@ -822,7 +822,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All blogs",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 345,
+    line: 340,
     uses: 2,
   },
   {
@@ -1173,7 +1173,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Contact us and our team will be happy to help you learn about our services.",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 113,
+    line: 119,
     uses: 1,
   },
   {
@@ -1236,7 +1236,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "WhatsApp",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 320,
+    line: 315,
     uses: 4,
   },
   {
@@ -1425,7 +1425,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All offers",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 227,
+    line: 222,
     uses: 1,
   },
   {
@@ -1533,7 +1533,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branch details",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 255,
+    line: 250,
     uses: 1,
   },
   {
@@ -1767,7 +1767,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branch",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 283,
+    line: 278,
     uses: 1,
   },
   {
@@ -2181,7 +2181,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "There’s nothing to show just yet",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 112,
+    line: 118,
     uses: 1,
   },
   {

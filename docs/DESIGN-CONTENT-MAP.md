@@ -87,14 +87,15 @@ TreatmentCard fields (also used on `/services` list): image, category badge (hid
 when WP none), name, 2-line tagline, "From N EGP" (empty span when `priceStartingAt`
 null), Details link. → `services` collection fields.
 
-### Band 03 — Why clients choose Shamah — `HomeBody.tsx`
+### Side panel beside Home services — `HomeBody.tsx`
 
 The title, lead and numbered reasons come from the published `/about` page document.
 Edit them in **Console → Pages → About**, under **Why clients choose us**, then publish.
-The same values render on `/about`; Home omits the band when there are no published
-reasons.
+The same values render on `/about`; Home shows the panel in the original introduction
+column beside the services cards, with the `/about` button below the reasons. It does not
+add a separate band below services.
 
-### Band 04 — Seasonal offers — `HomeBody.tsx`
+### Seasonal offers — `HomeBody.tsx`
 
 Heading "باقات الموسم" + lead STATIC; view-all when offers>3 (API fetches 4 as
 "more exist" probe); `offers.slice(0,3)` → OfferCard. → `homeContent.offersTitle/

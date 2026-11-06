@@ -13,7 +13,7 @@ import { GoldLink, useWhatsappHref } from "@/components/shared/Actions";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { TreatmentCard } from "@/components/cards/TreatmentCard";
-import { ResultCompareSection, type HomeCompareCase } from "./ResultCompareSection";
+import type { HomeCompareCase } from "./ResultCompareSection";
 import { getLocalizedHref } from "@/lib/locale";
 import { toPhotoSlot } from "@/lib/wp/ui-helpers";
 import type { Offer as UIOffer } from "@/data/offers";
@@ -85,10 +85,17 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   const { t, language, formatNumber } = useLanguage();
   const waHref = useWhatsappHref();
   const hasIntro = !!(intro.title.ar || intro.title.en);
-  const hasWhyChooseUs = whyChooseUs.reasons.length > 0;
+  const hasWhyChooseUs = !!(
+    whyChooseUs.title.ar ||
+    whyChooseUs.title.en ||
+    whyChooseUs.lead.ar ||
+    whyChooseUs.lead.en ||
+    whyChooseUs.reasons.length
+  );
+  const hasIntroPanel = hasIntro || hasWhyChooseUs;
   const hasServices = !!services.length;
   const hasHomeContent =
-    hasIntro || hasWhyChooseUs || hasServices || cases.length > 0 || offers.length > 0 || branches.length > 0 || articles.length > 0;
+    hasIntroPanel || hasServices || cases.length > 0 || offers.length > 0 || branches.length > 0 || articles.length > 0;
   // The numerals count the bands that actually paint. They used to be written into the page,
   // so a Home with no introduction opened at "02" — and a comparison band, which is there or
   // not there on its own data, would have moved every number after it. This list is the paint
@@ -96,7 +103,6 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   const paintedBands = [
     hasIntro && "intro",
     hasServices && "services",
-    hasWhyChooseUs && "why",
     !!offers.length && "offers",
     !!branches.length && "branches",
     !!articles.length && "articles",
@@ -117,13 +123,31 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
           />
         </Section>
       )}
-      {/* 01 + 02 — The homepage introduction and its featured services. */}
-      {(hasIntro || hasServices) && (
+      {/* The CMS-authored reasons and featured services share the original Home band. */}
+      {(hasIntroPanel || hasServices) && (
         <Section className="bg-[var(--bg-primary)]">
           <div className="mt-4 grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-            {hasIntro && (
+            {hasIntroPanel && (
               <div className="lg:col-span-4 min-w-0">
-                <SectionHeading index={numeralOf("intro")} title={intro.title} lead={intro.lead} />
+                <SectionHeading
+                  index={hasIntro ? numeralOf("intro") : undefined}
+                  title={hasWhyChooseUs ? whyChooseUs.title : intro.title}
+                  lead={hasWhyChooseUs ? whyChooseUs.lead : intro.lead}
+                />
+                {hasWhyChooseUs && whyChooseUs.reasons.length > 0 && (
+                  <ol className="mt-5 space-y-3">
+                    {whyChooseUs.reasons.map((reason, index) => (
+                      <Reveal as="li" key={index} delay={index * 0.06} className="flex items-start gap-3">
+                        <span className="shrink-0 text-sm font-bold text-[var(--gold-end)] num">
+                          {formatNumber(index + 1)}
+                        </span>
+                        <span className="text-sm leading-relaxed text-[var(--text-secondary)]" dir="auto">
+                          {t(reason.ar, reason.en)}
+                        </span>
+                      </Reveal>
+                    ))}
+                  </ol>
+                )}
                 <GoldLink href="/about" withArrow size="sm" className="mt-5">
                   {t("لماذا تختار شامه", "Why clients choose Shamah")}
                 </GoldLink>
@@ -131,7 +155,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
             )}
 
             {hasServices && (
-              <div className={`${hasIntro ? "lg:col-span-8" : "lg:col-span-12"} min-w-0`}>
+              <div className={`${hasIntroPanel ? "lg:col-span-8" : "lg:col-span-12"} min-w-0`}>
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <SectionHeading
                     index={numeralOf("services")}
@@ -173,35 +197,6 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                 </div>
               </div>
             )}
-          </div>
-        </Section>
-      )}
-
-      {/* 03 — CMS-authored About reasons, shown here as well as on /about. */}
-      {hasWhyChooseUs && (
-        <Section id="why-choose-us" className="bg-[var(--bg-secondary)]/60">
-          <SectionHeading
-            index={numeralOf("why")}
-            align="center"
-            title={whyChooseUs.title}
-            lead={whyChooseUs.lead}
-          />
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {whyChooseUs.reasons.map((reason, index) => (
-              <Reveal
-                as="article"
-                key={index}
-                delay={index * 0.08}
-                className="h-full rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] p-5"
-              >
-                <span className="text-sm font-bold tracking-eyebrow text-[var(--gold-end)] num">
-                  {formatNumber(index + 1)}
-                </span>
-                <h3 className="mt-3 text-lg font-bold leading-relaxed text-[var(--text-primary)]" dir="auto">
-                  {t(reason.ar, reason.en)}
-                </h3>
-              </Reveal>
-            ))}
           </div>
         </Section>
       )}
