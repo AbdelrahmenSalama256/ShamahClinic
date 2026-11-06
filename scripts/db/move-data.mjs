@@ -104,13 +104,14 @@ export function toJsonSqlValue(value) {
   return JSON.stringify(value);
 }
 
-function connectionConfig(env) {
+export function connectionConfig(env) {
+  const host = (env.DATABASE_HOST ?? env.DB_HOST ?? '').trim();
+  const socketPath = (env.DATABASE_SOCKET ?? '').trim();
   return {
-    host: (env.DATABASE_HOST ?? '').trim(),
-    port: Number(env.DATABASE_PORT ?? 3306),
-    user: (env.DATABASE_USER ?? '').trim(),
-    password: env.DATABASE_PASSWORD ?? '',
-    database: (env.DATABASE_NAME ?? '').trim(),
+    ...(socketPath ? { socketPath } : { host, port: Number(env.DATABASE_PORT ?? env.DB_PORT ?? 3306) }),
+    user: (env.DATABASE_USER ?? env.DB_USER ?? '').trim(),
+    password: env.DATABASE_PASSWORD ?? env.DB_PASSWORD ?? '',
+    database: (env.DATABASE_NAME ?? env.DB_NAME ?? '').trim(),
     multipleStatements: false,
     dateStrings: true,
     supportBigNumbers: true,
@@ -119,13 +120,16 @@ function connectionConfig(env) {
 }
 
 function describe(env) {
-  return `${(env.DATABASE_USER ?? '').trim()}@${(env.DATABASE_HOST ?? '').trim()}:${env.DATABASE_PORT ?? 3306}/${(env.DATABASE_NAME ?? '').trim()}`;
+  const user = (env.DATABASE_USER ?? env.DB_USER ?? '').trim();
+  const host = (env.DATABASE_HOST ?? env.DB_HOST ?? '').trim();
+  const endpoint = env.DATABASE_SOCKET?.trim() || `${host}:${env.DATABASE_PORT ?? env.DB_PORT ?? 3306}`;
+  return `${user}@${endpoint}/${(env.DATABASE_NAME ?? env.DB_NAME ?? '').trim()}`;
 }
 
 function requireConfig(env) {
   const config = connectionConfig(env);
-  if (!config.host || !config.user || !config.database) {
-    throw new Error('Set DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DATABASE_USER and DATABASE_PASSWORD (or pass --from/--to).');
+  if ((!config.host && !config.socketPath) || !config.user || !config.database) {
+    throw new Error('Set DATABASE_HOST/DB_HOST or DATABASE_SOCKET, DATABASE_PORT/DB_PORT, DATABASE_NAME/DB_NAME, DATABASE_USER/DB_USER and DATABASE_PASSWORD/DB_PASSWORD (or pass --from/--to).');
   }
   return config;
 }
@@ -168,7 +172,8 @@ async function dump(sourceEnv, outPath) {
       format: FORMAT,
       createdAt: new Date().toISOString(),
       source: {
-        host: config.host,
+        host: (sourceEnv.DATABASE_HOST ?? sourceEnv.DB_HOST ?? '').trim(),
+        socketPath: config.socketPath ?? null,
         database: config.database,
         server: `${version.comment} ${version.version}`,
       },
@@ -240,12 +245,20 @@ export function assertConfirmedTarget(target, args) {
   }
 }
 
+export function isSameSource(source, targetEnv) {
+  const targetHost = (targetEnv.DATABASE_HOST ?? targetEnv.DB_HOST ?? '').trim();
+  const targetSocket = (targetEnv.DATABASE_SOCKET ?? '').trim();
+  return source.host === targetHost &&
+    source.database === (targetEnv.DATABASE_NAME ?? targetEnv.DB_NAME ?? '').trim() &&
+    (!source.socketPath || !targetSocket || source.socketPath === targetSocket);
+}
+
 async function restore(dump, targetEnv, args) {
   const config = requireConfig(targetEnv);
   assertConfirmedTarget(config, args);
   const connection = await mysql.createConnection(config);
   try {
-    if (dump.source.host === config.host && dump.source.database === config.database) {
+    if (isSameSource(dump.source, targetEnv)) {
       throw new Error('The target is the database the dump came from. Restoring into it would delete rows on the source.');
     }
 

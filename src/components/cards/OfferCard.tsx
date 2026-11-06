@@ -6,9 +6,10 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
 import { useWhatsappHref } from "@/components/shared/Actions";
 import { Photo } from "@/components/ui/Photo";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Offer } from "@/data/offers";
-import { Check, Calendar, MessageCircle } from "lucide-react";
+import { Check, Calendar } from "lucide-react";
 
 export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
   const { t, language, formatNumber } = useLanguage();
@@ -32,7 +33,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
 
   return (
     <article
-      className={`group relative flex flex-col h-full rounded-2xl border bg-[var(--bg-card)] overflow-hidden transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-1 hover:shadow-xl ${
+      className={`group relative flex flex-col h-full rounded-2xl border bg-[var(--bg-card)] overflow-hidden transition-[transform,box-shadow] duration-hover ease-brand hover:-translate-y-1 hover:shadow-xl ${
         offer.popular ? "border-[var(--border-control)] shadow-lg" : "border-[var(--border-control)]"
       }`}
     >
@@ -48,7 +49,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
         <Photo
           slot={offer.image}
           ratio="landscape"
-          imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+          imgClassName="group-hover:scale-105 transition-transform duration-reveal ease-brand"
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
         />
       </div>
@@ -63,7 +64,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
               title links to it exactly like a journal card. */}
           <Link
             href={getLocalizedHref(offer.href[language], language)}
-            className="hover:text-[var(--gold-end)] transition-colors duration-300"
+            className="hover:text-[var(--gold-end)] transition-colors duration-hover"
           >
             {title}
           </Link>
@@ -121,7 +122,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
                 openBooking({ offer: { slug: offer.slug, name: offer.title, services: offer.services } })
               }
               data-cta="offer-card"
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-sm py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-sm py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-hover ease-brand cursor-pointer"
             >
               <Calendar className="w-4 h-4" />
               <span>{t("احجزي العرض", "Book Offer")}</span>
@@ -130,9 +131,9 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
               href={waHref(language, waMsg)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-success)] text-[var(--text-success)] font-bold text-sm py-3 hover:bg-[var(--bg-success-soft)] transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-success)] text-[var(--text-success)] font-bold text-sm py-3 hover:bg-[var(--bg-success-soft)] transition-[background-color] duration-hover ease-brand"
             >
-              <MessageCircle className="w-4 h-4" />
+              <WhatsAppIcon className="w-4 h-4" />
               <span>{t("استفسري", "Ask")}</span>
             </a>
           </div>

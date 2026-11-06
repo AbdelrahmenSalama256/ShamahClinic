@@ -11,7 +11,8 @@ import { getLocalizedHref } from "@/lib/locale";
 import { socialLinks } from "@/lib/site";
 import { reopenConsent } from "@/lib/tracking/client";
 import type { NavItem } from "@/data/nav";
-import { Phone, Send, Check, MessageCircle } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { Phone, Send, Check } from "lucide-react";
 
 const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
   const common = {
@@ -50,7 +51,9 @@ export const Footer: React.FC<{
 }> = ({ branches, nav, hiddenPaths, cookieSettings = false }) => {
   const { language, t } = useLanguage();
   const clinic = useClinic();
-  const visibleNavItems = nav.filter((item) => !hiddenPaths.includes(item.href));
+  const visibleNavItems = nav.filter(
+    (item) => !hiddenPaths.includes(item.href),
+  );
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [newsletterError, setNewsletterError] = useState("");
@@ -99,7 +102,7 @@ export const Footer: React.FC<{
             <div className="pt-1 flex flex-col gap-2.5 text-xs text-gray-300">
               <a
                 href={`tel:${clinic.phone.replace(/\s/g, "")}`}
-                className="flex items-center gap-2 hover:text-[var(--gold-start)] transition-colors duration-300"
+                className="flex items-center gap-2 hover:text-[var(--gold-start)] transition-colors duration-hover"
                 // dir="ltr"
               >
                 <Phone className="w-4 h-4 text-[var(--text-gold)]" />
@@ -109,9 +112,9 @@ export const Footer: React.FC<{
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-[var(--text-success-on-dark)] hover:text-[var(--text-success-on-dark)] transition-colors duration-300"
+                className="flex items-center gap-2 text-[var(--text-success-on-dark)] hover:text-[var(--text-success-on-dark)] transition-colors duration-hover"
               >
-                <MessageCircle className="w-4 h-4" />
+                <WhatsAppIcon className="w-4 h-4" />
                 <span>{t("تواصل فوري عبر واتساب", "WhatsApp Chat")}</span>
               </a>
             </div>
@@ -124,7 +127,7 @@ export const Footer: React.FC<{
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={s.label}
-                  className="w-9 h-9 rounded-full border border-[var(--border-on-dark)] bg-white/5 flex items-center justify-center text-[var(--text-on-dark-muted)] hover:text-[var(--gold-start)] hover:border-[var(--gold-border)] hover:bg-white/10 transition-colors duration-300"
+                  className="w-9 h-9 rounded-full border border-[var(--border-on-dark)] bg-white/5 flex items-center justify-center text-[var(--text-on-dark-muted)] hover:text-[var(--gold-start)] hover:border-[var(--gold-border)] hover:bg-white/10 transition-colors duration-hover"
                 >
                   <SocialIcon id={s.id} />
                 </a>
@@ -141,19 +144,19 @@ export const Footer: React.FC<{
               {branches.map((b) => (
                 <div
                   key={b.id}
-                  className="p-3 rounded-xl bg-white/5 border border-[var(--border-on-dark)] hover:border-[var(--gold-border)] transition-colors duration-300"
+                  className="p-3 rounded-xl bg-white/5 border border-[var(--border-on-dark)] hover:border-[var(--gold-border)] transition-colors duration-hover"
                 >
                   <div className="font-bold text-[var(--text-on-dark)] text-xs mb-1 flex items-center justify-between gap-2">
                     <Link
                       href={getLocalizedHref(`/branches/${b.id}`, language)}
-                      className="hover:text-[var(--gold-start)] transition-colors duration-300"
+                      className="hover:text-[var(--gold-start)] transition-colors duration-hover"
                     >
                       {b.name[language]}
                     </Link>
                     <a
                       href={`tel:${b.phone}`}
                       className="text-[var(--gold-start)] hover:underline shrink-0"
-                      // dir="ltr"
+                      dir="ltr"
                     >
                       {b.phone}
                     </a>
@@ -176,7 +179,7 @@ export const Footer: React.FC<{
                 <li key={l.href}>
                   <Link
                     href={getLocalizedHref(l.href, language)}
-                    className="hover:text-[var(--gold-start)] transition-colors duration-300"
+                    className="hover:text-[var(--gold-start)] transition-colors duration-hover"
                   >
                     {t(l.label.ar, l.label.en)}
                   </Link>
@@ -211,12 +214,12 @@ export const Footer: React.FC<{
                     value={newsletterEmail}
                     onChange={(e) => setNewsletterEmail(e.target.value)}
                     placeholder={t("بريدكِ الإلكتروني", "Your email address")}
-                    className="w-full bg-white/10 border border-[var(--border-on-dark)] text-xs text-[var(--text-on-dark)] py-3 ps-3.5 pe-14 rounded-full outline-none placeholder:text-[var(--text-on-dark-muted)] transition-colors duration-300"
+                    className="w-full bg-white/10 border border-[var(--border-on-dark)] text-xs text-[var(--text-on-dark)] py-3 ps-3.5 pe-14 rounded-full outline-none placeholder:text-[var(--text-on-dark-muted)] transition-colors duration-hover"
                   />
                   <button
                     type="submit"
                     aria-label={t("اشتراك", "Subscribe")}
-                    className="absolute end-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gold-gradient flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-300 cursor-pointer"
+                    className="absolute end-1 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gold-gradient flex items-center justify-center hover:scale-105 active:scale-95 transition-transform duration-hover cursor-pointer"
                   >
                     <Send className="w-3.5 h-3.5 rtl:-scale-x-100" />
                   </button>

@@ -12,16 +12,16 @@ import { ArrowLeft, ArrowRight, Pause, Play } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { Counter } from "@/components/ui/Counter";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
-import { images, type PhotoSlot } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 import { getLocalizedHref, type Locale } from "@/lib/locale";
 import type { HeroSettings, HeroSlide } from "@/lib/hero/types";
+import { motionTransition, DUR } from "@/lib/motion";
 
 /**
  * One frame the hero can draw, whatever wrote it.
  *
- * A slide from the console and a photograph scraped from the imported page are the same
- * thing to this component: a picture, alt text, and optional copy. That is what lets the
- * table stay empty on a fresh database without the homepage changing at all.
+ * A slide from the console and a photograph parsed from a published CMS page share the
+ * same shape here: a picture, alt text, and optional copy.
  */
 interface Frame {
   key: string;
@@ -57,7 +57,7 @@ function frameOfSlide(slide: HeroSlide): Frame {
   };
 }
 
-/** `photos` is the WordPress slider or the authored photo, used only when the table is empty. */
+/** `photos` and `slides` are both sourced from published CMS content. */
 export const HomeHero: React.FC<{
   photos: PhotoSlot[];
   slides: HeroSlide[];
@@ -78,16 +78,9 @@ export const HomeHero: React.FC<{
     ["0%", reduce ? "0%" : "12%"],
   );
 
-  const frames: Frame[] = (slides.length > 0
-    ? slides.map(frameOfSlide)
-    : photos.length > 0
-      ? photos.map(frameOfPhoto)
-      : [frameOfPhoto(images.hero)]
-  ).filter((frame) => frame.image.trim() !== "");
-
-  // `images.hero` is the last resort above, so this is non-empty in practice; the guard
-  // keeps a database row with a cleared address from producing a frame with no picture.
-  const safe = frames.length > 0 ? frames : [];
+  const safe: Frame[] = (slides.length > 0 ? slides.map(frameOfSlide) : photos.map(frameOfPhoto)).filter(
+    (frame) => frame.image.trim() !== "",
+  );
 
   const multiple = safe.length > 1 && !reduce;
   const count = safe.length;
@@ -207,6 +200,8 @@ export const HomeHero: React.FC<{
 
   const fadeMs = reduce ? 0 : settings.fadeMs;
 
+  if (count === 0) return null;
+
   return (
     <section ref={ref} className="relative overflow-hidden">
       {/* Full-bleed background image */}
@@ -321,7 +316,7 @@ export const HomeHero: React.FC<{
                         className="grid h-11 w-6 place-items-center focus-visible:outline-none"
                       >
                         <span
-                          className="block h-2 rounded-full transition-all duration-300"
+                          className="block h-2 rounded-full transition-[width,background-color] duration-hover"
                           style={{
                             width: i === index ? 22 : 8,
                             background: i === index ? "var(--gold-start)" : "rgba(255,255,255,.55)",
@@ -344,74 +339,39 @@ export const HomeHero: React.FC<{
 
         {/* Content */}
         <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center items-start pt-32 pb-0 sm:pt-40 sm:pb-24 lg:pt-44 lg:pb-28">
-          <motion.p
-            initial={reduce ? false : { opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-            className="text-[11px] sm:text-xs font-bold uppercase tracking-eyebrow text-[var(--gold-start)]"
-          >
-            {t(
-              "عيادات شامه · القاهرة والجيزة",
-              "Shamah Clinics · Cairo & Giza",
-            )}
-          </motion.p>
+          {heading && (
+            <motion.h1
+              initial={reduce ? false : { opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...motionTransition("enter"), delay: 0.05 }}
+              className="mt-4 text-[28px] sm:text-5xl lg:text-[64px] font-black leading-[1.05] tracking-tight text-[var(--text-on-dark)] max-w-3xl"
+            >
+              {heading}
+            </motion.h1>
+          )}
 
-          <motion.h1
-            initial={reduce ? false : { opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.05,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="mt-4 text-[28px] sm:text-5xl lg:text-[64px] font-black leading-[1.05] tracking-tight text-[var(--text-on-dark)] max-w-3xl"
-          >
-            {heading !== "" ? (
-              heading
-            ) : (
-              <>
-                {t("بشرةٌ تستحق ", "Skin that deserves ")}
-                <span className="text-[var(--gold-start)]">
-                  {t("عنايةً صادقة", "honest care")}
-                </span>
-                {t("، بأيدي نسائية خبيرة", ", in expert female hands")}
-              </>
-            )}
-          </motion.h1>
-
-          <motion.p
-            initial={reduce ? false : { opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.15,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="mt-5 text-sm sm:text-base lg:text-lg leading-relaxed text-[var(--text-on-dark-muted)] max-w-2xl"
-          >
-            {sub !== ""
-              ? sub
-              : t(
-                  "نبدأ كل حالة باستشارة وتحليل واضح، ونستخدم أجهزة حديثة ومنتجات أصلية، مع طاقم طبي نسائي بالكامل وخصوصية تامة في ثلاثة فروع.",
-                  "Every case starts with a clear consultation and analysis, using modern devices and authentic products, with an all-female medical team and full privacy across three branches.",
-                )}
-          </motion.p>
+          {sub && (
+            <motion.p
+              initial={reduce ? false : { opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...motionTransition("enter"), delay: 0.15 }}
+              className="mt-5 text-sm sm:text-base lg:text-lg leading-relaxed text-[var(--text-on-dark-muted)] max-w-2xl"
+            >
+              {sub}
+            </motion.p>
+          )}
 
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: 0.8,
-              delay: 0.25,
-              ease: [0.22, 1, 0.36, 1],
-            }}
+            transition={{ ...motionTransition("enter"), delay: 0.25 }}
             className="mt-8 flex flex-row sm:flex-row gap-3 sm:gap-4"
           >
             {ctaHref !== "" && ctaLabel !== "" && (
               <a
                 href={ctaHref}
                 {...(ctaExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient px-4 py-2 text-base font-bold shadow-md transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 hover:shadow-lg"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient px-4 py-2 text-base font-bold shadow-md transition-[transform,box-shadow] duration-hover ease-brand hover:-translate-y-0.5 hover:shadow-lg"
               >
                 {ctaLabel}
               </a>
@@ -420,12 +380,11 @@ export const HomeHero: React.FC<{
             <WhatsAppButton size="lg" variant="onDark" className="backdrop-blur-sm" />
           </motion.div>
 
-          {/* Verified figures */}
           <motion.dl
             initial={reduce ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.35 }}
-            className="mt-12 grid grid-cols-3 gap-4 sm:gap-8 border-t border-[var(--border-on-dark)] pt-6 max-w-2xl w-full sm:w-auto"
+            transition={{ duration: DUR.enter, delay: 0.35 }}
+            className="mt-12 grid grid-cols-2 gap-4 sm:gap-8 border-t border-[var(--border-on-dark)] pt-6 max-w-2xl w-full sm:w-auto"
           >
             <div>
               <dt className="text-[10px] sm:text-xs text-[var(--text-on-dark-muted)] uppercase tracking-wider">
@@ -441,14 +400,6 @@ export const HomeHero: React.FC<{
               </dt>
               <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
                 <Counter value={treatmentCount} format={formatNumber} />
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[10px] sm:text-xs text-[var(--text-on-dark-muted)] uppercase tracking-wider">
-                {t("طاقم نسائي", "Female staff")}
-              </dt>
-              <dd className="mt-1 text-2xl sm:text-3xl font-black text-[var(--gold-start)]">
-                <Counter value={100} suffix="٪" format={formatNumber} />
               </dd>
             </div>
           </motion.dl>

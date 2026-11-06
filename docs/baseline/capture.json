@@ -1,6 +1,6 @@
 {
   "base": "http://127.0.0.1:3430",
-  "capturedAt": "2026-11-04T19:30:12.479Z",
+  "capturedAt": "2026-11-04T21:35:35.693Z",
   "widths": [
     {
       "w": 1440,
@@ -22,12 +22,12 @@
       "route": "/ar",
       "name": "home",
       "status": "200",
-      "ms": 6575,
+      "ms": 29180,
       "file": "docs/baseline/ar-desktop-1440-home.png",
-      "bytes": 1450666,
-      "sha256": "44e3e53581eb7d117da48afa9144a5444b0d7ff80864814eb35892a80031c0a7",
+      "bytes": 1346777,
+      "sha256": "9899bd2269186d61e815a9ff3327317d72308e3b5d15060882adb4d186affc7b",
       "pageErrors": [],
-      "prefetchAborts": 18
+      "prefetchAborts": 447
     },
     {
       "locale": "ar",
@@ -35,12 +35,12 @@
       "route": "/ar/services",
       "name": "services",
       "status": "200",
-      "ms": 6289,
+      "ms": 4577,
       "file": "docs/baseline/ar-desktop-1440-services.png",
-      "bytes": 982834,
-      "sha256": "311889ed93eafd13fad96057f0697e1595eedaba23ac6e6a957b6099eaee8d24",
+      "bytes": 982959,
+      "sha256": "6413daf7b3e8eddfcb988a5a813b7d5d292c1dd1d7fa80f885f4ad48b6ce0fa0",
       "pageErrors": [],
-      "prefetchAborts": 22
+      "prefetchAborts": 19
     },
     {
       "locale": "ar",
@@ -48,10 +48,10 @@
       "route": "/ar/services/skincare",
       "name": "service-skincare",
       "status": "200",
-      "ms": 4180,
+      "ms": 3805,
       "file": "docs/baseline/ar-desktop-1440-service-skincare.png",
-      "bytes": 738346,
-      "sha256": "dc6e2bc50d631a65cbf06eae7eae980d777e9e123509dc73c6b0e3af98d2bfb4",
+      "bytes": 738222,
+      "sha256": "d78e3de2beec47ec56d30e1e4c4ad8a84bf189d843195bd662f87eed82b2ed58",
       "pageErrors": [],
       "prefetchAborts": 15
     },
@@ -61,12 +61,12 @@
       "route": "/ar/services/laser-hair-removal",
       "name": "service-laser-hair-removal",
       "status": "200",
-      "ms": 3463,
+      "ms": 4057,
       "file": "docs/baseline/ar-desktop-1440-service-laser-hair-removal.png",
-      "bytes": 726739,
-      "sha256": "f017bd397847f28ed2112accaba9bda787b8d45bbe2c6ec4a41dc549f1c8d99e",
+      "bytes": 726741,
+      "sha256": "303220fb5dd29f735ca5f95300639e58e4e1d31a83f58546c024174ef9918358",
       "pageErrors": [],
-      "prefetchAborts": 13
+      "prefetchAborts": 16
     },
     {
       "locale": "ar",
@@ -74,12 +74,12 @@
       "route": "/ar/services/botox-injections",
       "name": "service-botox-injections",
       "status": "200",
-      "ms": 4279,
+      "ms": 4268,
       "file": "docs/baseline/ar-desktop-1440-service-botox-injections.png",
-      "bytes": 728603,
-      "sha256": "ce1e10c47acaa8a51b783165f7326313807e4089cba72a2647b578af9b9d4bc1",
+      "bytes": 728570,
+      "sha256": "39d54b9894743a19bedd2c3fa00d27915580ec031791f00da7a96b585bc4b93a",
       "pageErrors": [],
-      "prefetchAborts": 16
+      "prefetchAborts": 14
     },
     {
       "locale": "ar",
@@ -87,12 +87,12 @@
       "route": "/ar/offers",
       "name": "offers",
       "status": "200",
-      "ms": 5297,
+      "ms": 5191,
       "file": "docs/baseline/ar-desktop-1440-offers.png",
-      "bytes": 1116056,
-      "sha256": "008db6eba372607e1aea11f9b3874ca6cc75556c39d9133d5429804ad83bd79c",
+      "bytes": 1116135,
+      "sha256": "d13463b925c975a38f85e287a63d70e9da5cfd4a08d89506c56b9a1268db0bc7",
       "pageErrors": [],
-      "prefetchAborts": 22
+      "prefetchAborts": 19
     },
     {
       "locale": "ar",
@@ -100,12 +100,12 @@
       "route": "/ar/results",
       "name": "cases-results",
       "status": "200",
-      "ms": 4736,
+      "ms": 4685,
       "file": "docs/baseline/ar-desktop-1440-cases-results.png",
-      "bytes": 892669,
-      "sha256": "4c5c574cc905d191dadd445428d7e56c2d61aa34584ab13017b5ec4f953b3abf",
+      "bytes": 892544,
+      "sha256": "457160cb09d7d7269937130c8ca8a3d0c3185d51049954bd60faf8df688dd088",
       "pageErrors": [],
-      "prefetchAborts": 20
+      "prefetchAborts": 15
     },
     {
       "locale": "ar",
@@ -113,12 +113,12 @@
       "route": "/ar/doctors",
       "name": "doctors",
       "status": "200",
-      "ms": 4593,
+      "ms": 4916,
       "file": "docs/baseline/ar-desktop-1440-doctors.png",
-      "bytes": 1254906,
-      "sha256": "fb71b3acf6cdd058c31d1645a624280f0e12d5d352f08eb4b32df551d2742fe4",
+      "bytes": 1254709,
+      "sha256": "cba241a1235229f2b6f8f2d49ac8a26e2c3364901e66376697533d25efe2d97f",
       "pageErrors": [],
-      "prefetchAborts": 13
+      "prefetchAborts": 11
     },
     {
       "locale": "ar",
@@ -126,12 +126,12 @@
       "route": "/ar/branches",
       "name": "branches",
       "status": "200",
-      "ms": 3942,
+      "ms": 2743,
       "file": "docs/baseline/ar-desktop-1440-branches.png",
-      "bytes": 846482,
-      "sha256": "c664363007c55ec69282d6cab2ff959ed42189b332b71b425a8ed53199235d11",
+      "bytes": 846574,
+      "sha256": "e8f6aa25a3f6a7b4e8746288248e720301704f5ac53370210e50362e78b1c647",
       "pageErrors": [],
-      "prefetchAborts": 22
+      "prefetchAborts": 20
     },
     {
       "locale": "ar",
@@ -139,12 +139,12 @@
       "route": "/ar/contact",
       "name": "contact",
       "status": "200",
-      "ms": 4302,
+      "ms": 2947,
       "file": "docs/baseline/ar-desktop-1440-contact.png",
-      "bytes": 772584,
-      "sha256": "96e488d2808d895730a3b6bcfef906c4d96d6ece53cf4b4d354d1e58b0c53c44",
+      "bytes": 772588,
+      "sha256": "0df5980921e1703f66db68913a35b3a3188c98a59a5636c3654c83b42902ad8b",
       "pageErrors": [],
-      "prefetchAborts": 14
+      "prefetchAborts": 15
     },
     {
       "locale": "ar",
@@ -152,12 +152,12 @@
       "route": "/ar/about",
       "name": "about",
       "status": "200",
-      "ms": 4620,
+      "ms": 4125,
       "file": "docs/baseline/ar-desktop-1440-about.png",
-      "bytes": 1066788,
-      "sha256": "47a68092e034923feb68becc1cf4a5eedad0b16e4234fa94242a5c3fc07550f1",
+      "bytes": 1066926,
+      "sha256": "de07edab1e09faf33c5067a00d67c4a298c400c1089947367190b006b89ee9d8",
       "pageErrors": [],
-      "prefetchAborts": 16
+      "prefetchAborts": 14
     },
     {
       "locale": "ar",
@@ -165,12 +165,12 @@
       "route": "/ar/blogs",
       "name": "blog-list",
       "status": "200",
-      "ms": 5692,
+      "ms": 4875,
       "file": "docs/baseline/ar-desktop-1440-blog-list.png",
-      "bytes": 1069309,
-      "sha256": "b318fd3c3d702f78dfe4b49a3221c0c6b4417741c99d47ed98701b8573a56d1f",
+      "bytes": 1069397,
+      "sha256": "eafd52055f07faaacf2f911062bc18352a64ad483e4899862ecde02e1854c16c",
       "pageErrors": [],
-      "prefetchAborts": 19
+      "prefetchAborts": 18
     },
     {
       "locale": "ar",
@@ -178,12 +178,12 @@
       "route": "/ar/blogs/hifu-facial-skin-tightening",
       "name": "article-short-hifu",
       "status": "200",
-      "ms": 5451,
+      "ms": 5440,
       "file": "docs/baseline/ar-desktop-1440-article-short-hifu.png",
-      "bytes": 1151726,
-      "sha256": "d25677145aa94119b670dc0f191a4820aea1cf1bdd1fb731cf26f09cd726f8f4",
+      "bytes": 1151770,
+      "sha256": "f1cb4dc28bc26919b6807e8105475abf5671be2f59c51588731924b666324509",
       "pageErrors": [],
-      "prefetchAborts": 12
+      "prefetchAborts": 11
     },
     {
       "locale": "ar",
@@ -191,10 +191,10 @@
       "route": "/ar/blogs/laser-underarm-hair-removal",
       "name": "article-long-table-underarm",
       "status": "200",
-      "ms": 6666,
+      "ms": 7097,
       "file": "docs/baseline/ar-desktop-1440-article-long-table-underarm.png",
-      "bytes": 1282231,
-      "sha256": "396a71e8a2086de19eabfdf43b3c1e50ed26006f093e954bcf5514e31dc37db9",
+      "bytes": 1282081,
+      "sha256": "5c071f263c759f45a9b432b158d60337e0b5bf7ef386a38aba2d1186cdd9352d",
       "pageErrors": [],
       "prefetchAborts": 12
     },
@@ -204,12 +204,12 @@
       "route": "/ar/blogs/morpheus-8-sessions",
       "name": "article-two-tables-morpheus",
       "status": "200",
-      "ms": 6688,
+      "ms": 7132,
       "file": "docs/baseline/ar-desktop-1440-article-two-tables-morpheus.png",
-      "bytes": 1187055,
-      "sha256": "fd411e6c0669dcfb9ca6d4b903ef7f9bafaecfba30475d4874f2f11246d5de9b",
+      "bytes": 1187240,
+      "sha256": "ccba3d470f732fcfe053a270453165319d8b3ee4dc8187effdb8e43d56c52521",
       "pageErrors": [],
-      "prefetchAborts": 16
+      "prefetchAborts": 9
     },
     {
       "locale": "ar",
@@ -217,10 +217,10 @@
       "route": "/ar/blogs/best-laser-clinics-near-me",
       "name": "article-lists-clinics-near-me",
       "status": "200",
-      "ms": 5193,
+      "ms": 5553,
       "file": "docs/baseline/ar-desktop-1440-article-lists-clinics-near-me.png",
-      "bytes": 1016260,
-      "sha256": "cf76b0ad2a5e1a155a76be675b6d19d8eff09653aec1a5842878f507f97b8faf",
+      "bytes": 1016313,
+      "sha256": "9380cb226b3093b4a6e74d28eccc6a9ccab6852a3f9989bbea3f2b1832d8b71a",
       "pageErrors": [],
       "prefetchAborts": 14
     },
@@ -230,12 +230,12 @@
       "route": "/ar/blogs/laser-hair-removal-egypt-price",
       "name": "article-price-table",
       "status": "200",
-      "ms": 5842,
+      "ms": 6717,
       "file": "docs/baseline/ar-desktop-1440-article-price-table.png",
-      "bytes": 1267858,
-      "sha256": "2917639ce06515acb0a042482eac718dbb74ff1550808998e9bbbb5886fe90b8",
+      "bytes": 1267831,
+      "sha256": "9510ae62103552cf8a4b92485624e3c95e6d2dcab4d017678ef305c890a32218",
       "pageErrors": [],
-      "prefetchAborts": 11
+      "prefetchAborts": 15
     },
     {
       "locale": "ar",
@@ -243,12 +243,12 @@
       "route": "/ar",
       "name": "home",
       "status": "200",
-      "ms": 4634,
+      "ms": 4968,
       "file": "docs/baseline/ar-phone-390-home.png",
-      "bytes": 511162,
-      "sha256": "eb5df675d133ab1d74cbe9a20048574d25d44d3318864d7d6aacbf04fa5abdf2",
+      "bytes": 415724,
+      "sha256": "14b6ed65df710759df0754935a62b9f7312e416dfc9a662dfd2ab71bec45c8c8",
       "pageErrors": [],
-      "prefetchAborts": 20
+      "prefetchAborts": 19
     },
     {
       "locale": "ar",
@@ -256,12 +256,12 @@
       "route": "/ar/services",
       "name": "services",
       "status": "200",
-      "ms": 3377,
+      "ms": 3481,
       "file": "docs/baseline/ar-phone-390-services.png",
-      "bytes": 419826,
-      "sha256": "0a7d881adef939c323a4bfa5c9a7cc3ab3040f0533742faf628c86b7b525ad6c",
+      "bytes": 419885,
+      "sha256": "13d62f847b04d197d7a97ecbcb2e1920890798bcacfbb990421d6d5edcc4ed53",
       "pageErrors": [],
-      "prefetchAborts": 7
+      "prefetchAborts": 6
     },
     {
       "locale": "ar",
@@ -269,10 +269,10 @@
       "route": "/ar/services/skincare",
       "name": "service-skincare",
       "status": "200",
-      "ms": 3107,
+      "ms": 2995,
       "file": "docs/baseline/ar-phone-390-service-skincare.png",
-      "bytes": 393655,
-      "sha256": "89400a9cd7a5b6f11d56eef782321eb717c310047d116b8edf933f13db364bb4",
+      "bytes": 393434,
+      "sha256": "125bc320e42e1340e662441c1ec606c6d9aad9b1ce6fc8ba5c2eafc7c9971ef0",
       "pageErrors": [],
       "prefetchAborts": 2
     },
@@ -282,12 +282,12 @@
       "route": "/ar/services/laser-hair-removal",
       "name": "service-laser-hair-removal",
       "status": "200",
-      "ms": 2761,
+      "ms": 3045,
       "file": "docs/baseline/ar-phone-390-service-laser-hair-removal.png",
-      "bytes": 394610,
-      "sha256": "de31989b6eab14bca2430e9a14b2293e941b352b67ba522ef0070db0841c1376",
+      "bytes": 393345,
+      "sha256": "2ea3b958a19c80574dd15aca11d4570179739deca01cce5a71311d9f3f0a87d3",
       "pageErrors": [],
-      "prefetchAborts": 1
+      "prefetchAborts": 2
     },
     {
       "locale": "ar",
@@ -295,12 +295,12 @@
       "route": "/ar/services/botox-injections",
       "name": "service-botox-injections",
       "status": "200",
-      "ms": 2875,
+      "ms": 3024,
       "file": "docs/baseline/ar-phone-390-service-botox-injections.png",
-      "bytes": 394213,
-      "sha256": "64ed152695041c3615ed0959c131a0f214fe5a09ce5ddbb95a65f057edd33cb2",
+      "bytes": 395396,
+      "sha256": "88f6f8fb59fbcd82cbf77015a241c43b901dcf355dcbe5eb3897cc2d96da7815",
       "pageErrors": [],
-      "prefetchAborts": 1
+      "prefetchAborts": 2
     },
     {
       "locale": "ar",
@@ -308,10 +308,10 @@
       "route": "/ar/offers",
       "name": "offers",
       "status": "200",
-      "ms": 3679,
+      "ms": 3550,
       "file": "docs/baseline/ar-phone-390-offers.png",
-      "bytes": 522390,
-      "sha256": "d5b52811ab05cb98560d52b3f3177b6d1f196bf120bd8915fa0de9daa44ef44b",
+      "bytes": 522571,
+      "sha256": "628fdaae92b3a14a09f302aa901891dc222663168ccfc0520b6e26cbc8ba95ab",
       "pageErrors": [],
       "prefetchAborts": 1
     },
@@ -321,10 +321,10 @@
       "route": "/ar/results",
       "name": "cases-results",
       "status": "200",
-      "ms": 3477,
+      "ms": 3185,
       "file": "docs/baseline/ar-phone-390-cases-results.png",
-      "bytes": 480939,
-      "sha256": "b66525a5979bc807b4c8444e1c6d442e3b037062736e8e515a4ac1ce8488bb47",
+      "bytes": 480967,
+      "sha256": "b7af12af674fc3241d067342380b45f5b4589f7d736a5b63875ddb9d855758c0",
       "pageErrors": [],
       "prefetchAborts": 2
     },
@@ -334,10 +334,10 @@
       "route": "/ar/doctors",
       "name": "doctors",
       "status": "200",
-      "ms": 2855,
+      "ms": 2974,
       "file": "docs/baseline/ar-phone-390-doctors.png",
-      "bytes": 473640,
-      "sha256": "baae545a5de0f5264d1965bcc3d3c375dfc87e42ff45be08917bc6b5a298212f",
+      "bytes": 473674,
+      "sha256": "8539de65faec34925c3a56541d0c059d5a84d524d47ad90590898f37bf17e84b",
       "pageErrors": [],
       "prefetchAborts": 1
     },
@@ -347,12 +347,12 @@
       "route": "/ar/branches",
       "name": "branches",
       "status": "200",
-      "ms": 2665,
+      "ms": 2487,
       "file": "docs/baseline/ar-phone-390-branches.png",
-      "bytes": 419957,
-      "sha256": "4452e10eeb73c5303f9ca91c150fd6deadecebdc0c6a96e0ad8a2580857f87f6",
+      "bytes": 419965,
+      "sha256": "2fe6450e7adcee39314cb7d961505e60eae26492394ed8a53731c70475e52675",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 3
     },
     {
       "locale": "ar",
@@ -360,10 +360,10 @@
       "route": "/ar/contact",
       "name": "contact",
       "status": "200",
-      "ms": 2955,
+      "ms": 2630,
       "file": "docs/baseline/ar-phone-390-contact.png",
-      "bytes": 462315,
-      "sha256": "0e2592bfbb7b66926b9b88b953accc4495546d8ed9e58a3443a8eae916703c3b",
+      "bytes": 462332,
+      "sha256": "d6fe861b7606900413c307af8823b27486e6940ea61f54b73c6605dea3d18cf2",
       "pageErrors": [],
       "prefetchAborts": 1
     },
@@ -373,10 +373,10 @@
       "route": "/ar/about",
       "name": "about",
       "status": "200",
-      "ms": 3317,
+      "ms": 2614,
       "file": "docs/baseline/ar-phone-390-about.png",
-      "bytes": 432735,
-      "sha256": "f00d3473fe6c757c337d3132c71718d97c9610d9c32d50773f6664077b336d9f",
+      "bytes": 432682,
+      "sha256": "dfc71a04eebbe12a7ab8445a04240b94206d3a3723f06b67f1726ff5e87374cd",
       "pageErrors": [],
       "prefetchAborts": 1
     },
@@ -386,12 +386,12 @@
       "route": "/ar/blogs",
       "name": "blog-list",
       "status": "200",
-      "ms": 4150,
+      "ms": 3751,
       "file": "docs/baseline/ar-phone-390-blog-list.png",
-      "bytes": 448755,
-      "sha256": "25819d5254684d598c1595eb9ba1e357754fc77c0b9714f67cdfc55fbe5e12d8",
+      "bytes": 448809,
+      "sha256": "77b80c42dd7d9f1c04d933bce267ed66f203c4904e5445007cf5480e86f790d8",
       "pageErrors": [],
-      "prefetchAborts": 6
+      "prefetchAborts": 7
     },
     {
       "locale": "ar",
@@ -399,12 +399,12 @@
       "route": "/ar/blogs/hifu-facial-skin-tightening",
       "name": "article-short-hifu",
       "status": "200",
-      "ms": 2784,
+      "ms": 4127,
       "file": "docs/baseline/ar-phone-390-article-short-hifu.png",
-      "bytes": 701038,
-      "sha256": "163dc3c0db905826e76755f4ed305d8795355ba96d818a99a5fa3269b8dc8725",
+      "bytes": 700793,
+      "sha256": "b703375a5116fa4fde2268fdbb40f213892bcd7e883017d345a46e4fc462ac57",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 3
     },
     {
       "locale": "ar",
@@ -412,12 +412,12 @@
       "route": "/ar/blogs/laser-underarm-hair-removal",
       "name": "article-long-table-underarm",
       "status": "200",
-      "ms": 3530,
+      "ms": 5025,
       "file": "docs/baseline/ar-phone-390-article-long-table-underarm.png",
-      "bytes": 813870,
-      "sha256": "ae990bcfad107bf4151c3d08359c04362f05561f99f3c053ef644f2d5b3b1513",
+      "bytes": 813739,
+      "sha256": "c0e6bfff3433e55ce15336632ee2e444f025e927cdb77bf073771549d45bf6f5",
       "pageErrors": [],
-      "prefetchAborts": 0
+      "prefetchAborts": 2
     },
     {
       "locale": "ar",
@@ -425,12 +425,12 @@
       "route": "/ar/blogs/morpheus-8-sessions",
       "name": "article-two-tables-morpheus",
       "status": "200",
-      "ms": 3266,
+      "ms": 4686,
       "file": "docs/baseline/ar-phone-390-article-two-tables-morpheus.png",
-      "bytes": 830542,
-      "sha256": "d28e1eb58b06ca408c7e347d11e9219eeee6f640bf4ff2c3a8028bca3fd00bca",
+      "bytes": 801937,
+      "sha256": "b9c69642c78874498bd51061a2dca890c5cc291cf04f6b80b3de38bbaa88fdb7",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 1
     },
     {
       "locale": "ar",
@@ -438,10 +438,10 @@
       "route": "/ar/blogs/best-laser-clinics-near-me",
       "name": "article-lists-clinics-near-me",
       "status": "200",
-      "ms": 3484,
+      "ms": 2782,
       "file": "docs/baseline/ar-phone-390-article-lists-clinics-near-me.png",
-      "bytes": 699632,
-      "sha256": "aee47274fe152e2c0c8d8f7f51d430d259d91421b38dd99bd2e52a1186bd263c",
+      "bytes": 699662,
+      "sha256": "4e6f4d70c966ce9ddb2ef30402308353ef527393d5f04fce23b1b005a419af80",
       "pageErrors": [],
       "prefetchAborts": 2
     },
@@ -451,10 +451,10 @@
       "route": "/ar/blogs/laser-hair-removal-egypt-price",
       "name": "article-price-table",
       "status": "200",
-      "ms": 3549,
+      "ms": 2841,
       "file": "docs/baseline/ar-phone-390-article-price-table.png",
-      "bytes": 729618,
-      "sha256": "17059f8e31a45ed804d354aae769e514c40748cf04bca7e24726a8ed6fcdf27b",
+      "bytes": 729755,
+      "sha256": "aa9e06f27599106f912a377091237979261a58e2b2e28fa8b89fd3bbfc067990",
       "pageErrors": [],
       "prefetchAborts": 2
     },
@@ -464,12 +464,12 @@
       "route": "/en",
       "name": "home",
       "status": "200",
-      "ms": 5448,
+      "ms": 4428,
       "file": "docs/baseline/en-desktop-1440-home.png",
-      "bytes": 1427787,
-      "sha256": "76643d002536b4514af1e19b26e4647eccd357112dcceea0c77fe4521637712b",
+      "bytes": 1427657,
+      "sha256": "33c3c00c0b0d68d8f8c4e421e4792ff5efbc68f74b4f137ea2a3b5102b819a9a",
       "pageErrors": [],
-      "prefetchAborts": 16
+      "prefetchAborts": 8
     },
     {
       "locale": "en",
@@ -477,12 +477,12 @@
       "route": "/en/services",
       "name": "services",
       "status": "200",
-      "ms": 4840,
+      "ms": 3296,
       "file": "docs/baseline/en-desktop-1440-services.png",
-      "bytes": 964559,
-      "sha256": "0156f759c77c776e8754fa066a41ac65e1afbf7e47496ef99663fafa03fb0ea6",
+      "bytes": 964523,
+      "sha256": "a27d1fc9bebcb4114175849a5ccfbb997d770db9c7d5f5e99593c1361e20f9ee",
       "pageErrors": [],
-      "prefetchAborts": 17
+      "prefetchAborts": 21
     },
     {
       "locale": "en",
@@ -490,12 +490,12 @@
       "route": "/en/services/skincare",
       "name": "service-skincare",
       "status": "200",
-      "ms": 4045,
+      "ms": 2929,
       "file": "docs/baseline/en-desktop-1440-service-skincare.png",
-      "bytes": 729497,
-      "sha256": "5850e0d3abcf5f5325f9c691119120af0178c275a12e3614c4668eb57a9d52aa",
+      "bytes": 729412,
+      "sha256": "7c2082435c5c3af357e6c79b8dabfdc6c9f7a9831082bbf3c9206d8f0e2aa615",
       "pageErrors": [],
-      "prefetchAborts": 15
+      "prefetchAborts": 16
     },
     {
       "locale": "en",
@@ -503,12 +503,12 @@
       "route": "/en/services/laser-hair-removal",
       "name": "service-laser-hair-removal",
       "status": "200",
-      "ms": 3160,
+      "ms": 2694,
       "file": "docs/baseline/en-desktop-1440-service-laser-hair-removal.png",
-      "bytes": 714635,
-      "sha256": "a4643aba81923ccedd87c888c521b74ecde87044952dfa760f25178d9003a2b5",
+      "bytes": 715689,
+      "sha256": "b03034b153dc23d66a0ef551c4934082995a31118a47ae9004e8e646ba37a3eb",
       "pageErrors": [],
-      "prefetchAborts": 12
+      "prefetchAborts": 13
     },
     {
       "locale": "en",
@@ -516,10 +516,10 @@
       "route": "/en/services/botox-injections",
       "name": "service-botox-injections",
       "status": "200",
-      "ms": 3706,
+      "ms": 3833,
       "file": "docs/baseline/en-desktop-1440-service-botox-injections.png",
-      "bytes": 1190112,
-      "sha256": "015286ebcc3e0f0379e57e601e5d1be8b1bedf0a214f6a4177041f5d83c0d920",
+      "bytes": 1189861,
+      "sha256": "58b68aa6d4f5b15d5423a06301c0eb940d8aa5f07bc9e7910afa014556c87f24",
       "pageErrors": [],
       "prefetchAborts": 16
     },
@@ -529,12 +529,12 @@
       "route": "/en/offers",
       "name": "offers",
       "status": "200",
-      "ms": 4775,
+      "ms": 3127,
       "file": "docs/baseline/en-desktop-1440-offers.png",
-      "bytes": 1098933,
-      "sha256": "dada44c6e93e4fb61a821304d639ea43451c8e6c4f6250ed8352c22c1663eec3",
+      "bytes": 1099250,
+      "sha256": "69d2db496c5164c2adc92ccff483ba63db987f86004bd63a12760db351be2e46",
       "pageErrors": [],
-      "prefetchAborts": 20
+      "prefetchAborts": 16
     },
     {
       "locale": "en",
@@ -542,12 +542,12 @@
       "route": "/en/results",
       "name": "cases-results",
       "status": "200",
-      "ms": 3833,
+      "ms": 2755,
       "file": "docs/baseline/en-desktop-1440-cases-results.png",
-      "bytes": 876692,
-      "sha256": "877509a815311f1b894813ac467583c38e66f84184b670a4403e37564e2bd6e9",
+      "bytes": 876725,
+      "sha256": "51c24aeab54b7b257fb7a509f060e4ed77005464ecb1e1faeb22ed8514609e6c",
       "pageErrors": [],
-      "prefetchAborts": 18
+      "prefetchAborts": 13
     },
     {
       "locale": "en",
@@ -555,12 +555,12 @@
       "route": "/en/doctors",
       "name": "doctors",
       "status": "200",
-      "ms": 3772,
+      "ms": 2602,
       "file": "docs/baseline/en-desktop-1440-doctors.png",
-      "bytes": 1255842,
-      "sha256": "313d2a495caa727d6874771a03ef98adcc9061c678e291c09700a0f5be497f69",
+      "bytes": 1256630,
+      "sha256": "dbc7a0899b08d94649d91189168b6e08d1dcaddf488482c704f15846af6c1591",
       "pageErrors": [],
-      "prefetchAborts": 15
+      "prefetchAborts": 12
     },
     {
       "locale": "en",
@@ -568,12 +568,12 @@
       "route": "/en/branches",
       "name": "branches",
       "status": "200",
-      "ms": 3481,
+      "ms": 2263,
       "file": "docs/baseline/en-desktop-1440-branches.png",
-      "bytes": 835448,
-      "sha256": "7c4456fd2c68afa50237c02501e8bf552dfc051538a82ef814c76367ad872d16",
+      "bytes": 835894,
+      "sha256": "94576eb33e5b15cd0a71f50e6c0cb297f370fda320d96231b939f6966f9c9cc2",
       "pageErrors": [],
-      "prefetchAborts": 16
+      "prefetchAborts": 19
     },
     {
       "locale": "en",
@@ -581,12 +581,12 @@
       "route": "/en/contact",
       "name": "contact",
       "status": "200",
-      "ms": 3179,
+      "ms": 2181,
       "file": "docs/baseline/en-desktop-1440-contact.png",
-      "bytes": 757134,
-      "sha256": "86aea056dfb0eda589b86706754e79d676fd316e9e59f33d22060c847628fd71",
+      "bytes": 759317,
+      "sha256": "a1ba154755fc8c0d5104ed6ae1c8e37dead0dc4722887ce53f4d24d6aeec0341",
       "pageErrors": [],
-      "prefetchAborts": 15
+      "prefetchAborts": 14
     },
     {
       "locale": "en",
@@ -594,12 +594,12 @@
       "route": "/en/about",
       "name": "about",
       "status": "200",
-      "ms": 3699,
+      "ms": 2543,
       "file": "docs/baseline/en-desktop-1440-about.png",
-      "bytes": 1033898,
-      "sha256": "ecf348025b97f5417491ed4e64ac09e5517c460056adc3937aaed5548bfc0d1e",
+      "bytes": 1034153,
+      "sha256": "979b9f84588ad8ccef1c8e4b21097bc0f8335f6662f0cee563b7a63389010ebd",
       "pageErrors": [],
-      "prefetchAborts": 15
+      "prefetchAborts": 12
     },
     {
       "locale": "en",
@@ -607,12 +607,12 @@
       "route": "/en/blogs",
       "name": "blog-list",
       "status": "200",
-      "ms": 4004,
+      "ms": 2695,
       "file": "docs/baseline/en-desktop-1440-blog-list.png",
-      "bytes": 1053398,
-      "sha256": "56a5ea3349c5717959bc3018641241773724e10a940c11465386ba722ff10685",
+      "bytes": 1051854,
+      "sha256": "8f37e5ebd0c90de0cecc82578ec1387166be5a4b7c7f04e16b53b0209d2a81ed",
       "pageErrors": [],
-      "prefetchAborts": 16
+      "prefetchAborts": 17
     },
     {
       "locale": "en",
@@ -620,12 +620,12 @@
       "route": "/en/blogs/hifu-facial-skin-tightening",
       "name": "article-short-hifu",
       "status": "200",
-      "ms": 4392,
+      "ms": 2924,
       "file": "docs/baseline/en-desktop-1440-article-short-hifu.png",
-      "bytes": 1141634,
-      "sha256": "bcd05df8b279a7ff8a79b63dcd887d46d0266a4efcf41e9e5339c18cf175a5e9",
+      "bytes": 1148131,
+      "sha256": "82933bde49066edf94bcbfe175079a3604b796d195d6fdf1e52fd1b26694d314",
       "pageErrors": [],
-      "prefetchAborts": 14
+      "prefetchAborts": 10
     },
     {
       "locale": "en",
@@ -633,12 +633,12 @@
       "route": "/en/blogs/laser-underarm-hair-removal",
       "name": "article-long-table-underarm",
       "status": "200",
-      "ms": 4899,
+      "ms": 3758,
       "file": "docs/baseline/en-desktop-1440-article-long-table-underarm.png",
-      "bytes": 1306075,
-      "sha256": "3de73cc2ce11703dad1af1e72c4f6dd585138152f595808d738e6d7f9867243a",
+      "bytes": 1311690,
+      "sha256": "827061e37d143df3f47b973ddd1462bd24aaf428ff1539fddc56983fe43e80b9",
       "pageErrors": [],
-      "prefetchAborts": 10
+      "prefetchAborts": 12
     },
     {
       "locale": "en",
@@ -646,12 +646,12 @@
       "route": "/en/blogs/morpheus-8-sessions",
       "name": "article-two-tables-morpheus",
       "status": "200",
-      "ms": 4529,
+      "ms": 3750,
       "file": "docs/baseline/en-desktop-1440-article-two-tables-morpheus.png",
-      "bytes": 1181677,
-      "sha256": "4893ee63cf5cb47ed0fc379393013b726af1475ce8f369cc3169d99d1fae484d",
+      "bytes": 1187391,
+      "sha256": "9fda5ceb96572a30bb5df0647fad1d3f6d246232fc5cd875a31ece49fc6be5a2",
       "pageErrors": [],
-      "prefetchAborts": 10
+      "prefetchAborts": 11
     },
     {
       "locale": "en",
@@ -659,12 +659,12 @@
       "route": "/en/blogs/best-laser-clinics-near-me",
       "name": "article-lists-clinics-near-me",
       "status": "200",
-      "ms": 3714,
+      "ms": 2705,
       "file": "docs/baseline/en-desktop-1440-article-lists-clinics-near-me.png",
-      "bytes": 989991,
-      "sha256": "46845a7aa96fe87726694c8b3da20e65f9117d33c3a35d188d13bd5a784d02c6",
+      "bytes": 995792,
+      "sha256": "53011946cdfd49f472737c32544f2c946b2aae23045dab2ed8ec4122e8e08209",
       "pageErrors": [],
-      "prefetchAborts": 9
+      "prefetchAborts": 11
     },
     {
       "locale": "en",
@@ -672,10 +672,10 @@
       "route": "/en/blogs/laser-hair-removal-egypt-price",
       "name": "article-price-table",
       "status": "200",
-      "ms": 4929,
+      "ms": 3037,
       "file": "docs/baseline/en-desktop-1440-article-price-table.png",
-      "bytes": 1262075,
-      "sha256": "e01d2205af637b73ceb31d35b554bac4f605365afae885a14d69dab1a4c7e58d",
+      "bytes": 1266839,
+      "sha256": "2534064a698df348a4eb214b934ad0bb8f9373d897f7892b7ca0c7b3cbd9f3e7",
       "pageErrors": [],
       "prefetchAborts": 10
     },
@@ -685,12 +685,12 @@
       "route": "/en",
       "name": "home",
       "status": "200",
-      "ms": 4164,
+      "ms": 3243,
       "file": "docs/baseline/en-phone-390-home.png",
-      "bytes": 427552,
-      "sha256": "309eec05b4380206cc76d09d8406816a3ce7500c1b7bc14dd2043d997f092fa0",
+      "bytes": 427664,
+      "sha256": "ee3e0efeb5a7b315ae1b5ff9a85b392c3c7f3976af918487495dc728a7c00e48",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 0
     },
     {
       "locale": "en",
@@ -698,12 +698,12 @@
       "route": "/en/services",
       "name": "services",
       "status": "200",
-      "ms": 3060,
+      "ms": 2644,
       "file": "docs/baseline/en-phone-390-services.png",
-      "bytes": 404072,
-      "sha256": "25d5958dbdf4e3088c94d402efd024c88f7482c91c22b1b081c76495695d9100",
+      "bytes": 404430,
+      "sha256": "b599a1932f56c321dad329345d8fc368d5b1c89fcc3a9f1447078278f3ed9b6f",
       "pageErrors": [],
-      "prefetchAborts": 7
+      "prefetchAborts": 5
     },
     {
       "locale": "en",
@@ -711,10 +711,10 @@
       "route": "/en/services/skincare",
       "name": "service-skincare",
       "status": "200",
-      "ms": 2541,
+      "ms": 2665,
       "file": "docs/baseline/en-phone-390-service-skincare.png",
-      "bytes": 391646,
-      "sha256": "817ff01b50ce389c32e07b454afad52c233910569a71e153f3fa610ecacf551c",
+      "bytes": 390264,
+      "sha256": "a264a54cfd8464033d0fdd3eb17bc9a4987911a9295d7dee2ebe72ae9c21760d",
       "pageErrors": [],
       "prefetchAborts": 2
     },
@@ -724,10 +724,10 @@
       "route": "/en/services/laser-hair-removal",
       "name": "service-laser-hair-removal",
       "status": "200",
-      "ms": 2727,
+      "ms": 2530,
       "file": "docs/baseline/en-phone-390-service-laser-hair-removal.png",
-      "bytes": 387453,
-      "sha256": "70621e407826ceacc513425faee47b3f4ccd8f1dc8db276991c69360f17da4a4",
+      "bytes": 389112,
+      "sha256": "4cab41286b4cb69b5735a29ce3a9d0cc39b56d88ba7b98ec2e52f86d2edfb7d9",
       "pageErrors": [],
       "prefetchAborts": 2
     },
@@ -737,12 +737,12 @@
       "route": "/en/services/botox-injections",
       "name": "service-botox-injections",
       "status": "200",
-      "ms": 3326,
+      "ms": 2140,
       "file": "docs/baseline/en-phone-390-service-botox-injections.png",
-      "bytes": 646615,
-      "sha256": "08a223dd29a09b09ffaa4e9329a5d1cbab19aa0f0cc5d136235585ec420386ba",
+      "bytes": 650392,
+      "sha256": "e0661e080d2784cdf73aaf79ac84bc6abdcf96447ef003e6a720fa7a6d7693c5",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 3
     },
     {
       "locale": "en",
@@ -750,12 +750,12 @@
       "route": "/en/offers",
       "name": "offers",
       "status": "200",
-      "ms": 3025,
+      "ms": 2919,
       "file": "docs/baseline/en-phone-390-offers.png",
-      "bytes": 502740,
-      "sha256": "02347bda5a3ae682ef279723e5a7d8319226ec8cff586be37cfb7ca6c2b887e1",
+      "bytes": 502931,
+      "sha256": "b6bba480bc47d16726e0c91d892e801593d871e86ca92e90b9dfb0757408ed11",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 3
     },
     {
       "locale": "en",
@@ -763,12 +763,12 @@
       "route": "/en/results",
       "name": "cases-results",
       "status": "200",
-      "ms": 2761,
+      "ms": 2515,
       "file": "docs/baseline/en-phone-390-cases-results.png",
-      "bytes": 494292,
-      "sha256": "f313983acc937bd3c2026a707fe751d32cc4d07c569c00c8aa54fdc4bc85773e",
+      "bytes": 493829,
+      "sha256": "b7a33c3b4451fe1af8d72a1a26ad56b0da295263db36594dcaa1a7fea368376d",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 3
     },
     {
       "locale": "en",
@@ -776,10 +776,10 @@
       "route": "/en/doctors",
       "name": "doctors",
       "status": "200",
-      "ms": 2401,
+      "ms": 2365,
       "file": "docs/baseline/en-phone-390-doctors.png",
-      "bytes": 461339,
-      "sha256": "dc407790ae68114e3d6e09e42681a55ce3bdf356be8d3a0c3d4f964fe831b273",
+      "bytes": 461840,
+      "sha256": "2fd5a8ce6da7f238c335e151819383ee3afc8dfe6c1a3ee195d53379021c7957",
       "pageErrors": [],
       "prefetchAborts": 1
     },
@@ -789,10 +789,10 @@
       "route": "/en/branches",
       "name": "branches",
       "status": "200",
-      "ms": 1864,
+      "ms": 1792,
       "file": "docs/baseline/en-phone-390-branches.png",
-      "bytes": 416458,
-      "sha256": "0ad828688e27ec0b3f3715c3de83cae46c8811d2fcec440a810f0fb5e53594ce",
+      "bytes": 416455,
+      "sha256": "6100d3f40dc8e6113bf642287111fa8637ab2291a5d60084b5e7f789e0c69a8c",
       "pageErrors": [],
       "prefetchAborts": 3
     },
@@ -802,10 +802,10 @@
       "route": "/en/contact",
       "name": "contact",
       "status": "200",
-      "ms": 2529,
+      "ms": 1684,
       "file": "docs/baseline/en-phone-390-contact.png",
-      "bytes": 455982,
-      "sha256": "a04edf297894a58bca9ccfba573540060981813d3c758db83789dcb8b5147f20",
+      "bytes": 457883,
+      "sha256": "ac2fac1b8b9e0a5f040531461363b53545dc42239255a1c84eda57e54210b356",
       "pageErrors": [],
       "prefetchAborts": 1
     },
@@ -815,10 +815,10 @@
       "route": "/en/about",
       "name": "about",
       "status": "200",
-      "ms": 3042,
+      "ms": 1966,
       "file": "docs/baseline/en-phone-390-about.png",
-      "bytes": 443535,
-      "sha256": "ce8f29efcad9be1332fbfdc002b4ef9e152a165a3ff3e218ba4052dd39d33803",
+      "bytes": 446203,
+      "sha256": "0568ef765eb8721e06897acaf4b3ea584697d53af658c5d7111a8e592881e998",
       "pageErrors": [],
       "prefetchAborts": 1
     },
@@ -828,12 +828,12 @@
       "route": "/en/blogs",
       "name": "blog-list",
       "status": "200",
-      "ms": 3726,
+      "ms": 2400,
       "file": "docs/baseline/en-phone-390-blog-list.png",
-      "bytes": 443058,
-      "sha256": "6d31da2a9260df605841dd55805e3cafbc3c0f520d82184ae85ff97055c83f51",
+      "bytes": 444507,
+      "sha256": "2a8594ee91068bf1595c85e5ca5d181bfc48030d6a4f5ae84be6004c987425bf",
       "pageErrors": [],
-      "prefetchAborts": 5
+      "prefetchAborts": 4
     },
     {
       "locale": "en",
@@ -841,12 +841,12 @@
       "route": "/en/blogs/hifu-facial-skin-tightening",
       "name": "article-short-hifu",
       "status": "200",
-      "ms": 3784,
+      "ms": 2743,
       "file": "docs/baseline/en-phone-390-article-short-hifu.png",
-      "bytes": 714122,
-      "sha256": "c9022389d922e3746a6984a67c8c2c628076bd8455dee7b3b696ed12352f7a4c",
+      "bytes": 714404,
+      "sha256": "1918806472609b82fe46231097bd6fc4e010e1d21c969eab064258b4c45e7594",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 1
     },
     {
       "locale": "en",
@@ -854,12 +854,12 @@
       "route": "/en/blogs/laser-underarm-hair-removal",
       "name": "article-long-table-underarm",
       "status": "200",
-      "ms": 5039,
+      "ms": 3403,
       "file": "docs/baseline/en-phone-390-article-long-table-underarm.png",
-      "bytes": 817934,
-      "sha256": "f41dcbadda57adaa207407646efec90333890d74188d15cfe628366d8d814741",
+      "bytes": 818120,
+      "sha256": "7cb457822e4e959343520aa1aee012f7cb8b28ba3c7acda23697d790c1daf321",
       "pageErrors": [],
-      "prefetchAborts": 1
+      "prefetchAborts": 2
     },
     {
       "locale": "en",
@@ -867,12 +867,12 @@
       "route": "/en/blogs/morpheus-8-sessions",
       "name": "article-two-tables-morpheus",
       "status": "200",
-      "ms": 4509,
+      "ms": 3030,
       "file": "docs/baseline/en-phone-390-article-two-tables-morpheus.png",
-      "bytes": 692315,
-      "sha256": "91d73b6de5880d92cc6eee08c5067313e925ce172468fadad8e3061d6fa075dc",
+      "bytes": 692579,
+      "sha256": "d3ed17e86d46ed443f53c78df5cd16b9d215d8396bd028784f3be3e2a954e662",
       "pageErrors": [],
-      "prefetchAborts": 2
+      "prefetchAborts": 1
     },
     {
       "locale": "en",
@@ -880,10 +880,10 @@
       "route": "/en/blogs/best-laser-clinics-near-me",
       "name": "article-lists-clinics-near-me",
       "status": "200",
-      "ms": 3650,
+      "ms": 2301,
       "file": "docs/baseline/en-phone-390-article-lists-clinics-near-me.png",
-      "bytes": 687232,
-      "sha256": "67d6aa3573187ddf6eab816261df56d1e2982d665fa78dbe1da78340957362b8",
+      "bytes": 687753,
+      "sha256": "ef6022d606107b4f28c59c35cf92332ce9130408a6f15cb34ce8aee9fa021a37",
       "pageErrors": [],
       "prefetchAborts": 2
     },
@@ -893,12 +893,12 @@
       "route": "/en/blogs/laser-hair-removal-egypt-price",
       "name": "article-price-table",
       "status": "200",
-      "ms": 3739,
+      "ms": 2898,
       "file": "docs/baseline/en-phone-390-article-price-table.png",
-      "bytes": 733086,
-      "sha256": "0e680359ea70bee6f2b523a88d94d976073c572cdce5c9a6b4735a9078424c93",
+      "bytes": 733220,
+      "sha256": "a9f977395927a9363ef526eb9a20cec8ae413866418c2d53f29037892a015faa",
       "pageErrors": [],
-      "prefetchAborts": 1
+      "prefetchAborts": 2
     }
   ]
 }

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useInView, useReducedMotion } from "framer-motion";
+import { milliseconds } from "@/lib/motion";
 
 interface CounterProps {
   value: number;
@@ -15,7 +16,7 @@ interface CounterProps {
 /** Animated count-up for real, verified figures only. */
 export const Counter: React.FC<CounterProps> = ({
   value,
-  duration = 1400,
+  duration = milliseconds("count"),
   suffix = "",
   prefix = "",
   format,
@@ -32,6 +33,8 @@ export const Counter: React.FC<CounterProps> = ({
     const start = performance.now();
     const tick = (now: number) => {
       const p = Math.min((now - start) / duration, 1);
+      // The reference's own cubic-out, kept verbatim: the house curve would front-load
+      // the count, and this is the one animation whose pacing reads as a number.
       const eased = 1 - Math.pow(1 - p, 3);
       setAnimated(Math.round(value * eased));
       if (p < 1) raf = requestAnimationFrame(tick);

@@ -18,25 +18,45 @@ export interface DbConfig {
   user: string;
   password: string;
   database: string;
+  socketPath?: string;
 }
 
 export type Env = Record<string, string | undefined>;
 
 export function readDbConfig(env: Env = process.env): DbConfig {
   const url = env.DATABASE_URL ? new URL(env.DATABASE_URL) : null;
+  const socketPath = env.DATABASE_SOCKET?.trim();
   const config = {
-    host: env.DATABASE_HOST ?? url?.hostname ?? '',
-    port: Number(env.DATABASE_PORT ?? url?.port ?? 3306),
-    user: decodeURIComponent(env.DATABASE_USER ?? url?.username ?? ''),
-    password: decodeURIComponent(env.DATABASE_PASSWORD ?? url?.password ?? ''),
-    database: (env.DATABASE_NAME ?? url?.pathname.replace(/^\//, '') ?? '').trim(),
+    host: env.DATABASE_HOST ?? env.DB_HOST ?? url?.hostname ?? '',
+    port: Number(env.DATABASE_PORT ?? env.DB_PORT ?? url?.port ?? 3306),
+    user: decodeURIComponent(env.DATABASE_USER ?? env.DB_USER ?? url?.username ?? ''),
+    password: decodeURIComponent(env.DATABASE_PASSWORD ?? env.DB_PASSWORD ?? url?.password ?? ''),
+    database: (env.DATABASE_NAME ?? env.DB_NAME ?? url?.pathname.replace(/^\//, '') ?? '').trim(),
+    ...(socketPath ? { socketPath } : {}),
   };
-  if (!config.host || !config.user || !config.database) {
+  if ((!config.host && !socketPath) || !config.user || !config.database) {
     throw new Error(
-      'Incomplete database configuration. Set DATABASE_HOST, DATABASE_PORT, DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME (or DATABASE_URL). See docs/LOCAL-MARIADB.md.',
+      'Incomplete database configuration. Set DATABASE_HOST, DATABASE_PORT, DATABASE_USER, DATABASE_PASSWORD, DATABASE_NAME (or cPanel DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, or DATABASE_URL). Set DATABASE_SOCKET to connect through a local Unix socket instead of a host and port. See docs/LOCAL-MARIADB.md.',
     );
   }
   return config;
+}
+
+export function poolOptions(config: DbConfig): PoolOptions {
+  const tls = readTls();
+  return {
+    ...(config.socketPath ? { socketPath: config.socketPath } : { host: config.host, port: config.port }),
+    user: config.user,
+    password: config.password,
+    database: config.database,
+    connectionLimit: Number(process.env.DATABASE_POOL_SIZE ?? 8),
+    // Keep DATETIME(3) as Date and DECIMAL as string, so a price never loses cents to a float.
+    dateStrings: false,
+    decimalNumbers: false,
+    multipleStatements: false,
+    enableKeepAlive: true,
+    ...(tls ? { ssl: tls } : {}),
+  };
 }
 
 /**
@@ -70,23 +90,9 @@ const globalForDb = globalThis as typeof globalThis & { __shamahDb?: Db };
 export function getDb(): Db {
   if (globalForDb.__shamahDb) return globalForDb.__shamahDb;
   const config = readDbConfig();
-  const tls = readTls();
-  const poolOptions: PoolOptions = {
-    host: config.host,
-    port: config.port,
-    user: config.user,
-    password: config.password,
-    database: config.database,
-    connectionLimit: Number(process.env.DATABASE_POOL_SIZE ?? 8),
-    // Keep DATETIME(3) as Date and DECIMAL as string, so a price never loses cents to a float.
-    dateStrings: false,
-    decimalNumbers: false,
-    multipleStatements: false,
-    enableKeepAlive: true,
-    ...(tls ? { ssl: tls } : {}),
-  };
+  const options = poolOptions(config);
   const db = new Kysely<Database>({
-    dialect: new MysqlDialect({ pool: createPool(poolOptions) }),
+    dialect: new MysqlDialect({ pool: createPool(options) }),
     // A diagnostic, off unless asked for: `DATABASE_LOG_QUERIES=1` prints the SQL of every
     // statement (placeholders only, no bound values) so a route's query count can be read
     // off the server log. It costs a string per query and must stay off in normal service.

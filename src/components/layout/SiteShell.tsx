@@ -22,6 +22,7 @@ import type { NavItem } from "@/data/nav";
 import type { Specialist } from "@/data/specialists";
 import type { TreatmentOption } from "@/data/treatments";
 import type { CopyBundle } from "@/lib/copy/shared";
+import { motionTransition } from "@/lib/motion";
 
 /**
  * Application shell: providers, persistent chrome (navbar / footer / floating
@@ -64,7 +65,7 @@ export const SiteShell: React.FC<{
                   initial={reduce ? false : { opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={reduce ? undefined : { opacity: 0, y: -8 }}
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                  transition={motionTransition("settle")}
                 >
                   {children}
                 </motion.main>

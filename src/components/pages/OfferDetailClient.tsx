@@ -68,7 +68,7 @@ export const OfferDetailClient: React.FC<OfferDetailClientProps> = ({
                         onClick={() => setShown(i)}
                         aria-label={language === "ar" ? slot.alt.ar : slot.alt.en}
                         aria-current={i === active || undefined}
-                        className={`w-20 rounded-xl overflow-hidden border transition-[border-color,opacity] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
+                        className={`w-20 rounded-xl overflow-hidden border transition-[border-color,opacity] duration-hover ease-brand cursor-pointer ${
                           i === active
                             ? "border-[var(--gold-end)]"
                             : "border-[var(--border-control)] opacity-70 hover:opacity-100"

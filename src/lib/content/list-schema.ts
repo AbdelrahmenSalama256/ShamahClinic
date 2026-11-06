@@ -161,7 +161,7 @@ const G = {
   sections: { key: 'sections', label: { ar: 'ترتيب الأقسام وإظهارها', en: 'Section order & visibility' } },
 } as const;
 
-const SERVICE_ICONS = optionsOf(['sparkles', 'shield', 'droplet', 'sun', 'heart', 'clock']);
+const SERVICE_ICONS = optionsOf(['badge-check', 'shield', 'droplet', 'sun', 'heart', 'clock']);
 
 const SERVICES: ListSchema = {
   key: 'services',

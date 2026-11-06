@@ -56,8 +56,10 @@ next-env.d.ts
 
 # The §0a golden set: 68 full-page PNGs (~49 MB) that items 4c and 6 diff against. The
 # files stay on disk and out of git; docs/baseline/capture.json + errors.json carry each
-# name, byte count and SHA-256, so a later run proves identity without committing pixels.
+# name, byte count and SHA-256 — but MB-2 measured that these hashes do NOT repeat between
+# two walks of one build, because the pages animate. The diffable set is the frozen one.
 /docs/baseline/*.png
+/docs/baseline/frozen/
 
 # The §0b Lighthouse matrix: 96 full JSON reports, 0.7–1.1 MB each (~80 MB). docs/perf/
 # summary.json carries every number that matters (categories, timings, sizes, request
@@ -90,3 +92,6 @@ next-env.d.ts
 .vercel
 .env*
 !.env.example
+
+# Local credential scratch file; never publish credentials from this path.
+/src/lib/db/senstive.txt

@@ -7,6 +7,7 @@ import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
 import { Photo } from "@/components/ui/Photo";
 import { useWhatsappHref } from "@/components/shared/Actions";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { useClinic } from "@/context/ClinicContext";
 import type { BranchDetail } from "@/data/branches";
 import type { TreatmentOption } from "@/data/treatments";
@@ -16,8 +17,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { trackEvent } from "@/lib/tracking/client";
 import { EVENT_NAMES } from "@/lib/tracking/events";
 import { leadAttribution, trackOnce } from "@/lib/tracking/first-party";
+import { motionTransition } from "@/lib/motion";
 import {
-  MessageCircle,
   Phone,
   Check,
   Calendar,
@@ -29,7 +30,7 @@ export const ContactClient: React.FC<{
   branches: BranchDetail[];
   /** The service picker in the lead form, named by WordPress page 696. */
   services: TreatmentOption[];
-  banner: PhotoSlot;
+  banner: PhotoSlot | null;
 }> = ({ branches, services, banner }) => {
   const { t, language } = useLanguage();
   const clinic = useClinic();
@@ -174,7 +175,7 @@ export const ContactClient: React.FC<{
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/contact", label: { ar: "تواصلي", en: "Contact" } },
         ]}
-        photo={banner}
+        photo={banner ?? undefined}
       />
 
       <section className="py-8 lg:py-16">
@@ -185,10 +186,10 @@ export const ContactClient: React.FC<{
               href={waHref(language)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-success)] bg-[var(--bg-success-soft)]/60 hover:bg-[var(--bg-success-soft)] hover:-translate-y-0.5 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+              className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-success)] bg-[var(--bg-success-soft)]/60 hover:bg-[var(--bg-success-soft)] hover:-translate-y-0.5 transition-[transform,background-color] duration-hover ease-brand"
             >
               <span className="w-11 h-11 rounded-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] flex items-center justify-center shrink-0">
-                <MessageCircle className="w-5 h-5" />
+                <WhatsAppIcon className="w-5 h-5" />
               </span>
               <span>
                 <span className="block font-black text-[var(--text-primary)]">
@@ -206,7 +207,7 @@ export const ContactClient: React.FC<{
             <a
               href={`tel:${clinic.phone.replace(/\s/g, "")}`}
               // dir="ltr"
-              className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] hover:-translate-y-0.5 hover:shadow-md transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+              className="flex items-center gap-4 p-5 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] hover:-translate-y-0.5 hover:shadow-md transition-[transform,box-shadow] duration-hover ease-brand"
             >
               <span className="w-11 h-11 rounded-full bg-gold-gradient flex items-center justify-center shrink-0">
                 <Phone className="w-5 h-5" />
@@ -239,7 +240,7 @@ export const ContactClient: React.FC<{
                     <a
                       href={`tel:${b.phone}`}
                       dir="ltr"
-                      className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300 shrink-0"
+                      className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-hover shrink-0"
                     >
                       {b.phone}
                     </a>
@@ -271,9 +272,9 @@ export const ContactClient: React.FC<{
                       href={continueWaUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] font-bold text-sm px-6 py-3 hover:bg-[var(--btn-wa-solid-bg-hover)] hover:-translate-y-0.5 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] font-bold text-sm px-6 py-3 hover:bg-[var(--btn-wa-solid-bg-hover)] hover:-translate-y-0.5 transition-[transform,background-color] duration-hover ease-brand"
                     >
-                      <MessageCircle className="w-4 h-4" />
+                      <WhatsAppIcon className="w-4 h-4" />
                       {t("أكملي عبر واتساب", "Continue on WhatsApp")}
                     </a>
                     <button
@@ -290,7 +291,7 @@ export const ContactClient: React.FC<{
                           message: "",
                         });
                       }}
-                      className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-300 cursor-pointer"
+                      className="text-sm font-semibold text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors duration-hover cursor-pointer"
                     >
                       {t("إرسال رسالة أخرى", "Send another message")}
                     </button>
@@ -342,7 +343,7 @@ export const ContactClient: React.FC<{
                         setForm({ ...form, name: e.target.value })
                       }
                       placeholder={t("مثال: سارة أحمد", "e.g. Sarah Ahmed")}
-                      className={`w-full p-3 rounded-xl border text-sm outline-none transition-colors duration-300 ${
+                      className={`w-full p-3 rounded-xl border text-sm outline-none transition-colors duration-hover ${
                         errors.name
                           ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
                           : "border-[var(--border-control)] focus:border-[var(--border-control)]"
@@ -371,7 +372,7 @@ export const ContactClient: React.FC<{
                         setForm({ ...form, phone: e.target.value })
                       }
                       placeholder="010xxxxxxxx"
-                      className={`w-full p-3 rounded-xl border text-sm outline-none transition-colors duration-300 ${
+                      className={`w-full p-3 rounded-xl border text-sm outline-none transition-colors duration-hover ${
                         errors.phone
                           ? "border-[var(--border-danger)] bg-[var(--bg-danger-soft)]"
                           : "border-[var(--border-control)] focus:border-[var(--border-control)]"
@@ -392,7 +393,7 @@ export const ContactClient: React.FC<{
                       aria-expanded={isServicesOpen}
                       aria-controls="c-service-options"
                       onClick={() => setIsServicesOpen((isOpen) => !isOpen)}
-                      className={`group w-full px-4 py-3 rounded-2xl border bg-[var(--bg-card)] flex items-center justify-between gap-3 text-start text-sm outline-none transition-[border-color,box-shadow,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
+                      className={`group w-full px-4 py-3 rounded-2xl border bg-[var(--bg-card)] flex items-center justify-between gap-3 text-start text-sm outline-none transition-[border-color,box-shadow,background-color] duration-hover ease-brand cursor-pointer ${
                         isServicesOpen
                           ? "border-[var(--border-control)] shadow-[0_0_0_3px_var(--gold-glow)]"
                           : "border-[var(--border-control)] hover:border-[var(--border-control)]"
@@ -419,7 +420,7 @@ export const ContactClient: React.FC<{
                           </span>
                         )}
                         <ChevronDown
-                          className={`w-4 h-4 text-[var(--gold-end)] transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
+                          className={`w-4 h-4 text-[var(--gold-end)] transition-transform duration-hover ease-brand ${
                             isServicesOpen ? "rotate-180" : ""
                           }`}
                         />
@@ -435,10 +436,7 @@ export const ContactClient: React.FC<{
                           initial={{ opacity: 0, y: -8, scale: 0.98 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: -6, scale: 0.98 }}
-                          transition={{
-                            duration: 0.24,
-                            ease: [0.22, 1, 0.36, 1],
-                          }}
+                          transition={motionTransition("ui")}
                           style={{ transformOrigin: "top center" }}
                           className="absolute z-20 mt-2 w-full max-h-72 overflow-y-auto rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] shadow-2xl p-1.5"
                         >
@@ -449,14 +447,14 @@ export const ContactClient: React.FC<{
                             return (
                               <label
                                 key={treatment.id}
-                                className={`group/item flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm cursor-pointer transition-colors duration-200 ${
+                                className={`group/item flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm cursor-pointer transition-colors duration-quick ${
                                   isChecked
                                     ? "bg-[var(--blush-light)]/70"
                                     : "hover:bg-[var(--bg-secondary)]"
                                 }`}
                               >
                                 <span
-                                  className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center shrink-0 transition-[background-color,border-color,transform] duration-200 ${
+                                  className={`w-[18px] h-[18px] rounded-md border flex items-center justify-center shrink-0 transition-[background-color,border-color,transform] duration-quick ${
                                     isChecked
                                       ? "bg-gold-gradient border-transparent scale-105"
                                       : "bg-[var(--bg-card)] border-[var(--gold-border)] group-hover/item:border-[var(--border-control)]"
@@ -497,7 +495,7 @@ export const ContactClient: React.FC<{
                                 />
 
                                 <span
-                                  className={`flex-1 transition-colors duration-200 ${
+                                  className={`flex-1 transition-colors duration-quick ${
                                     isChecked
                                       ? "text-[var(--gold-end)] font-semibold"
                                       : "text-[var(--text-primary)] group-hover/item:text-[var(--gold-end)]"
@@ -516,7 +514,7 @@ export const ContactClient: React.FC<{
                                 setForm((prev) => ({ ...prev, services: [] }))
                               }
                               disabled={selectedServices.length === 0}
-                              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed px-2.5 py-2 transition-colors duration-200 cursor-pointer"
+                              className="text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed px-2.5 py-2 transition-colors duration-quick cursor-pointer"
                             >
                               {t("مسح الكل", "Clear all")}
                             </button>
@@ -524,7 +522,7 @@ export const ContactClient: React.FC<{
                             <button
                               type="button"
                               onClick={() => setIsServicesOpen(false)}
-                              className="rounded-full bg-gold-gradient text-xs font-bold px-4 py-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+                              className="rounded-full bg-gold-gradient text-xs font-bold px-4 py-2 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-hover ease-brand cursor-pointer"
                             >
                               {t("تم", "Done")}
                             </button>
@@ -552,7 +550,7 @@ export const ContactClient: React.FC<{
                         "اكتبي استفساركِ أو الوقت المفضل للزيارة...",
                         "Write your question or preferred visit time...",
                       )}
-                      className="w-full p-3 rounded-xl border border-[var(--border-control)] focus:border-[var(--border-control)] text-sm outline-none resize-none transition-colors duration-300"
+                      className="w-full p-3 rounded-xl border border-[var(--border-control)] focus:border-[var(--border-control)] text-sm outline-none resize-none transition-colors duration-hover"
                     />
                   </div>
 
@@ -566,9 +564,9 @@ export const ContactClient: React.FC<{
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-sm py-3.5 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-sm py-3.5 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-hover ease-brand cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
                     >
-                      <MessageCircle className="w-4 h-4" />
+                      <WhatsAppIcon className="w-4 h-4" />
                       {submitting
                         ? t("جارٍ الإرسال…", "Sending…")
                         : t("إرسال الاستفسار", "Send enquiry")}
@@ -577,7 +575,7 @@ export const ContactClient: React.FC<{
                       type="button"
                       onClick={() => openBooking()}
                       data-cta="contact-form"
-                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--gold-end)] font-bold text-sm py-3.5 hover:bg-[var(--blush-light)] transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+                      className="flex-1 inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--gold-end)] font-bold text-sm py-3.5 hover:bg-[var(--blush-light)] transition-[background-color] duration-hover ease-brand cursor-pointer"
                     >
                       <Calendar className="w-4 h-4" />
                       {t("أو احجزي مباشرة", "Or book directly")}

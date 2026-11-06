@@ -53,17 +53,26 @@ function withoutComments(source: string): string {
     .replace(/(^|[^:'"`])\/\/[^\n]*/gm, '$1');
 }
 
-/** The text of a `@layer base { … }` block, brace-matched, or '' when absent. Anchored
- *  to the start of a line because the phrase also appears inside an explanation. */
+/** The text of every `@layer base { … }` block in the sheet, brace-matched and joined, or
+ *  '' when absent. Anchored to the start of a line because the phrase also appears inside
+ *  an explanation. Union, not first: a sheet may open the same layer twice — MB-2's hover
+ *  polish and the type scale are both base and both live far apart — and CSS reads them as
+ *  one layer, so a test that only looked at the first block would fail on the order they
+ *  happen to be written in. */
 function layerBlock(css: string, layer: string): string {
-  const match = new RegExp(`^@layer ${layer}\\s*\\{`, 'm').exec(css);
-  if (!match) return '';
-  let depth = 0;
-  for (let i = match.index + match[0].length - 1; i < css.length; i += 1) {
-    if (css[i] === '{') depth += 1;
-    if (css[i] === '}' && (depth -= 1) === 0) return css.slice(match.index, i + 1);
+  const opener = new RegExp(`^@layer ${layer}\\s*\\{`, 'gm');
+  const blocks: string[] = [];
+  for (let match = opener.exec(css); match !== null; match = opener.exec(css)) {
+    let depth = 0;
+    for (let i = match.index + match[0].length - 1; i < css.length; i += 1) {
+      if (css[i] === '{') depth += 1;
+      if (css[i] === '}' && (depth -= 1) === 0) {
+        blocks.push(css.slice(match.index, i + 1));
+        break;
+      }
+    }
   }
-  return '';
+  return blocks.join('\n');
 }
 
 /** Every `@font-face` block in a stylesheet, as {family, descriptors}. */
@@ -245,7 +254,9 @@ describe('MB-1 the site paints the original site’s faces', () => {
     expect(base).toMatch(/h1\s*\{\s*font-size:\s*var\(--fs-h1\);/);
     expect(base).toMatch(/h4\s*\{\s*font-size:\s*var\(--fs-h4\);/);
     expect(base).toMatch(/text-wrap:\s*balance/);
-    expect(globals.indexOf('--fs-h1:')).toBeLessThan(globals.indexOf(base));
+    // The theme block that names the token is read before any rule that consumes it —
+    // measured against the first `@layer base`, since the sheet opens that layer twice.
+    expect(globals.indexOf('--fs-h1:')).toBeLessThan(globals.search(/^@layer base\s*\{/m));
   });
 
   it('never tracks Arabic, in either direction', () => {

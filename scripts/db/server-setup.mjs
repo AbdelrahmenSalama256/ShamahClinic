@@ -66,18 +66,18 @@ export function readEnvFile(path) {
   return out;
 }
 
-function connectionConfig(env, { withDatabase = true } = {}) {
-  const host = (env.DATABASE_HOST ?? '').trim();
-  const user = (env.DATABASE_USER ?? '').trim();
-  const database = (env.DATABASE_NAME ?? '').trim();
-  if (!host || !user || (withDatabase && !database)) {
-    throw new Error('Set DATABASE_HOST, DATABASE_PORT, DATABASE_NAME, DATABASE_USER and DATABASE_PASSWORD (or pass --env-file).');
+export function connectionConfig(env, { withDatabase = true } = {}) {
+  const host = (env.DATABASE_HOST ?? env.DB_HOST ?? '').trim();
+  const socketPath = (env.DATABASE_SOCKET ?? '').trim();
+  const user = (env.DATABASE_USER ?? env.DB_USER ?? '').trim();
+  const database = (env.DATABASE_NAME ?? env.DB_NAME ?? '').trim();
+  if ((!host && !socketPath) || !user || (withDatabase && !database)) {
+    throw new Error('Set DATABASE_HOST/DB_HOST or DATABASE_SOCKET, DATABASE_PORT/DB_PORT, DATABASE_NAME/DB_NAME, DATABASE_USER/DB_USER and DATABASE_PASSWORD/DB_PASSWORD (or pass --env-file).');
   }
   return {
-    host,
-    port: Number(env.DATABASE_PORT ?? 3306),
+    ...(socketPath ? { socketPath } : { host, port: Number(env.DATABASE_PORT ?? env.DB_PORT ?? 3306) }),
     user,
-    password: env.DATABASE_PASSWORD ?? '',
+    password: env.DATABASE_PASSWORD ?? env.DB_PASSWORD ?? '',
     ...(withDatabase ? { database } : {}),
     multipleStatements: false,
     dateStrings: true,
@@ -113,28 +113,28 @@ async function appliedMigrations(connection, existingTables) {
  * as "access denied to database" rather than "wrong account".
  */
 export function accountHost(env) {
-  const host = (env.DATABASE_HOST ?? '').trim();
-  return (env.DATABASE_USER_HOST ?? host).trim();
+  const host = (env.DATABASE_HOST ?? env.DB_HOST ?? '').trim();
+  return (env.DATABASE_USER_HOST ?? (host || 'localhost')).trim();
 }
 
 async function createDatabaseAndUser(env, args) {
-  const host = (env.DATABASE_HOST ?? '').trim();
-  if (!LOOPBACK.has(host) && !args.allowHost) {
+  const host = (env.DATABASE_HOST ?? env.DB_HOST ?? '').trim();
+  const socketPath = (env.DATABASE_SOCKET ?? '').trim();
+  if (!socketPath && !LOOPBACK.has(host) && !args.allowHost) {
     throw new Error(
       `Refusing to create a database and user on "${host}": this path mints credentials, so it is limited to loopback. Pass --allow-host if you really mean it.`,
     );
   }
   const adminUser = (env.SERVER_ADMIN_USER ?? 'root').trim();
   const admin = await mysql.createConnection({
-    host,
-    port: Number(env.DATABASE_PORT ?? 3306),
+    ...(socketPath ? { socketPath } : { host, port: Number(env.DATABASE_PORT ?? env.DB_PORT ?? 3306) }),
     user: adminUser,
     password: env.SERVER_ADMIN_PASSWORD ?? '',
     multipleStatements: false,
   });
-  const database = env.DATABASE_NAME;
-  const user = env.DATABASE_USER;
-  const password = env.DATABASE_PASSWORD ?? '';
+  const database = env.DATABASE_NAME ?? env.DB_NAME;
+  const user = env.DATABASE_USER ?? env.DB_USER;
+  const password = env.DATABASE_PASSWORD ?? env.DB_PASSWORD ?? '';
   const userHost = accountHost(env);
   if (!password) {
     await admin.end();

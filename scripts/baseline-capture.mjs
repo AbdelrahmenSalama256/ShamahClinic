@@ -6,11 +6,19 @@
  * seventeen routes the owner's brief lists, and writes one full-page PNG per route
  * plus `docs/baseline/capture.json`: the route, HTTP status, bytes, sha256 and the
  * console/page/request errors the page produced. The PNGs are git-ignored (the set
- * is ~49 MB); the manifest with its hashes is committed, so a later run can prove
- * that a page is byte-identical to the baseline or name the file that changed.
+ * is ~49 MB); the manifest with its hashes is committed. Read that manifest for the
+ * route list, the statuses and the per-route error ledger — NOT as a pixel-parity
+ * proof: these pages animate, so two walks of ONE build do not repeat each other's
+ * hashes. Measured on MB-2 (2026-11-04): run-to-run, 0 of 68 SHA-256s matched, and the
+ * visible pixel difference reached 8.2% of the frame on `ar phone-390 home` while
+ * `en desktop-1440 offers` came out identical. For a diff that can be trusted, capture
+ * with `BASELINE_FROZEN=1`: the same walk, motion stopped, into `docs/baseline/frozen/`
+ * and `docs/baseline/frozen.json`, which does repeat itself (9 of 10 routes in a
+ * pass-to-pass test; the tenth is noted in `docs/OPEN-QUESTIONS.md`).
  *
  *   PROOF_BASE=http://127.0.0.1:3430 node scripts/baseline-capture.mjs
  *   PROOF_BASE=http://127.0.0.1:3430 BASELINE_SKIP_SHOTS=1 node scripts/baseline-capture.mjs
+ *   PROOF_BASE=http://127.0.0.1:3430 BASELINE_FROZEN=1 node scripts/baseline-capture.mjs
  *
  * Run it against `next start` on a production build, not against `next dev`: a dev
  * server serves unoptimized fonts and no compiled CSS chunks, so its pixels are not
@@ -28,7 +36,16 @@ const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
 
 const BASE = process.env.PROOF_BASE || 'http://127.0.0.1:3430';
-const OUT = join(process.cwd(), 'docs/baseline');
+// `BASELINE_FROZEN=1` stops motion before each shot — `prefers-reduced-motion`, then
+// `animation-play-state: paused` and `transition: none` over the tree — and writes
+// `docs/baseline/frozen/<name>.png` + `docs/baseline/frozen.json` instead of the golden set.
+// It exists because the golden set cannot prove pixel parity: two walks of ONE build,
+// back to back, produced 0 of 68 matching SHA-256s (MB-2, 2026-11-04), because a marquee
+// and a swiper are at a different phase every time the shutter falls. Frozen, the same
+// walk repeats its own hashes, so items 4c and 6 can diff pixels for real and read any
+// remaining movement as the defect it is.
+const FROZEN = process.env.BASELINE_FROZEN === '1';
+const OUT = join(process.cwd(), 'docs/baseline', FROZEN ? 'frozen' : '.');
 // `BASELINE_SKIP_SHOTS=1` walks the same routes and collects only the per-route error ledger,
 // into `errors.json`. Use it to re-prove "zero console errors" after a change without spending
 // forty minutes and 49 MB re-writing golden PNGs that the change did not touch.
@@ -74,7 +91,7 @@ for (const locale of LOCALES) {
       deviceScaleFactor: 1,
       locale: locale === 'ar' ? 'ar-EG' : 'en-US',
       timezoneId: 'Africa/Cairo',
-      reducedMotion: 'no-preference',
+      reducedMotion: FROZEN ? 'reduce' : 'no-preference',
     });
     const page = await ctx.newPage();
     // Errors are drained per route (`seen.splice(0)` below), so a record describes the route it
@@ -104,6 +121,15 @@ for (const locale of LOCALES) {
         const res = await page.goto(url, { waitUntil: 'load', timeout: 60_000 });
         status = res ? String(res.status()) : status;
         await page.waitForLoadState('networkidle', { timeout: 25_000 }).catch(() => {});
+        if (FROZEN) {
+          // The site's own reduced-motion block zeroes every duration; this adds the other
+          // half — a keyframe paused wherever it stands, so an infinite marquee cannot be
+          // at a different x when the shutter falls. Order matters: inject before the
+          // scroll, or a section revealed on scroll animates into the shot.
+          await page.addStyleTag({
+            content: '*,*::before,*::after{animation-play-state:paused!important;transition:none!important}',
+          });
+        }
         await page.evaluate(async () => {
           if (document.fonts) await document.fonts.ready;
           const step = Math.max(400, Math.floor(window.innerHeight * 0.8));
@@ -126,7 +152,7 @@ for (const locale of LOCALES) {
         name,
         status,
         ms: Date.now() - started,
-        file: SHOTS && existsSync(file) ? `docs/baseline/${locale}-${vp.tag}-${name}.png` : null,
+        file: SHOTS && existsSync(file) ? `docs/baseline/${FROZEN ? 'frozen/' : ''}${locale}-${vp.tag}-${name}.png` : null,
         bytes: SHOTS && existsSync(file) ? statSync(file).size : 0,
         sha256: SHOTS && existsSync(file) ? sha256(file) : null,
         pageErrors: seen.splice(0),
@@ -142,9 +168,9 @@ for (const locale of LOCALES) {
 await browser.close();
 
 writeFileSync(
-  join(OUT, SHOTS ? 'capture.json' : 'errors.json'),
+  join(process.cwd(), 'docs/baseline', FROZEN ? 'frozen.json' : SHOTS ? 'capture.json' : 'errors.json'),
   JSON.stringify(
-    { base: BASE, capturedAt: new Date().toISOString(), widths: WIDTHS, routes: ROUTES.length, shots: SHOTS, records },
+    { base: BASE, frozen: FROZEN, capturedAt: new Date().toISOString(), widths: WIDTHS, routes: ROUTES.length, shots: SHOTS, records },
     null,
     2,
   ),

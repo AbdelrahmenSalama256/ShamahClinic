@@ -1,12 +1,12 @@
 import { cookies, headers } from 'next/headers';
-import { Skeleton } from '@/components/console/kit';
+import { LoadingSplash } from '@/components/ui/LoadingSplash';
 import { message } from '@/lib/console/messages';
 import { PREFS_COOKIE, resolvePrefs } from '@/lib/console/prefs';
 
 /**
- * The workspace's own loading state: the frame is already on screen, so only the screen
- * body breathes. It reads the prefs cookie directly rather than `consoleView`, because a
- * skeleton must not wait on the database it is covering for.
+ * The workspace's own loading state: the frame is already on screen. It reads the prefs
+ * cookie directly rather than `consoleView`, because loading UI must not wait on the database
+ * it is covering for.
  */
 export default async function ConsoleLoading() {
   const store = await cookies();
@@ -16,8 +16,8 @@ export default async function ConsoleLoading() {
   });
 
   return (
-    <div className="console-content" aria-busy="true">
-      <Skeleton rows={6} label={message('state.loading', prefs.locale)} />
+    <div className="console-content" aria-label={message('state.loading', prefs.locale)}>
+      <LoadingSplash />
     </div>
   );
 }

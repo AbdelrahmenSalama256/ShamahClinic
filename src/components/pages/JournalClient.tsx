@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { apiCardToUI } from "@/lib/wp/ui-helpers";
 import { getLocalizedHref } from "@/lib/locale";
@@ -34,7 +35,7 @@ interface Props {
   activeCategory?: string;
   activeSearch?: string;
   /** The page's banner, saved in the console or authored. */
-  banner: PhotoSlot;
+  banner: PhotoSlot | null;
 }
 
 const EMPTY: WpArticleCard[] = [];
@@ -152,7 +153,7 @@ export const JournalClient: React.FC<Props> = ({
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/blogs", label: title },
         ]}
-        photo={banner}
+        photo={banner ?? undefined}
       />
 
       <section className="py-5 lg:py-16">
@@ -209,15 +210,36 @@ export const JournalClient: React.FC<Props> = ({
             {t("{0} مقالاً", "{0} articles", total)}
           </p>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
-            {articles.map((a, i) => (
-              <Reveal className="h-full" key={`${a.slug}-${i}`} delay={Math.min(i, 8) * 0.05}>
-                <ArticleCard article={a} priority={i < 2} />
-              </Reveal>
-            ))}
-            {loading &&
-              EMPTY.concat(Array.from({ length: 3 })).map((_, i) => <SkeletonCard key={`sk-${i}`} />)}
-          </div>
+          {articles.length === 0 && !loading ? (
+            <EmptyState
+              title={
+                activeSearch || activeCategory
+                  ? t("لم نعثر على مقالات مطابقة", "No matching articles found")
+                  : t("لا توجد مقالات منشورة الآن", "No articles have been published yet")
+              }
+              description={
+                activeSearch || activeCategory
+                  ? t(
+                      "جرّبي عبارة بحث مختلفة أو اختاري تصنيفاً آخر.",
+                      "Try a different search or choose another category.",
+                    )
+                  : t(
+                      "ستجدين هنا المقالات الطبية والتوعوية فور نشرها.",
+                      "Medical and wellness articles will appear here when published.",
+                    )
+              }
+            />
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8">
+              {articles.map((a, i) => (
+                <Reveal className="h-full" key={`${a.slug}-${i}`} delay={Math.min(i, 8) * 0.05}>
+                  <ArticleCard article={a} priority={i < 2} />
+                </Reveal>
+              ))}
+              {loading &&
+                EMPTY.concat(Array.from({ length: 3 })).map((_, i) => <SkeletonCard key={`sk-${i}`} />)}
+            </div>
+          )}
 
           {/* Load more + real crawlable page links */}
           <div className="mt-10 flex flex-col items-center gap-4">
@@ -225,7 +247,7 @@ export const JournalClient: React.FC<Props> = ({
               <button
                 onClick={loadMore}
                 disabled={loading}
-                className="inline-flex items-center gap-2 rounded-full bg-gold-gradient font-bold text-sm px-7 py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-full bg-gold-gradient font-bold text-sm px-7 py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-hover disabled:opacity-60 disabled:hover:translate-y-0 cursor-pointer"
               >
                 {loading ? t("جارٍ التحميل…", "Loading…") : t("عرض المزيد", "Load more")}
               </button>

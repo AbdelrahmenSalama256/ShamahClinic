@@ -400,7 +400,6 @@
 }
 
 @layer screens {
-
   /* --- Console forms placement ---
      Single-column forms on a phone, wrapping toolbars. The control's own paint is
      `console-kit.css`'s, so nothing here names a field class. --- */
@@ -618,6 +617,39 @@
     width: 100%;
     max-width: var(--c-content-w);
     margin-inline: auto;
+  }
+
+  [data-surface="console"] .brand-loading-splash {
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 1rem;
+    min-block-size: min(60svh, 36rem);
+    color: var(--c-accent);
+  }
+
+  [data-surface="console"] .brand-loading-splash__spinner {
+    inline-size: 2rem;
+    aspect-ratio: 1;
+    border: 2px solid var(--c-line-strong);
+    border-block-start-color: var(--c-accent);
+    border-radius: 50%;
+    animation: brand-loading-spin 0.9s linear infinite;
+  }
+
+  [data-surface="console"] .brand-loading-splash__logo {
+    inline-size: min(13.75rem, 58vw);
+    block-size: auto;
+    object-fit: contain;
+    animation: brand-loading-breathe 1.8s ease-in-out infinite;
+  }
+
+  @keyframes brand-loading-spin {
+    to { transform: rotate(1turn); }
+  }
+
+  @keyframes brand-loading-breathe {
+    50% { opacity: 0.72; }
   }
 
   /* --- the sidebar: column, drawer, or both ---------------------------------- */
@@ -3108,7 +3140,9 @@
     font-size: var(--c-font-micro);
     font-weight: 600;
     cursor: pointer;
-    transition: color var(--c-dur-base) var(--c-ease-soft), border-color var(--c-dur-base) var(--c-ease-soft),
+    transition:
+      color var(--c-dur-base) var(--c-ease-soft),
+      border-color var(--c-dur-base) var(--c-ease-soft),
       background-color var(--c-dur-base) var(--c-ease-soft);
   }
 
@@ -4693,19 +4727,19 @@
     }
 
     .console-ov-main,
-        .console-ov-split {
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        }
+    .console-ov-split {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
 
-        .console-ov-trio {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
+    .console-ov-trio {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 
     /* A Recharts surface is painted at the width it measured, and the printer does not
        re-measure it: clipping the plot keeps a wide chart from widening the page. */
-        .console-ov-plot {
-          max-inline-size: 100%;
-          overflow: clip;
-        }
+    .console-ov-plot {
+      max-inline-size: 100%;
+      overflow: clip;
+    }
   }
 }

@@ -13,7 +13,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
-import { readDbConfig, readTls } from '@/lib/db';
+import { poolOptions, readDbConfig, readTls } from '@/lib/db';
 
 const scratch = mkdtempSync(join(tmpdir(), 'shamah-db-config-'));
 afterAll(() => rmSync(scratch, { recursive: true, force: true }));
@@ -62,6 +62,50 @@ describe('readDbConfig', () => {
     ).toEqual({ host: '127.0.0.1', port: 3306, user: 'shamah_app', password: 'secret', database: 'shamah_cms' });
   });
 
+  it('reads cPanel reserved database variables', () => {
+    expect(
+      readDbConfig({
+        DB_HOST: 'db.internal',
+        DB_PORT: '3307',
+        DB_USER: 'cpanel_user',
+        DB_PASSWORD: 'cpanel_pass',
+        DB_NAME: 'cpanel_database',
+      }),
+    ).toEqual({ host: 'db.internal', port: 3307, user: 'cpanel_user', password: 'cpanel_pass', database: 'cpanel_database' });
+  });
+
+  it('uses DATABASE_SOCKET without adding a TCP host or port to mysql2 options', () => {
+    const config = readDbConfig({
+      DATABASE_SOCKET: '/run/mysqld/mysql.sock',
+      DB_USER: 'cpanel_user',
+      DB_PASSWORD: 'cpanel_pass',
+      DB_NAME: 'cpanel_database',
+    });
+    expect(config.socketPath).toBe('/run/mysqld/mysql.sock');
+    expect(config.user).toBe('cpanel_user');
+    const options = poolOptions(config);
+    expect(options.socketPath).toBe('/run/mysqld/mysql.sock');
+    expect(options).not.toHaveProperty('host');
+    expect(options).not.toHaveProperty('port');
+  });
+
+  it('lets DATABASE variables override cPanel aliases', () => {
+    expect(
+      readDbConfig({
+        DATABASE_HOST: 'explicit.host',
+        DATABASE_PORT: '3308',
+        DATABASE_USER: 'explicit_user',
+        DATABASE_PASSWORD: 'explicit_pass',
+        DATABASE_NAME: 'explicit_db',
+        DB_HOST: 'cpanel.host',
+        DB_PORT: '3307',
+        DB_USER: 'cpanel_user',
+        DB_PASSWORD: 'cpanel_pass',
+        DB_NAME: 'cpanel_db',
+      }),
+    ).toEqual({ host: 'explicit.host', port: 3308, user: 'explicit_user', password: 'explicit_pass', database: 'explicit_db' });
+  });
+
   it('lets the discrete variables win over DATABASE_URL', () => {
     const config = readDbConfig({
       DATABASE_URL: 'mysql://url_user:url_pass@url-host:3307/url_db',
@@ -82,5 +126,6 @@ describe('readDbConfig', () => {
     expect(() => readDbConfig({ DATABASE_USER: 'u', DATABASE_NAME: 'd' })).toThrow(/Incomplete database configuration/);
     expect(() => readDbConfig({ DATABASE_HOST: 'h', DATABASE_NAME: 'd' })).toThrow(/Incomplete database configuration/);
     expect(() => readDbConfig({ DATABASE_HOST: 'h', DATABASE_USER: 'u' })).toThrow(/Incomplete database configuration/);
+    expect(() => readDbConfig({ DATABASE_SOCKET: '/run/mysql.sock', DATABASE_USER: 'u' })).toThrow(/Incomplete database configuration/);
   });
 });

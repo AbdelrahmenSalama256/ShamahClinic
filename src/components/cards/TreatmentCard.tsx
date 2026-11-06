@@ -19,13 +19,13 @@ export const TreatmentCard: React.FC<{ treatment: Treatment }> = ({
   return (
     <Link
       href={getLocalizedHref(`/services/${treatment.id}`, language)}
-      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-hover ease-brand"
     >
       <div className="relative overflow-hidden">
         <Photo
           slot={treatment.image}
           ratio="landscape"
-          imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+          imgClassName="group-hover:scale-105 transition-transform duration-reveal ease-brand"
           sizes="(max-width:1024px) 50vw, 33vw"
         />
         {/* A service WordPress publishes without a category or a price keeps the
@@ -38,7 +38,7 @@ export const TreatmentCard: React.FC<{ treatment: Treatment }> = ({
       </div>
       <div className="p-3 sm:p-5 flex flex-col flex-1">
         <h3
-          className="text-sm sm:text-base lg:text-lg font-black text-[var(--text-primary)] leading-snug line-clamp-2 group-hover:text-[var(--gold-end)] transition-colors duration-300"
+          className="text-sm sm:text-base lg:text-lg font-black text-[var(--text-primary)] leading-snug line-clamp-2 group-hover:text-[var(--gold-end)] transition-colors duration-hover"
           dir="auto"
         >
           {name}
@@ -61,7 +61,7 @@ export const TreatmentCard: React.FC<{ treatment: Treatment }> = ({
           )}
           <span className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)]">
             {t("التفاصيل", "Details")}
-            <Arrow className="w-3.5 h-3.5 transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+            <Arrow className="w-3.5 h-3.5 transition-transform duration-hover ease-brand group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
           </span>
         </div>
       </div>

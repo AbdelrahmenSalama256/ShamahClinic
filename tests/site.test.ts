@@ -1,22 +1,15 @@
 /**
  * BK-6.3 the site's one read path, against the disposable `shamah_cms_test` database.
  *
- * The behaviour worth proving is the seam itself — which rung answered, and what
- * that means for a row the other rung holds:
- *   - while the database has nothing published of a kind, the site renders the
- *     committed WordPress snapshot exactly as it did before the seam existed;
- *   - one published row takes that whole kind over: a kind is never a merge of the
- *     two sources, and a slug the database does not have is a 404 rather than
- *     something the snapshot happens to still contain;
+ * The behaviour worth proving is that public content is sourced from published CMS rows:
+ *   - an empty CMS list never renders data from a WordPress snapshot;
+ *   - a slug the CMS does not have is a 404, even when the WordPress snapshot has it;
  *   - a visitor sees the published copy only: a draft, an unpublished edit, a
  *     disabled offer or page and a trashed row never reach the site;
  *   - the published HTML goes through the same sanitizer the WordPress body did, so
  *     an authored `<script>` cannot ride into `dangerouslySetInnerHTML`;
- *   - a list (`branches`, `services`) is chosen per **list**, not per kind: two
- *     lists of the same table can sit on different rungs at the same time — and
- *     `services` has no snapshot rung at all, so an empty list stays empty;
- *   - settings are the exception: a saved `site` key replaces the config value for
- *     that one field only, a blank or secret row never reaches a public reader.
+ *   - lists are chosen per **list**, not per kind, and an empty CMS list stays empty;
+ *   - settings are read only from CMS rows; blank or secret values are not exposed.
  *
  * Every fixture is named `site-<run>` and removed in `afterAll`.
  */
@@ -50,10 +43,6 @@ import {
   getSettings,
 } from '../src/lib/content/site';
 import { SITE_URL } from '../src/lib/site';
-import { images } from '../src/lib/images';
-import { homeIntroFallback } from '../src/data/about';
-import { siteConfig } from '../src/config/site';
-import { WHATSAPP } from '../src/lib/wp/config';
 import * as wp from '../src/lib/wp';
 
 const run = randomUUID().slice(0, 8);
@@ -184,28 +173,22 @@ afterAll(async () => {
   await destroyDb();
 });
 
-describe('the fallback rung', () => {
-  it('serves the committed snapshot while the database holds nothing published', async () => {
+describe('CMS-only public content', () => {
+  it('keeps content empty while the database holds nothing published', async () => {
     const [fromSite, fromWp] = await Promise.all([getAllArticles(), wp.getAllArticles()]);
     expect(fromWp.length).toBeGreaterThan(0);
-    expect(fromSite).toHaveLength(fromWp.length);
-    expect(fromSite.map((card) => card.slug)).toEqual(fromWp.map((card) => card.slug));
+    expect(fromSite).toEqual([]);
   });
 
-  it('reads a WordPress page and its heading through the same door', async () => {
-    const throughSeam = await getPage('privacy-policy');
-    expect(throughSeam?.item.slug).toBe('privacy-policy');
-    expect(throughSeam?.seo.en.title).toBeTruthy();
-    const title = await getPageTitle('privacy-policy', { ar: 'سياسة الخصوصية', en: 'Privacy Policy' });
-    expect(title.en).toBe(throughSeam?.item.title.en);
+  it('does not expose a page or heading from the WordPress snapshot', async () => {
+    expect(await getPage('privacy-policy')).toBeNull();
+    expect(await getPageTitle('privacy-policy')).toEqual({ ar: '', en: '' });
   });
 
-  it('renders the WordPress branches while their list holds nothing, and no services at all', async () => {
+  it('keeps empty branches and services lists empty', async () => {
     const [fromSite, fromWp] = await Promise.all([getBranches(), wp.getBranches()]);
     expect(fromWp.length).toBeGreaterThan(0);
-    expect(fromSite.map((branch) => branch.id)).toEqual(fromWp.map((branch) => branch.id));
-    // Services are the one list with no snapshot rung: the database is their single source,
-    // so a list holding nothing published renders an empty page rather than these rows.
+    expect(fromSite).toEqual([]);
     const [cards, wpCards] = await Promise.all([getServiceCards(), wp.getServiceCards()]);
     expect(wpCards.length).toBeGreaterThan(0);
     expect(cards).toEqual([]);
@@ -244,9 +227,8 @@ describe('the database rung', () => {
     expect((await getPost(key('post')))?.item.title.en).toBe('Skincare guide');
 
     unwrap(await setTrashed('article', { id: stored.id, trashed: true, actorId: actor.id }), 'trash');
-    // With nothing published of the kind left, the read goes back to the snapshot.
-    const afterTrash = await getAllArticles();
-    expect(afterTrash.map((card) => card.slug)).toEqual((await wp.getAllArticles()).map((card) => card.slug));
+    // With nothing published of the kind left, the public read stays empty.
+    expect(await getAllArticles()).toEqual([]);
 
     unwrap(await setTrashed('article', { id: stored.id, trashed: false, actorId: actor.id }), 'restore');
     expect((await getAllArticles()).map((card) => card.slug)).toEqual([key('post')]);
@@ -421,14 +403,13 @@ describe('the database rung', () => {
     expect(found?.item.href).toEqual({ ar: `/ar/${page.key}`, en: `/${page.key}` });
     expect((await getAllPages()).map((card) => card.slug)).toEqual([page.key]);
 
-    const authored = { ar: 'عنوان مكتوب يدويًا', en: 'Home' };
-    expect(await getPageTitle(page.key, authored)).toEqual({ ar: 'من نحن', en: 'About us' });
+    expect(await getPageTitle(page.key)).toEqual({ ar: 'من نحن', en: 'About us' });
 
     // A page whose Arabic column holds English keeps the authored Arabic instead.
     const stored = await db.selectFrom('pages').select('id').where('route', '=', `/${page.key}`).executeTakeFirstOrThrow();
     unwrap(await saveDraft('page', { id: stored.id, locale: 'ar', fields: { title: 'About us, untranslated' }, actorId: actor.id }), 'write the ar title');
     unwrap(await publishRow('page', { id: stored.id, locales: ['ar'], actor }), 'publish the ar title');
-    expect(await getPageTitle(page.key, authored)).toEqual({ ar: authored.ar, en: 'About us' });
+    expect(await getPageTitle(page.key)).toEqual({ ar: '', en: 'About us, untranslated' });
 
     unwrap(await saveDraft('page', { id: stored.id, locale: 'en', fields: { enabled: false }, actorId: actor.id }), 'disable');
     expect(await getPage(page.key)).toBeNull();
@@ -439,21 +420,21 @@ describe('the database rung', () => {
     const home = await getHome({ offers: 2, articles: 2 });
     expect(home.articles.map((card) => card.slug)).toEqual([key('post')]);
     expect(home.offers.map((offer) => offer.slug)).toEqual([key('hydra')]);
-    expect(home.branches.length).toBeGreaterThan(0);
-    expect(home.settings.name).toBeTruthy();
+    expect(home.branches).toEqual([]);
+    expect(home.settings.name).toBe('');
   });
 
   it('reads a saved setting per key, and never a secret one', async () => {
-    const authored = await getSettings('en');
-    expect(authored.name).toBe(siteConfig.brand.name.en);
-    expect(authored.whatsapp).toBe(WHATSAPP);
+    const empty = await getSettings('en');
+    expect(empty.name).toBe('');
+    expect(empty.whatsapp).toBe('');
 
     await db
       .insertInto('settings')
       .values([
         { group_name: 'site', setting_key: 'name', value: JSON.stringify('شامه سي إم إس'), default_value: null, is_secret: 0, version: 1 },
         { group_name: 'site', setting_key: 'whatsapp', value: JSON.stringify('20555000111'), default_value: null, is_secret: 0, version: 1 },
-        // A blank is not an edit: the field keeps the config value rather than rendering nothing.
+        // A blank setting remains absent from public content.
         { group_name: 'site', setting_key: 'email', value: JSON.stringify('   '), default_value: null, is_secret: 0, version: 1 },
         // A secret row is hidden from the console, so it is hidden from a public reader too.
         { group_name: 'site', setting_key: 'phone', value: JSON.stringify('+20999000111'), default_value: null, is_secret: 1, version: 1 },
@@ -465,28 +446,27 @@ describe('the database rung', () => {
     const saved = await getSettings('en');
     expect(saved.name).toBe('شامه سي إم إس');
     expect(saved.whatsapp).toBe('20555000111');
-    // The fallback is per key: an operator who saved a name still gets the authored
-    // email (blank) and the authored phone (the secret row never reaches here).
-    expect(saved.email).toBe(authored.email);
-    expect(saved.phone).toBe(authored.phone);
+    // A blank and a secret field stay absent from public content.
+    expect(saved.email).toBe('');
+    expect(saved.phone).toBe('');
     // The two counted fields stay counted — they are not settings.
     expect(saved.branches).toBe((await getBranches()).length);
-    expect(saved.currency).toBe(authored.currency);
+    expect(saved.currency).toBe(empty.currency);
     // One legacy `name` row answers for both languages, so an operator who saved it
     // before the split keeps the name they typed on the Arabic site too.
     expect((await getSettings('ar')).name).toBe('شامه سي إم إس');
 
-    // Clearing a field hands it back to the config file, one key at a time.
+    // Clearing a field leaves it blank.
     await db
       .updateTable('settings')
       .set({ value: JSON.stringify('') })
       .where('group_name', '=', 'site')
       .where('setting_key', '=', 'name')
       .execute();
-    expect((await getSettings('en')).name).toBe(siteConfig.brand.name.en);
+    expect((await getSettings('en')).name).toBe('');
 
     await db.deleteFrom('settings').where('group_name', 'in', ['site', `${run}-settings`]).where('setting_key', 'in', SETTING_KEYS).execute();
-    expect((await getSettings('en')).whatsapp).toBe(WHATSAPP);
+    expect((await getSettings('en')).whatsapp).toBe('');
   });
 
   it('splits the brand name per language, and the two rows beat the older single one', async () => {
@@ -503,13 +483,12 @@ describe('the database rung', () => {
     expect((await getSettings('en')).name).toBe('Shamah English');
     expect(await getBrandWords()).toEqual({ ar: 'شامه العربية', en: 'Shamah English' });
 
-    // Editing one language is that language's own edit: the other falls back one rung,
-    // to the older single row before it falls back to the config file.
+    // Editing one language is that language's own edit; the legacy row remains the only fallback.
     await db.deleteFrom('settings').where('group_name', '=', 'site').where('setting_key', '=', 'name.en').execute();
     expect(await getBrandWords()).toEqual({ ar: 'شامه العربية', en: 'اسم قبل التقسيم' });
 
     await db.deleteFrom('settings').where('group_name', 'in', ['site', `${run}-settings`]).where('setting_key', 'in', SETTING_KEYS).execute();
-    expect(await getBrandWords()).toEqual({ ar: siteConfig.brand.name.ar, en: siteConfig.brand.name.en });
+    expect(await getBrandWords()).toEqual({ ar: '', en: '' });
   });
 
   it('parses the homepage blocks out of the published home row, raw', async () => {
@@ -523,11 +502,9 @@ describe('the database rung', () => {
     const en = body('Who we are', 'Shamah writes its own introduction into a database row.');
     const ar = body('Who we are', 'عيادات شامه تكتب مقدمتها هنا في صف من قاعدة البيانات.');
 
-    // Pages are on the database rung already (the `about` row above), and it holds no
-    // `home` row: the authored photo and copy answer, not a WordPress page fetched
-    // beside database ones. Same rule that makes an unknown slug a 404.
-    expect(await getHeroPhotos()).toEqual([images.hero]);
-    expect(await getHomeIntro()).toEqual({ title: homeIntroFallback.title, lead: homeIntroFallback.lead });
+    // Pages are CMS-only: without a published home row, the hero and intro stay empty.
+    expect(await getHeroPhotos()).toEqual([]);
+    expect(await getHomeIntro()).toEqual({ title: { ar: '', en: '' }, lead: { ar: '', en: '' } });
     expect(await getHomeProseSections()).toEqual([]);
 
     const created = unwrap(await createRow('page', { key: 'home', actorId: actor.id }), 'create home');
@@ -554,9 +531,8 @@ describe('the database rung', () => {
 
       const intro = await getHomeIntro();
       expect(intro.title.en).toBe('Who we are');
-      // The row's Arabic heading is English text, so the authored Arabic stays — the
-      // rule `parseHomeProse` applies to every untranslated subsite row.
-      expect(intro.title.ar).toBe(homeIntroFallback.title.ar);
+      // The row has no Arabic translation, so the CMS value remains blank.
+      expect(intro.title.ar).toBe('');
       expect(intro.lead.en).toContain('database row');
       expect(intro.lead.ar).toContain('قاعدة البيانات');
 
@@ -576,7 +552,7 @@ describe('the database rung', () => {
       await db.deleteFrom('pages').where('id', '=', created.id).execute();
     }
 
-    expect(await getHeroPhotos()).toEqual([images.hero]);
+    expect(await getHeroPhotos()).toEqual([]);
   });
 });
 

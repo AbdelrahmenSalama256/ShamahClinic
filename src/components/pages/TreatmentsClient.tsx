@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { TreatmentCard } from "@/components/cards/TreatmentCard";
 import {
   treatmentCategories,
@@ -18,7 +19,7 @@ interface Props {
   /** WordPress-titled catalog (pages/696). */
   treatments: Treatment[];
   /** The page's banner, saved in the console or authored. */
-  banner: PhotoSlot;
+  banner: PhotoSlot | null;
 }
 
 type FilterCategory = {
@@ -67,7 +68,7 @@ export const TreatmentsClient: React.FC<Props> = ({ title, treatments, banner })
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/services", label: title },
         ]}
-        photo={banner}
+        photo={banner ?? undefined}
       />
 
       <section className="py-8 lg:py-16">
@@ -81,7 +82,7 @@ export const TreatmentsClient: React.FC<Props> = ({ title, treatments, banner })
                   key={c.id}
                   onClick={() => setActive(c.id)}
                   aria-pressed={isActive}
-                  className={`px-5 py-2.5 rounded-full text-sm font-bold border transition-[background-color,color,transform,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
+                  className={`px-5 py-2.5 rounded-full text-sm font-bold border transition-[background-color,color,transform,border-color] duration-hover ease-brand cursor-pointer ${
                     isActive
                       ? "bg-gold-gradient border-transparent shadow-md"
                       : "bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-control)] hover:border-[var(--border-control)] hover:text-[var(--gold-end)]"
@@ -94,13 +95,23 @@ export const TreatmentsClient: React.FC<Props> = ({ title, treatments, banner })
           </div>
 
           <h2 className="sr-only">{t("خدماتنا", "Our services")}</h2>
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 max-lg:[&>*:last-child]:col-span-2">
-            {filtered.map((tr, i) => (
-              <Reveal className="h-full" key={tr.id} delay={(i % 3) * 0.08}>
-                <TreatmentCard treatment={tr} />
-              </Reveal>
-            ))}
-          </div>
+          {filtered.length === 0 ? (
+            <EmptyState
+              title={t("لا توجد خدمات متاحة الآن", "No treatments are available right now")}
+              description={t(
+                "تواصلي معنا للاستفسار عن خدمات العيادة ومواعيد توفرها.",
+                "Contact us to ask about clinic services and availability.",
+              )}
+            />
+          ) : (
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 lg:gap-8 max-lg:[&>*:last-child]:col-span-2">
+              {filtered.map((tr, i) => (
+                <Reveal className="h-full" key={tr.id} delay={(i % 3) * 0.08}>
+                  <TreatmentCard treatment={tr} />
+                </Reveal>
+              ))}
+            </div>
+          )}
 
           <p className="mt-12 text-center text-sm text-[var(--text-secondary)]">
             {t(

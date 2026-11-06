@@ -34,8 +34,8 @@ import type { Locale } from "@/lib/locale";
 import type { PhotoSlot } from "@/lib/images";
 import { CalendarDays, ChevronLeft, ChevronRight, MapPin, X } from "lucide-react";
 import { track } from "@/lib/tracking/first-party";
+import { motionTransition } from "@/lib/motion";
 
-const ease = [0.22, 1, 0.36, 1] as const;
 
 /** Bilingual text, as the console writes it. */
 interface Words {
@@ -93,7 +93,7 @@ const Chips: React.FC<{ data: ResultCaseData; dark: boolean; t: Translate; langu
       {data.service ? (
         <Link
           href={getLocalizedHref(data.service.href.ar || data.service.href.en, language)}
-          className={`inline-flex items-center font-bold rounded-full px-2.5 py-1 transition-colors duration-300 ${
+          className={`inline-flex items-center font-bold rounded-full px-2.5 py-1 transition-colors duration-hover ${
             dark
               ? "text-[var(--gold-start)] bg-[var(--gold-end)]/20 border border-[var(--gold-start)]/30 hover:bg-[var(--gold-end)]/35"
               : "text-[var(--gold-end)] bg-[var(--blush-light)] border border-[var(--border-control)] hover:text-[var(--text-gold)]"
@@ -190,11 +190,11 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
   const articleHref = story.article ? getLocalizedHref(`/blogs/${story.article.slug}`, language) : null;
 
   return (
-    <div className="h-full flex flex-col rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] transition-[box-shadow,border-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)] hover:shadow-lg hover:border-[var(--border-control)]">
+    <div className="h-full flex flex-col rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] transition-[box-shadow,border-color] duration-fade ease-brand hover:shadow-lg hover:border-[var(--border-control)]">
       {/* ── Title, above the two pictures ── */}
       <h3 className="px-4 pt-4 text-sm sm:px-5 sm:pt-5 sm:text-base lg:text-lg font-black leading-snug line-clamp-2 text-[var(--text-primary)]" dir="auto">
         {articleHref ? (
-          <Link href={articleHref} className="hover:text-[var(--gold-end)] transition-colors duration-300">
+          <Link href={articleHref} className="hover:text-[var(--gold-end)] transition-colors duration-hover">
             {headline}
           </Link>
         ) : (
@@ -234,10 +234,10 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                 ratio="square"
                 priority={priority}
                 className="!aspect-square"
-                imgClassName="transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)] group-hover:scale-105"
+                imgClassName="transition-transform duration-reveal ease-brand group-hover:scale-105"
                 sizes="50vw"
               />
-              <span className="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-500" />
+              <span className="pointer-events-none absolute inset-0 bg-black/0 group-hover:bg-black/15 transition-colors duration-fade" />
               <span className={`absolute bottom-2 start-2 ${item.style} text-[11px] font-bold px-2.5 py-1 rounded-full backdrop-blur-sm`}>
                 {t(item.label.ar, item.label.en)}
               </span>
@@ -267,7 +267,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, ease }}
+                transition={motionTransition("ui")}
                 className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-2 sm:p-4 lg:p-6 backdrop-blur-sm"
                 onClick={closeGallery}
               >
@@ -275,7 +275,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                   initial={{ opacity: 0, scale: 0.96, y: 20 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.97, y: 12 }}
-                  transition={{ duration: 0.3, ease }}
+                  transition={motionTransition("hover")}
                   role="dialog"
                   aria-modal="true"
                   aria-label={t("معرض صور قبل وبعد", "Before and after gallery")}
@@ -297,7 +297,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                       type="button"
                       onClick={closeGallery}
                       aria-label={t("إغلاق المعرض", "Close gallery")}
-                      className="rounded-full p-1.5 sm:p-2 text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--gold-end)] transition-colors duration-300"
+                      className="rounded-full p-1.5 sm:p-2 text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] hover:text-[var(--gold-end)] transition-colors duration-hover"
                     >
                       <X className="h-4 w-4 sm:h-5 sm:w-5" />
                     </button>
@@ -313,7 +313,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                           initial={{ opacity: 0, x: xIn(slideDir) }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: xOut(slideDir) }}
-                          transition={{ duration: 0.35, ease }}
+                          transition={motionTransition("settle")}
                           className="grid grid-cols-2 gap-2 sm:gap-3 lg:gap-4"
                         >
                           {(activeResult.pair ? [activeResult.pair.before, activeResult.pair.after] : []).map((photo, index) => (
@@ -342,7 +342,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                         type="button"
                         onClick={() => move(-1)}
                         aria-label={t("النتيجة السابقة", "Previous result")}
-                        className="hidden sm:flex absolute start-2 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 p-2.5 text-[var(--text-on-dark)] backdrop-blur transition-[background-color,transform] duration-300 hover:bg-black/80 hover:scale-105"
+                        className="hidden sm:flex absolute start-2 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 p-2.5 text-[var(--text-on-dark)] backdrop-blur transition-[background-color,transform] duration-hover hover:bg-black/80 hover:scale-105"
                       >
                         {rtl ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
                       </button>
@@ -350,7 +350,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                         type="button"
                         onClick={() => move(1)}
                         aria-label={t("النتيجة التالية", "Next result")}
-                        className="hidden sm:flex absolute end-2 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 p-2.5 text-[var(--text-on-dark)] backdrop-blur transition-[background-color,transform] duration-300 hover:bg-black/80 hover:scale-105"
+                        className="hidden sm:flex absolute end-2 top-1/2 z-10 -translate-y-1/2 items-center justify-center rounded-full bg-black/60 p-2.5 text-[var(--text-on-dark)] backdrop-blur transition-[background-color,transform] duration-hover hover:bg-black/80 hover:scale-105"
                       >
                         {rtl ? <ChevronLeft className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
                       </button>
@@ -364,7 +364,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                           initial={{ opacity: 0, y: 12 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
-                          transition={{ duration: 0.3, ease, delay: 0.05 }}
+                          transition={{ ...motionTransition("hover"), delay: 0.05 }}
                           className="on-dark mx-auto w-full max-w-2xl rounded-lg sm:rounded-xl border border-[var(--border-control)] bg-[var(--bg-dark)]/95 p-3 sm:p-4 lg:p-5 text-[var(--text-on-dark)] shadow-xl backdrop-blur-md"
                         >
                           <Chips data={activeResult} dark t={t} language={language} />
@@ -384,7 +384,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                           {activeResult.article ? (
                             <Link
                               href={getLocalizedHref(`/blogs/${activeResult.article.slug}`, language)}
-                              className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-start)] hover:text-[var(--text-gold)] transition-colors duration-300"
+                              className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-start)] hover:text-[var(--text-gold)] transition-colors duration-hover"
                             >
                               {t("افتحي مقال النتيجة", "Open the result's article")}
                               {rtl ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
@@ -400,7 +400,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                         type="button"
                         onClick={() => move(-1)}
                         aria-label={t("النتيجة السابقة", "Previous result")}
-                        className="flex items-center gap-1 rounded-full px-3 py-2 text-[12px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors duration-300"
+                        className="flex items-center gap-1 rounded-full px-3 py-2 text-[12px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors duration-hover"
                       >
                         {rtl ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
                         {t("السابق", "Prev")}
@@ -412,7 +412,7 @@ export const ResultCaseCard: React.FC<Props> = ({ story, gallery, priority }) =>
                         type="button"
                         onClick={() => move(1)}
                         aria-label={t("النتيجة التالية", "Next result")}
-                        className="flex items-center gap-1 rounded-full px-3 py-2 text-[12px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors duration-300"
+                        className="flex items-center gap-1 rounded-full px-3 py-2 text-[12px] font-bold text-[var(--text-primary)] hover:bg-[var(--bg-secondary)] transition-colors duration-hover"
                       >
                         {t("التالي", "Next")}
                         {rtl ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}

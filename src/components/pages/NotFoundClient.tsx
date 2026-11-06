@@ -8,7 +8,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { BookButton, GoldLink } from "@/components/shared/Actions";
 import {
   Home,
-  Sparkles,
+  Stethoscope,
   Ticket,
   MapPin,
   BookOpen,
@@ -26,7 +26,7 @@ const destinations = [
   },
   {
     href: "/services",
-    icon: Sparkles,
+    icon: Stethoscope,
     label: { ar: "خدماتنا", en: "Treatments" },
     description: { ar: "اكتشفي جلساتنا", en: "Explore our services" },
   },
@@ -134,14 +134,14 @@ export const NotFoundClient: React.FC = () => {
                 <Link
                   key={d.href}
                   href={getLocalizedHref(d.href, language)}
-                  className="group relative flex flex-col items-start gap-3 p-5 rounded-2xl border border-[var(--border-on-dark)] bg-white/[0.03] text-[var(--text-on-dark)] hover:bg-white/[0.06] hover:border-[var(--gold-start)]/40 hover:-translate-y-1 transition-[transform,background-color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] backdrop-blur-sm"
+                  className="group relative flex flex-col items-start gap-3 p-5 rounded-2xl border border-[var(--border-on-dark)] bg-white/[0.03] text-[var(--text-on-dark)] hover:bg-white/[0.06] hover:border-[var(--gold-start)]/40 hover:-translate-y-1 transition-[transform,background-color,border-color] duration-hover ease-brand backdrop-blur-sm"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-[var(--gold-start)]/10 border border-[var(--gold-start)]/30 flex items-center justify-center group-hover:bg-[var(--gold-start)]/20 transition-colors duration-300">
+                  <div className="w-10 h-10 rounded-xl bg-[var(--gold-start)]/10 border border-[var(--gold-start)]/30 flex items-center justify-center group-hover:bg-[var(--gold-start)]/20 transition-colors duration-hover">
                     <Icon className="w-4 h-4 text-[var(--gold-start)]" />
                   </div>
 
                   <div className="min-w-0">
-                    <span className="block text-sm font-black text-[var(--text-on-dark)] group-hover:text-[var(--gold-start)] transition-colors duration-300">
+                    <span className="block text-sm font-black text-[var(--text-on-dark)] group-hover:text-[var(--gold-start)] transition-colors duration-hover">
                       {t(d.label.ar, d.label.en)}
                     </span>
                     <span className="block text-[11px] text-[var(--text-on-dark-muted)] mt-0.5">
@@ -149,7 +149,7 @@ export const NotFoundClient: React.FC = () => {
                     </span>
                   </div>
 
-                  <Arrow className="absolute top-5 end-5 w-3.5 h-3.5 text-[var(--text-on-dark-muted)] group-hover:text-[var(--gold-start)] group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-[transform,color] duration-300" />
+                  <Arrow className="absolute top-5 end-5 w-3.5 h-3.5 text-[var(--text-on-dark-muted)] group-hover:text-[var(--gold-start)] group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 transition-[transform,color] duration-hover" />
                 </Link>
               );
             })}

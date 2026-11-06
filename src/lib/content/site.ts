@@ -1,44 +1,32 @@
 /**
  * The site's one read path.
  *
- * WordPress is on the way out, but its committed snapshot (`data/wp/*.json`) stays
- * as the second rung until BK-7 imports the articles, offers and pages into this
- * database. So every read asks the database first and takes the snapshot only when
- * the database holds nothing published of that kind — decided once per kind, never
- * per row, so a slug that genuinely does not exist is a 404 rather than something
- * the stale snapshot happens to contain. The two rungs are provable separately:
- * today the development database holds zero content rows, so the site renders what
- * it rendered yesterday; the day the import lands, the same calls return database
- * rows and no WordPress origin is contacted.
+ * The public site reads published CMS rows only. WordPress snapshots remain available
+ * to import tooling, but an empty or unavailable CMS never makes the public readers
+ * serve those files or bundled content instead.
  *
  * Each function keeps the name, arguments and returned shape of the `../wp` reader
- * it replaces, so rewiring a route is an import path. Where the two rungs cannot
+ * it replaces, so rewiring a route is an import path. Where the CMS and legacy shapes cannot
  * agree — the numeric id a WordPress card carried — the shape is kept and the value
  * is documented at its maker.
  *
- * The decision is per kind, and for `list_items` it is per **list**: the branches
- * can be database-backed while the services still come from the snapshot, because
- * "has this been published yet?" is a question about one list, not about a table.
+ * The decision is per kind, and for `list_items` it is per **list**.
  */
 import { cache } from 'react';
 import * as wp from '../wp';
 import type { BranchView, PageCard, Query, WithSeo } from '../wp';
-import { arabicRatio, hrefPair } from '../wp/lang';
+import { hrefPair } from '../wp/lang';
 import { decodeEntities, firstParagraph, htmlToText, sanitizeHtmlBody } from '../wp/sanitize';
 import { heroPhotos } from '../wp/hero';
 import { readPublicHero } from '../hero/store';
 import { HERO_DEFAULTS, type HeroDocument } from '../hero/types';
-import { storyPhraseIndex } from '../wp/result-stories';
 import { parseHomeProse, splitHomeProse, type BilingualHomeBlock } from '../wp/home-prose';
-import { homeIntroFallback } from '../../data/about';
 import type { PhotoSlot } from '../images';
 import type { BranchDetail } from '../../data/branches';
 import type { Article, ArticleCard, Bi, CategoryTerm, Lang, Offer, OfferDetail, PageContent, Paged, SeoMeta, ServiceCard, Settings } from '../wp/types';
 import { db } from '../db';
 import { SITE_URL } from '../site';
 import { getLocalizedHref } from '../locale';
-import { siteConfig } from '../../config/site';
-import { WHATSAPP } from '../wp/config';
 import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
 import { offerLiveOn } from './offer-services';
 import type { ContentKind } from './kinds';
@@ -54,12 +42,12 @@ export type { PageCard, Query, WithSeo };
 // --- which rung answered ------------------------------------------------------
 
 const logged = new Set<string>();
-function note(rung: 'db' | 'snapshot', kind: string, detail = ''): void {
-  const key = `${rung}:${kind}:${detail}`;
+function note(source: 'db' | 'empty', kind: string, detail = ''): void {
+  const key = `${source}:${kind}:${detail}`;
   if (logged.has(key)) return;
   if (logged.size > 100) logged.clear();
   logged.add(key);
-  console.log(`[site] ${rung.padEnd(8)} ${kind}${detail ? ` (${detail})` : ''}`);
+  console.log(`[site] ${source.padEnd(8)} ${kind}${detail ? ` (${detail})` : ''}`);
 }
 
 function reason(err: unknown): string {
@@ -67,21 +55,20 @@ function reason(err: unknown): string {
 }
 
 /**
- * Read a kind from the database when it has published rows, and from the snapshot
- * otherwise. A database that cannot be reached is the same answer as an empty one:
- * the site keeps rendering, which is the whole reason the snapshot is committed.
+ * Read published CMS rows. An empty table or a failed database read returns an empty
+ * value supplied by the caller; public content is never substituted from a snapshot.
  */
-async function rung<T>(kind: ContentKind, fromDb: () => Promise<T>, fromSnapshot: () => Promise<T>): Promise<T> {
+async function rung<T>(kind: ContentKind, fromDb: () => Promise<T>, empty: T): Promise<T> {
   try {
     if (await hasPublished(kind)) {
       note('db', kind);
       return await fromDb();
     }
-    note('snapshot', kind, 'nothing published');
+    note('empty', kind, 'nothing published');
   } catch (err) {
-    note('snapshot', kind, reason(err));
+    note('empty', kind, reason(err));
   }
-  return fromSnapshot();
+  return empty;
 }
 
 // --- reading a row's values ---------------------------------------------------
@@ -222,7 +209,7 @@ export async function getAllArticles(): Promise<ArticleCard[]> {
       const [rows, categories] = await Promise.all([publicRows('article'), categoryIndex()]);
       return rows.map((row, index) => articleCard(row, index, categories));
     },
-    () => wp.getAllArticles(),
+    [],
   );
 }
 
@@ -256,7 +243,7 @@ export async function getPost(slug: string): Promise<WithSeo<Article> | null> {
       };
       return { item: article, seo: publicSeo('article', card.slug, article.title, article.excerpt, article.image) };
     },
-    () => wp.getPost(slug),
+    null,
   );
 }
 
@@ -283,11 +270,11 @@ export async function getCategories(): Promise<CategoryTerm[]> {
         }))
         .sort((a, b) => b.count - a.count);
     }
-    note('snapshot', 'category', 'no categories');
+    note('empty', 'category', 'no categories');
   } catch (err) {
-    note('snapshot', 'category', reason(err));
+    note('empty', 'category', reason(err));
   }
-  return wp.getCategories();
+  return [];
 }
 
 /** How many published articles each category holds — the chip's count. One per render. */
@@ -357,9 +344,8 @@ function offer(row: PublicRow, index: number): Offer {
     services: arrayOfStrings(json(row, 'applicableServices')),
     validFrom: text(row, 'startsAt'),
     validUntil: text(row, 'endsAt'),
-    // Both languages carry the same unprefixed path because that is how the snapshot
-    // spells an offer link (`../wp/mappers.ts`), and `decideRoute()` renders an Arabic
-    // page for it either way. The prefix is the one thing the two rungs must agree on.
+    // Both languages carry the same unprefixed path for compatibility with existing
+    // offer links; `decideRoute()` renders an Arabic page for it either way.
     href: { ar: publicPathOf('offer', row.key)!, en: publicPathOf('offer', row.key)! },
   };
 }
@@ -382,15 +368,15 @@ function offerIsLive(row: PublicRow): boolean {
 }
 
 /**
- * Offers in the language being rendered. One database row carries both locales, so
- * `lang` only decides the fallback's snapshot — the list, its order and its prices
- * are the published rows either way.
+ * Offers in the language being rendered. One CMS row carries both locales, so the
+ * locale argument is retained for compatibility with existing callers.
  */
-export async function getAllOffers(lang: Lang = 'en'): Promise<Offer[]> {
+export async function getAllOffers(_lang: Lang = 'en'): Promise<Offer[]> {
+  void _lang;
   return rung(
     'offer',
     async () => (await publicRows('offer')).filter(offerIsLive).map(offer),
-    () => wp.getAllOffers(lang),
+    [],
   );
 }
 
@@ -402,7 +388,8 @@ export async function getOffers(q: Query = {}, lang: Lang = 'en'): Promise<Paged
   return wp.paginate(offers, q.page, q.perPage);
 }
 
-export async function getOffer(slug: string, lang: Lang = 'en'): Promise<WithSeo<OfferDetail> | null> {
+export async function getOffer(slug: string, _lang: Lang = 'en'): Promise<WithSeo<OfferDetail> | null> {
+  void _lang;
   return rung(
     'offer',
     async () => {
@@ -411,7 +398,7 @@ export async function getOffer(slug: string, lang: Lang = 'en'): Promise<WithSeo
       const detail = { ...offer(row, 0), html: body(row, 'body') };
       return { item: detail, seo: publicSeo('offer', detail.slug, detail.name, detail.excerpt, detail.image) };
     },
-    () => wp.getOffer(slug, lang),
+    null,
   );
 }
 
@@ -435,7 +422,7 @@ export async function getAllPages(): Promise<PageCard[]> {
   return rung(
     'page',
     async () => (await publicRows('page')).filter((row) => flag(row, 'enabled')).map(pageCard),
-    () => wp.getAllPages(),
+    [],
   );
 }
 
@@ -462,22 +449,18 @@ export async function getPage(slug: string): Promise<WithSeo<PageContent> | null
       };
       return { item: page, seo: publicSeo('page', row.key, page.title, { ar: '', en: '' }, null) };
     },
-    () => wp.getPage(slug),
+    null,
   );
 }
 
 /**
  * A page's heading as its authors write it, for the hero title of the matching
- * route. Arabic only wins when the row actually holds Arabic — the fallback keeps
- * the authored heading instead of opening an Arabic page with an English one.
+ * route.
  */
-export async function getPageTitle(slug: string, authored: Bi): Promise<Bi> {
+export async function getPageTitle(slug: string, _authored?: Bi): Promise<Bi> {
+  void _authored;
   const card = (await getAllPages()).find((page) => page.slug === pageSlug(slug));
-  if (!card) return authored;
-  return {
-    ar: arabicRatio(card.title.ar) > 0.3 ? card.title.ar : authored.ar,
-    en: card.title.en || authored.en,
-  };
+  return card?.title ?? { ar: '', en: '' };
 }
 
 // --- lists --------------------------------------------------------------------
@@ -492,12 +475,9 @@ export async function getPageTitle(slug: string, authored: Bi): Promise<Bi> {
  * falls back instead of throwing, and a row with nothing usable in it is skipped
  * rather than rendered as an empty card.
  */
-// --- the source rung -----------------------------------------------------------
+// --- import sources -----------------------------------------------------------
 //
-// What the site renders before a list has been published. The import reads these,
-// never the rung above: a list is served wholly from the database once anything in
-// it is published, so an importer that asked `getBranchList()` would copy back the
-// one row a person had already saved instead of importing the rest.
+// These are used by import tooling only. Public list readers below never call them.
 export async function getSourceBranches(): Promise<BranchDetail[]> {
   return wp.getBranchList();
 }
@@ -518,17 +498,17 @@ export async function getSourceServiceCards(): Promise<ServiceCard[]> {
   return wp.getServiceCards();
 }
 
-async function listRung<T>(listKey: string, fromDb: () => Promise<T>, fromFallback: () => Promise<T>): Promise<T> {
+async function listRung<T>(listKey: string, fromDb: () => Promise<T>, empty: T): Promise<T> {
   try {
     if (await hasPublished('list_item', { listKey })) {
       note('db', `list ${listKey}`);
       return await fromDb();
     }
-    note('snapshot', `list ${listKey}`, 'nothing published');
+    note('empty', `list ${listKey}`, 'nothing published');
   } catch (err) {
-    note('snapshot', `list ${listKey}`, reason(err));
+    note('empty', `list ${listKey}`, reason(err));
   }
-  return fromFallback();
+  return empty;
 }
 
 function documentOf(row: PublicRow): Record<string, unknown> | null {
@@ -572,7 +552,7 @@ export async function getBranchList(): Promise<BranchDetail[]> {
         .filter((row) => flag(row, 'enabled'))
         .map(branchOf)
         .filter((branch): branch is BranchDetail => branch !== null),
-    getSourceBranches,
+    [],
   );
 }
 
@@ -597,7 +577,7 @@ export async function getSpecialistList(): Promise<Specialist[]> {
           return doc ? specialistOfDoc(doc, row.key) : null;
         })
         .filter((specialist): specialist is Specialist => specialist !== null),
-    async () => getSourceSpecialists(),
+    [],
   );
 }
 
@@ -615,7 +595,7 @@ export async function getFaqList(): Promise<FaqItem[]> {
           return doc ? faqOfDoc(doc, row.key) : null;
         })
         .filter((item): item is FaqItem => item !== null),
-    async () => getSourceFaq(),
+    [],
   );
 }
 
@@ -636,16 +616,14 @@ export async function getNavList(): Promise<NavItem[]> {
           return doc ? navOfDoc(doc) : null;
         })
         .filter((item): item is NavItem => item !== null),
-    async () => getSourceNav(),
+    [],
   );
 }
 
 // services
 
 /**
- * A service card. WordPress has no route per service — its cards are sections of
- * one page — so a row with no link of its own points the reader at `/services`,
- * which is where the fallback's cards point too.
+ * A service card. A row with no link of its own points the reader at `/services`.
  *
  * The name is read as `name` first and `title` second, in either shape a document holds
  * a value in. The service form writes `name_ar`, a row seeded before that form existed
@@ -681,7 +659,7 @@ export async function getServiceCards(): Promise<ServiceCard[]> {
         .filter((row) => flag(row, 'enabled'))
         .map(serviceCardOf)
         .filter((card): card is ServiceCard => card !== null),
-    () => Promise.resolve<ServiceCard[]>([]),
+    [],
   );
 }
 
@@ -798,8 +776,7 @@ function wordsOf(...candidates: Bi[]): Bi {
  * the list keeps the order its author set: the `position` column the import wrote and the old
  * reader ignored.
  *
- * The snapshot rung answers with the same shape, minus the detail: the file named a post and
- * typed nothing else.
+ * Imported rows can name a post without carrying additional case details.
  */
 async function resultSelections(): Promise<ResultSelection[]> {
   return listRung(
@@ -810,22 +787,7 @@ async function resultSelections(): Promise<ResultSelection[]> {
         .filter((row) => flag(row, 'enabled'))
         .map((row) => resultSelectionOf(row, services));
     },
-    async () =>
-      [...(await storyPhraseIndex()).entries()].map(([id, phrases]) => ({
-        key: String(id),
-        pointer: String(id),
-        phrases,
-        detail: {
-          headline: { ar: '', en: '' },
-          pair: null,
-          area: { ar: '', en: '' },
-          sessions: { ar: '', en: '' },
-          caption: { ar: '', en: '' },
-          note: { ar: '', en: '' },
-          service: null,
-          showOnHome: false,
-        },
-      })),
+    [],
   );
 }
 
@@ -930,16 +892,10 @@ export async function getHomeResultCases(): Promise<ResultStory[]> {
  * is looking over the operator's shoulder, and a public reader is a worse version of
  * that room. `/api/v1/settings` answers to any visitor.
  *
- * The fallback is per key, not per call: a site that has saved a phone number still
- * takes its hours from the config file. That is the opposite of the content rungs,
- * where "has this been published?" is answered for a whole kind at a time — a
- * setting has no draft twin and no version of record, so half-filling the group is
- * a normal state rather than a broken one.
+ * Missing CMS values stay blank; a missing setting is never filled from local
+ * configuration.
  */
 const SETTING_GROUP = 'site';
-
-/** The homepage's tagline. No config file holds it today, and BK-14 gives it an address. */
-const TAGLINE = "Great Skin Doesn't Happen By Chance";
 
 /** MariaDB prints JSON as LONGTEXT and the driver parses most, but not every, path. */
 function asWord(value: unknown): string | null {
@@ -981,10 +937,8 @@ const savedGroup = cache(async (group: string): Promise<Map<string, string>> => 
 const savedSettings = () => savedGroup(SETTING_GROUP);
 
 /**
- * The site's settings: the six words an operator can edit come from the database when
- * they have been saved and from the config file otherwise, and the two counted fields
- * stay counted — they are not settings, they are the offers and branches this same
- * read path just returned.
+ * The site's words come from CMS settings. The two counted fields remain derived from
+ * CMS offers and branches.
  *
  * `lang` moves `name` — the two identity rows are one per language — but not `hours`,
  * which no page renders today. A field with no surface is reported, not wired to a
@@ -997,24 +951,23 @@ export async function getSettings(lang: Lang = 'en'): Promise<Settings> {
     savedSettings().then(
       (values) => {
         if (values.size) note('db', 'settings', `${values.size} key(s)`);
-        else note('snapshot', 'settings', 'nothing saved');
+        else note('empty', 'settings', 'nothing saved');
         return values;
       },
       (err: unknown) => {
-        note('snapshot', 'settings', reason(err));
+        note('empty', 'settings', reason(err));
         return new Map<string, string>();
       },
     ),
   ]);
-  const field = (key: string, authored: string): string => saved.get(key) ?? authored;
   return {
     name: brandFrom(saved)[lang],
-    tagline: field('tagline', TAGLINE),
-    currency: offers.items[0]?.currency || 'EGP',
-    phone: field('phone', siteConfig.contact.phone),
-    whatsapp: field('whatsapp', WHATSAPP),
-    email: field('email', siteConfig.contact.email),
-    hours: field('hours', siteConfig.contact.workingHours.en),
+    tagline: saved.get('tagline') ?? '',
+    currency: offers.items[0]?.currency ?? '',
+    phone: saved.get('phone') ?? '',
+    whatsapp: saved.get('whatsapp') ?? '',
+    email: saved.get('email') ?? '',
+    hours: saved.get('hours') ?? '',
     branches: branches.length,
   };
 }
@@ -1033,10 +986,7 @@ export interface ClinicWords {
  * buttons each imported `clinicData`, which is built from `config/site.ts` at module
  * load. An operator typing a new number into Settings wrote a row nothing rendered.
  *
- * The fallback is the config file again, and it is per call rather than per key: a page
- * that cannot reach the database shows the number it shipped with, never a blank
- * `tel:` link. The digits in a `wa.me` address are whatever the operator typed with the
- * spaces, the plus and the dashes taken out — a wa.me link with a `+` in it does not open.
+ * A missing CMS value stays blank; public contact details are never taken from config.
  */
 export async function getClinicWords(): Promise<ClinicWords> {
   let saved = new Map<string, string>();
@@ -1044,14 +994,14 @@ export async function getClinicWords(): Promise<ClinicWords> {
     saved = await savedSettings();
     if (saved.size) note('db', 'clinic', `${saved.size} key(s)`);
   } catch (err: unknown) {
-    note('snapshot', 'clinic', reason(err));
+    note('empty', 'clinic', reason(err));
   }
-  const phone = saved.get('phone') ?? siteConfig.contact.phone;
-  const whatsapp = saved.get('whatsapp') ?? WHATSAPP;
+  const phone = saved.get('phone') ?? '';
+  const whatsapp = saved.get('whatsapp') ?? '';
   return {
     phone,
     whatsapp,
-    whatsappUrl: `https://wa.me/${whatsapp.replace(/\D/g, '')}`,
+    whatsappUrl: whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, '')}` : '',
   };
 }
 
@@ -1060,12 +1010,12 @@ export interface BrandWords {
   en: string;
 }
 
-/** The rule both reads share: per-language row, then the older single row, then the file. */
+/** The rule both reads share: per-language row, then the older single row. */
 function brandFrom(saved: Map<string, string>): BrandWords {
   const legacy = saved.get('name');
   return {
-    ar: saved.get('name.ar') ?? legacy ?? siteConfig.brand.name.ar,
-    en: saved.get('name.en') ?? legacy ?? siteConfig.brand.name.en,
+    ar: saved.get('name.ar') ?? legacy ?? '',
+    en: saved.get('name.en') ?? legacy ?? '',
   };
 }
 
@@ -1084,7 +1034,7 @@ export async function getBrandWords(): Promise<BrandWords> {
   try {
     return brandFrom(await savedSettings());
   } catch (err: unknown) {
-    note('snapshot', 'brand', reason(err));
+    note('empty', 'brand', reason(err));
     return brandFrom(new Map());
   }
 }
@@ -1097,23 +1047,18 @@ export interface SiteMeta {
 }
 
 /**
- * The site-wide metadata the layout falls back to. A saved word wins; a missing row
- * keeps the config file, so an operator can change the description without first
- * copying every other value into the console. Unreadable settings fail back to the
- * config rather than to an empty `<title>`.
+ * Site metadata is CMS-owned; missing or unreadable settings remain empty.
  */
 export async function getSiteMeta(lang: Lang): Promise<SiteMeta> {
   let saved = new Map<string, string>();
   try {
     saved = await savedGroup(SEO_SETTING_GROUP);
-  } catch {
-    /* the config file is a complete fallback */
+  } catch (err: unknown) {
+    note('empty', 'site metadata', reason(err));
   }
   return {
-    title: saved.get(`title.${lang}`) ?? (lang === 'ar' ? siteConfig.metadata.title : siteConfig.metadata.titleEn),
-    description:
-      saved.get(`description.${lang}`) ??
-      (lang === 'ar' ? siteConfig.metadata.description : siteConfig.metadata.descriptionEn),
+    title: saved.get(`title.${lang}`) ?? '',
+    description: saved.get(`description.${lang}`) ?? '',
     verification: saved.get('verification.google') ?? null,
   };
 }
@@ -1126,11 +1071,7 @@ export async function getSiteMeta(lang: Lang): Promise<SiteMeta> {
  * renderer drops — so this takes the body **raw**, the counterpart of `body()`, and
  * nothing it reads is ever sent to a browser as HTML.
  *
- * The rung is the page kind's, not a per-row decision: once pages come from the
- * database, a missing `home` row means the authored fallback photo and copy, not a
- * WordPress page fetched alongside database ones. Same rule that makes an unknown slug
- * a 404 (`getPage`), and the reason this asks `rung` rather than looking for the row
- * first.
+ * The page kind is read from the CMS only, so a missing `home` row means no hero or copy.
  */
 async function rawHomeBodies(): Promise<{ en: string; ar: string }> {
   return rung(
@@ -1140,35 +1081,23 @@ async function rawHomeBodies(): Promise<{ en: string; ar: string }> {
       const content = row ? pair(row, 'content') : null;
       return { en: content?.en ?? '', ar: content?.ar ?? '' };
     },
-    async () => {
-      try {
-        const [en, ar] = await Promise.all([wp.getRawPageHtml('home', 'en'), wp.getRawPageHtml('home', 'ar')]);
-        return { en, ar };
-      } catch {
-        return { en: '', ar: '' };
-      }
-    },
+    { en: '', ar: '' },
   );
 }
 
-/** Homepage hero backgrounds: the slider the page publishes, or the authored photo. */
+/** Homepage hero backgrounds parsed from the published CMS page. */
 export async function getHeroPhotos(): Promise<PhotoSlot[]> {
   return heroPhotos((await rawHomeBodies()).en);
 }
 
 /**
  * The slider the console edits, with the schedule already applied.
- *
- * An empty result is not an error: `hero_slides` starts empty on a database that has
- * never been seeded, and the homepage then draws the photographs the imported page
- * carries — exactly what it drew before this table existed. A database that cannot be
- * reached answers the same way, because a marketing table must not be able to take the
- * homepage down.
  */
 export async function getHomeHero(): Promise<HeroDocument> {
   try {
     return await readPublicHero();
-  } catch {
+  } catch (err: unknown) {
+    note('empty', 'hero', reason(err));
     return { slides: [], settings: { ...HERO_DEFAULTS } };
   }
 }
@@ -1186,17 +1115,11 @@ async function homeProse(): Promise<{ intro: BilingualHomeBlock | null; sections
  */
 export async function getHomeIntro(): Promise<{ title: Bi; lead: Bi }> {
   const { intro } = await homeProse();
-  if (!intro) return { title: homeIntroFallback.title, lead: homeIntroFallback.lead };
+  if (!intro) return { title: { ar: '', en: '' }, lead: { ar: '', en: '' } };
   const lead = intro.paragraphs.find((p) => p.en);
   return {
-    title: {
-      ar: intro.heading.ar || homeIntroFallback.title.ar,
-      en: intro.heading.en || homeIntroFallback.title.en,
-    },
-    lead: {
-      ar: lead?.ar || homeIntroFallback.lead.ar,
-      en: lead?.en || homeIntroFallback.lead.en,
-    },
+    title: intro.heading,
+    lead: lead ?? { ar: '', en: '' },
   };
 }
 

@@ -103,12 +103,11 @@ describe('a saved banner', () => {
     expect(isBannerPage('faq')).toBe(false);
   });
 
-  it('keeps a blank caption authored, and one photo for both languages', () => {
-    const authored = BANNER_DEFAULTS.blogs;
+  it('keeps only the caption saved with the CMS banner', () => {
     const slot = bannerPhoto({ blogs: { src: '/images/treatment-peel.jpg', altAr: '', altEn: 'Peel session' } }, 'blogs');
     expect(slot).toEqual({
       src: '/images/treatment-peel.jpg',
-      alt: { ar: authored.alt.ar, en: 'Peel session' },
+      alt: { ar: '', en: 'Peel session' },
       width: 1600,
       height: 1067,
       focal: '50% 50%',
@@ -117,8 +116,8 @@ describe('a saved banner', () => {
 });
 
 describe('the banners group read from the database', () => {
-  it('falls back to the authored photo until a row is saved', async () => {
-    expect(await getBanner('blogs')).toEqual(BANNER_DEFAULTS.blogs);
+  it('leaves the banner empty until a CMS row is saved', async () => {
+    expect(await getBanner('blogs')).toBeNull();
     expect(await getBannerOverride('home')).toBeNull();
   });
 
@@ -128,8 +127,8 @@ describe('the banners group read from the database', () => {
     const saved = await readBanners();
     expect(saved.blogs).toEqual({ src: '/images/treatment-peel.jpg', altAr: '', altEn: 'Peel session' });
     expect(saved.about).toBeUndefined();
-    expect((await getBanner('blogs')).src).toBe('/images/treatment-peel.jpg');
-    expect((await getBanner('about')).src).toBe(BANNER_DEFAULTS.about.src);
+    expect((await getBanner('blogs'))?.src).toBe('/images/treatment-peel.jpg');
+    expect(await getBanner('about')).toBeNull();
   });
 
   it('gives the home hero an override of its own, so its slides survive no choice', async () => {
@@ -146,6 +145,6 @@ describe('the banners group read from the database', () => {
     const saved = await readBanners();
     expect(saved.offers).toBeUndefined();
     expect(saved).not.toHaveProperty('cart');
-    expect((await getBanner('offers')).src).toBe(BANNER_DEFAULTS.offers.src);
+    expect(await getBanner('offers')).toBeNull();
   });
 });

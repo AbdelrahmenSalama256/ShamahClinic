@@ -20,14 +20,14 @@ export const ArticleCard: React.FC<{
   return (
     <Link
       href={getLocalizedHref(`/blogs/${article.slug}`, language)}
-      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+      className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl hover:-translate-y-1 transition-[transform,box-shadow] duration-hover ease-brand"
     >
       <div className="relative overflow-hidden">
         <Photo
           slot={article.image}
           ratio="landscape"
           priority={priority}
-          imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+          imgClassName="group-hover:scale-105 transition-transform duration-reveal ease-brand"
           sizes="(max-width:1024px) 50vw, 33vw"
         />
       </div>
@@ -45,7 +45,7 @@ export const ArticleCard: React.FC<{
           ) : null}
         </div>
         <h3
-          className="mt-2 text-sm sm:text-base lg:text-lg font-black leading-snug line-clamp-2 text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300"
+          className="mt-2 text-sm sm:text-base lg:text-lg font-black leading-snug line-clamp-2 text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-hover"
           dir="auto"
         >
           {t(article.title.ar, article.title.en) || t("بلا عنوان", "Untitled")}

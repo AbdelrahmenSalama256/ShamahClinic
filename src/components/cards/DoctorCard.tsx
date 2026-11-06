@@ -22,12 +22,12 @@ export const DoctorCard: React.FC<{
     .join(" • ");
 
   return (
-    <article className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl transition-[box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]">
+    <article className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl transition-[box-shadow] duration-hover ease-brand">
       <div className="relative overflow-hidden">
         <Photo
           slot={doctor.image}
           ratio="portrait"
-          imgClassName="group-hover:scale-[1.04] transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+          imgClassName="group-hover:scale-[1.04] transition-transform duration-reveal ease-brand"
           sizes="(max-width:640px) 100vw, 33vw"
         />
       </div>
@@ -58,7 +58,7 @@ export const DoctorCard: React.FC<{
         <button
           onClick={() => openBooking({ specialistId: doctor.id })}
           data-cta="doctor-card"
-          className="mt-3 sm:mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-xs sm:text-sm py-2.5 sm:py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+          className="mt-3 sm:mt-5 w-full inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold text-xs sm:text-sm py-2.5 sm:py-3 hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-hover ease-brand cursor-pointer"
         >
           <Calendar className="w-4 h-4" />
           <span>{t("احجزي مع هذه الطبيبة", "Book with this doctor")}</span>

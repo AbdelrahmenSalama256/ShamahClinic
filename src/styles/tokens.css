@@ -224,21 +224,78 @@
   --z-palette: 75;
   --z-toast: 80;
 
-  /* Motion. 150–400ms, easing that leaves the value it started from fast. The
-     blanket `transition: all` these replace could not be given a duration at all
-     without also animating width, padding and visibility. */
+  /* Motion (MB-2). The durations and curves below are measurements of `D:\shamah`, not
+     preferences: the numbers after each token are the counts in that tree's own compiled
+     CSS (`.tmp/built.css`) and JSX, and every token is the value the site already paints
+     today, so retuning nothing to match the reference means changing what the reference
+     actually does. Two kinds of number live here and they are not interchangeable:
+     a duration is how long one state change takes to settle, a period is how long a loop
+     takes to repeat. The brief's 150–400 ms is about the first; the periods
+     (`--dur-spin`, `--dur-shimmer`, `--dur-gold`, `--dur-shine`, `--dur-marquee`) never
+     settle, and a loop that fast looks nervous while one that slow looks broken.
+
+     What the reference says, in short: `* { transition: all .3s ease-in-out !important }`
+     over every element (`--dur-hover`), `duration-300` ×103 in its JSX against
+     `transition-colors` ×76, its own components overriding the blanket with
+     `ease-[cubic-bezier(.22,1,.36,1)]` ×56 and 12 more in CSS (`--ease-signature`),
+     `.2s`/`.25s` on the date picker's cells and arrows, `.7s` on both the mount reveal
+     (`[class*="reveal-mount-"]`) and the scroll reveal (`.reveal-scroll`), `.8s` clip-path
+     + `.9s` transform on the photo curtain, `.28s` on the dropdown, `1400ms` on the
+     counter, and loops at 8 s / 4.5 s / 1.2 s / 32 s.
+
+     A blanket `transition: all` cannot be given any of these durations without also
+     animating `width`, `padding` and `visibility` — which is why the site names its
+     properties everywhere and this table only has to carry the timing. Curves the
+     reference names as CSS keywords (`ease`, `ease-in-out`) stay keywords at the call
+     site: the browser owns those numbers, and inventing a token for a keyword would
+     let this table drift from what the reference computes. */
   --dur-fast: 150ms;
+  /* `.duration-200` — the date-picker day cell (`transition: all .2s ease`) */
+  --dur-quick: 200ms;
   --dur-base: 220ms;
-  --dur-slow: 340ms;
-  --dur-reveal: 500ms;
-  /* Not transitions. The brief's 150–400ms is how long a state change takes to settle;
-     these are the periods of things that never settle — an indeterminate spinner and a
-     skeleton's sweep — and a loop that fast looks nervous and one that slow looks broken. */
+  /* `.rdp-nav_button` (`all .25s cubic-bezier(.22,1,.36,1)`) and the drawer framer value */
+  --dur-ui: 250ms;
+  /* the blanket, and the site's own hover timing: `.3s` ×9 in CSS, `duration-300` ×111 here */
+  --dur-hover: 300ms;
+  /* `.dropdown-panel` / `.dropdown-panel-out` (`animation: .28s …`), under --dur-hover
+     because a menu that opens slower than the button that opened it reads as lag. */
+  --dur-menu: 280ms;
+  /* The three framer lengths the reference uses between its blanket and its fades — a
+     page swap and an accordion closing (350 ms) and a modal step changing (400 ms, the
+     top of the brief's 150–400 ms). They are roles because they are asked for by name in
+     `src/lib/motion.ts`, not because 350 and 400 are different sizes of the same thing. */
+  --dur-settle: 350ms;
+  --dur-step: 400ms;
+  /* `.duration-500` — card lift and scrim fade */
+  --dur-fade: 500ms;
+  /* `.reveal-scroll` (`opacity .7s, transform .7s`) and `[class*="reveal-mount-"]`
+     (`animation-duration: .7s`); the same length a section enters on either path. */
+  --dur-reveal: 700ms;
+  /* One length for both ways a block arrives: the hero's copy (`duration: .8` there) and
+     the mask a photograph opens through (`clip-path .8s` in the reference). The image
+     under that mask gets its own, longer number on purpose — the reference gives it `.9s`,
+     and the overshoot is what makes the curtain and the photo read as one gesture
+     instead of two switches. */
+  --dur-enter: 800ms;
+  --dur-pan: 900ms;
+  --dur-loader-breathe: 1.8s;
+  /* `Counter.tsx` counts up for as long as `.duration-[1400ms]` did in the reference. */
+  --dur-count: 1400ms;
+  /* Periods of things that never settle. */
   --dur-spin: 700ms;
   --dur-shimmer: 1.2s;
+  --dur-gold: 8s;
+  --dur-shine: 4.5s;
+  /* `.bg-gold-gradient:hover::before` — the same sweep the pointer is on runs four times
+     faster, which is the whole reason the hover reads as a response. */
+  --dur-shine-hover: 1.2s;
+  --dur-marquee: 32s;
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* The house curve: the reference names it 12 times in CSS, 56 times in its JSX, and in
+     most of its framer `transition` objects. One curve for the whole site is the single
+     biggest reason the original feels like one site. */
+  --ease-signature: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* var(--tw-leading, var(--text-xs--line-height)) */
   --line-height: 1.5;

@@ -412,9 +412,13 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // properties that actually change, on the elements a finger hits.
     expect(css).toMatch(/:where\(a, button, input, select, textarea, summary\)/);
     expect(css).toMatch(/transition-property:/);
-    // And so does the site: the same eleven names, six properties, no `all`.
+    // And so does the site: the same eleven names, six properties, no `all`. MB-2 moved
+    // that list inside `@layer base` and behind the site's own surface marker, which is
+    // also what stopped it outranking the utilities it is meant to fall back to.
     const globals = sourceText(join(process.cwd(), 'src/app/globals.css'));
-    expect(globals).toMatch(/\n\[tabindex\] \{\n\s+transition:\n\s+color var\(--dur-base\)/);
+    expect(globals).toMatch(
+      /@layer base \{\s*\[data-surface="site"\] :is\(a, button, input, select, textarea, summary, label, \[role="button"\], \[role="link"\], \[tabindex\]\) \{\n\s+transition:\n\s+color var\(--dur-hover\)/,
+    );
   });
 
   it('lets the drawer become visible in the frame it opens, not one later', () => {
@@ -425,13 +429,16 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // site's blanket `transition: all .3s !important` on `*`. BK-19.1 removed that
     // blanket rule, so the assertion is now the negative: it must not come back, and the
     // drawer must still name `transform` and nothing else.
-    const globals = sourceText(join(process.cwd(), 'src/app/globals.css'));
-    // `[^;]` alone would also match across the lines of the comment that explains what
-    // used to be here, so the pattern is anchored to one declaration.
+    // Comments go first here too, and for a new reason: MB-2's own prose quotes the
+    // blanket it bans, so reading the sheet as text cites that quote as the defect.
+    const globals = sourceText(join(process.cwd(), 'src/app/globals.css')).replace(/\/\*[\s\S]*?\*\//g, '');
     expect(globals).not.toMatch(/transition: all [^;\n]*!important/);
     // The replacement is a named list, so a state change cannot touch a layout property.
-    expect(globals).toMatch(/transition:\s+color var\(--dur-base\) var\(--ease-out\),/);
-    expect(globals).toMatch(/transform var\(--dur-base\) var\(--ease-out\),/);
+    expect(globals).toMatch(/transition:\s+color var\(--dur-hover\) var\(--ease-signature\),/);
+    expect(globals).toMatch(/transform var\(--dur-hover\) var\(--ease-signature\),/);
+    // The console's half of that promise never lived in this sheet: it is console.css's own
+    // reset, at the console's own numbers, which is why item 2 moved the site without it.
+    expect(globals).not.toMatch(/\[data-surface="console"\]/);
     expect(css).toMatch(/\.console-side\s*\{[^}]*transition: transform var\(--c-dur-slow\) var\(--c-ease-soft\);/);
   });
 
@@ -442,7 +449,11 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // one that does not may be defined once.
     for (const token of ['--sp-1', '--sp-4', '--sp-8', '--radius-control', '--radius-surface', '--radius-pill',
       '--z-sticky', '--z-scrim', '--z-drawer', '--z-drop', '--z-modal', '--z-palette', '--z-toast',
-      '--dur-fast', '--dur-base', '--dur-slow', '--dur-reveal', '--ease-out', '--ease-in-out', '--ease-spring',
+      '--dur-fast', '--dur-base', '--dur-reveal', '--ease-out', '--ease-in-out',
+      // MB-2's roles. `--dur-slow` and `--ease-spring` left the table with their last
+      // consumer, so they are named as absent just below rather than counted as defined.
+      '--dur-quick', '--dur-ui', '--dur-menu', '--dur-hover', '--dur-settle', '--dur-step',
+      '--dur-fade', '--dur-enter', '--dur-pan', '--dur-count', '--ease-signature',
       '--tap', '--tap-field', '--ui-font', '--ui-font-small', '--ui-gap', '--ui-gap-tight', '--ui-pad', '--ui-stack',
       '--dur-spin', '--dur-shimmer']) {
       expect((tokensText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} defined once`).toBe(1);
@@ -450,6 +461,12 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     for (const token of ['--hairline', '--hairline-strong', '--hairline-gold', '--elev-1', '--elev-2', '--elev-3',
       '--glass-surface', '--glass-border', '--gold-gradient']) {
       expect((tokensText.match(new RegExp(`\\n\\s*${token}:`, 'g')) ?? []).length, `${token} light + dark`).toBe(2);
+    }
+
+    // Two names retired with MB-2 and stay retired: a token earns its place by having a
+    // consumer today, and these two had lost theirs before the sweep started.
+    for (const gone of ['--dur-slow', '--ease-spring']) {
+      expect((tokensText.match(new RegExp(`\\n\\s*${gone}:`, 'g')) ?? []).length, `${gone} is gone, not shadowed`).toBe(0);
     }
 
     // The console has its own set, declared entirely in its own file: no `var()` it reads

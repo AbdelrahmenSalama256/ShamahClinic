@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { Calendar as CalendarIcon, X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { motionTransition } from "@/lib/motion";
 import "react-day-picker/dist/style.css";
 
 interface DatePickerProps {
@@ -62,7 +63,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({ value, onChange, min }) 
             initial={{ opacity: 0, y: -6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            transition={motionTransition("quick")}
             className="absolute z-50 mt-2 p-4 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-control)] shadow-2xl rdp-shamah"
           >
             {/* Close button */}

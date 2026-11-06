@@ -13,12 +13,12 @@ export const BranchCard: React.FC<{ branch: BranchDetail }> = ({ branch }) => {
   const Arrow = language === "ar" ? ArrowLeft : ArrowRight;
 
   return (
-    <article className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl transition-[box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]">
+    <article className="group flex flex-col h-full rounded-2xl overflow-hidden border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-xl transition-[box-shadow] duration-hover ease-brand">
       <div className="relative overflow-hidden">
         <Photo
           slot={branch.image}
           ratio="landscape"
-          imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+          imgClassName="group-hover:scale-105 transition-transform duration-reveal ease-brand"
           sizes="(max-width:1024px) 50vw, 33vw"
         />
       </div>
@@ -34,17 +34,17 @@ export const BranchCard: React.FC<{ branch: BranchDetail }> = ({ branch }) => {
           <a
             href={`tel:${branch.phone}`}
             dir="ltr"
-            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-hover"
           >
             <Phone className="w-4 h-4" />
             {branch.phone}
           </a>
           <Link
             href={getLocalizedHref(`/branches/${branch.id}`, language)}
-            className="inline-flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--gold-end)] transition-colors duration-300"
+            className="inline-flex items-center gap-1 text-xs font-bold text-[var(--text-secondary)] hover:text-[var(--gold-end)] transition-colors duration-hover"
           >
             {t("الصفحة", "View")}
-            <Arrow className="w-3.5 h-3.5 transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+            <Arrow className="w-3.5 h-3.5 transition-transform duration-hover ease-brand group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
           </Link>
         </div>
       </div>

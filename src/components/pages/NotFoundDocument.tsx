@@ -59,6 +59,7 @@ export default async function NotFoundDocument() {
     <html
       lang={lang}
       dir={lang === "ar" ? "rtl" : "ltr"}
+      data-surface="site"
       data-scroll-behavior="smooth"
       className="h-full scroll-smooth"
       style={siteTheme.light as React.CSSProperties}

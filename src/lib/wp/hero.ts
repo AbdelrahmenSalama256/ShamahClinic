@@ -1,5 +1,5 @@
 import * as cheerio from "cheerio";
-import { images, type PhotoSlot } from "@/lib/images";
+import type { PhotoSlot } from "@/lib/images";
 import { mirrorSrc } from "./mirror";
 import { decodeEntities } from "./sanitize";
 import { toPhotoSlot } from "./ui-helpers";
@@ -54,11 +54,10 @@ export function parseSliderPhotos(html: string): WpSlide[] {
 /**
  * The hero background follows the dashboard: the slider images WordPress publishes,
  * in the order the page lists them. `images.hero` (an authored local photo) is used
- * only when the homepage has no slider, so the hero is never empty.
+ * The page has no hero when the CMS publishes no slider photographs.
  */
 export function heroPhotos(html: string): PhotoSlot[] {
   const slides = parseSliderPhotos(html);
-  if (!slides.length) return [images.hero];
   // Slider frames are wide cover shots, so the crop stays centred the way the
   // WordPress slider itself crops them.
   return slides.map((slide) => ({ ...toPhotoSlot(slide.src, slide.alt), width: slide.width, height: slide.height }));

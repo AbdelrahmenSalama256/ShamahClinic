@@ -4,11 +4,14 @@ Per-element proof of what is wired and what is authored lives in **`docs/WIRING.
 per visible text block and image, on every route, in both languages, each with the REST endpoint,
 page/product id or HTML selector behind the verdict). This file is the summary contract.
 
+The source labels below describe legacy content provenance and import inputs, not public
+runtime fallbacks. Public content is rendered only from published CMS rows; the public
+layout shows an empty state while the CMS database is unavailable.
+
 Legend:
-- `WP:<endpoint>` — real WordPress/WooCommerce data. Served **live** at runtime, from the committed
-  **snapshot** during build and whenever live fails (see "Transport" below).
-- `STATIC` — hand-authored module under `src/data` (no WP source exists, or WP has nothing translatable).
-- `CONFIG` — app config under `src/config` / `src/lib/site.ts`.
+- `WP:<endpoint>` — legacy WordPress/WooCommerce source; snapshots are used by import tooling only.
+- `STATIC` — hand-authored module under `src/data`; not used as a public content fallback.
+- `CONFIG` — app config under `src/config` / `src/lib/site.ts`; visual design settings may remain configured there.
 
 Language model: EN is the base subsite (`/wp-json`), AR is the TranslatePress subsite
 (`/ar/wp-json`); **same post ids** on both, so a `{ar,en}` pair is built by fetching the same id/slug
@@ -20,12 +23,13 @@ canonical, hreflang, JSON-LD and all copy are decided on the server, not in the 
 Nothing on the site is translated client-side-only: `useLanguage()` reads the same `/en` prefix the
 server does.
 
-## Transport (snapshot-only since BK-7.3, DB rung since BK-6)
+## Public content source
 | Stage | behaviour |
 |-------|-----------|
-| `npm run sync:wp` (`scripts/sync-wp.mjs`) | pulls both subsites slowly (concurrency 2, 300 ms between requests, 30 s timeout, 1 retry with backoff, max 3 in-flight) into committed `data/wp/*.json`: `posts-list.{en,ar}`, `posts.{en,ar}` (full content), `pages-list.*`, `pages.*`, `categories.*`, `products.*`, `offer-categories.en`, `media.json` (one batched `/media?include=<ids>` per 100 ids), `seo.json`, `meta.json` (generatedAt, request count, byte size, row counts). It then downloads **only the images the site actually renders** (<=140, decided from the same `bestImageSrc` preference the UI uses), encodes them with sharp to `public/wp/<slug>-<hash>.webp` at 1280 px / q72, and records the URL -> file map in `data/wp/images.json`. Hand-run only: never imported by a route or module, so it is the single place in the repo that reaches WordPress. Last verified run (2026-10-12): 22 WP requests in 82.4 s, 60/60 images encoded into 1.4 MB, `git diff data/wp/` = the `meta.json` timestamp only. |
-| `next build` | reads **only** the DB (if a kind is published there) and `data/wp/*.json`. Zero WordPress requests — `src/lib/wp/http.ts` is deleted, so there is no live client left to refuse. `generateStaticParams` returns every post per language (92 + 92) from the snapshot **until the console publishes that kind**, then the published slugs; `dynamicParams` stays true so anything published after the build still renders. `next.config.ts` caps generation to 2 CPUs with `staticPageGenerationTimeout: 120` and sets `expireTime: 3600` (stale-while-revalidate). |
-| Runtime | same as the build: no network. Each content kind is served entirely from MariaDB once it holds one published row (`hasPublished(kind)` in `src/lib/content/site.ts`), otherwise from the committed snapshot — the DB is a rung, not a fallback that can time out. Every read logs its source: `[wp] snapshot en posts-list (92 rows)`. A DB error is treated as an empty DB so `next build` still works without `DATABASE_URL`. `/api/revalidate` (**POST**, secret-guarded) flushes the `wp:en` / `wp:ar` / `wp:seo` tags and the listed paths; it answers 401 on a wrong secret and 500 when `REVALIDATE_SECRET` is unset. |
+| Public runtime | `/[lang]` is forced to render per request. The layout first checks the CMS connection; if it is unavailable, it suppresses the site shell and page content and shows the shared empty state. A database outage therefore cannot leave prerendered or ISR content visible. |
+| Public data | Published CMS rows are the only source for public content. Empty or failed CMS reads return empty values; `data/wp/*.json`, `src/data/*`, and config defaults are not used as public-content fallbacks. |
+| Import tooling | `npm run sync:wp` and the explicit CMS import commands may still read committed `data/wp/*.json` and `src/data/*` to populate CMS rows. Those sources are not read by public page readers. |
+| Revalidation | `/api/revalidate` remains secret-guarded for other cached resources; public CMS pages render dynamically and do not depend on ISR to notice a CMS outage. |
 
 ### Images
 `data/wp/images.json` maps a WordPress upload URL to its local `/wp/<file>.webp` mirror, and
@@ -44,15 +48,14 @@ client used to send per read; `scripts/sync-wp.mjs` still sends them.
 ## Global / shell
 | UI | source |
 |----|--------|
-| Brand name | **DB-first** — Settings `site.name.ar` / `site.name.en` through `getBrandWords()` (`src/lib/content/site.ts`), which answers the `<title>` suffix, `og:site_name`, the layout's `authors`/`siteName` and every JSON-LD `Organization`/`MedicalClinic`/article node. CONFIG (`src/config/site.ts`) is the fallback rung, and a `site.name` row saved before the split still answers for both languages. |
-| Tagline, currency, theme colour | CONFIG (`src/config/site.ts`) — `tagline` also has a Settings row that nothing on the site renders yet, `currency` comes from the published offers when there are any, and the theme colour has no Settings field at all |
-| Phone 01121880908, WhatsApp 201121880908, email, hours | DB-first for phone + WhatsApp (Settings `site.phone` / `site.whatsapp`, read by `getSettings()`); email and hours are CONFIG-only and are not rendered anywhere — contact info is not exposed by WP REST, and both were taken off the site as unverified |
-| Primary nav (labels, order, enabled flag, 4 dropdown children) and the footer link group | **DB** — the console's `nav` list (`list_items`, one row per line, children in the row's own JSON), through `getNavList()`. `src/data/nav.ts` is what it falls back to while the list holds nothing published; a WordPress menu does exist (homepage item ids `870`→622, `717`→696, `755`→9, `643`→62, `646`→67, `647`→32, `838`→837), it is deliberately not followed, and `src/lib/wp/nav.ts` was deleted. Renaming, reordering or switching a line off is a row edit, not a deploy. Proof: `node scripts/verify-render.mjs http://127.0.0.1:<port>` asserts the served header and footer are the same one menu, in the served language, with every line answering 200 (AR + EN) |
+| Brand name | **CMS settings only** — `site.name.ar` / `site.name.en` through `getBrandWords()` (`src/lib/content/site.ts`). Missing values stay blank; config is not a public-content fallback. |
+| Tagline, currency, contact details | **CMS only** — values are read from published settings or offers. Missing values stay blank. Theme colour remains a visual design token in config. |
+| Primary nav and footer link group | **CMS only** — the console's `nav` list through `getNavList()`. `src/data/nav.ts` remains an import source and is not rendered when the list is empty. |
 | Booking CTA label (header, footer, hero, cards) | **COPY** — `t("احجزي موعدك", "Book")` at the call site (`Navbar.tsx:329`), so the Texts screen addresses it (`copy.05e94757c108`); the accessible name is a second, separate address. It was `bookCta` in `src/data/nav.ts` until BK-14.2 |
 | Logo image + alt | STATIC local wordmark (`public/images/logo.png`) — `media.json` does hold id 722 `Shamah_Header.png`, but swapping it would change the header, which the decision forbids |
 | Social links | CONFIG |
-| Footer branch strip | **DB** — the console's `branches` list (`list_items`), read by `getBranchList()`; `src/data/branches.ts` is the fallback while the list holds nothing published. It came from page 622's office blocks in the import |
-| Service names in the dropdown | **DB** — the `nav` list's Services row carries its own sub-items, so the dropdown is rows like every other line; `navItems[2].children` in `src/data/nav.ts` is only the fallback. The WordPress-merged service names are used on `/services`, `/results`, the pickers and the JSON-LD, not in the menu |
+| Footer branch strip | **CMS only** — the console's `branches` list through `getBranchList()`; an empty list renders no branch cards. |
+| Service names in the dropdown | **CMS only** — the `nav` list's Services row carries its own sub-items. |
 
 ## Home (SHORTER — full cut list at the bottom)
 Every card list on Home renders at most 3 cards (`HOME_CARDS` in `src/components/home/HomeBody.tsx:60`)
@@ -66,21 +69,21 @@ before/after, is `docs/HOME-PRIORITY.md`.
 
 | Section | source |
 |---------|--------|
-| Hero photos (backdrop slider) | WP — the `rs-slide` images of page 622's Revolution Slider, parsed from the **raw** rendered body (`src/lib/wp/hero.ts`), mirrored to `/wp/*.webp`; `images.hero` only when the page has no slider |
-| Hero headline, sub, CTAs | STATIC — the slider's own captions ("Book Now", "Shop Now") are per-slide button labels and are dropped by design; the headline sentence "The Best Aesthetic Center" is genuine client copy but lives only inside the slider markup, see `docs/STATIC-SWEEP.md` |
-| 01 introduction (heading + lead) | WP — page 622 row 1 (`The Best Aesthetic Center` + "Discover the highest standards…"), parsed by `src/lib/wp/home-prose.ts` through `getHomeIntro()`; the authored `homeIntroFallback` only when the dashboard changes the row beyond recognition |
-| 02 services (max 3) + "All services" | WP:pages/696 order, first three whose card renders with a photo and an intro (`getFeaturedServices` in `src/lib/wp/treatments.ts`); `featuredServiceSlugs` in `src/config/home.ts` overrides, empty means computed. Selection rule and the current three slugs in `docs/HOME-PRIORITY.md` |
-| 03 Offers (max 3) + "All offers" | WP:offers (WooCommerce Store API, the products that language's base returns, in WP order — nothing merged or filtered) |
-| 04 Branches strip (max 3) with call / WhatsApp | **DB** — the `branches` list rows through `getBranchList()`, proped into the strip; `src/data/branches.ts` is the fallback rung. (Originally page 622's `.ws-contact-office-item` blocks, imported once) |
-| 05 Latest journal (max 3) + "All blogs" | WP:posts (4 fetched, 3 shown, both subsites) |
+| Hero photos (backdrop slider) | CMS only — published hero slides, the published home page body, or a saved home banner; no local default image |
+| Hero headline, sub, CTAs | CMS slide copy only; absent heading/sub copy is omitted. Booking and WhatsApp actions remain site UI controls. |
+| 01 introduction (heading + lead) | CMS only — parsed from the published home page body; missing fields remain blank. |
+| 02 services (max 3) + "All services" | CMS-published services and their order; an empty services list produces no service cards. |
+| 03 Offers (max 3) + "All offers" | CMS-published offers only. |
+| 04 Branches strip (max 3) with call / WhatsApp | **CMS only** — the `branches` list rows through `getBranchList()`; an empty CMS list renders no branch cards. The rows were originally imported from page 622's `.ws-contact-office-item` blocks. |
+| 05 Latest journal (max 3) + "All blogs" | CMS-published articles only. |
 | One strong CTA band | STATIC |
 
 ## Services (`/services` + `/services/[slug]`, aliases of `/treatments*`)
 | Field | source |
 |-------|--------|
-| Page H1 | WP — `getPageTitle("our-services")` = page 696 title (`خدماتنا` / `Our Services`), authored fallback. Same pattern on `/offers` (9 `العروض`/Offers), `/blogs` (62 `معلومات طبية`/Journal), `/faq` (169 `أهم الأسئلة الشائعة`/FAQ) and `/privacy` (3, EN only — its AR title is untranslated) |
-| Category chips | STATIC (`treatmentCategories`) — WP has no service taxonomy (`categories.*` is a post taxonomy: `Laser`, `laser session`) |
-| Card titles + taglines | WP:pages/696 — **all 7** image-bearing WPBakery sections render, in the order the page lists them (the 5 that name an authored treatment override its title/tagline/photo; the 2 that do not — `glow-brightening-injections`, `mens-aesthetic-services` — are appended as their own cards and detail routes). Arabic comes from the AR subsite wherever `arabicRatio` says it is really Arabic, otherwise from the authored row. Nothing published on 696 is left out |
+| Page H1 | CMS page rows only through `getPageTitle("our-services")`; missing pages return an empty heading. The same rule applies to `/offers`, `/blogs`, `/faq` and `/privacy`. |
+| Category chips | UI categories are code-defined; service names and cards are CMS-only. |
+| Card titles + taglines | CMS-published service list rows only; a missing row is not filled from bundled treatments or WordPress snapshots. |
 | The 2 WP-only services | WP gives a title, one intro paragraph and a section photo, and that is all the site shows: no category badge (WP has no service taxonomy), no "يبدأ من / From" price (WP publishes none — the card's price slot stays empty rather than showing 0), no Benefits / How the session works / Aftercare block, no session length or course, and no `Offer` in the JSON-LD. They are excluded from the `/results` comparison table, whose every column is a figure WP does not hold |
 | Heading normalisation | The AR dashboard holds a stray list number on one heading (`3. إزالة الشعر بالليزر`); `extractServiceSections` trims a leading `N.` so the card reads `إزالة الشعر بالليزر`. Asserted out loud in `scripts/verify-render.mjs` rather than done silently |
 | Card photos | WP — the section's own image replaces the stock photo where the dashboard publishes one (all 7 sections now render their image: Skincare, Laser-Hair-Removal, Botox-Injections, Filler-Injections-1, Glow-Brightening-Injections, Chemical-Peeling, Mens-Aesthetic-Services, plus each section's AR twin); the authored `lib/images.ts` slot stays on the 5 authored rows WP has no section for |
@@ -91,7 +94,7 @@ before/after, is `docs/HOME-PRIORITY.md`.
 ## Offers (`/offers`, `/offers/[slug]`)
 | Field | source |
 |-------|--------|
-| Page H1 | WP — page 9 title (`العروض` / `Offers`) with authored fallback |
+| Page H1 | CMS page row only; there is no authored page-title fallback. |
 | Title, image, permalink | WP:offers (`wc/store/v1/products`) |
 | Price EGP | WP product `price` + `currency_minor_unit` (89900 / 100 -> 899 EGP) — never hand-typed |
 | regular / sale price | WP `regular_price` and `price` as returned; shown exactly as the dashboard holds them |
@@ -104,12 +107,12 @@ before/after, is `docs/HOME-PRIORITY.md`.
 ## Journal (`/blogs`, `/blogs/[slug]`)
 | Field | source |
 |-------|--------|
-| Page H1 | WP — page 62 title (`معلومات طبية` / `Journal`), authored fallback; the lead stays authored because 62's whole body is "Set your Journal page to display blog posts." |
+| Page H1 | CMS page row only; missing page copy stays empty. |
 |-------|--------|
 | Article cards (title, date, image, category, excerpt) | WP:posts list projection + `media.json` + `categories.{en,ar}` — each language shows its own subsite's `excerpt.rendered`. 91/92 AR excerpts are English auto-excerpts because WordPress generates them that way; the site displays that and does not rewrite it |
 | Card without a featured image | 15/92 posts have `featured_media: 0`. `<Photo>` renders the empty aspect-ratio frame (no `<img>`, no layout shift) instead of substituting a stock photo |
 | Article body | WP:posts `content.rendered`, sanitized (`sanitize-html`), only fetched on detail |
-| Category filter, search | `GET /api/v1/posts?category=&search=&page=` — the filter runs over the rows the data layer already has (live or snapshot), not a second WordPress query. Category matches the merged card's `categorySlug`; search is a case-insensitive substring of title + excerpt in **both** languages, so an Arabic term finds a post whose English subsite holds the slug (e.g. `search=ليزر` -> 35 of 92, `search=Botox` -> 11, `search=PRP` -> 0 because no published title or excerpt contains it). The visible filter is a URL state (`/blogs?category=…`), so it is shareable, prerendered and crawler-visible. |
+| Category filter, search | `GET /api/v1/posts?category=&search=&page=` — filters published CMS rows only. Category matches the card's `categorySlug`; search is a case-insensitive substring of title + excerpt in both languages. |
 | Pagination | in-memory over the filtered list (92 posts, 9/page -> 11 pages, last page 2 items); `/blogs?page=N` is a real URL with an absolute per-language canonical and `<link rel=prev/next>` in `<head>`; an out-of-range `?page=` (99) renders **and canonicalizes** the last real page, so it cannot duplicate page 11 under a second canonical; "Load more" appends `/api/v1/posts?page=N+1` without a reload, so no page repeats or skips |
 
 ## Doctors (`/doctors`), Results (`/results`), FAQ (`/faq`), Privacy (`/privacy`)

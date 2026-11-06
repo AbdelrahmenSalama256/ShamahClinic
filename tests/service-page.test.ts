@@ -507,6 +507,7 @@ describe('the ported page draws a group only when the row fills it', () => {
     for (const key of ['how', 'prep', 'safety', 'pricing', 'proof', 'gallery', 'people', 'faq', 'related']) {
       expect(markup, `the anchor #${key} would point at nothing`).not.toContain(`id="${key}"`);
     }
+    expect(markup).not.toContain('aria-label="Page sections"');
   });
 
   it('reads in Arabic with the console’s own Arabic words', () => {
@@ -518,7 +519,8 @@ describe('the ported page draws a group only when the row fills it', () => {
 
   it('names a fact chip and a price with the words beside the box that wrote them', () => {
     const markup = render(thinPage({ duration_en: '30 minutes', price: 1500 }));
-    expect(markup).toContain('How it works');
+    expect(markup).toContain('aria-label="Treatment at a glance"');
+    expect(markup).not.toContain('href="#how"');
     expect(markup).toContain('Session time');
     expect(markup).toContain('30 minutes');
     expect(markup).toContain('Pricing &amp; offers');
@@ -530,13 +532,14 @@ describe('the ported page draws a group only when the row fills it', () => {
   it('draws the benefit and step lists under their own headings', () => {
     const markup = render(
       thinPage({
-        benefits: [{ text_en: 'A test benefit', text_ar: 'فائدة اختبار', icon: 'sparkles' }],
+        benefits: [{ text_en: 'A test benefit', text_ar: 'فائدة اختبار', icon: 'badge-check' }],
         steps: [{ text_en: 'A test step', text_ar: 'خطوة اختبار' }],
       }),
     );
     expect(markup).toContain('Benefits');
     expect(markup).toContain('A test benefit');
-    expect(markup).toContain('Session steps');
+    expect(markup).toContain('How it works');
+    expect(markup).not.toContain('Session steps');
     expect(markup).toContain('A test step');
   });
 

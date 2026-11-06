@@ -7,7 +7,8 @@ import { useClinic } from "@/context/ClinicContext";
 import { images } from "@/lib/images";
 import { Photo } from "./Photo";
 import { Reveal } from "./Reveal";
-import { Calendar, MessageCircle, Phone } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
+import { Calendar, Phone } from "lucide-react";
 
 interface LocalizedText {
   ar: string;
@@ -86,7 +87,7 @@ export const CtaBand: React.FC<CtaBandProps> = ({
               <button
                 onClick={() => openBooking()}
                 data-cta="cta-band"
-                className="bg-gold-gradient font-bold text-sm px-4 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] flex items-center justify-center gap-2 cursor-pointer"
+                className="bg-gold-gradient font-bold text-sm px-4 py-3.5 rounded-full shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-hover ease-brand flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Calendar className="w-4 h-4" />
                 <span>{t("احجزي موعدك", "Book Appointment")}</span>
@@ -95,15 +96,15 @@ export const CtaBand: React.FC<CtaBandProps> = ({
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-transparent border border-[var(--border-on-dark)] text-[var(--text-on-dark)] font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-[var(--bg-dark-card)] transition-colors duration-300 flex items-center justify-center gap-2"
+                className="bg-transparent border border-[var(--border-on-dark)] text-[var(--text-on-dark)] font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-[var(--bg-dark-card)] transition-colors duration-hover flex items-center justify-center gap-2"
               >
-                <MessageCircle className="w-4 h-4 text-[var(--text-success-on-dark)]" />
+                <WhatsAppIcon className="w-4 h-4 text-[var(--text-success-on-dark)]" />
                 <span>{t("واتساب", "WhatsApp")}</span>
               </a>
               <Reveal delay={0.2}>
                 <a
                   href={`tel:${clinic.phone.replace(/\s/g, "")}`}
-                  className="bg-transparent border border-[var(--border-on-dark)] text-[var(--text-on-dark)] font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-[var(--bg-dark-card)] transition-colors duration-300 flex items-center justify-center gap-2"
+                  className="bg-transparent border border-[var(--border-on-dark)] text-[var(--text-on-dark)] font-semibold text-sm px-6 py-3.5 rounded-full hover:bg-[var(--bg-dark-card)] transition-colors duration-hover flex items-center justify-center gap-2"
                   dir="ltr"
                 >
                   <Phone className="w-4 h-4 text-[var(--gold-start)]" />

@@ -51,5 +51,33 @@ describe('server-setup agrees with the TypeScript migration runner', () => {
     expect(setup.accountHost({ DATABASE_HOST: 'localhost' })).toBe('localhost');
     expect(setup.accountHost({ DATABASE_HOST: '127.0.0.1' })).toBe('127.0.0.1');
     expect(setup.accountHost({ DATABASE_HOST: '127.0.0.1', DATABASE_USER_HOST: 'localhost' })).toBe('localhost');
+    expect(setup.accountHost({ DATABASE_SOCKET: '/run/mysql.sock' })).toBe('localhost');
+    expect(setup.accountHost({ DB_HOST: 'localhost' })).toBe('localhost');
+  });
+
+  it('builds a socket mysql2 config and accepts cPanel DB aliases', () => {
+    expect(setup.connectionConfig({
+      DATABASE_SOCKET: '/run/mysql.sock',
+      DB_USER: 'cpanel_user',
+      DB_PASSWORD: 'secret',
+      DB_NAME: 'cpanel_db',
+    })).toEqual({
+      socketPath: '/run/mysql.sock',
+      user: 'cpanel_user',
+      password: 'secret',
+      database: 'cpanel_db',
+      multipleStatements: false,
+      dateStrings: true,
+    });
+  });
+
+  it('uses TCP host and port aliases when no socket is configured', () => {
+    expect(setup.connectionConfig({
+      DB_HOST: '127.0.0.1',
+      DB_PORT: '3307',
+      DB_USER: 'cpanel_user',
+      DB_PASSWORD: 'secret',
+      DB_NAME: 'cpanel_db',
+    })).toMatchObject({ host: '127.0.0.1', port: 3307, user: 'cpanel_user', database: 'cpanel_db' });
   });
 });

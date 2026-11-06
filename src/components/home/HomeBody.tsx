@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Reveal } from "@/components/ui/Reveal";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { Photo } from "@/components/ui/Photo";
 import { Swiper } from "@/components/ui/Swiper";
 import { GoldLink, useWhatsappHref } from "@/components/shared/Actions";
@@ -17,7 +19,7 @@ import { toPhotoSlot } from "@/lib/wp/ui-helpers";
 import type { Offer as UIOffer } from "@/data/offers";
 import type { Article as UIArticle } from "@/data/journal";
 import type { Treatment } from "@/data/treatments";
-import { MapPin, Phone, MessageCircle } from "lucide-react";
+import { MapPin, Phone } from "lucide-react";
 
 interface HomeBranch {
   id: string;
@@ -81,6 +83,8 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   const waHref = useWhatsappHref();
   const hasIntro = !!(intro.title.ar || intro.title.en);
   const hasServices = !!services.length;
+  const hasHomeContent =
+    hasIntro || hasServices || cases.length > 0 || offers.length > 0 || branches.length > 0 || articles.length > 0;
   // The numerals count the bands that actually paint. They used to be written into the page,
   // so a Home with no introduction opened at "02" — and a comparison band, which is there or
   // not there on its own data, would have moved every number after it. This list is the paint
@@ -98,6 +102,17 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
 
   return (
     <>
+      {!hasHomeContent && (
+        <Section>
+          <EmptyState
+            title={t("لا يوجد محتوى متاح الآن", "There’s nothing to show just yet")}
+            description={t(
+              "تواصلي معنا وسيسعد فريقنا بمساعدتكِ في معرفة خدمات العيادة.",
+              "Contact us and our team will be happy to help you learn about our services.",
+            )}
+          />
+        </Section>
+      )}
       {/* 01 + 02 — One band, the shape Home has always had: the WordPress
           introduction row and the three services page 696 leads with. The block the
           authored reasons list occupied is now the services cards (docs/HOME-PRIORITY.md),
@@ -215,7 +230,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
           <div className="mt-5 lg:mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
             {branches.slice(0, HOME_CARDS).map((b, i) => (
               <Reveal key={b.id} delay={i * 0.08} className="h-full min-w-0">
-                <div className="group h-full flex flex-col rounded-2xl overflow-hidden bg-[var(--bg-card)] border border-[var(--border-control)] hover:border-[var(--border-control)] shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-500 ease-[cubic-bezier(.22,1,.36,1)]">
+                <div className="group h-full flex flex-col rounded-2xl overflow-hidden bg-[var(--bg-card)] border border-[var(--border-control)] hover:border-[var(--border-control)] shadow-sm hover:shadow-lg transition-[box-shadow,border-color] duration-fade ease-brand">
                   <Link
                     href={getLocalizedHref(`/branches/${b.id}`, language)}
                     className="relative block overflow-hidden aspect-[16/10]"
@@ -225,7 +240,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                         slot={toPhotoSlot(b.image, b.name)}
                         ratio="landscape"
                         className="!aspect-auto !h-full w-full"
-                        imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+                        imgClassName="group-hover:scale-105 transition-transform duration-reveal ease-brand"
                         sizes="(max-width:768px) 100vw, (max-width:1024px) 50vw, 33vw"
                       />
                     )}
@@ -255,7 +270,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                       <a
                         href={`tel:${b.phone}`}
                         dir="ltr"
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-gold-gradient text-xs font-bold px-3 py-2.5 hover:-translate-y-0.5 hover:shadow transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full bg-gold-gradient text-xs font-bold px-3 py-2.5 hover:-translate-y-0.5 hover:shadow transition-[transform,box-shadow] duration-hover ease-brand"
                       >
                         <Phone className="w-3.5 h-3.5" />
                         {b.phone}
@@ -269,9 +284,9 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
                         )}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full border border-[var(--border-success)] text-[var(--text-success)] text-xs font-bold px-3 py-2.5 hover:bg-[var(--bg-success-soft)] transition-[background-color] duration-300"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-full border border-[var(--border-success)] text-[var(--text-success)] text-xs font-bold px-3 py-2.5 hover:bg-[var(--bg-success-soft)] transition-[background-color] duration-hover"
                       >
-                        <MessageCircle className="w-3.5 h-3.5" />
+                        <WhatsAppIcon className="w-3.5 h-3.5" />
                         {t("واتساب", "WhatsApp")}
                       </a>
                     </div>

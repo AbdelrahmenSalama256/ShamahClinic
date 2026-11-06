@@ -70,7 +70,7 @@ export const BranchDetailClient: React.FC<{
                       <a
                         href={`tel:${branch.phone}`}
                         dir="ltr"
-                        className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
+                        className="text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-hover"
                       >
                         {branch.phone}
                       </a>
@@ -136,7 +136,7 @@ export const BranchDetailClient: React.FC<{
                   <a
                     href={`tel:${branch.phone}`}
                     dir="ltr"
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-[var(--gold-border)] text-[var(--gold-end)] font-bold text-sm py-3 hover:bg-[var(--blush-light)] transition-[background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-full border border-[var(--gold-border)] text-[var(--gold-end)] font-bold text-sm py-3 hover:bg-[var(--blush-light)] transition-[background-color] duration-hover ease-brand"
                   >
                     <Phone className="w-4 h-4" />
                     {branch.phone}
@@ -156,7 +156,7 @@ export const BranchDetailClient: React.FC<{
                 <Link
                   key={o.id}
                   href={getLocalizedHref(`/branches/${o.id}`, language)}
-                  className="group flex items-center gap-4 p-4 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+                  className="group flex items-center gap-4 p-4 rounded-2xl border border-[var(--border-control)] bg-[var(--bg-card)] hover:shadow-md hover:-translate-y-0.5 transition-[transform,box-shadow] duration-hover ease-brand"
                 >
                   <div className="w-20 h-16 rounded-xl overflow-hidden shrink-0">
                     <Photo
@@ -167,14 +167,14 @@ export const BranchDetailClient: React.FC<{
                     />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300">
+                    <h3 className="font-bold text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-hover">
                       {t(o.name.ar, o.name.en)}
                     </h3>
                     <p className="text-xs text-[var(--text-muted)] mt-0.5">
                       {t(o.area.ar, o.area.en)}
                     </p>
                   </div>
-                  <Arrow className="w-5 h-5 text-[var(--text-gold)] shrink-0 transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
+                  <Arrow className="w-5 h-5 text-[var(--text-gold)] shrink-0 transition-transform duration-hover ease-brand group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
                 </Link>
               ))}
             </div>

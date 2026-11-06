@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useLanguage } from "@/context/LanguageContext";
 import { Plus, Minus } from "lucide-react";
 import { track } from "@/lib/tracking/first-party";
+import { motionTransition } from "@/lib/motion";
 
 /**
  * One row of the accordion: a question, its answer, and the id that keeps it open.
@@ -44,7 +45,7 @@ export const FaqAccordion: React.FC<{ items: readonly FaqEntry[] }> = ({ items }
             >
               {/* Number */}
               <span
-                className={`text-2xl sm:text-3xl font-black num [--num-digits:2] leading-none pt-0.5 shrink-0 transition-colors duration-300 ${
+                className={`text-2xl sm:text-3xl font-black num [--num-digits:2] leading-none pt-0.5 shrink-0 transition-colors duration-hover ${
                   isOpen
                     ? "text-[var(--gold-end)]"
                     : "text-[var(--text-muted)] group-hover:text-[var(--gold-end)]"
@@ -56,7 +57,7 @@ export const FaqAccordion: React.FC<{ items: readonly FaqEntry[] }> = ({ items }
               {/* Question + Answer */}
               <div className="flex-1 min-w-0">
                 <h3
-                  className={`text-base sm:text-lg lg:text-xl font-bold leading-snug transition-colors duration-300 ${
+                  className={`text-base sm:text-lg lg:text-xl font-bold leading-snug transition-colors duration-hover ${
                     isOpen
                       ? "text-[var(--text-primary)]"
                       : "text-[var(--text-primary)]/85 group-hover:text-[var(--text-primary)]"
@@ -72,10 +73,7 @@ export const FaqAccordion: React.FC<{ items: readonly FaqEntry[] }> = ({ items }
                       initial={reduce ? false : { height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={reduce ? undefined : { height: 0, opacity: 0 }}
-                      transition={{
-                        duration: 0.35,
-                        ease: [0.22, 1, 0.36, 1],
-                      }}
+                      transition={motionTransition("settle")}
                       className="overflow-hidden"
                     >
                       <p
@@ -91,7 +89,7 @@ export const FaqAccordion: React.FC<{ items: readonly FaqEntry[] }> = ({ items }
 
               {/* Icon */}
               <span
-                className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-[background-color,border-color,color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
+                className={`mt-0.5 shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-[background-color,border-color,color,transform] duration-hover ease-brand ${
                   isOpen
                     ? "bg-gold-gradient border border-transparent"
                     : "bg-transparent border border-[var(--border-control)] text-[var(--text-gold)] group-hover:border-[var(--border-control)] group-hover:text-[var(--gold-end)]"

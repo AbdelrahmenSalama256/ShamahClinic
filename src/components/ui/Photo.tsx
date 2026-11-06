@@ -101,7 +101,7 @@ export const Photo: React.FC<PhotoProps> = ({
           className={
             priority
               ? `object-cover ${imgClassName}`
-              : `object-cover ${imgClassName} transition-[filter,opacity,transform] duration-700 ease-[cubic-bezier(.22,1,.36,1)] ${
+              : `object-cover ${imgClassName} transition-[filter,opacity,transform] duration-reveal ease-brand ${
                   masked ? "blur-md opacity-0" : "blur-0 opacity-100"
                 }`
           }

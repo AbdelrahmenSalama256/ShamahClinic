@@ -141,7 +141,7 @@ export const AboutClient: React.FC<{ page: AboutPage }> = ({ page }) => {
       <section className="py-5 lg:py-16 bg-[var(--bg-primary)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-6">
           <Reveal className="relative rounded-3xl overflow-hidden min-h-[300px] group">
-            <Photo slot={images.doctors.doctor1} ratio="landscape" className="!aspect-auto !absolute inset-0 !h-full" imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]" sizes="(max-width:768px) 100vw, 45vw" />
+            <Photo slot={images.doctors.doctor1} ratio="landscape" className="!aspect-auto !absolute inset-0 !h-full" imgClassName="group-hover:scale-105 transition-transform duration-reveal ease-brand" sizes="(max-width:768px) 100vw, 45vw" />
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-dark)]/85 via-[var(--bg-dark)]/30 to-transparent" />
             <div className="absolute bottom-0 p-7">
               <h3 className="text-xl sm:text-2xl font-black text-[var(--text-on-dark)] mb-2">{t("الفريق الطبي", "The medical team")}</h3>
@@ -154,7 +154,7 @@ export const AboutClient: React.FC<{ page: AboutPage }> = ({ page }) => {
             </div>
           </Reveal>
           <Reveal delay={0.1} className="relative rounded-3xl overflow-hidden min-h-[300px] group">
-            <Photo slot={images.interiors.corridor} ratio="landscape" className="!aspect-auto !absolute inset-0 !h-full" imgClassName="group-hover:scale-105 transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]" sizes="(max-width:768px) 100vw, 45vw" />
+            <Photo slot={images.interiors.corridor} ratio="landscape" className="!aspect-auto !absolute inset-0 !h-full" imgClassName="group-hover:scale-105 transition-transform duration-reveal ease-brand" sizes="(max-width:768px) 100vw, 45vw" />
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-dark)]/85 via-[var(--bg-dark)]/30 to-transparent" />
             <div className="absolute bottom-0 p-7">
               <h3 className="text-xl sm:text-2xl font-black text-[var(--text-on-dark)] mb-2">{t("فروعنا", "Our branches")}</h3>

@@ -7,12 +7,11 @@
  * here: one `settings` row per page in the `banners` group, value
  * `{ "src": "...", "altAr": "...", "altEn": "..." }`.
  *
- * A missing row is not an error: `BANNER_DEFAULTS` is the authored photo, so a site
- * that never opens the screen looks exactly as it did, and a database outage falls
- * back to it rather than to an empty frame.
+ * `BANNER_DEFAULTS` are console-side starting suggestions only. Public pages render
+ * a banner only when the CMS has a saved value.
  *
  * This file is the client-safe half (plain data, no database import), because the
- * Settings screen previews and validates against the same defaults the server uses.
+ * Settings screen previews and validates against the same defaults.
  */
 import { images, type PhotoSlot } from '@/lib/images';
 import { SITE_PAGES, type BilingualLabel } from './settings-catalog';

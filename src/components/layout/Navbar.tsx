@@ -9,17 +9,18 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useBooking } from "@/context/BookingContext";
 import { siteConfig } from "@/config/site";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { useClinic } from "@/context/ClinicContext";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
 import type { NavItem } from "@/data/nav";
+import { motionTransition } from "@/lib/motion";
 import {
   Menu,
   X,
   Phone,
   Calendar,
   Globe,
-  MessageCircle,
   MapPin,
   ChevronDown,
   Moon,
@@ -95,11 +96,11 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
 
   // Shared link styling for the desktop nav
   const desktopLinkBase =
-    "relative text-sm font-medium px-3 py-1.5 transition-colors duration-300 " +
+    "relative text-sm font-medium px-3 py-1.5 transition-colors duration-hover " +
     "after:content-[''] after:absolute after:bottom-0 after:start-3 after:end-3 " +
     "after:h-[2px] after:bg-[var(--gold-mid)] after:origin-center " +
-    "after:transition-transform after:duration-300 " +
-    "after:ease-[cubic-bezier(.22,1,.36,1)]";
+    "after:transition-transform after:duration-hover " +
+    "after:ease-brand";
 
   const desktopLinkColor = (active: boolean) =>
     active
@@ -110,13 +111,13 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
     <>
       {/* ══════════════ HEADER ══════════════ */}
       <header
-        className={`fixed top-0 start-0 end-0 z-40 transition-[padding,background-color,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
+        className={`fixed top-0 start-0 end-0 z-40 transition-[padding,background-color,box-shadow] duration-hover ease-brand ${
           isScrolled ? "glass-nav-scrolled py-2" : "glass-nav py-3.5"
         }`}
       >
         {/* ── Announcement mini-bar ── */}
         <div
-          className={`hidden lg:block overflow-hidden transition-[max-height,opacity] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
+          className={`hidden lg:block overflow-hidden transition-[max-height,opacity] duration-hover ease-brand ${
             isScrolled ? "max-h-0 opacity-0" : "max-h-10 opacity-100"
           } border-b border-[var(--border-control)] pb-2 mb-2 text-xs text-[var(--text-secondary)]`}
         >
@@ -134,7 +135,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
               <a
                 href={`tel:${clinic.phone.replace(/\s/g, "")}`}
                 dir="ltr"
-                className="flex items-center gap-1.5 hover:text-[var(--text-gold)] transition-colors duration-300"
+                className="flex items-center gap-1.5 hover:text-[var(--text-gold)] transition-colors duration-hover"
               >
                 <Phone className="w-3.5 h-3.5 text-[var(--text-gold)]" />
                 <span>{clinic.phone}</span>
@@ -144,7 +145,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
               </span>
               <button
                 onClick={toggleLanguage}
-                className="flex items-center gap-1 hover:text-[var(--text-gold)] transition-colors duration-300 font-medium cursor-pointer"
+                className="flex items-center gap-1 hover:text-[var(--text-gold)] transition-colors duration-hover font-medium cursor-pointer"
               >
                 <Globe className="w-3.5 h-3.5 text-[var(--text-gold)]" />
                 <span>{language === "ar" ? "English" : "العربية"}</span>
@@ -214,7 +215,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                   >
                     {t(link.label.ar, link.label.en)}
                     <ChevronDown
-                      className={`w-3.5 h-3.5 transition-transform duration-300 ${
+                      className={`w-3.5 h-3.5 transition-transform duration-hover ${
                         isOpen ? "rotate-180" : ""
                       }`}
                     />
@@ -226,10 +227,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        transition={{
-                          duration: 0.22,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
+                        transition={motionTransition("base")}
                         role="menu"
                         className="absolute top-full start-0 mt-2 w-72 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-control)] shadow-2xl overflow-hidden z-50"
                       >
@@ -239,11 +237,11 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                               key={child.href}
                               href={getLocalizedHref(child.href, language)}
                               role="menuitem"
-                              className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors duration-200"
+                              className="group flex items-start gap-3 px-3 py-2.5 rounded-xl hover:bg-[var(--bg-secondary)] transition-colors duration-quick"
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--gold-mid)]/40 group-hover:bg-[var(--gold-mid)] shrink-0 mt-2 transition-colors duration-300" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--gold-mid)]/40 group-hover:bg-[var(--gold-mid)] shrink-0 mt-2 transition-colors duration-hover" />
                               <div className="min-w-0">
-                                <span className="block text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300">
+                                <span className="block text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-hover">
                                   {t(child.label.ar, child.label.en)}
                                 </span>
                                 {/* {child.description && (
@@ -261,7 +259,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                         <div className="border-t border-[var(--border-control)] p-2">
                           <Link
                             href={getLocalizedHref(link.href, language)}
-                            className="block text-center text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] py-1.5 transition-colors duration-300"
+                            className="block text-center text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] py-1.5 transition-colors duration-hover"
                           >
                             <span className="inline-flex items-center justify-center gap-1.5">
                               {t("كل الخدمات", "All treatments")}
@@ -292,7 +290,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                     ? t("الوضع الفاتح", "Light mode")
                     : t("الوضع الداكن", "Dark mode")
                 }
-                className="inline-flex items-center justify-center rounded-full w-8 h-8 border border-[var(--gold-border)] text-[var(--text-primary)] hover:border-[var(--border-control)] transition-colors duration-300 cursor-pointer"
+                className="inline-flex items-center justify-center rounded-full w-8 h-8 border border-[var(--gold-border)] text-[var(--text-primary)] hover:border-[var(--border-control)] transition-colors duration-hover cursor-pointer"
               >
                 {theme === "dark" ? (
                   <Sun className="w-4 h-4" />
@@ -304,7 +302,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
             <button
               onClick={toggleLanguage}
               title={t("تغيير اللغة", "Switch language")}
-              className="lg:hidden  rounded-full w-8 h-8 d-flex justify-center align-center border border-[var(--gold-border)] text-xs font-bold text-[var(--text-primary)] hover:border-[var(--border-control)] transition-colors duration-300"
+              className="lg:hidden  rounded-full w-8 h-8 d-flex justify-center align-center border border-[var(--gold-border)] text-xs font-bold text-[var(--text-primary)] hover:border-[var(--border-control)] transition-colors duration-hover"
             >
               {language === "ar" ? "EN" : "عربي"}
             </button>
@@ -314,16 +312,16 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
               target="_blank"
               rel="noopener noreferrer"
               aria-label={t("تواصل عبر واتساب", "Chat on WhatsApp")}
-              className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full border border-[var(--border-success)] bg-[var(--bg-success-soft)] text-[var(--text-success)] hover:bg-[var(--bg-success-soft)] transition-colors duration-300"
+              className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full border border-[var(--border-success)] bg-[var(--bg-success-soft)] text-[var(--text-success)] hover:bg-[var(--bg-success-soft)] transition-colors duration-hover"
             >
-              <MessageCircle className="w-5 h-5 text-[var(--text-success)]" />
+              <WhatsAppIcon className="w-5 h-5 text-[var(--text-success)]" />
             </a>
 
             <button
               onClick={() => openBooking()}
               data-cta="navbar"
               aria-label={t("احجزي موعدك", "Book appointment")}
-              className="bg-gold-gradient font-medium text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] flex items-center gap-2 cursor-pointer"
+              className="bg-gold-gradient font-medium text-xs sm:text-sm px-4 sm:px-6 py-2.5 rounded-full shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-[transform,box-shadow] duration-hover ease-brand flex items-center gap-2 cursor-pointer"
             >
               <Calendar className="w-4 h-4" />
               <span className="hidden sm:inline">
@@ -335,7 +333,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
               onClick={() => openMenu({ mobile: !isMobileMenuOpen })}
               aria-label={t("القائمة", "Menu")}
               aria-expanded={isMobileMenuOpen}
-              className="lg:hidden p-2 text-[var(--text-primary)] hover:text-[var(--text-gold)] transition-colors duration-300"
+              className="lg:hidden p-2 text-[var(--text-primary)] hover:text-[var(--text-gold)] transition-colors duration-hover"
             >
               {isMobileMenuOpen ? (
                 <X className="w-6 h-6" />
@@ -349,7 +347,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
 
       {/* ══════════════ MOBILE MENU — 3D CUBE ══════════════ */}
       <div
-        className={`fixed inset-0 z-50 overflow-hidden transition-opacity duration-300 ease-[cubic-bezier(.22,1,.36,1)] lg:hidden ${
+        className={`fixed inset-0 z-50 overflow-hidden transition-opacity duration-hover ease-brand lg:hidden ${
           isMobileMenuOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
@@ -364,7 +362,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
         />
 
         <aside
-          className={`absolute top-0 bottom-0 start-0 w-[84%] max-w-sm bg-[var(--bg-primary)] shadow-2xl border-e border-[var(--gold-border)] transition-transform duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
+          className={`absolute top-0 bottom-0 start-0 w-[84%] max-w-sm bg-[var(--bg-primary)] shadow-2xl border-e border-[var(--gold-border)] transition-transform duration-hover ease-brand ${
             isMobileMenuOpen
               ? "translate-x-0"
               : language === "ar"
@@ -381,7 +379,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                 initial={{ opacity: 0, x: slideInX }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -slideInX }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                transition={motionTransition("ui")}
                 className="absolute inset-0 flex flex-col justify-between p-6 overflow-y-auto"
               >
                 <div>
@@ -399,7 +397,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                     <button
                       onClick={() => openMenu({ mobile: false })}
                       aria-label={t("إغلاق", "Close")}
-                      className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-gold)] transition-colors duration-300"
+                      className="p-2 text-[var(--text-secondary)] hover:text-[var(--text-gold)] transition-colors duration-hover"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -419,7 +417,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                           <Link
                             key={link.href}
                             href={getLocalizedHref(link.href, language)}
-                            className={`py-3 border-b border-[var(--border-control)] flex items-center justify-between text-sm font-semibold transition-colors duration-300 ${
+                            className={`py-3 border-b border-[var(--border-control)] flex items-center justify-between text-sm font-semibold transition-colors duration-hover ${
                               active
                                 ? "text-[var(--gold-end)]"
                                 : "text-[var(--text-primary)] hover:text-[var(--gold-end)]"
@@ -437,7 +435,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                         <button
                           key={link.href}
                           onClick={() => openMenu({ mobileDropdown: link.href })}
-                          className={`py-3 border-b border-[var(--border-control)] flex items-center justify-between text-sm font-semibold transition-colors duration-300 cursor-pointer ${
+                          className={`py-3 border-b border-[var(--border-control)] flex items-center justify-between text-sm font-semibold transition-colors duration-hover cursor-pointer ${
                             active
                               ? "text-[var(--gold-end)]"
                               : "text-[var(--text-primary)] hover:text-[var(--gold-end)]"
@@ -445,7 +443,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                         >
                           <span>{t(link.label.ar, link.label.en)}</span>
                           <ChevronDown
-                            className={`w-4 h-4 transition-transform duration-300 ${
+                            className={`w-4 h-4 transition-transform duration-hover ${
                               language === "ar" ? "rotate-90" : "-rotate-90"
                             }`}
                           />
@@ -510,7 +508,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                     rel="noopener noreferrer"
                     className="w-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] font-medium py-3 rounded-xl shadow-sm flex items-center justify-center gap-2"
                   >
-                    <MessageCircle className="w-4 h-4" />
+                    <WhatsAppIcon className="w-4 h-4" />
                     <span>{t("محادثة واتساب فورية", "Chat on WhatsApp")}</span>
                   </a>
                   <p className="text-center text-xs text-[var(--text-muted)] mt-1">
@@ -528,7 +526,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                 initial={{ opacity: 0, x: slideInX }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -slideInX }}
-                transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                transition={motionTransition("ui")}
                 className="absolute inset-0 flex flex-col p-6 overflow-y-auto bg-[var(--bg-primary)]"
               >
                 {/* Header with back */}
@@ -536,7 +534,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                   <button
                     onClick={() => openMenu({ mobileDropdown: null })}
                     aria-label={t("رجوع", "Back")}
-                    className="flex items-center gap-2 text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300 cursor-pointer"
+                    className="flex items-center gap-2 text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-hover cursor-pointer"
                   >
                     <ChevronDown
                       className={`w-4 h-4 ${
@@ -564,7 +562,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                         href={getLocalizedHref(child.href, language)}
                         className="group flex flex-col gap-1 py-3 border-b border-[var(--border-control)]"
                       >
-                        <span className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-300">
+                        <span className="text-sm font-semibold text-[var(--text-primary)] group-hover:text-[var(--gold-end)] transition-colors duration-hover">
                           {t(child.label.ar, child.label.en)}
                         </span>
                         {/* {child.description && (
@@ -577,7 +575,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
 
                     <Link
                       href={getLocalizedHref(mobileParent.href, language)}
-                      className="mt-4 block text-center text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] py-3 rounded-xl border border-[var(--border-control)] hover:border-[var(--border-control)] transition-colors duration-300"
+                      className="mt-4 block text-center text-sm font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] py-3 rounded-xl border border-[var(--border-control)] hover:border-[var(--border-control)] transition-colors duration-hover"
                     >
                       <span className="inline-flex items-center justify-center gap-1.5">
                         {t("كل الخدمات", "All treatments")}

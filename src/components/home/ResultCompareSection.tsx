@@ -5,10 +5,20 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useReducedMotion } from "framer-motion";
 import { Photo } from "@/components/ui/Photo";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { frameGeometry, useCompareSlider } from "@/components/ui/compare-slider";
+import {
+  frameGeometry,
+  useCompareSlider,
+} from "@/components/ui/compare-slider";
 import { GoldLink } from "@/components/shared/Actions";
 import { toPhotoSlot } from "@/lib/wp/ui-helpers";
-import { CalendarDays, ChevronsLeftRight, ChevronLeft, ChevronRight, MapPin, Sparkles } from "lucide-react";
+import {
+  CalendarDays,
+  ChevronsLeftRight,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  MoveHorizontal,
+} from "lucide-react";
 
 interface Localized {
   ar: string;
@@ -29,7 +39,12 @@ export interface HomeCompareCase {
   area: Localized;
   sessions: Localized;
   caption: Localized;
-  pair: { before: string; after: string; beforeAlt: Localized; afterAlt: Localized };
+  pair: {
+    before: string;
+    after: string;
+    beforeAlt: Localized;
+    afterAlt: Localized;
+  };
 }
 
 interface ResultCompareSectionProps {
@@ -47,7 +62,10 @@ interface ResultCompareSectionProps {
  * drag works in both reading directions, and with nothing eligible the band renders no markup
  * at all rather than an empty section and its padding.
  */
-export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ cases, index }) => {
+export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({
+  cases,
+  index,
+}) => {
   const { t, language, formatNumber } = useLanguage();
   const reduce = useReducedMotion();
   const rtl = language === "ar";
@@ -71,7 +89,10 @@ export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ case
         <div className="flex flex-wrap items-end justify-between gap-4">
           <SectionHeading
             index={index}
-            title={{ ar: "قبل وبعد، من ملفات الحالات", en: "Before and after, from the cases themselves" }}
+            title={{
+              ar: "قبل وبعد، من ملفات الحالات",
+              en: "Before and after, from the cases themselves",
+            }}
             lead={{
               ar: "كل حالة بصورتَيها من الجلسة: ما كان، وما صار. تتفاوت النتيجة من بشرة لأخرى، ولا تُعرض حالة إلا بصورتَيها.",
               en: "Each case carries its own two pictures: what was there, and what the sessions left. Results vary from one skin to another, and no case shows with fewer than both.",
@@ -95,17 +116,29 @@ export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ case
                   slot={toPhotoSlot(current.pair.after, current.pair.afterAlt)}
                   className="!aspect-auto h-full w-full"
                   sizes="(max-width: 1024px) 92vw, 900px"
-                  imgClassName={reduce ? undefined : "transition-transform duration-500 ease-out"}
+                  imgClassName={
+                    reduce
+                      ? undefined
+                      : "transition-transform duration-fade ease-out"
+                  }
                 />
                 <span className="absolute bottom-3 end-3 rounded-full bg-[var(--bg-dark)]/80 px-3 py-1 text-[11px] font-bold text-[var(--text-on-dark)] pointer-events-none">
                   {t("بعد", "After")}
                 </span>
               </div>
 
-              <div className="absolute inset-0" style={{ clipPath: frameGeometry(slider.progress, rtl).clipPath }}>
+              <div
+                className="absolute inset-0"
+                style={{
+                  clipPath: frameGeometry(slider.progress, rtl).clipPath,
+                }}
+              >
                 <div className="absolute inset-0">
                   <Photo
-                    slot={toPhotoSlot(current.pair.before, current.pair.beforeAlt)}
+                    slot={toPhotoSlot(
+                      current.pair.before,
+                      current.pair.beforeAlt,
+                    )}
                     className="!aspect-auto h-full w-full"
                     sizes="(max-width: 1024px) 92vw, 900px"
                   />
@@ -126,8 +159,15 @@ export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ case
                   photograph still on screen. */}
               <div
                 {...slider.handleProps}
-                aria-label={t("اسحبي لمقارنة صورة قبل بصورة بعد", "Drag to compare the before picture with the after picture")}
-                aria-valuetext={t("{0}٪ من صورة قبل", "{0}% of the before picture", formatNumber(slider.percent))}
+                aria-label={t(
+                  "اسحبي لمقارنة صورة قبل بصورة بعد",
+                  "Drag to compare the before picture with the after picture",
+                )}
+                aria-valuetext={t(
+                  "{0}٪ من صورة قبل",
+                  "{0}% of the before picture",
+                  formatNumber(slider.percent),
+                )}
                 className="absolute top-1/2 z-10 flex h-11 w-11 cursor-ew-resize items-center justify-center rounded-full border-2 border-white bg-gold-gradient shadow-[var(--elev-2)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)]"
                 style={frameGeometry(slider.progress, rtl).handle}
               >
@@ -136,9 +176,15 @@ export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ case
             </div>
 
             <p className="mt-3 flex items-center justify-center gap-2 text-center text-xs text-[var(--text-muted)]">
-              <Sparkles className="h-3.5 w-3.5 shrink-0 text-[var(--text-gold)]" aria-hidden="true" />
+              <MoveHorizontal
+                className="h-3.5 w-3.5 shrink-0 text-[var(--text-gold)]"
+                aria-hidden="true"
+              />
               <span dir="auto">
-                {t("اسحبي المقبض، أو اضغطي عليه ثم استخدمي الأسهم، لتحريك الخط بين الصورتين.", "Drag the handle, or focus it and use the arrow keys, to move the line between the two pictures.")}
+                {t(
+                  "اسحبي المقبض، أو اضغطي عليه ثم استخدمي الأسهم، لتحريك الخط بين الصورتين.",
+                  "Drag the handle, or focus it and use the arrow keys, to move the line between the two pictures.",
+                )}
               </span>
             </p>
 
@@ -150,10 +196,22 @@ export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ case
                   aria-label={t("الحالة السابقة", "Previous case")}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] outline-none"
                 >
-                  {rtl ? <ChevronRight className="h-5 w-5" aria-hidden="true" /> : <ChevronLeft className="h-5 w-5" aria-hidden="true" />}
+                  {rtl ? (
+                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                  )}
                 </button>
-                <span className="text-xs font-bold text-[var(--text-muted)]" dir="auto">
-                  {t("الحالة {0} من {1}", "Case {0} of {1}", formatNumber(position + 1), formatNumber(cases.length))}
+                <span
+                  className="text-xs font-bold text-[var(--text-muted)]"
+                  dir="auto"
+                >
+                  {t(
+                    "الحالة {0} من {1}",
+                    "Case {0} of {1}",
+                    formatNumber(position + 1),
+                    formatNumber(cases.length),
+                  )}
                 </span>
                 <button
                   type="button"
@@ -161,7 +219,11 @@ export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ case
                   aria-label={t("الحالة التالية", "Next case")}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] outline-none"
                 >
-                  {rtl ? <ChevronLeft className="h-5 w-5" aria-hidden="true" /> : <ChevronRight className="h-5 w-5" aria-hidden="true" />}
+                  {rtl ? (
+                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                  )}
                 </button>
               </div>
             )}
@@ -171,25 +233,39 @@ export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ case
               the part that was treated, how many sessions it took, and the line the owner
               asked for under the pictures. */}
           <div className="lg:col-span-4 min-w-0">
-            <h3 className="text-lg sm:text-xl font-black leading-tight text-[var(--text-primary)]" dir="auto">
+            <h3
+              className="text-lg sm:text-xl font-black leading-tight text-[var(--text-primary)]"
+              dir="auto"
+            >
               {t(current.headline.ar, current.headline.en)}
             </h3>
             <div className="mt-3 flex flex-wrap gap-2">
               {(current.area.ar || current.area.en) && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-control)] px-3 py-1 text-xs font-bold text-[var(--text-secondary)]">
-                  <MapPin className="h-3.5 w-3.5 text-[var(--text-gold)]" aria-hidden="true" />
+                  <MapPin
+                    className="h-3.5 w-3.5 text-[var(--text-gold)]"
+                    aria-hidden="true"
+                  />
                   <span dir="auto">{t(current.area.ar, current.area.en)}</span>
                 </span>
               )}
               {(current.sessions.ar || current.sessions.en) && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--border-control)] px-3 py-1 text-xs font-bold text-[var(--text-secondary)]">
-                  <CalendarDays className="h-3.5 w-3.5 text-[var(--text-gold)]" aria-hidden="true" />
-                  <span dir="auto">{t(current.sessions.ar, current.sessions.en)}</span>
+                  <CalendarDays
+                    className="h-3.5 w-3.5 text-[var(--text-gold)]"
+                    aria-hidden="true"
+                  />
+                  <span dir="auto">
+                    {t(current.sessions.ar, current.sessions.en)}
+                  </span>
                 </span>
               )}
             </div>
             {(current.caption.ar || current.caption.en) && (
-              <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]" dir="auto">
+              <p
+                className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]"
+                dir="auto"
+              >
                 {t(current.caption.ar, current.caption.en)}
               </p>
             )}
@@ -201,9 +277,15 @@ export const ResultCompareSection: React.FC<ResultCompareSectionProps> = ({ case
                       type="button"
                       onClick={() => show(item_position)}
                       aria-current={item_position === position}
-                      aria-label={t("اعرض حالة: {0}", "Show case: {0}", t(item.headline.ar, item.headline.en))}
+                      aria-label={t(
+                        "اعرض حالة: {0}",
+                        "Show case: {0}",
+                        t(item.headline.ar, item.headline.en),
+                      )}
                       className={`h-2.5 w-8 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] ${
-                        item_position === position ? "bg-gold-gradient" : "bg-[var(--border-control)] hover:bg-[var(--border-control-soft)]"
+                        item_position === position
+                          ? "bg-gold-gradient"
+                          : "bg-[var(--border-control)] hover:bg-[var(--border-control-soft)]"
                       }`}
                     />
                   </li>

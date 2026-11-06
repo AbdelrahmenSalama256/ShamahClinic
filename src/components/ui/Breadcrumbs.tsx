@@ -37,7 +37,7 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items }) => {
                 <>
                   <Link
                     href={getLocalizedHref(item.href, language)}
-                    className="hover:text-[var(--gold-end)] transition-colors duration-300"
+                    className="hover:text-[var(--gold-end)] transition-colors duration-hover"
                   >
                     {t(item.label.ar, item.label.en)}
                   </Link>

@@ -12,8 +12,12 @@ if (!password) {
 }
 
 const root = await mysql.createConnection({
-  host: process.env.DATABASE_HOST ?? '127.0.0.1',
-  port: Number(process.env.DATABASE_PORT ?? 3307),
+  ...(process.env.DATABASE_SOCKET?.trim()
+    ? { socketPath: process.env.DATABASE_SOCKET.trim() }
+    : {
+        host: process.env.DATABASE_HOST ?? process.env.DB_HOST ?? '127.0.0.1',
+        port: Number(process.env.DATABASE_PORT ?? process.env.DB_PORT ?? 3307),
+      }),
   user: 'root',
   password,
 });

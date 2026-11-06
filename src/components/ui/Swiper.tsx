@@ -120,10 +120,10 @@ export const Swiper: React.FC<SwiperProps> = ({
     >
       <div className="overflow-hidden">
         <div
-          className="flex transition-transform duration-700 ease-[cubic-bezier(.22,1,.36,1)]"
+          className="flex transition-transform duration-reveal ease-brand"
           style={{
             transform: `translateX(${offset}%)`,
-            transitionDuration: reduce ? "0ms" : "700ms",
+            transitionDuration: reduce ? "0ms" : undefined,
           }}
         >
           {slides.map((slide, i) => (
@@ -152,7 +152,7 @@ export const Swiper: React.FC<SwiperProps> = ({
               onClick={() => goTo(index - 1)}
               disabled={index === 0}
               aria-label={t("السابق", "Previous")}
-              className="p-2 rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:text-[var(--text-gold)] hover:border-[var(--border-control)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+              className="p-2 rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:text-[var(--text-gold)] hover:border-[var(--border-control)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-hover ease-brand cursor-pointer"
             >
               <PrevIcon className="w-4 h-4" />
             </button>
@@ -172,7 +172,7 @@ export const Swiper: React.FC<SwiperProps> = ({
                   aria-current={i === index}
                   // Padding + background-clip keeps the dot the same size and the
                   // row the same height while the tap target reaches 24x24.
-                  className={`-m-2 h-6 p-2 bg-clip-content rounded-full transition-[width,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${
+                  className={`-m-2 h-6 p-2 bg-clip-content rounded-full transition-[width,background-color] duration-hover ease-brand cursor-pointer ${
                     i === index
                       ? "w-10 bg-[var(--text-gold)]"
                       : "w-6 bg-[var(--border-control)] hover:bg-[var(--gold-mid)]/60"
@@ -187,7 +187,7 @@ export const Swiper: React.FC<SwiperProps> = ({
               onClick={() => goTo(index + 1)}
               disabled={index === maxIndex}
               aria-label={t("التالي", "Next")}
-              className="p-2 rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:text-[var(--text-gold)] hover:border-[var(--border-control)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer"
+              className="p-2 rounded-full border border-[var(--border-control)] text-[var(--text-secondary)] hover:text-[var(--text-gold)] hover:border-[var(--border-control)] disabled:opacity-40 disabled:pointer-events-none transition-[color,border-color] duration-hover ease-brand cursor-pointer"
             >
               <NextIcon className="w-4 h-4" />
             </button>

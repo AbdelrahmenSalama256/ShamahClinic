@@ -35,6 +35,41 @@ describe('move-data refuses to write to a database it was not told about', () =>
   });
 });
 
+describe('move-data database connection config', () => {
+  it('uses the cPanel variables and socketPath without TCP options', () => {
+    expect(move.connectionConfig({
+      DATABASE_SOCKET: '/run/mysql.sock',
+      DB_USER: 'cpanel_user',
+      DB_PASSWORD: 'secret',
+      DB_NAME: 'cpanel_db',
+    })).toMatchObject({
+      socketPath: '/run/mysql.sock',
+      user: 'cpanel_user',
+      password: 'secret',
+      database: 'cpanel_db',
+    });
+    expect(move.connectionConfig({
+      DATABASE_SOCKET: '/run/mysql.sock',
+      DB_USER: 'cpanel_user',
+      DB_NAME: 'cpanel_db',
+    })).not.toHaveProperty('host');
+  });
+
+  it('identifies a matching socket source but distinguishes a different socket', () => {
+    const source = { host: 'localhost', socketPath: '/run/mysql.sock', database: 'shamah_cms' };
+    expect(move.isSameSource(source, {
+      DATABASE_HOST: 'localhost',
+      DATABASE_SOCKET: '/run/mysql.sock',
+      DATABASE_NAME: 'shamah_cms',
+    })).toBe(true);
+    expect(move.isSameSource(source, {
+      DATABASE_HOST: 'localhost',
+      DATABASE_SOCKET: '/run/other.sock',
+      DATABASE_NAME: 'shamah_cms',
+    })).toBe(false);
+  });
+});
+
 describe('move-data hashing and value conversion', () => {
   it('hashes the same document regardless of key order', () => {
     const a = { title: 'x', meta: { title: 'y', description: 'z' } };

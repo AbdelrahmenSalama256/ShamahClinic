@@ -4,6 +4,7 @@ import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { FaqAccordion } from "@/components/shared/FaqAccordion";
 import { WhatsAppButton, CallButton } from "@/components/shared/Actions";
 import { type FaqItem } from "@/data/faq";
@@ -47,14 +48,24 @@ export const FaqClient: React.FC<{
       <section className="py-8 lg:py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="space-y-14">
-            {grouped.map((g, gi) => (
-              <Reveal className="h-full" key={g.cat} delay={gi * 0.05}>
-                <h2 className="text-xl sm:text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
-                  {t(categoryLabels[g.cat].ar, categoryLabels[g.cat].en)}
-                </h2>
-                <FaqAccordion items={g.items} />
-              </Reveal>
-            ))}
+            {grouped.length === 0 ? (
+              <EmptyState
+                title={t("لا توجد أسئلة منشورة الآن", "No questions are listed right now")}
+                description={t(
+                  "إذا كان لديكِ استفسار، تواصلي معنا وسيسعد فريقنا بمساعدتكِ.",
+                  "If you have a question, contact us and our team will be happy to help.",
+                )}
+              />
+            ) : (
+              grouped.map((g, gi) => (
+                <Reveal className="h-full" key={g.cat} delay={gi * 0.05}>
+                  <h2 className="text-xl sm:text-xl sm:text-2xl font-black text-[var(--text-primary)] mb-5">
+                    {t(categoryLabels[g.cat].ar, categoryLabels[g.cat].en)}
+                  </h2>
+                  <FaqAccordion items={g.items} />
+                </Reveal>
+              ))
+            )}
           </div>
 
           <Reveal className="mt-16 rounded-2xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-8 text-center">

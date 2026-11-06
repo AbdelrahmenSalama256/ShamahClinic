@@ -1229,3 +1229,6 @@ select.ui-control {
 .ui-rich-file {
   display: none;
 }
+a{
+  text-decoration: none;
+}

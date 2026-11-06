@@ -15,15 +15,16 @@ import {
   Clock,
   MapPin,
   Download,
-  MessageCircle,
   ChevronRight,
   ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DatePicker } from "@/components/ui/DatePicker";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { trackEvent } from "@/lib/tracking/client";
 import { EVENT_NAMES } from "@/lib/tracking/events";
 import { leadAttribution, trackOnce } from "@/lib/tracking/first-party";
+import { motionTransition } from "@/lib/motion";
 
 interface BookingModalProps {
   isOpen: boolean;
@@ -370,7 +371,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+          transition={motionTransition("base")}
           onClick={onClose}
           className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-md overflow-y-auto"
         >
@@ -379,7 +380,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
             initial={{ opacity: 0, scale: 0.94, y: 24, filter: "blur(6px)" }}
             animate={{ opacity: 1, scale: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, scale: 0.96, y: 12, filter: "blur(4px)" }}
-            transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            transition={motionTransition("hover")}
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-modal="true"
@@ -425,7 +426,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   {[1, 2, 3, 4].map((stepNum) => (
                     <div key={stepNum} className="flex items-center">
                       <div
-                        className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition-[transform,background-color,color] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${
+                        className={`w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition-[transform,background-color,color] duration-hover ease-brand ${
                           currentStep === stepNum
                             ? "bg-gold-gradient shadow-sm scale-110"
                             : currentStep > stepNum
@@ -444,7 +445,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 </div>
                 <div className="w-full bg-[var(--bg-secondary)] h-1.5 rounded-full overflow-hidden">
                   <div
-                    className="bg-gold-gradient h-full transition-[width] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+                    className="bg-gold-gradient h-full transition-[width] duration-hover ease-brand"
                     style={{ width: `${((currentStep - 1) / 3) * 100}%` }}
                   />
                 </div>
@@ -511,7 +512,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                               return remaining;
                             });
                           }}
-                          className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between text-start ${
+                          className={`p-3.5 rounded-2xl border transition-[border-color,background-color,box-shadow] cursor-pointer flex items-center justify-between text-start ${
                             isSelected
                               ? "border-[var(--border-control)] bg-[var(--blush-light)]/60 shadow-sm"
                               : "border-[var(--border-control)] hover:border-[var(--gold-border)] bg-[var(--bg-card)]"
@@ -588,7 +589,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                             key={b.id}
                             aria-pressed={isSelected}
                             onClick={() => setSelectedBranchId(b.id)}
-                            className={`w-full p-3 rounded-2xl border text-center transition-all ${
+                            className={`w-full p-3 rounded-2xl border text-center transition-[border-color,background-color,color] ${
                               isSelected
                                 ? "border-[var(--border-control)] bg-[var(--blush-light)] shadow-sm font-bold text-[var(--gold-end)]"
                                 : "border-[var(--border-control)] hover:border-[var(--gold-border)] text-[var(--text-secondary)]"
@@ -719,7 +720,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                               key={slotKey}
                               aria-pressed={isSelected}
                               onClick={() => setSelectedTimeSlot(slotKey)}
-                              className={`w-full p-3.5 rounded-2xl border flex items-center justify-between transition-all ${
+                              className={`w-full p-3.5 rounded-2xl border flex items-center justify-between transition-[border-color,background-color,color] ${
                                 isSelected
                                   ? "border-[var(--border-control)] bg-[var(--blush-light)] font-bold text-[var(--gold-end)]"
                                   : "border-[var(--border-control)] hover:border-[var(--border-control)] text-[var(--text-secondary)]"
@@ -868,7 +869,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                   <motion.div
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    transition={motionTransition("step")}
                     className="w-20 h-20 rounded-full bg-[var(--bg-success-soft)] border-2 border-[var(--border-success)] text-[var(--text-success)] flex items-center justify-center mx-auto shadow-lg"
                   >
                     <Check className="w-10 h-10 stroke-[2.5]" />
@@ -974,7 +975,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                       rel="noopener noreferrer"
                       className="w-full bg-[var(--btn-wa-solid-bg)] hover:bg-[var(--btn-wa-solid-bg-hover)] text-[var(--btn-wa-solid-fg)] font-bold py-3.5 px-6 rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 text-sm"
                     >
-                      <MessageCircle className="w-5 h-5" />
+                      <WhatsAppIcon className="w-5 h-5" />
                       <span>
                         {t(
                           "تأكيد فوري عبر واتساب الآن",
@@ -1025,7 +1026,7 @@ export const BookingModal: React.FC<BookingModalProps> = ({
                 <button
                   onClick={handleNext}
                   disabled={submitting}
-                  className="bg-gold-gradient hover:opacity-95 text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-all flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
+                  className="bg-gold-gradient hover:opacity-95 text-xs sm:text-sm font-bold px-6 py-2.5 rounded-xl shadow-sm hover:shadow transition-[opacity,box-shadow] flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-wait"
                 >
                   <span>
                     {submitting

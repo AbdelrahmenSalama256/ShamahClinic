@@ -83,7 +83,7 @@ export function ConsentBanner({ lang, hasTags }: { lang: Locale; hasTags: boolea
           <button
             type="button"
             onClick={() => answer("granted")}
-            className="bg-gold-gradient cursor-pointer rounded-full px-5 py-2.5 text-sm font-bold transition-transform duration-300 hover:-translate-y-0.5"
+            className="bg-gold-gradient cursor-pointer rounded-full px-5 py-2.5 text-sm font-bold transition-transform duration-hover hover:-translate-y-0.5"
           >
             {ar ? "موافق" : "Accept"}
           </button>

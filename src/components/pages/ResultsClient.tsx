@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ResultCaseCard } from "@/components/cards/ResultCaseCard";
 import { GoldLink } from "@/components/shared/Actions";
@@ -46,7 +47,7 @@ export const ResultsClient: React.FC<{
   page: number;
   totalPages: number;
   total: number;
-  banner: PhotoSlot;
+  banner: PhotoSlot | null;
 }> = ({ stories, page, totalPages, total, banner }) => {
   const { t, language } = useLanguage();
   const router = useRouter();
@@ -71,7 +72,7 @@ export const ResultsClient: React.FC<{
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/results", label: { ar: "النتائج", en: "Results" } },
         ]}
-        photo={banner}
+        photo={banner ?? undefined}
       />
 
       <section className="py-8 lg:py-16">
@@ -91,14 +92,13 @@ export const ResultsClient: React.FC<{
           </h2>
 
           {stories.length === 0 ? (
-            <Reveal className="rounded-2xl border border-dashed border-[var(--border-control)] bg-[var(--bg-card)] p-8 text-center">
-              <p className="text-sm leading-relaxed text-[var(--text-secondary)]">
-                {t(
-                  "لم تُنشر أي نتيجة بعد. تضيف العيادة النتيجة من لوحة التحكم: ترفع صورة قبل وأخرى بعد وتكتب عنوانها وسطرًا تحت الصورتين، والمقال الاختياري بعدها.",
-                  "No result has been published yet. The clinic adds one from the console: it uploads a before and an after, writes the title and the line under the pictures, and picks an article only if it wants one.",
-                )}
-              </p>
-            </Reveal>
+            <EmptyState
+              title={t("لم تُنشر أي نتيجة بعد", "No result has been published yet")}
+              description={t(
+                "تضيف العيادة النتيجة من لوحة التحكم: ترفع صورة قبل وأخرى بعد وتكتب عنوانها وسطرًا تحت الصورتين، والمقال الاختياري بعدها.",
+                "The clinic adds one from the console: it uploads a before and an after, writes the title and the line under the pictures, and picks an article only if it wants one.",
+              )}
+            />
           ) : (
             // 1 col mobile → 2 cols tablet → 3 cols desktop
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 mt-8">
@@ -142,7 +142,7 @@ export const ResultsClient: React.FC<{
             {page < totalPages && (
               <Link
                 href={pageHref(page + 1)}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
+                className="inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-hover"
               >
                 {t("الصفحة التالية", "Next page")}
                 <Arrow className="w-3.5 h-3.5" />

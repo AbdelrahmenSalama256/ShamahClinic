@@ -8,6 +8,7 @@ import { Reveal } from "@/components/ui/Reveal";
 import { Photo } from "@/components/ui/Photo";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { BookButton, WhatsAppButton } from "@/components/shared/Actions";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Article } from "@/data/journal";
 import { useSpecialist } from "@/context/SpecialistsContext";
@@ -21,7 +22,6 @@ import {
   Check,
   ChevronUp,
   List,
-  MessageCircle,
   BookOpen,
 } from "lucide-react";
 
@@ -102,7 +102,7 @@ export const JournalArticleClient: React.FC<{
         className="fixed top-0 start-0 end-0 h-0.5 z-50 bg-transparent pointer-events-none"
       >
         <div
-          className="h-full bg-gold-gradient transition-[width] duration-150 ease-out"
+          className="h-full bg-gold-gradient transition-[width] duration-fast ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -215,7 +215,7 @@ export const JournalArticleClient: React.FC<{
                 {article.tags[language].map((tag) => (
                   <span
                     key={tag}
-                    className="text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-control)] rounded-full px-3 py-1 hover:border-[var(--border-control)] hover:text-[var(--gold-end)] transition-colors duration-300"
+                    className="text-xs font-semibold text-[var(--text-secondary)] bg-[var(--bg-secondary)] border border-[var(--border-control)] rounded-full px-3 py-1 hover:border-[var(--border-control)] hover:text-[var(--gold-end)] transition-colors duration-hover"
                   >
                     #{tag}
                   </span>
@@ -236,7 +236,7 @@ export const JournalArticleClient: React.FC<{
                     aria-label="Share on WhatsApp"
                     className="w-9 h-9 rounded-full border border-[var(--border-control)] text-[var(--text-success)] hover:bg-[var(--bg-success-soft)] hover:border-[var(--border-success)] flex items-center justify-center transition-colors"
                   >
-                    <MessageCircle className="w-4 h-4" />
+                    <WhatsAppIcon className="w-4 h-4" />
                   </a>
                   <a
                     href={shareLinks.twitter}
@@ -305,7 +305,7 @@ export const JournalArticleClient: React.FC<{
                     </p>
                     <Link
                       href={getLocalizedHref("/doctors", language)}
-                      className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-300"
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[var(--gold-end)] hover:text-[var(--text-gold)] transition-colors duration-hover"
                     >
                       {t("تعرّفي على الفريق الطبي", "Meet the medical team")}
                       <Arrow className="w-3.5 h-3.5" />
@@ -413,7 +413,7 @@ export const JournalArticleClient: React.FC<{
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label="Back to top"
-          className="fixed bottom-[calc(var(--mobile-bar-height)+var(--floating-control-gap)+env(safe-area-inset-bottom))] sm:bottom-[calc(var(--floating-control-gap)+env(safe-area-inset-bottom))] end-6 z-[45] w-11 h-11 rounded-full bg-gold-gradient shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-300 flex items-center justify-center cursor-pointer"
+          className="fixed bottom-[calc(var(--mobile-bar-height)+var(--floating-control-gap)+env(safe-area-inset-bottom))] sm:bottom-[calc(var(--floating-control-gap)+env(safe-area-inset-bottom))] end-6 z-[45] w-11 h-11 rounded-full bg-gold-gradient shadow-xl hover:shadow-2xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-hover flex items-center justify-center cursor-pointer"
         >
           <ChevronUp className="w-5 h-5" />
         </button>

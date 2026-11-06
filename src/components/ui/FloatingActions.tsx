@@ -4,7 +4,8 @@ import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
 import { useClinic } from "@/context/ClinicContext";
-import { MessageCircle, Calendar, Phone } from "lucide-react";
+import { Calendar, Phone } from "lucide-react";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 
 /**
  * Conversion affordances: a single floating WhatsApp bubble on desktop
@@ -36,11 +37,11 @@ export const FloatingActions: React.FC = () => {
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative flex w-14 h-14 rounded-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] shadow-xl items-center justify-center hover:bg-[var(--btn-wa-solid-bg-hover)] hover:text-[var(--btn-wa-solid-fg-hover)] hover:scale-105 transition-[transform,background-color] duration-300 ease-[cubic-bezier(.22,1,.36,1)]"
+          className="group relative flex w-14 h-14 rounded-full bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] shadow-xl items-center justify-center hover:bg-[var(--btn-wa-solid-bg-hover)] hover:text-[var(--btn-wa-solid-fg-hover)] hover:scale-105 transition-[transform,background-color] duration-hover ease-brand"
           aria-label={t("تواصل عبر واتساب", "Chat on WhatsApp")}
         >
-          <MessageCircle className="w-6 h-6" />
-          <span className="pointer-events-none p-3 border border-[var(--border-on-dark)] transition-colors duration-300 absolute start-16 bg-[var(--bg-dark)] text-[var(--text-on-dark)] text-xs font-bold py-1.5 px-3 rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <WhatsAppIcon className="w-6 h-6" />
+          <span className="pointer-events-none p-3 border border-[var(--border-on-dark)] transition-colors duration-hover absolute start-16 bg-[var(--bg-dark)] text-[var(--text-on-dark)] text-xs font-bold py-1.5 px-3 rounded-lg shadow-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-hover">
             {t("تواصلي معنا عبر واتساب", "Chat on WhatsApp")}
           </span>
         </a>
@@ -54,7 +55,7 @@ export const FloatingActions: React.FC = () => {
           rel="noopener noreferrer"
           className="flex-1 bg-[var(--btn-wa-solid-bg)] text-[var(--btn-wa-solid-fg)] font-bold text-xs py-3 px-3 rounded-xl shadow-sm flex items-center justify-center gap-1.5"
         >
-          <MessageCircle className="w-4 h-4" />
+          <WhatsAppIcon className="w-4 h-4" />
           <span>{t("واتساب", "WhatsApp")}</span>
         </a>
         <button

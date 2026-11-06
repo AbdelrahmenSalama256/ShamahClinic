@@ -4,6 +4,7 @@ import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
 import { PageHero } from "@/components/shared/PageHero";
 import { Reveal } from "@/components/ui/Reveal";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { Photo } from "@/components/ui/Photo";
 import { DoctorCard } from "@/components/cards/DoctorCard";
 import type { Specialist } from "@/data/specialists";
@@ -13,7 +14,7 @@ import type { PhotoSlot } from "@/lib/images";
 
 export const DoctorsClient: React.FC<{
   branches: BranchDetail[];
-  banner: PhotoSlot;
+  banner: PhotoSlot | null;
   /** The team the console edits; the snapshot stands in only while no row is published. */
   specialists: Specialist[];
 }> = ({ branches, banner, specialists }) => {
@@ -31,19 +32,29 @@ export const DoctorsClient: React.FC<{
           { href: "/", label: { ar: "الرئيسية", en: "Home" } },
           { href: "/doctors", label: { ar: "الأطباء", en: "Doctors" } },
         ]}
-        photo={banner}
+        photo={banner ?? undefined}
       />
 
       <section className="py-8 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="sr-only">{t("فريق الطبيبات", "Our doctors")}</h2>
-          <div className="grid sm:grid-cols-3 gap-4 lg:gap-8">
-            {specialists.map((doc, i) => (
-              <Reveal className="h-full" key={doc.id} delay={i * 0.1}>
-                <DoctorCard doctor={doc} branches={branches} />
-              </Reveal>
-            ))}
-          </div>
+          {specialists.length === 0 ? (
+            <EmptyState
+              title={t("لا توجد أسماء معروضة الآن", "No doctors are listed right now")}
+              description={t(
+                "تواصلي معنا وسنساعدكِ في ترتيب استشارتكِ مع الفريق الطبي.",
+                "Contact us and we’ll help arrange a consultation with the medical team.",
+              )}
+            />
+          ) : (
+            <div className="grid sm:grid-cols-3 gap-4 lg:gap-8">
+              {specialists.map((doc, i) => (
+                <Reveal className="h-full" key={doc.id} delay={i * 0.1}>
+                  <DoctorCard doctor={doc} branches={branches} />
+                </Reveal>
+              ))}
+            </div>
+          )}
 
           {/* Consultation process — editorial numbered band */}
           <div className="mt-12 lg:mt-16 grid lg:grid-cols-12 gap-10 items-center rounded-3xl bg-[var(--bg-secondary)]/70 border border-[var(--border-control)] p-8 lg:p-12">

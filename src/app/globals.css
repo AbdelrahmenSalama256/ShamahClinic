@@ -28,39 +28,68 @@
   --color-brand-muted: var(--text-secondary);
   --color-brand-gold: var(--gold-mid);
   --color-brand-blush: var(--blush-accent);
+
+  /* Motion (MB-2): the two Tailwind namespaces that read `src/styles/tokens.css`, so a
+     component asks for a role — `duration-hover`, `ease-brand` — and never for a number.
+     `inline` is what makes that a rule rather than a duplicate: the generated utility
+     emits `transition-duration: var(--dur-hover)` instead of baking `.3s` into the sheet,
+     so the token table stays the only place a duration is written and a surface can still
+     re-scope it. `duration-300` could do neither, which is why the site no longer writes
+     it. The easing aliases under `brand-` for the same reason the colours do — the tokens
+     file owns the number, the class is the site's name for it. */
+  --transition-duration-fast: var(--dur-fast);
+  --transition-duration-quick: var(--dur-quick);
+  --transition-duration-ui: var(--dur-ui);
+  --transition-duration-hover: var(--dur-hover);
+  --transition-duration-fade: var(--dur-fade);
+  --transition-duration-reveal: var(--dur-reveal);
+  --ease-brand: var(--ease-signature);
+}
+
+/* MB-2 found this in the sheet, not in the design: the polish rule below sat unlayered,
+   and an unlayered declaration outranks every rule inside `@layer utilities` — so for a
+   year the site's own `transition-colors duration-hover ease-brand` on a link or a button
+   computed to nothing, and the blanket won. That is the same defect as the reference's
+   `!important` blanket, only quieter, and fixing it is what "restored" means here: the
+   timing the components ask for is now the timing that paints.
+   Two numbers make that true for the controls that ask for nothing. The reference's
+   blanket is `.3s` on its house curve, and Tailwind resolves a bare `transition-colors`
+   from `--default-transition-duration` / `-timing-function` at the element, so the site
+   surface sets both: 300 ms, one curve, every control — without a rule that a component
+   cannot override. */
+[data-surface="site"] {
+  --default-transition-duration: var(--dur-hover);
+  --default-transition-timing-function: var(--ease-signature);
 }
 
 * {
   box-sizing: border-box;
 }
-/* Hover polish, named. This block used to be `* { transition: all 0.3s ease-in-out
-   !important }`, which did four things nobody wanted: it animated layout properties
-   (`width`, `padding`, `visibility`) so every state change cost a reflow; its
-   `!important` outranked every Tailwind `transition-*`/`duration-*` utility, so the
-   site's own components could not ask for a different curve; it gave a drawer no way
-   to stop transitioning `visibility`, which is why `console.css` had to fight it with
-   another `!important`; and it made a theme toggle unverifiable, because "all"
-   includes the properties a CLS audit measures. The names below are the ones a
-   control actually changes state in — transform and opacity included, so nothing that
-   animated before stops animating now. */
-a,
-button,
-input,
-select,
-textarea,
-summary,
-label,
-[role="button"],
-[role="link"],
-[tabindex] {
-  transition:
-    color var(--dur-base) var(--ease-out),
-    background-color var(--dur-base) var(--ease-out),
-    border-color var(--dur-base) var(--ease-out),
-    box-shadow var(--dur-base) var(--ease-out),
-    transform var(--dur-base) var(--ease-out),
-    opacity var(--dur-base) var(--ease-out);
+/* Hover polish. The original site writes a blanket over every element — `.3s`,
+   `!important`, and `all` for the property list — which outranks each of the 131 numeric
+   duration utilities its own components write and animates `width`, `padding` and
+   `visibility`, so every state change costs a reflow and a drawer cannot stop transitioning
+   a property it never meant to. What is worth keeping from it is the timing and the
+   population — every control changes state in colour, fill, border, shadow, transform and
+   opacity — so those six are named and the list sits in `@layer base`, where a component's
+   own utility can still outrank it. MB-2 found the previous version of this rule doing
+   neither: it was unlayered, and an unlayered declaration beats everything inside
+   `@layer utilities`, which is how the site came to have 110 `duration-300` classes that
+   computed to nothing on the links and buttons that wrote them. The scoping marker is the
+   other half: this sheet is the site's, and the console's polish has always lived in
+   `console.css` at its own numbers. */
+@layer base {
+  [data-surface="site"] :is(a, button, input, select, textarea, summary, label, [role="button"], [role="link"], [tabindex]) {
+    transition:
+      color var(--dur-hover) var(--ease-signature),
+      background-color var(--dur-hover) var(--ease-signature),
+      border-color var(--dur-hover) var(--ease-signature),
+      box-shadow var(--dur-hover) var(--ease-signature),
+      transform var(--dur-hover) var(--ease-signature),
+      opacity var(--dur-hover) var(--ease-signature);
+  }
 }
+
 img {
   width: 100% !important;
   height: auto;
@@ -78,6 +107,90 @@ body {
   overflow-x: hidden;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+[data-surface="site"] .site-empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-3);
+  max-inline-size: 48rem;
+  margin-inline: auto;
+  padding: clamp(2rem, 6vw, 3.5rem) clamp(1.25rem, 5vw, 3rem);
+  border: 1px dashed var(--border-control-soft);
+  border-radius: var(--radius-2xl);
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--gold-glow), transparent 68%),
+    var(--bg-card);
+  text-align: center;
+}
+
+[data-surface="site"] .site-empty-state__icon {
+  display: grid;
+  place-items: center;
+  inline-size: 3.5rem;
+  aspect-ratio: 1;
+  border: 1px solid var(--border-control-soft);
+  border-radius: 50%;
+  background: var(--bg-secondary);
+  color: var(--text-gold);
+}
+
+[data-surface="site"] .site-empty-state h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--fs-h3);
+  font-weight: 800;
+}
+
+[data-surface="site"] .site-empty-state p {
+  max-inline-size: 36rem;
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: var(--lh-body);
+}
+
+[data-surface="site"] .brand-loading-splash {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: var(--sp-4);
+  min-block-size: min(68svh, 42rem);
+  color: var(--text-gold);
+}
+
+[data-surface="site"] .brand-loading-splash__spinner {
+  inline-size: 2rem;
+  aspect-ratio: 1;
+  border: 2px solid var(--border-control-soft);
+  border-block-start-color: var(--gold-end);
+  border-radius: 50%;
+  animation: brand-loading-spin var(--dur-pan) linear infinite;
+}
+
+[data-surface="site"] .brand-loading-splash__logo {
+  inline-size: min(13.75rem, 58vw) !important;
+  block-size: auto;
+  object-fit: contain;
+  animation: brand-loading-breathe var(--dur-loader-breathe) ease-in-out infinite;
+}
+
+@keyframes brand-loading-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes brand-loading-breathe {
+  50% {
+    opacity: 0.72;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-surface="site"] .brand-loading-splash__spinner,
+  [data-surface="site"] .brand-loading-splash__logo {
+    animation: none;
+  }
 }
 
 html[data-theme="dark"] body {
@@ -204,7 +317,7 @@ textarea::placeholder {
 .bg-gold-gradient {
   background: var(--gold-gradient);
   background-size: 220% 220%;
-  animation: goldShift 8s ease-in-out infinite;
+  animation: goldShift var(--dur-gold) ease-in-out infinite;
   color: var(--btn-gold-fg);
   position: relative;
   overflow: hidden;
@@ -227,7 +340,7 @@ textarea::placeholder {
     transparent 70%
   );
   transform: translateX(-120%);
-  animation: goldShine 4.5s ease-in-out infinite;
+  animation: goldShine var(--dur-shine) ease-in-out infinite;
   pointer-events: none;
 }
 
@@ -257,7 +370,7 @@ textarea::placeholder {
 
 /* Hover: speed the shine up a bit */
 .bg-gold-gradient:hover::before {
-  animation-duration: 1.2s;
+  animation-duration: var(--dur-shine-hover);
 }
 
 /* Respect reduced motion */
@@ -300,7 +413,7 @@ textarea::placeholder {
 }
 
 .animate-marquee {
-  animation: marqueeScroll 32s linear infinite;
+  animation: marqueeScroll var(--dur-marquee) linear infinite;
 }
 
 [dir="rtl"] .animate-marquee {
@@ -310,7 +423,7 @@ textarea::placeholder {
 /* Image curtain reveal: vertical on mobile, horizontal on desktop. */
 .photo-curtain {
   clip-path: inset(0 0 100% 0);
-  transition: clip-path 800ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: clip-path var(--dur-enter) var(--ease-signature);
 }
 
 .photo-curtain.is-revealed {
@@ -325,7 +438,7 @@ textarea::placeholder {
 
 .photo-curtain img {
   transform: scale(1.08);
-  transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: transform var(--dur-pan) var(--ease-signature);
 }
 
 .photo-curtain.is-revealed img {
@@ -389,18 +502,19 @@ textarea::placeholder {
 }
 
 [class*="reveal-mount-"] {
-  animation-duration: 700ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-duration: var(--dur-reveal);
+  animation-timing-function: var(--ease-signature);
   animation-fill-mode: both;
 }
 
 /* Scroll reveals. `.reveal-scroll` is the only class present in the server HTML, and
    it paints nothing: the hidden state is added by the client for elements the user
-   cannot see yet, then removed when they enter the viewport. */
+   cannot see yet, then removed when they enter the viewport. Same length as the mount
+   animation above, because the reference gives both the same one. */
 .reveal-scroll {
   transition:
-    opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity var(--dur-reveal) var(--ease-signature),
+    transform var(--dur-reveal) var(--ease-signature);
 }
 
 .reveal-armed {
@@ -569,7 +683,12 @@ a[class*="items-center"]:has(> svg, span) {
   color: var(--gold-end);
   background: transparent;
   border: 1px solid transparent;
-  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  /* The reference writes `transition: all .25s` here. `all` bought nothing: the hover
+     rule below changes two properties, and both are named — a cell that also animated
+     `width` would reflow the month grid on every pointer move. */
+  transition:
+    background-color var(--dur-ui) var(--ease-signature),
+    border-color var(--dur-ui) var(--ease-signature);
   cursor: pointer;
 }
 
@@ -596,7 +715,14 @@ a[class*="items-center"]:has(> svg, span) {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
-  transition: all 0.2s ease;
+  /* `all .2s ease` in the reference; the three properties a day cell can be in a
+     different state for are colour, its fill, and the selected ring. The gradient the
+     selected day takes is a background-*image*, so no timing could ever have animated it
+     — naming the list says so out loud instead of leaving it to `all`. */
+  transition:
+    color var(--dur-quick) ease,
+    background-color var(--dur-quick) ease,
+    box-shadow var(--dur-quick) ease;
   cursor: pointer;
 }
 
@@ -661,8 +787,7 @@ a[class*="items-center"]:has(> svg, span) {
 }
 
 .dropdown-panel {
-  /* animation: ; */
-  animation: dropdownIn 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: dropdownIn var(--dur-menu) var(--ease-signature) both;
   transform-origin: top center;
 }
 @keyframes dropdownOut {
@@ -677,6 +802,9 @@ a[class*="items-center"]:has(> svg, span) {
 }
 
 .dropdown-panel-out {
-  animation: dropdownOut 0.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: dropdownOut var(--dur-menu) var(--ease-signature) both;
   transform-origin: top center;
+}
+a {
+  text-decoration: none;
 }

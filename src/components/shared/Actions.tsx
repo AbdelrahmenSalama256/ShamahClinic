@@ -6,9 +6,9 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useBooking } from "@/context/BookingContext";
 import { getLocalizedHref } from "@/lib/locale";
 import { useClinic } from "@/context/ClinicContext";
+import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import {
   Calendar,
-  MessageCircle,
   Phone,
   ArrowLeft,
   ArrowRight,
@@ -63,7 +63,7 @@ export const BookButton: React.FC<BookButtonProps> = ({
     <button
       onClick={() => openBooking({ treatmentId, specialistId })}
       data-cta={treatmentId ? "book-service" : specialistId ? "book-specialist" : "book"}
-      className={`inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] cursor-pointer ${pad} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full bg-gold-gradient font-bold shadow-md hover:-translate-y-0.5 hover:shadow-lg transition-[transform,box-shadow] duration-hover ease-brand cursor-pointer ${pad} ${className}`}
     >
       <Calendar className="w-4 h-4" />
       <span>
@@ -109,9 +109,9 @@ export const WhatsAppButton: React.FC<WhatsAppButtonProps> = ({
       href={whatsappHref(language, custom)}
       target="_blank"
       rel="noopener noreferrer"
-      className={`inline-flex items-center justify-center gap-2 rounded-full font-bold shadow-sm hover:-translate-y-0.5 transition-[transform,background-color,box-shadow] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${pad} ${skin} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full font-bold shadow-sm hover:-translate-y-0.5 transition-[transform,background-color,box-shadow] duration-hover ease-brand ${pad} ${skin} ${className}`}
     >
-      <MessageCircle className="w-4 h-4" />
+      <WhatsAppIcon className="w-4 h-4" />
       <span>{t("واتساب", "WhatsApp")}</span>
     </a>
   );
@@ -135,7 +135,7 @@ export const CallButton: React.FC<{
     <a
       href={`tel:${num}`}
       dir="ltr"
-      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--blush-light)] transition-[background-color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] ${pad} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--blush-light)] transition-[background-color,transform] duration-hover ease-brand ${pad} ${className}`}
     >
       <Phone className="w-4 h-4" />
       <span>{phone ?? clinic.phone}</span>
@@ -169,7 +169,7 @@ export const GoldLink: React.FC<GoldLinkProps> = ({
       href={localizedPath}
       // The hover fill is gold, so a gold hairline would vanish into it; the border
       // takes the label's ink and keeps the control's boundary above 3:1.
-      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--gold-mid)] hover:text-[var(--btn-gold-fg)] hover:border-[var(--btn-gold-fg)] transition-[background-color,color,border-color,transform] duration-300 ease-[cubic-bezier(.22,1,.36,1)] hover:-translate-y-0.5 ${pad} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full border border-[var(--border-control)] text-[var(--text-gold)] font-bold hover:bg-[var(--gold-mid)] hover:text-[var(--btn-gold-fg)] hover:border-[var(--btn-gold-fg)] transition-[background-color,color,border-color,transform] duration-hover ease-brand hover:-translate-y-0.5 ${pad} ${className}`}
     >
       <span>{children}</span>
       {withArrow && <Arrow className="w-4 h-4" />}
