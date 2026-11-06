@@ -33,7 +33,7 @@ import { db, destroyDb, readDbConfig } from '../src/lib/db';
 import { assertTestDb } from '../src/lib/db/guard';
 import { json } from '../src/lib/db/json';
 import { ABOUT, pageDocSchema, parseListDoc } from '../src/lib/content/list-schema';
-import { getAboutPage, type AboutPage } from '../src/lib/content/about-page';
+import { getAboutPage, getHomeWhyChooseUs, type AboutPage } from '../src/lib/content/about-page';
 import { getBranchList, getClinicWords, getServiceCards } from '../src/lib/content/site';
 import { getRow, idForRowKey, type ContentRow } from '../src/lib/content/store';
 import { fieldsFromForm, formOf, listSchemaOfRow } from '../src/lib/console/editor-form';
@@ -70,10 +70,12 @@ const { LanguageProvider } = await import('../src/context/LanguageContext');
 const { ThemeProvider } = await import('../src/context/ThemeContext');
 const { ClinicProvider } = await import('../src/context/ClinicContext');
 const { AboutClient } = await import('../src/components/pages/AboutClient');
+const { HomeBody } = await import('../src/components/home/HomeBody');
 
 const run = randomUUID().slice(0, 8);
 const PASSWORD = 'Shamah-ab2-2026';
 const email = `ab2-owner-${run}@example.invalid`;
+const DRAFT_REASON = `سبب مسودة ${run}`;
 const userIds: string[] = [];
 
 /** The id `014_about_page_seed.sql` writes, so the migration and this file name one row. */
@@ -147,6 +149,33 @@ function drawn(page: AboutPage, language: 'ar' | 'en'): string {
       {
         children: createElement(ThemeProvider, {
           children: createElement(ClinicProvider, { value: words, children: createElement(AboutClient, { page }) }),
+        }),
+      },
+    ),
+  );
+}
+
+function drawnHome(whyChooseUs: Awaited<ReturnType<typeof getHomeWhyChooseUs>>, language: 'ar' | 'en'): string {
+  mockPath = `/${language}`;
+  return renderToStaticMarkup(
+    createElement(
+      LanguageProvider,
+      {
+        children: createElement(ThemeProvider, {
+          children: createElement(ClinicProvider, {
+            value: words,
+            children: createElement(HomeBody, {
+              intro: { title: { ar: '', en: '' }, lead: { ar: '', en: '' } },
+              whyChooseUs,
+              services: [],
+              servicesTotal: 0,
+              servicesTitle: { ar: '', en: '' },
+              cases: [],
+              offers: [],
+              articles: [],
+              branches: [],
+            }),
+          }),
         }),
       },
     ),
@@ -290,6 +319,17 @@ describe('the reader answers from the published copy', () => {
     expect(page.numbers).toEqual([]);
   });
 
+  it('shows the About page CMS reasons on Home in both languages', async () => {
+    const whyChooseUs = await getHomeWhyChooseUs();
+    expect(whyChooseUs.title.ar).toBe(text('reasonsTitle_ar'));
+    expect(whyChooseUs.reasons.map((reason) => reason.ar)).toEqual(list('reasons_ar'));
+
+    const arabic = drawnHome(whyChooseUs, 'ar');
+    const english = drawnHome(whyChooseUs, 'en');
+    for (const reason of list('reasons_ar')) expect(arabic).toContain(reason);
+    for (const reason of list('reasons_en')) expect(english).toContain(reason);
+  });
+
   it('counts the two figures it claims and takes the third from the row', async () => {
     const [page, branches, services] = await Promise.all([published(), getBranchList(), getServiceCards()]);
     expect(page.branchCount).toBe(branches.length);
@@ -307,6 +347,7 @@ describe('an edit in the console cannot reach a visitor before it is published',
     const form = formOf(row, 'ar');
     form.lead_ar = DRAFT_LEAD;
     form['storyParagraphs_ar.2'] = DRAFT_PARAGRAPH;
+    form['reasons_ar.0'] = DRAFT_REASON;
     const parsed = fieldsFromForm(row, form);
     expect(parsed.issues).toEqual([]);
 
@@ -321,8 +362,11 @@ describe('an edit in the console cannot reach a visitor before it is published',
     const publishedDoc = JSON.parse(stored.pub_data) as Record<string, unknown>;
     expect(draft.lead_ar).toBe(DRAFT_LEAD);
     expect((draft.storyParagraphs_ar as string[])[2]).toBe(DRAFT_PARAGRAPH);
+    expect((draft.reasons_ar as string[])[0]).toBe(DRAFT_REASON);
     expect(publishedDoc.lead_ar).toBe(text('lead_ar'));
     expect((publishedDoc.storyParagraphs_ar as string[]).length).toBe(list('storyParagraphs_ar').length);
+    expect((publishedDoc.reasons_ar as string[])[0]).toBe(list('reasons_ar')[0]);
+    expect((await getHomeWhyChooseUs()).reasons[0]?.ar).toBe(list('reasons_ar')[0]);
 
     // Not just the columns: the page a visitor would be handed still says the published words.
     const page = await published();
@@ -346,6 +390,7 @@ describe('an edit in the console cannot reach a visitor before it is published',
     const page = await published();
     expect(page.lead.ar).toBe(DRAFT_LEAD);
     expect(page.splits[0]?.paragraphs.map((paragraph) => paragraph.ar)).toEqual([...list('storyParagraphs_ar'), DRAFT_PARAGRAPH]);
+    expect((await getHomeWhyChooseUs()).reasons[0]?.ar).toBe(DRAFT_REASON);
     // The English half of a bilingual field survives an Arabic-only publish.
     expect(page.lead.en).toBe(text('lead_en'));
     expect(drawn(page, 'ar')).toContain(DRAFT_LEAD);
@@ -357,7 +402,9 @@ describe('the page renders what the row says', () => {
     const markup = drawn(await published(), 'ar');
     expect(markup).toContain(text('storyTitle_ar'));
     for (const paragraph of list('processParagraphs_ar')) expect(markup).toContain(paragraph);
-    for (const reason of list('reasons_ar')) expect(markup).toContain(reason);
+    const reasons = list('reasons_ar');
+    reasons[0] = DRAFT_REASON;
+    for (const reason of reasons) expect(markup).toContain(reason);
     for (const value of list('values_ar')) expect(markup).toContain(value);
     expect(markup).toContain(text('heroAlt_ar'));
     // The blocks the deleted fallback manufactured are still absent, because the row leaves

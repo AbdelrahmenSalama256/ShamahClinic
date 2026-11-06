@@ -256,6 +256,7 @@ export default async function PreviewMissingFieldsPage() {
       body: (
         <HomeBody
           intro={{ title: { ar: "", en: "" }, lead: { ar: "", en: "" } }}
+          whyChooseUs={{ title: { ar: "", en: "" }, lead: { ar: "", en: "" }, reasons: [] }}
           services={[]}
           servicesTotal={0}
           servicesTitle={{ ar: "", en: "" }}
@@ -272,6 +273,7 @@ export default async function PreviewMissingFieldsPage() {
       body: (
         <HomeBody
           intro={{ title: { ar: "عنوان", en: "Intro title" }, lead: { ar: "مقدمة", en: "Lead" } }}
+          whyChooseUs={{ title: { ar: "", en: "" }, lead: { ar: "", en: "" }, reasons: [] }}
           services={[1, 2, 3, 4].map((n) => treatment({ id: `f-h-${n}`, name: { ar: `خدمة ${n}`, en: `Service ${n}` } }))}
           servicesTotal={12}
           servicesTitle={{ ar: "خدماتنا", en: "Our services" }}
@@ -297,6 +299,7 @@ export default async function PreviewMissingFieldsPage() {
       body: (
         <HomeBody
           intro={{ title: { ar: "عنوان", en: "Intro title" }, lead: { ar: "مقدمة", en: "Lead" } }}
+          whyChooseUs={{ title: { ar: "", en: "" }, lead: { ar: "", en: "" }, reasons: [] }}
           services={[treatment({ id: "f-hb-svc" })]}
           servicesTotal={1}
           servicesTitle={{ ar: "خدماتنا", en: "Our services" }}

@@ -77,7 +77,7 @@ discarded today — do not reintroduce as rendered fields.
 | Field | Src | Req | Loc | Empty | CMS home |
 |---|---|---|---|---|---|
 | Intro heading `#about` of page 622 | WP | ✓ | yes | fallback `homeIntroFallback`, else band collapses | `homeContent.introTitle/introLead` (WP import) |
-| "Why clients choose Shamah" link → `/about` | STATIC label | opt | yes | link hidden if heading empty | `homeContent.introCtaLabel` |
+| "Why clients choose Shamah" link → `/about` | STATIC label | opt | yes | hidden with intro heading | `homeContent.introCtaLabel` |
 | Services section heading (= page 696 title) | WP | ✓ | yes | band hidden if no services | `homeContent.servicesTitle` (or read from `services` global) |
 | Services lead "كل خدمة تبدأ…" | STATIC | ✓ | yes | n/a | `homeContent.servicesLead` |
 | "All services" view-all → `/services` | STATIC, shown when total>3 | opt | yes | hidden when ≤3 | `homeContent` view-all label map |
@@ -87,7 +87,14 @@ TreatmentCard fields (also used on `/services` list): image, category badge (hid
 when WP none), name, 2-line tagline, "From N EGP" (empty span when `priceStartingAt`
 null), Details link. → `services` collection fields.
 
-### Band 03 — Seasonal offers — `HomeBody.tsx:144-170`
+### Band 03 — Why clients choose Shamah — `HomeBody.tsx`
+
+The title, lead and numbered reasons come from the published `/about` page document.
+Edit them in **Console → Pages → About**, under **Why clients choose us**, then publish.
+The same values render on `/about`; Home omits the band when there are no published
+reasons.
+
+### Band 04 — Seasonal offers — `HomeBody.tsx`
 
 Heading "باقات الموسم" + lead STATIC; view-all when offers>3 (API fetches 4 as
 "more exist" probe); `offers.slice(0,3)` → OfferCard. → `homeContent.offersTitle/

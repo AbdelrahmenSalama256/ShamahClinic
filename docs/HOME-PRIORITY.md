@@ -1,31 +1,31 @@
-# Home priority: which section the services block replaced
+# Home priority: services and CMS-authored reasons
 
-Task: put WordPress services on Home **without making Home longer** — the number of
-Home sections stays what it was, and Journal, Offers and Branches keep their three
-cards each with a "View all" link.
+Home shows the first three featured services and also renders the About page's
+published "Why clients choose us" content. Both are CMS-backed: edit service cards
+under Services, and edit the reasons under Console → Pages → About.
 
-## 1. The section that was removed, and why it was the least valuable one
+## 1. The section that was removed, and why its CMS content returned
 
 Home's first band used to be the authored "Why clients choose Shamah Clinics" block:
 a reception photo, a heading, and a carousel of four numbered claims
 (`استشارة قبل أي إجراء`, `طاقم طبي نسائي بالكامل`, `أجهزة حديثة ومنتجات أصلية`,
 `ثلاثة فروع قريبة منكِ`), with an "All reasons" link to `/about`.
 
-It was scored against the three candidates that stayed, on the three questions the
-brief asks:
+The first implementation removed this hard-coded block because the claims duplicated
+other pages and were not verified in the live content. The reasons are now authored in
+the About page's CMS document, so they can be edited and published rather than embedded
+in `HomeBody.tsx`.
 
 | Section | Where its content comes from | Overlaps another section? | Links to a conversion action? | Verdict |
 | --- | --- | --- | --- | --- |
-| **Why Shamah (removed)** | Authored in `HomeBody.tsx`. The live-site sweep (`docs/STATIC-SWEEP.md`) searched 200 crawled documents for these four claims and found no WordPress page, post, widget or footer block that states them — they exist only in this repository. | Yes: every claim is restated by a section that survived — "consultation first" by each service page's assessment copy, "all-female team" by `/about` and `/doctors`, "modern devices" by the service pages, "three branches" by the Branches band right below it. | No. Its only link was "All reasons" → `/about`, an information page. | **Replaced.** Generic, unverifiable, duplicated elsewhere, no conversion path. |
+| **Why Shamah** | The published `/about` page row; its heading, lead and reasons are edited in the About page's typed CMS form. | Some themes overlap the other pages, but the owner controls the exact wording. | The section links to `/about`; it is not presented as a clinical promise. | **Shown on Home and About** from the same published fields. |
 | Offers | Live WordPress/WooCommerce (`/api/v1/offers`, Store API products with prices). | No — it is the only place discounted packages appear. | Yes — `احجزي العرض` opens the booking dialog, plus a WhatsApp deep link per card. | Stays. |
 | Branches | Live WordPress (branch pages: names, areas, addresses, per-branch phones). | Partially with `/branches`, but on Home it is the tap-to-call entry. | Yes — `tel:` and WhatsApp links on every card. | Stays. |
 | Journal | Live WordPress posts (92 EN slugs mirrored in the snapshot). | No. | Indirect — each card is a post, and posts carry the booking CTA. | Stays. |
 
-The services block now occupies that exact band, so Home keeps **four** sections.
-The four claims were not deleted: they moved to `/about`, where they already had a
-home (the page's "Why clients choose Shamah Clinics" list — `AboutClient.tsx` renders
-them again above "What we stand by"), and the band's link to `/about` is kept, now
-labelled `لماذا تختار شامه` / `Why clients choose Shamah`.
+The Home intro still links to `/about`, and the same CMS-authored reasons also appear in
+a dedicated Home section below the intro/services band. The About page continues to
+render them above "What we stand by."
 
 ## 2. Which three services, chosen by a deterministic rule
 
@@ -59,20 +59,18 @@ page is still untranslated English, so the Arabic side keeps the authored
 `كل الخدمات` / `All services` links to `/services` whenever more than three exist
 (12 merged services do).
 
-## 3. Layout, so Home does not grow
+## 3. Home layout
 
-The band keeps the replaced section's own pattern: heading style, `Section` container,
-`Reveal` delays, and — because the removed block was a carousel — the same `Swiper`
-component for the cards: `mobilePerView 1`, `tabletPerView 2`, `desktopPerView 3`,
-`gap 16`, no autoplay. From `lg` up all three fit, so `Swiper` hides its own control
-row (new `maxIndex > 0` guard in `src/components/ui/Swiper.tsx`) and the row is
-visually the same three-card grid as the Offers/branches/Journal bands. Stacking the
-three cards instead measured 1556 px for that band on a 390 px phone rather than
-844 px — ~710 px taller.
+The intro/services band keeps its `Swiper` layout: `mobilePerView 1`, `tabletPerView 2`,
+`desktopPerView 3`, `gap 16`, no autoplay. The Why Choose Us band renders the About
+reasons as numbered cards; it is omitted when the About row has no published reasons.
 
-## 4. Measured height, before and after
+## 4. Historical measured height before CMS reasons returned to Home
 
-Measured with Playwright (Chromium) against `next dev`, comparing `/` (after) with a
+These measurements compare the layout before and after the services section replaced
+the original hard-coded reasons section. They predate the CMS-backed reasons band
+described above and are not measurements of the current Home. Playwright (Chromium)
+compared `/` (after) with a
 temporary `/preview-home-before` route that rendered the committed HEAD version of
 `HomeBody.tsx` with the same data — the route and component were deleted afterwards.
 `document.documentElement.scrollHeight`, light theme, Arabic and English:

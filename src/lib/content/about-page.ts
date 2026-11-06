@@ -24,12 +24,17 @@ import { cache } from 'react';
 import type { PhotoSlot } from '../images';
 import { toPhotoSlot } from '../wp/ui';
 import type { Bi } from './list-schema';
-import { publicRow } from './published';
+import { publicRow, type PublicRow } from './published';
 import { getBranchList, getServiceCards } from './site';
 
 type Doc = Record<string, unknown>;
 
 const EMPTY: Bi = { ar: '', en: '' };
+const EMPTY_HOME_REASONS = {
+  title: EMPTY,
+  lead: EMPTY,
+  reasons: [] as Bi[],
+};
 
 const str = (doc: Doc, key: string): string => {
   const value = doc[key];
@@ -121,6 +126,27 @@ export interface AboutPageDeps {
   treatmentCount: number;
 }
 
+interface AboutDocument {
+  title: Bi;
+  doc: Doc;
+}
+
+function documentOf(row: PublicRow): AboutDocument {
+  const title = row.values.title;
+  const data = row.values.data;
+  return {
+    title: title && title.kind === 'bi' ? { ar: title.ar, en: title.en } : { ...EMPTY },
+    doc: data && data.kind === 'json' && data.value && typeof data.value === 'object' && !Array.isArray(data.value)
+      ? (data.value as Doc)
+      : {},
+  };
+}
+
+const aboutDocument = cache(async (): Promise<AboutDocument | null> => {
+  const row = await publicRow('page', '/about');
+  return row ? documentOf(row) : null;
+});
+
 function split(doc: Doc, stem: string): AboutSplit | null {
   const paragraphs = lines(doc, `${stem}Paragraphs`);
   if (paragraphs.length === 0) return null;
@@ -169,16 +195,26 @@ export function buildAboutPage(title: Bi, doc: Doc, deps: AboutPageDeps): AboutP
  * needs one, and printing a default sentence instead would hide that from everybody.
  */
 export const getAboutPage = cache(async (): Promise<AboutPage | null> => {
-  const row = await publicRow('page', '/about');
-  if (!row) return null;
-  const title = row.values.title;
-  const data = row.values.data;
+  const content = await aboutDocument();
+  if (!content) return null;
   const [branches, services] = await Promise.all([getBranchList(), getServiceCards()]);
-  return buildAboutPage(
-    title && title.kind === 'bi' ? { ar: title.ar, en: title.en } : { ...EMPTY },
-    data && data.kind === 'json' && data.value && typeof data.value === 'object' && !Array.isArray(data.value)
-      ? (data.value as Doc)
-      : {},
-    { branchCount: branches.length, treatmentCount: services.length },
-  );
+  return buildAboutPage(content.title, content.doc, { branchCount: branches.length, treatmentCount: services.length });
+});
+
+/**
+ * The homepage uses the same published reasons the About page editor owns.
+ * A missing or unreadable About row leaves this optional band empty, like other
+ * homepage content readers, instead of preventing the rest of Home from rendering.
+ */
+export const getHomeWhyChooseUs = cache(async (): Promise<typeof EMPTY_HOME_REASONS> => {
+  try {
+    const content = await aboutDocument();
+    if (!content) return EMPTY_HOME_REASONS;
+    const page = buildAboutPage(content.title, content.doc, { branchCount: 0, treatmentCount: 0 });
+    return { title: page.reasonsTitle, lead: page.reasonsLead, reasons: page.reasons };
+  } catch (err) {
+    const detail = err instanceof Error ? err.message.slice(0, 60) : String(err).slice(0, 60);
+    console.log(`[site] empty    home reasons (${detail})`);
+    return EMPTY_HOME_REASONS;
+  }
 });

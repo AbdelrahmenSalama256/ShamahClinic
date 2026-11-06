@@ -4,6 +4,7 @@ import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeBody } from "@/components/home/HomeBody";
 import { getHeroPhotos, getHome, getHomeHero, getHomeIntro, getHomeResultCases, getPageTitle } from "@/lib/content/site";
+import { getHomeWhyChooseUs } from "@/lib/content/about-page";
 import { getBannerOverride } from "@/lib/content/banners";
 import { getMergedTreatments, getFeaturedServices } from "@/lib/wp/treatments";
 import { routeLang } from "@/lib/route-lang";
@@ -22,12 +23,13 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   await guardPage('home');
   const lang = await routeLang();
-  const [home, treatments, hero, heroSlides, intro, services, servicesTitle, banner, storyCases] = await Promise.all([
+  const [home, treatments, hero, heroSlides, intro, whyChooseUs, services, servicesTitle, banner, storyCases] = await Promise.all([
     getHome({ offers: 4, articles: 4, lang }),
     getMergedTreatments(),
     getHeroPhotos(),
     getHomeHero(),
     getHomeIntro(),
+    getHomeWhyChooseUs(),
     getFeaturedServices(3),
     getPageTitle("our-services", {
       ar: "خدمات عيادات شامه التجميلية",
@@ -72,6 +74,7 @@ export default async function HomePage() {
       />
       <HomeBody
         intro={intro}
+        whyChooseUs={whyChooseUs}
         services={services}
         servicesTotal={treatments.length}
         servicesTitle={servicesTitle}
