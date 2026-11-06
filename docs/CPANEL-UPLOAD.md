@@ -91,7 +91,8 @@ SQL file.
 If you already imported an earlier version of the schema into this database, do not
 re-import the full schema. Instead, open phpMyAdmin's **SQL** tab for the application
 database and run `database/create-owner.sql` to add the Owner account. It does not change
-an existing account with the same email.
+an existing account with the same email. Run the entire file in one phpMyAdmin **SQL**
+tab execution; do not copy only one statement from it.
 
 In the cPanel terminal, run the following from the application root after importing the
 SQL file. Use the same database credentials as the running application:
