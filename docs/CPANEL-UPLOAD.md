@@ -28,18 +28,32 @@ and tell you which startup command and application port to use.
    prefixes; use the full names it displays. Grant the user all privileges on this
    database only. Do not connect this application to the existing WordPress database.
 
-## 3. Upload and install
+## 3. Release and install
 
-Before preparing a refreshed upload, run `npm run copy:catalog` and `npm run copy:check`
-from the repository root. Copy the regenerated catalog and any source changes it reflects
-into `cpanel-upload/`, then rebuild the ZIP from that folder. The build also regenerates
-the catalog from the uploaded source before running Next.js, so a stale generated file
-cannot block deployment.
+The GitHub repository's `main` branch is the deployable application tree: its root has
+the contents of `cpanel-upload/`, with `package.json` directly at the root. From the
+source workspace, release changes with:
 
-Upload and extract `shamah-cpanel-newshamah.zip` into the new application directory so
-`package.json` is directly inside it. The prepared source folder is `cpanel-upload/`;
-the ZIP contains that folder's contents at its root. In cPanel's Node.js app settings,
-select Node 22+ and set the application root to that directory.
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1 -Message "Describe the release"
+```
+
+The script checks that `src/` matches `cpanel-upload/src/`, validates the catalog,
+TypeScript, and production build, scans for secrets, then makes a normal fast-forward
+push to `main`. It refuses to release if the deploy clone is dirty or the remote has
+diverged.
+
+On the cPanel server, run this from the application's Git clone after confirming there
+are no local changes:
+
+```sh
+git pull --ff-only
+npm ci --include=dev
+npm run build
+```
+
+In cPanel's Node.js app settings, select Node 22+ and set the application root to this
+clone. Restart the app from cPanel after the build succeeds.
 
 The app now reads cPanel's reserved `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and
 `DB_PASSWORD` values directly. cPanel supplies these at runtime; do not try to override
