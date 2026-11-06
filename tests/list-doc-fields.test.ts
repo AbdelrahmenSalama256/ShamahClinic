@@ -242,10 +242,13 @@ describe('what the typed list form really paints (BK-20 F)', () => {
           continue;
         }
         if (field.type === 'text' && field.html) {
-          // A column the site prints as markup is a page you write, not tags you read: one
-          // editable surface per language, and no box that shows the source.
-          expect(markup, `${schema.key}.${field.stem} arabic`).toContain(`id="${id}-ar" role="textbox"`);
-          expect(markup, `${schema.key}.${field.stem} english`).toContain(`id="${id}-en" role="textbox"`);
+          // A column the site prints as markup is a page you write, not tags you read: one editor
+          // per language, opening in that language's direction. The editable surface itself is
+          // built by TipTap after mount, so the row's `id` and accessible name reaching it are
+          // proved in `tests/block-editor.test.ts`, and what is paintable here is the frame.
+          expect(markup, `${schema.key}.${field.stem} arabic`).toContain('console-block-editor" dir="rtl"');
+          expect(markup, `${schema.key}.${field.stem} english`).toContain('console-block-editor" dir="ltr"');
+          expect(markup, `${schema.key}.${field.stem} gives the surface its tools`).toContain('role="toolbar"');
           continue;
         }
         if (field.type === 'text' && !field.mono) {
@@ -279,11 +282,13 @@ describe('what the typed list form really paints (BK-20 F)', () => {
       }
 
       // The boxes a `<label>` cannot reach: a contenteditable surface takes its name from
-      // `aria-label`, and it has to carry the same words.
-      const surfaces = [...markup.matchAll(/role="textbox"[^>]*aria-label="([^"]+)"/g)].map(([, title]) => unscape(title));
+      // `aria-label`, which TipTap writes onto its element when the document mounts — proved in
+      // `tests/block-editor.test.ts`. What this render can prove is that there is exactly one
+      // editor per language for every html field, and that the Arabic one reads right-to-left.
+      const frames = [...markup.matchAll(/class="console-block-editor" dir="(rtl|ltr)"/g)].map(([, dir]) => dir);
       const htmlFields = schema.fields.filter((field) => field.type === 'text' && field.html && !field.mono);
-      expect(surfaces.length, `${schema.key} names every rich surface`).toBe(2 * htmlFields.length);
-      for (const title of surfaces) expect(title, `${schema.key} rich surface`).toMatch(pattern);
+      expect(frames.length, `${schema.key} opens one editor per language`).toBe(2 * htmlFields.length);
+      expect(frames.filter((dir) => dir === 'rtl').length, `${schema.key} writes Arabic right-to-left`).toBe(htmlFields.length);
     }
 
     // One list read by name, so the shape of the words is on the page and not only inside a loop.

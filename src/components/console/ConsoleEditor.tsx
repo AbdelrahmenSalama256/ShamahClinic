@@ -71,7 +71,7 @@ import { Alert, Badge, Empty, Note, Skeleton, type Tone } from '@/components/con
 import { ImageGallery } from './ImageGallery';
 import { ImagePicker } from './ImagePicker';
 import { OfferServicesField } from './OfferServicesField';
-import { RichEditor } from './RichEditor';
+import { BlockEditor } from './BlockEditor';
 import { SeoPanel } from './SeoPanel';
 import { imageSlots, isImageField, isImageGalleryField, looksLikeImage } from '@/lib/console/image-field';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
@@ -907,7 +907,7 @@ function FieldRow({
   if (field.format === 'html') {
     return (
       <Field htmlFor={id} errors={errors} label={labelNode} note={noteNode}>
-        <RichEditor
+        <BlockEditor
           labels={labels}
           value={text}
           disabled={disabled}

@@ -738,10 +738,10 @@ describe('a section opens its entity with every field editable (S3)', () => {
     expect(editor).not.toMatch(/onChange\([^)]*row\.key/);
   });
 
-  it('gives every picture a picker and a body the rich editor', () => {
+  it('gives every picture a picker and a body the block editor', () => {
     expect(editor).toMatch(/<ImagePicker/);
     expect(editor).toMatch(/<ImageGallery/);
-    expect(editor).toMatch(/<RichEditor/);
+    expect(editor).toMatch(/<BlockEditor/);
     expect(editor).toMatch(/field\.kind === 'json'/);
   });
 });

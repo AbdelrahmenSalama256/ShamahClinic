@@ -5031,8 +5031,47 @@ and is not started. Requirements are in the brief; this is the working checklist
     into `src/`, so a mirror file typechecked from the root is checked against the *other* tree's
     modules. The mirror's own `tsconfig` and `scripts/release.ps1` (which compares the two `src/`
     trees by hash) still cover it.
-  - [ ] **A2 — the editor surface** (toolbar, media-library images with alt, FAQ/CTA node views,
-    paste through `cleanPaste`, RTL) — pending
+  - [x] **A2 — the editor surface** — `src/components/console/BlockEditor.tsx` replaces
+    `RichEditor.tsx` (deleted) in both places an `html` column is edited: the article/offer/page
+    pane (`ConsoleEditor.tsx`) and the two-language list rows (`ListDocFields.tsx`). The old
+    surface ran `document.execCommand`, which is why it could not make a FAQ pair, name a picture
+    or edit a table; nothing in the new one reaches for it (`execCommand`, `contentEditable` and
+    `data-placeholder=` are all asserted absent). Toolbar: undo/redo, paragraph, H2, H3, bold,
+    italic, bullets, numbers, quote, link/unlink, table, photo, FAQ, CTA, divider — 17 buttons,
+    plus a second row of table tools that appears only while the caret is in a table. A picture
+    comes from the media library (`/api/console/media?limit=24`, `uploadPicture`) or from a drop,
+    never from a typed address, and the alt box opens in the same breath as the choice, with
+    `rich.image_alt_missing` while it is empty; a link is checked against a scheme allowlist and
+    `isAllowedHref()` before it wraps words. A paste goes through `cleanPaste()` *before* the
+    browser's markup reaches the document (`view.pasteHTML`), falls back to `text/plain` when
+    cleaning leaves no words, and says what it cost (`rich.paste_cleaned`).
+    Decisions worth keeping: **the model is built once at module scope** (`EXTENSIONS`) and
+    `useEditor(…, [])` runs with `immediatelyRender: false` — a surface rebuilt on a render nobody
+    asked for is a caret sent back to the start of the document. That is safe only because TipTap
+    re-applies the options object on every render (`@tiptap/react` `index.cjs:465`/`:501` →
+    `Editor.setOptions` → `view.setProps`), so `onChange`, `labels`, `rtl`, and the surface's own
+    `id`/`role`/`aria-*` stay live with no refs and no `dom.setAttribute` anywhere. **The CTA chip
+    is a node view, the stored bytes are not**: `CtaBlock.extend({ addNodeView: … })` paints the
+    variant picker, while `getHTML()` serialises the `renderHTML` the round trip proved; the words
+    reach it through a `Strings` context (`Partial<Record<MessageKey,string>>`) because ProseMirror
+    renders a node view outside the React tree that owns `labels`. **The empty-slot sentences are
+    CSS custom properties, not attributes**: `Placeholder` supplies only the `is-empty` /
+    `is-editor-empty` classes (`includeChildren: true, showOnlyCurrent: false`) and the sheet
+    paints `content: var(--c-rich-placeholder | --c-rich-faq-question | --c-rich-faq-answer)`,
+    which the component writes from the catalog as CSS string tokens on every render — so a
+    language switch renames the slots without rebuilding anybody's document, and a blank line in
+    the middle of a page stays blank. **An external `value` re-parses only when it is not the
+    string this surface just produced** (`pending` ref + `setContent(…, { emitUpdate: false })`),
+    which is what keeps a save's echo from moving the caret. The sheet is console-only
+    (`.console-block-*` in `console-kit.css`, every `var()` a declared `--c-*`, logical
+    properties, no `outline:`, no numeric `border-radius`/`min-height`), and 44 new `rich.*`
+    catalog lines carry both languages. `@tiptap/extensions` joined `package.json` +
+    `package-lock.json` because that is where `Placeholder` lives in TipTap 3.
+    New coverage: `tests/block-editor.test.ts` (26) and `tests/paste-filter.test.ts` (17, renamed
+    from `rich-editor.test.ts` — it now proves only the paste filter, which is what it tests).
+    Gates with A2 in: `typecheck` clean, `eslint` 0 errors / 9 pre-existing warnings, `copy:check`
+    253 entries current, `next build` green, `npm test` **63 files / 1197 tests** passed, and
+    `cpanel-upload/src` byte-identical to `src` (`diff -rq` empty).
   - [ ] **A3 — article screen wiring**: editable Arabic-safe unique slug, live Latin-text and `[…]`
     warnings — pending
   - [ ] **A4 — live preview identical to the public page, TOC included** — pending

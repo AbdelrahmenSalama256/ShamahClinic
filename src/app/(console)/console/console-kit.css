@@ -905,19 +905,45 @@
   }
 
   /* --- body editor ----------------------------------------------------------- */
-  .console-rich {
+  .console-block-editor {
     display: grid;
     gap: var(--c-gap-tight);
+    /* The three sentences an empty slot is painted with, declared empty so the sheet still reads
+       only what the console declares (`tests/console-isolation.test.ts`). The component fills them
+       from the catalog, in the language the console is in, as an inline style on this same
+       element — which is why an Arabic console never shows an English hint. */
+    --c-rich-placeholder: "";
+    --c-rich-faq-question: "";
+    --c-rich-faq-answer: "";
   }
 
-  .console-rich-toolbar {
+  .console-block-toolbar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: var(--c-sp-1);
   }
 
-  .console-rich-link {
+  /* The table's own controls appear only while the caret is inside one, and say so by sitting on
+     their own line under the text tools rather than among them. */
+  .console-block-table-tools {
+    padding-block-start: var(--c-sp-1);
+    border-block-start: 1px solid var(--c-line);
+  }
+
+  .console-block-link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-block-image {
+    display: grid;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-block-image-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -926,7 +952,7 @@
 
   /* A document, not a box of text: an empty body still reads as somewhere to write, and a
      long one grows instead of hiding its own tail behind a scroll. */
-  .console-rich-surface {
+  .console-block-surface {
     min-block-size: 12rem;
     padding: var(--c-pad);
     border: 1px solid var(--c-line-strong);
@@ -937,73 +963,146 @@
     line-height: var(--c-line-height);
   }
 
-  .console-rich-surface:empty::before {
-    content: attr(data-placeholder);
-    color: var(--c-text-3);
-  }
-
-  .console-rich-surface[data-disabled="true"] {
+  .console-block-editor[data-disabled="true"] .console-block-surface {
     background: var(--c-surface-soft);
     color: var(--c-text-3);
-    cursor: not-allowed;
   }
 
-  .console-rich-surface > :first-child {
+  .console-block-surface > :first-child {
     margin-block-start: 0;
   }
 
-  .console-rich-surface > :last-child {
+  .console-block-surface > :last-child {
     margin-block-end: 0;
   }
 
-  .console-rich-surface p,
-  .console-rich-surface ul,
-  .console-rich-surface ol,
-  .console-rich-surface blockquote,
-  .console-rich-surface figure,
-  .console-rich-surface table {
+  .console-block-surface p,
+  .console-block-surface ul,
+  .console-block-surface ol,
+  .console-block-surface blockquote,
+  .console-block-surface figure,
+  .console-block-surface table {
     margin-block: var(--c-sp-2);
   }
 
-  .console-rich-surface h2,
-  .console-rich-surface h3,
-  .console-rich-surface h4 {
+  .console-block-surface h2,
+  .console-block-surface h3,
+  .console-block-surface h4 {
     margin-block: var(--c-sp-4) var(--c-sp-2);
     font-weight: 700;
     line-height: 1.25;
   }
 
-  .console-rich-surface ul,
-  .console-rich-surface ol {
+  .console-block-surface ul,
+  .console-block-surface ol {
     padding-inline-start: var(--c-sp-5);
   }
 
-  .console-rich-surface blockquote {
+  .console-block-surface blockquote {
     margin-inline: 0;
     padding-inline-start: var(--c-sp-3);
     border-inline-start: 2px solid var(--c-line-strong);
     color: var(--c-text-2);
   }
 
-  .console-rich-surface a {
+  .console-block-surface a {
     color: var(--c-text);
     text-decoration: underline;
     text-underline-offset: var(--c-sp-1);
   }
 
-  .console-rich-surface img {
+  .console-block-surface img {
     max-inline-size: 100%;
     border-radius: var(--c-r-sm);
   }
 
-  .console-rich-surface th,
-  .console-rich-surface td {
+  .console-block-surface th,
+  .console-block-surface td {
+    position: relative;
     padding: var(--c-sp-1);
     border: 1px solid var(--c-line);
     text-align: start;
+    vertical-align: top;
   }
 
-  .console-rich-file {
+  /* ProseMirror leaves a trailing break in an empty block, so the line already has its height and
+     the hint is painted over it instead of added to it. `inset-inline-start` is what puts the
+     Arabic page's hint at the right edge without a second rule for `dir="rtl"`. A blank line in the
+     middle of a page stays blank: only the three slots named below have a sentence. */
+  .console-block-surface .is-empty {
+    position: relative;
+  }
+
+  .console-block-surface .is-empty::before {
+    content: "";
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    color: var(--c-text-3);
+    pointer-events: none;
+  }
+
+  .console-block-surface .is-editor-empty::before {
+    content: var(--c-rich-placeholder);
+  }
+
+  .console-block-surface section[data-block="faq"] > .is-empty::before {
+    content: var(--c-rich-faq-question);
+  }
+
+  .console-block-surface [data-faq-answer] .is-empty::before {
+    content: var(--c-rich-faq-answer);
+  }
+
+  /* The two blocks that are not prose, drawn as the framed things they are. The FAQ pair is the
+     document the renderer reads (`section[data-block="faq"]`), so it is framed here and nowhere
+     else; the call-to-action chip is a node view and exists only on this screen. */
+  .console-block-surface section[data-block="faq"],
+  .console-block-cta {
+    margin-block: var(--c-sp-4);
+    padding: var(--c-sp-3);
+    border: 1px dashed var(--c-line-strong);
+    border-radius: var(--c-r-sm);
+  }
+
+  .console-block-surface section[data-block="faq"] > :first-child {
+    margin-block-start: 0;
+  }
+
+  .console-block-surface section[data-block="faq"] > :last-child {
+    margin-block-end: 0;
+  }
+
+  .console-block-cta {
+    display: grid;
+    gap: var(--c-gap-tight);
+    background: var(--c-surface-soft);
+  }
+
+  .console-block-cta[data-selected="true"] {
+    border-color: var(--c-accent);
+  }
+
+  .console-block-cta-title {
+    font-weight: 700;
+  }
+
+  /* A selected picture and a selected cell, said without the browser's ring: this is a document,
+     and the console's chrome has to read as the page's own rather than as a form control. */
+  .console-block-surface .ProseMirror-selectednode {
+    box-shadow: 0 0 0 2px var(--c-accent);
+  }
+
+  .console-block-surface .selectedCell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: color-mix(in srgb, var(--c-accent) 12%, transparent);
+    pointer-events: none;
+  }
+
+  .console-block-file {
     display: none;
   }
 

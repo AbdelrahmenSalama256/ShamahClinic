@@ -32,7 +32,7 @@
 import { Fragment, useState } from 'react';
 import { Badge, Button, Checkbox, Field, Input, Note, Select, Textarea, pairName } from '@/components/console/kit';
 import { ImagePicker } from './ImagePicker';
-import { RichEditor } from './RichEditor';
+import { BlockEditor } from './BlockEditor';
 import type { Form } from '@/lib/console/editor-form';
 import type { MessageKey } from '@/lib/console/messages';
 import { UNKNOWN_FORM_KEY, type ChildField, type FieldGroup, type ListField, type ListSchema } from '@/lib/content/list-schema';
@@ -276,7 +276,7 @@ function SchemaField({
         <div className="console-doc-pair">
           {field.html ? (
             <>
-              <RichEditor
+              <BlockEditor
                 labels={labels}
                 value={ar}
                 disabled={disabled}
@@ -285,7 +285,7 @@ function SchemaField({
                 rtl
                 onChange={(next) => onChange(`${field.stem}_ar`, next)}
               />
-              <RichEditor
+              <BlockEditor
                 labels={labels}
                 value={en}
                 disabled={disabled}
