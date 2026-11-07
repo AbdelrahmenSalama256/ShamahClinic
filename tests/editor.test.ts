@@ -31,7 +31,8 @@ import { describe, expect, it } from 'vitest';
 import { LIST_KEYS } from '../src/lib/auth/roles';
 import { CONTENT_KINDS, CONTENT_LOCALES, kindSpec, parseWrites, type ContentKind, type ContentLocale } from '../src/lib/content/kinds';
 import { localizedPath, pageSlug, publicPathOf } from '../src/lib/content/paths';
-import { fieldsFromForm, formOf, sameForm, contentStateKey, isPendingIn, resultNotices } from '../src/lib/console/editor-form';
+import { fieldsFromForm, formOf, sameForm, contentStateKey, isPendingIn, resultNotices, textWarnings } from '../src/lib/console/editor-form';
+import { identityForTitle } from '../src/lib/content/slug';
 import { imagesOfForm } from '../src/components/console/ConsoleEditor';
 import { catalogFor, type MessageKey } from '../src/lib/console/messages';
 import { fieldOf, groupIssues, issueText, liveIssues, type FieldIssue, type TrackedIssue } from '../src/lib/console/issues';
@@ -480,6 +481,116 @@ describe('the search read-out follows the site', () => {
   it('says when a row has no page to preview', () => {
     expect(seoReadout({ kind: 'list_item', key: 'home', listKey: 'nav', locale: 'en', title: 'x', otherTitle: '', description: '', otherDescription: '' }).path).toBeNull();
     expect(seoReadout({ kind: 'page', key: '/contact', locale: 'en', title: 'x', otherTitle: '', description: '', otherDescription: '' }).path).toBe('/en/contact');
+  });
+});
+
+describe('a box says what the WordPress import left in it', () => {
+  const plain = field({ kind: 'bi', format: 'plain', draft: { ar: '', en: '' }, pub: { ar: null, en: null } });
+  const body = field({ kind: 'bi', format: 'html', draft: { ar: '', en: '' }, pub: { ar: null, en: null } });
+
+  it('flags an Arabic box written in Latin letters, and only that one', () => {
+    // 91 of the 93 imported article excerpts are English sentences in an `*_ar` column, and the
+    // server has always accepted them: this is the only place that says so to the person typing.
+    expect(textWarnings(plain, 'ar', 'Skin care routine')).toEqual(['content.warn.latin']);
+    expect(textWarnings(plain, 'en', 'Skin care routine')).toEqual([]);
+    expect(textWarnings(plain, 'ar', 'روتين العناية بالبشرة')).toEqual([]);
+  });
+
+  it('counts a product name inside an Arabic sentence as Arabic', () => {
+    expect(textWarnings(plain, 'ar', 'جلسة Derma Pen للبشرة')).toEqual([]);
+  });
+
+  it('flags the teaser artifact in whichever language it survived in', () => {
+    expect(textWarnings(plain, 'ar', 'روتين العناية […]')).toEqual(['content.warn.ellipsis']);
+    expect(textWarnings(plain, 'en', 'A skin routine […]')).toEqual(['content.warn.ellipsis']);
+    expect(textWarnings(plain, 'ar', 'روتين العناية…')).toEqual([]);
+  });
+
+  it('says both at once, in the order the box reads', () => {
+    expect(textWarnings(plain, 'ar', 'Skin care routine […]')).toEqual(['content.warn.latin', 'content.warn.ellipsis']);
+  });
+
+  it('stays quiet about an empty box, about markup and about a column that is not text', () => {
+    expect(textWarnings(plain, 'ar', '   ')).toEqual([]);
+    // A body ends in `</p>`, so the same test over it would answer about the closing tag rather
+    // than about the sentence — which is why a warning is a plain field's business only.
+    expect(textWarnings(body, 'ar', 'A skin care routine […]</p>')).toEqual([]);
+    expect(textWarnings(field({ kind: 'text', format: 'plain', value: '' }), 'ar', 'Skin care […]')).toEqual([]);
+  });
+
+  it('is drawn under the field it belongs to, and never withholds the save', () => {
+    const pane = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
+    expect(pane).toMatch(/const warnNotes = textWarnings\(field, locale, value\)/);
+    expect(pane).toMatch(/note=\{warnNotes\.length > 0 \? <>\{noteNode\}\{warnNotes\}<\/> : noteNode\}/);
+    // What greys the buttons is still the browser's own complaint list, and a warning is not in it.
+    expect(pane).toMatch(/const invalid = parsed\.issues\.length > 0;/);
+    expect(fieldsFromForm(row({ kind: 'article', fields: { title: plain } }), { title: 'Skin care routine […]' }).issues).toEqual([]);
+  });
+});
+
+describe('the address a row is served at is editable, and says what a move costs', () => {
+  const pane = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
+
+  it('is drawn for the kinds whose key is a URL, and for no others', () => {
+    expect(pane).toMatch(/\{kind !== 'list_item' \? \(\s*<SlugField/);
+    // Keyed by the address it holds, so a move that lands starts the box from the database's
+    // value instead of leaving the person looking at the text they just submitted.
+    expect(pane).toMatch(/key=\{row\.key\}/);
+  });
+
+  it('folds what is typed with the function a new row is named by', () => {
+    expect(pane).toContain("from '@/lib/content/slug'");
+    expect(pane).toMatch(/const key = identityForTitle\(kind, typed\)/);
+    expect(pane).toMatch(/publicPathOf\(kind, key\)/);
+    // Arabic letters are kept rather than transliterated, a page keeps its leading slash, and a
+    // title made only of punctuation folds to nothing — which the box says instead of posting.
+    expect(identityForTitle('article', 'Derma Pen — Fusion!')).toBe('derma-pen-fusion');
+    expect(identityForTitle('article', 'عنوان مكرر')).toBe('عنوان-مكرر');
+    expect(identityForTitle('page', 'About Us')).toBe('/about-us');
+    expect(identityForTitle('article', '…')).toBe('');
+  });
+
+  it('offers the title as the source, read off the words in the box right now', () => {
+    expect(pane).toMatch(/const slugTitle = titleField \? String\(form\[titleField\.name\] \?\? ''\) : '';/);
+    expect(pane).toMatch(/onClick=\{\(\) => setTyped\(title\)\}/);
+    expect(pane).toMatch(/title\.trim\(\) === ''/);
+  });
+
+  it('is its own verb, so no draft write and no autosave can move a published page', () => {
+    expect(pane).toMatch(/\/rename\$\{query\}`, 'POST', \{ key: next, version: row\.version \}/);
+    // The box is not a member of the form: `fieldsFromForm()` walks the row's fields, and a
+    // typed address is not one of them, so a save cannot carry it even by accident.
+    expect(fieldsFromForm(rowOfKind('article'), { key: 'another-row' }).fields.key).toBeUndefined();
+    expect(fieldsFromForm(rowOfKind('page'), { key: '/somewhere-else' }).fields.key).toBeUndefined();
+  });
+
+  it('says every answer the server can give, in both languages', () => {
+    const keys: MessageKey[] = [
+      'content.slug',
+      'content.route',
+      'content.slug_at',
+      'content.slug_derive',
+      'content.slug_change',
+      'content.slug_changed',
+      'content.slug_moves',
+      'content.warn.latin',
+      'content.warn.ellipsis',
+      'content.error.key_taken',
+      'content.error.invalid_key',
+      'content.error.rename_not_applicable',
+    ];
+    for (const key of keys) {
+      expect(labels[key].trim().length, `${key} in Arabic`).toBeGreaterThan(0);
+      expect(labelsEn[key].trim().length, `${key} in English`).toBeGreaterThan(0);
+      expect(labels[key], key).not.toBe(labelsEn[key]);
+      expect(labels[key], `${key} reads as Arabic`).toMatch(/[\u0600-\u06FF]/);
+      expect(labelsEn[key], `${key} reads as English`).not.toMatch(/[\u0600-\u06FF]/);
+    }
+    // The three codes the store answers with that a save cannot: each one reaches a sentence
+    // through the same `content.error.<code>` mapping every other failure uses.
+    for (const code of ['key_taken', 'invalid_key', 'rename_not_applicable', 'stale_row', 'in_trash']) {
+      expect(labels[`content.error.${code}` as MessageKey], code).toBeTruthy();
+    }
   });
 });
 

@@ -5,7 +5,7 @@
  * console writes and the default the site falls back to. `npm run copy:catalog` rewrites
  * this file; `npm run build` fails when it is stale.
  *
- * 253 entries from 135 components. Data-driven calls
+ * 253 entries from 136 components. Data-driven calls
  * (`t(row.name.ar, row.name.en)`) are console rows, not copy, and are not listed here.
  */
 export interface CopyEntry {

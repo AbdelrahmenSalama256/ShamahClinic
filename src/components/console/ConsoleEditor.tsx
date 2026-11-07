@@ -54,6 +54,7 @@ import {
   sameForm,
   sharedAltMove,
   storedValue,
+  textWarnings,
   type Form,
 } from '@/lib/console/editor-form';
 import { isSharedAltKey } from '@/lib/content/alt-migration';
@@ -62,7 +63,8 @@ import { ListDocFields, type ReferenceChoice } from './ListDocFields';
 import { ServiceCompleteness } from './ServiceCompleteness';
 import { CaseComparePreview } from './CaseComparePreview';
 import { previewDocument, previewModel, type ResultCasePreview } from '@/lib/console/preview';
-import { localizedPath } from '@/lib/content/paths';
+import { localizedPath, publicPathOf } from '@/lib/content/paths';
+import { identityForTitle } from '@/lib/content/slug';
 import { writeScopeQuery } from '@/lib/content/list-view';
 import { Button, ButtonLink } from '@/components/console/kit';
 import { Checkbox, Field, Input, Textarea } from '@/components/console/kit';
@@ -76,7 +78,7 @@ import { SeoPanel } from './SeoPanel';
 import { imageSlots, isImageField, isImageGalleryField, looksLikeImage } from '@/lib/console/image-field';
 import type { ContentAbilities, ContentScope } from '@/lib/console/content-screen';
 import type { EntitySeo } from '@/lib/console/seo-center';
-import { isOrderedKind, type ContentKind, type ContentLocale } from '@/lib/content/kinds';
+import { isOrderedKind, kindSpec, CONTENT_LOCALES, type ContentKind, type ContentLocale } from '@/lib/content/kinds';
 import type { ContentRow, FieldView } from '@/lib/content/store';
 import type { RevisionView } from '@/lib/content/publish';
 import type { MessageKey } from '@/lib/console/messages';
@@ -190,6 +192,13 @@ export function ConsoleEditor({
 
   const writable = abilities.update.includes(scopeValue);
   const canEditRow = row !== null && writable && !row.trashed && !loading;
+  /**
+   * Whether this caller may move the address, which is not the same question as whether they may
+   * write the row. One column serves both languages, so a grant narrowed to one of them is not
+   * enough — the server refuses that rename, and a control whose only answer is a 403 is a
+   * control that should not have been drawn.
+   */
+  const mayMove = !named && abilities.update.length === CONTENT_LOCALES.length;
   const query = writeScopeQuery({ listKey: named ? String(scopeValue) : null, locale });
 
   // A fresh read — a new row, a new tab, a rollback — owns the form. A save that came
@@ -374,8 +383,27 @@ export function ConsoleEditor({
     onChanged();
   }
 
-  async function moveToTrash(): Promise<void> {
+  /**
+   * The address, changed — its own verb and its own lock, never part of a save.
+   *
+   * The identity column is the URL the row is served at, so a draft write must not be able to
+   * move a published page and the two-second autosave must not either. That is why the box the
+   * person types into is not a member of `form`: nothing here can reach it by accident, and a
+   * move is one deliberate press with the row's version attached.
+   */
+  async function rename(next: string): Promise<void> {
     if (!row) return;
+    setBusy(true);
+    const result = await consoleCall<{ row?: ContentRow }>(`${api}/${row.id}/rename${query}`, 'POST', { key: next, version: row.version });
+    setBusy(false);
+    tell(result, 'content.slug_changed');
+    if (result.data?.row) setDoc({ tag, row: result.data.row });
+    // The heading, the preview link and the SEO panel all read the address off the screen's own
+    // data, so a move asks for them again instead of leaving them naming the old one.
+    if (!result.error) onChanged();
+  }
+
+  async function moveToTrash(): Promise<void> {    if (!row) return;
     setBusy(true);
     const result = await consoleCall<{ row?: ContentRow }>(`${api}/${row.id}${query}`, 'DELETE', { trashed: true });
     setBusy(false);
@@ -444,20 +472,37 @@ export function ConsoleEditor({
   const state = row ? contentStateKey(row) : null;
   const previewPath = seo.path === null ? null : localizedPath(seo.path, locale);
   /**
+   * The title of the tab being edited, which is what "take it from the title" takes.
+   *
+   * Read off the live form rather than off the row: the person who has just retyped the
+   * headline is the one who wants the address to follow it, and a derive that read the last
+   * save would hand back the slug they are looking at already.
+   */
+  const titleField = kindSpec(kind).bi.find((candidate) => candidate.name === 'title' || candidate.name === 'name');
+  const slugTitle = titleField ? String(form[titleField.name] ?? '') : '';
+  /**
    * The address of this row's own draft page, or null when there is nothing to draw one with.
    *
-   * A service row is a whole page rather than a card, so its preview asks the site to render
-   * it: `src/lib/wp/…` builds the page from the row's saved draft, the site's components paint
-   * it, and the stylesheet that arrives is the site's, never the console's. `?v=` is the row's
-   * version, so the frame reloads on the write that lands — which is the same moment the
+   * An article and a service row are whole pages rather than cards, so their preview asks the
+   * site to render them: the same components the public detail uses, fed by the row's saved
+   * draft, and the stylesheet that arrives is the site's, never the console's. `?v=` is the
+   * row's version, so the frame reloads on the write that lands — which is the same moment the
    * public page would change, and why the document behind it is `savedForm` rather than the
    * words still being typed: a name that is only in this browser would ask for a page that
    * does not exist yet and be answered by a 404.
+   *
+   * An article needs no headline to have a page. The public detail prints its own "Untitled"
+   * for a row without one, so the frame does too; refusing to draw it would hide the state an
+   * author is most likely to be looking at.
    */
   const draftHref =
-    row && listSchema?.key === 'services' && !row.trashed && listDocTitle(listSchema, listDocFromForm(listSchema, savedForm).doc, locale) !== ''
-      ? `${localizedPath(`/preview/services/${row.id}`, locale)}?v=${row.version}`
-      : null;
+    row === null || row.trashed
+      ? null
+      : kind === 'article'
+        ? `${localizedPath(`/preview/articles/${row.id}`, locale)}?v=${row.version}`
+        : listSchema?.key === 'services' && listDocTitle(listSchema, listDocFromForm(listSchema, savedForm).doc, locale) !== ''
+          ? `${localizedPath(`/preview/services/${row.id}`, locale)}?v=${row.version}`
+          : null;
   /** The same row, too nameless to have a page yet — said, because the frame is what is missing. */
   const needsName = row !== null && listSchema?.key === 'services' && !row.trashed && draftHref === null;
   /**
@@ -577,6 +622,24 @@ export function ConsoleEditor({
 
         {row && (
           <div className="console-fields">
+            {/* The address goes first, above the fields it was derived from: it is the one
+                value on this pane that changes where the row lives. A list item has no
+                address of its own — its uid is a reference other rows hold — so it gets none
+                of this and the server refuses it too. */}
+            {kind !== 'list_item' ? (
+              <SlugField
+                key={row.key}
+                kind={kind}
+                rowKey={row.key}
+                locale={locale}
+                title={slugTitle}
+                labels={labels}
+                disabled={!canEditRow}
+                locked={!mayMove}
+                busy={busy}
+                onRename={(next) => void rename(next)}
+              />
+            ) : null}
             {listSchema ? (
               <ListDocFields
                 schema={listSchema}
@@ -764,6 +827,88 @@ export function ConsoleEditor({
   );
 }
 
+/**
+ * The address this row is served at, and the only control that moves it.
+ *
+ * It is not one of the fields, and deliberately so: the identity column is the URL, so the
+ * write is its own verb with its own version lock, and nothing the autosave carries can reach
+ * it. What the note prints is `identityForTitle()` over the text in the box — the same fold the
+ * server applies, Arabic letters kept, punctuation collapsed, a page's leading slash put back —
+ * so a pasted title shows as the slug it will become *before* anybody asks for it, and a box
+ * emptied by accident says so in the sentence the server would have answered with.
+ *
+ * The box keeps its own state and is keyed by the address it holds, which is what makes it stop
+ * being dirty the moment a move lands: a new `rowKey` is a new component, starting from the
+ * value the database now has.
+ */
+function SlugField({
+  kind,
+  rowKey,
+  locale,
+  title,
+  labels,
+  disabled,
+  locked,
+  busy,
+  onRename,
+}: Readonly<{
+  kind: ContentKind;
+  /** the address the row has right now, not the one being typed */
+  rowKey: string;
+  locale: ContentLocale;
+  title: string;
+  labels: Record<MessageKey, string>;
+  disabled: boolean;
+  /** the caller writes one language only, and the address belongs to both */
+  locked: boolean;
+  busy: boolean;
+  onRename: (key: string) => void;
+}>) {
+  const [typed, setTyped] = useState(rowKey);
+  const key = identityForTitle(kind, typed);
+  const path = key === '' ? null : publicPathOf(kind, key);
+  const moved = key !== '' && key !== rowKey;
+  const label = labels[kind === 'page' ? 'content.route' : 'content.slug'];
+  const here = publicPathOf(kind, rowKey);
+
+  // A writer of one language is shown the address and told why it is not a box: a control that
+  // could only answer 403 is a control that should never have been drawn.
+  if (locked) {
+    return (
+      <div className="console-field">
+        <Note>
+          {label}: {here === null ? rowKey : <bdi>{localizedPath(here, locale)}</bdi>} · {labels['content.slug_locked']}
+        </Note>
+      </div>
+    );
+  }
+
+  return (
+    <div className="console-field">
+      <label htmlFor="field-key">{label}</label>
+      {/* `dir="auto"` rather than the tab's direction: an Arabic slug is RTL and a Latin one is
+          LTR, and a box that guessed would reorder the hyphens of whichever it guessed wrong. */}
+      <Input id="field-key" value={typed} dir="auto" maxLength={191} disabled={disabled} onChange={(event) => setTyped(event.target.value)} />
+      <div className="console-controls">
+        <Button size="sm" disabled={disabled || busy || !moved} onClick={() => onRename(key)}>
+          {labels['content.slug_change']}
+        </Button>
+        <Button size="sm" disabled={disabled || busy || title.trim() === ''} onClick={() => setTyped(title)}>
+          {labels['content.slug_derive']}
+        </Button>
+      </div>
+      {path === null ? (
+        <Note tone="warn">{labels['content.error.invalid_key']}</Note>
+      ) : (
+        <Note tone={moved ? 'warn' : 'neutral'}>
+          {labels['content.slug_at']} <bdi>{localizedPath(path, locale)}</bdi>
+          {moved ? ` · ${labels['content.slug_moves']}` : ''}
+        </Note>
+      )}
+    </div>
+  );
+}
+
 function FieldRow({
   name,
   field,
@@ -840,6 +985,16 @@ function FieldRow({
     ) : field.immediate && !invalid ? (
       <Note>{labels['content.immediate']}</Note>
     ) : null;
+
+  // The two sentences nobody else says about a value the server accepts: a box filed under
+  // Arabic that is written in Latin letters, and the `[…]` the WordPress teaser shortcode left
+  // at the end of it. Both are said while the person is typing, in the field they belong to,
+  // and neither withholds a save — the imported corpus is full of both.
+  const warnNotes = textWarnings(field, locale, value).map((key) => (
+    <Note key={key} tone="warn">
+      {labels[key]}
+    </Note>
+  ));
 
   // BK-14a: a picture is chosen from the disk, never typed. The row keeps its label and its
   // `id` — the id now belongs to the file input the picker stretches over the frame — so the
@@ -921,7 +1076,7 @@ function FieldRow({
   }
 
   return (
-    <Field htmlFor={id} errors={errors} label={labelNode} note={noteNode}>
+    <Field htmlFor={id} errors={errors} label={labelNode} note={warnNotes.length > 0 ? <>{noteNode}{warnNotes}</> : noteNode}>
       {field.multiline ? (
         <Textarea
           id={id}

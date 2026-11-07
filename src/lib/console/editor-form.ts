@@ -19,6 +19,7 @@ import type { Tone } from '@/components/console/kit';
 import type { MessageKey } from './messages';
 import type { FieldIssue } from './issues';
 import { plainText } from '../content/format';
+import { endsWithEllipsisArtifact, isMostlyLatin } from '../text-script';
 import { isOrderedKind, type ContentLocale } from '../content/kinds';
 import {
   ALT_TARGET_KEYS,
@@ -79,6 +80,33 @@ export function contentStateTone(key: MessageKey): Tone {
 export function isPendingIn(field: FieldView, locale: ContentLocale): boolean {
   const published = field.pub?.[locale];
   return published !== null && published !== undefined && field.draft?.[locale] !== published;
+}
+
+/**
+ * What a plain-text box says about itself while a person is still typing in it.
+ *
+ * Both sentences are about the WordPress import, and both are true of a value the server
+ * accepts without a word: 91 of the 93 article excerpts arrived in `excerpt_ar` written in
+ * English, and 92 of the 94 arrived ending in the literal `[…]` the WP teaser shortcode baked
+ * into the stored text. The site cleans the second (`stripEllipsisArtifact()` in the readers)
+ * and reports the first (`answersIn()` in `language-fill.ts`), so an operator who fixes a
+ * headline today is fixing something no screen has ever complained about.
+ *
+ * A warning, never an issue: the row saves with either of them standing, because the imported
+ * corpus is full of both and refusing to write it would strand the article the person came to
+ * fix. Only `plain` fields are read — a body is markup, and `endsWithEllipsisArtifact()` over
+ * `</p>` answers about the closing tag rather than the sentence.
+ */
+export function textWarnings(field: FieldView, locale: ContentLocale, value: FormValue | undefined): MessageKey[] {
+  if (field.kind !== 'bi' || field.format !== 'plain') return [];
+  const text = String(value ?? '');
+  if (text.trim() === '') return [];
+  const out: MessageKey[] = [];
+  // The English column holding English is exactly what it says, so only `ar` is tested — the
+  // same rule `answersIn()` applies on the way out.
+  if (locale === 'ar' && isMostlyLatin(text)) out.push('content.warn.latin');
+  if (endsWithEllipsisArtifact(text)) out.push('content.warn.ellipsis');
+  return out;
 }
 
 /** The typed form a list row's document deserves, or null when its list has no schema. */
