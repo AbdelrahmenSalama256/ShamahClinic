@@ -407,8 +407,12 @@ describe('the editor points the frame at that route', () => {
     expect(articleBranch).not.toContain('listDocTitle');
   });
 
-  it('keeps scripting off, because the frame holds the session’s own origin', () => {
-    expect(editorSource).toMatch(/sandbox=\{draftHref \? 'allow-same-origin' : ''\}/);
-    expect(editorSource).not.toContain('allow-scripts');
+  it("keeps the page frame off the session while Next's stream finishes painting", () => {
+    // The frame runs Next's streamed scripts (an opaque origin cannot replace a loading
+    // boundary without them) but carries no same-origin capability: it cannot read the
+    // console's session or parent DOM. The card frame keeps the tighter sandbox with no
+    // scripts at all, and the editor test checks the same contract from its side.
+    expect(editorSource).toMatch(/sandbox=\{draftHref \? 'allow-scripts' : ''\}/);
+    expect(editorSource).not.toContain('allow-same-origin');
   });
 });
