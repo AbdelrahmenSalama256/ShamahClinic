@@ -5072,11 +5072,52 @@ and is not started. Requirements are in the brief; this is the working checklist
     Gates with A2 in: `typecheck` clean, `eslint` 0 errors / 9 pre-existing warnings, `copy:check`
     253 entries current, `next build` green, `npm test` **63 files / 1197 tests** passed, and
     `cpanel-upload/src` byte-identical to `src` (`diff -rq` empty).
-  - [ ] **A3 — article screen wiring**: editable Arabic-safe unique slug, live Latin-text and `[…]`
-    warnings — pending
+  - [x] **A3 — article screen wiring**: the address is editable, and the two WordPress warnings are
+    drawn while a person types. `renameRow()` (`src/lib/content/store.ts`) is its own verb rather than
+    a field in the save body, so the two-second autosave can never move a published page's URL:
+    `saveSchema` names `fields` and `version` only (zod strips a stray `key`), and `parseWrites()`
+    answers `{path:'key', message:'unknown field'}` — proved three ways, including a DB test that
+    PATCHes a `key` and asserts the slug did not move. The store normalises with the same
+    `identityForTitle()` a new row is named by, checks uniqueness across the **whole** table
+    (trashed rows included — the unique index does not disappear with `deleted_at`), honours the
+    version lock, and returns the row untouched when the address typed is the one it already has.
+    `list_items` are refused (`rename_not_applicable`): their `uid` is a reference other rows hold
+    (offers' `applicable_services`, results' WordPress ids) and no screen shows those links breaking.
+    `renameHandler()` (`src/lib/content/api.ts`) keeps the guard order — permission before the body —
+    and adds one rule of its own: the column serves **both** languages, so a grant narrowed to one
+    of them is refused with `address_locale_locked`. That is `writableLocales(...).length <
+    CONTENT_LOCALES.length`, not an empty `can()` target: every seeded role holds
+    `{locales:['ar','en']}`, and `dimensionAllowed(values, undefined)` is false, so a target-less
+    check would have denied the Owner too. The audit names **both** addresses, because the row
+    afterwards holds only the new one.
+    `guard()` gained `audit?: AuditPatch | false` (`src/lib/auth/guard.ts`): a handler can now say a
+    200 changed nothing, which is the same reason a refused request is not recorded. A no-op rename
+    spends no version and writes no trail line.
+    `SlugField` (`src/components/console/ConsoleEditor.tsx`) is **not a form member** — it posts its
+    own verb and is keyed by `row.key` so it re-initialises after a move. It prints
+    `identityForTitle()` over the typed text live (the fold is dependency-free and client-safe), the
+    address the site will serve it at via `publicPathOf()`/`localizedPath()`, a "take it from the
+    title" button, and `content.slug_moves` before anybody commits. A single-language writer sees the
+    address and `content.slug_locked` instead of a control whose only answer is a 403.
+    `textWarnings()` (`src/lib/console/editor-form.ts`) reads `bi` + `format:'plain'` only, so the
+    `[…]` test never answers about a body's closing `</p>`: `content.warn.latin` on the `ar` tab
+    (a product name inside an Arabic sentence is fine), `content.warn.ellipsis` in both. They are
+    `Note tone="warn"` under their field and **stay out of `parsed.issues`**, which alone drives
+    `invalid` — a warning must not grey the save button. `content.identity_hint` was deleted from both
+    catalogs: it claimed the address cannot change, and nothing drew it.
+    Coverage: `tests/content.test.ts` 68 → **78** (10 new: derivation, the fold, 409 against a live
+    *and* a trashed row, the no-op, the save that cannot move, both permission rules, the version
+    lock and Trash, a page's leading slash, the refused list row, the audit pair);
+    `tests/editor.test.ts` 83 → **94** (11 new). One fixture bug caught by re-running: a rename
+    target of `derma-pen` sits outside the `bk6-` prefix `purge()` cleans, so the second run collided
+    with the first run's residue — the target now keeps the prefix, and the one leaked row was
+    removed from `shamah_cms_test` (a disposable test DB, not production data).
+    Gates with A3 in: `typecheck` clean, `eslint` 0 errors / 9 pre-existing warnings, `copy:check`
+    253 entries current, `next build` green, `npm test` **63 files / 1218 tests** passed, and
+    `cpanel-upload/src` byte-identical to `src` (`diff -rq` empty).
   - [ ] **A4 — live preview identical to the public page, TOC included** — pending
-  - [ ] **A5 — committed fixtures for ≥3 real articles, `scripts/prove-blocks.ts`, `RichEditor.tsx`
-    deleted** — pending
+  - [ ] **A5 — committed fixtures for ≥3 real articles, `scripts/prove-blocks.ts`** — pending
+    (`RichEditor.tsx` was already deleted in A2; `tests/fixtures/wp-articles.json` exists)
   - [ ] **A6 — deployable tree**: TipTap deps in the mirror's `package.json` + lock, fresh `npm ci`
     and `npm run build` proof, push commands — pending
 - [x] **P1-verify — home "why choose us" from the About row** — `getHomeWhyChooseUs()`
