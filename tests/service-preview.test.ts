@@ -318,12 +318,14 @@ describe('the editor points the frame at that route', () => {
     expect(editorSource).toMatch(/listDocTitle\(listSchema, listDocFromForm\(listSchema, savedForm\)\.doc, locale\)/);
   });
 
-  it('keeps the sandboxed card for every other kind, and scripting off for both', () => {
-    expect(editorSource).toMatch(/sandbox=\{draftHref \? 'allow-same-origin' : ''\}/);
+  it('gives the page frame the site route un-sandboxed, keeps the card frame sandboxed', () => {
+    // The page frame points at a first-party route the server sanitizes, so it loads freed of
+    // any sandbox (an opaque origin is refused the chunks that stream the page in dev). The
+    // card frame keeps `sandbox=""`: no scripts, and no `<script>` pasted into a body can
+    // reach the document holding the session.
+    expect(editorSource).toMatch(/sandbox=\{draftHref \? undefined : ''\}/);
     expect(editorSource).toMatch(/src=\{draftHref \?\? undefined\}/);
     expect(editorSource).toMatch(/srcDoc=\{draftHref \? undefined : previewSrc\}/);
-    // `allow-scripts` would let half-written HTML reach the document holding the session.
-    expect(editorSource).not.toContain('allow-scripts');
   });
 
   it('offers both widths and an address to open, and says so in both catalogues', () => {

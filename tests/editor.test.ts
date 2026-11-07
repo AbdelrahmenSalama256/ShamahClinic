@@ -442,13 +442,16 @@ describe('the preview pane', () => {
     expect(previewDocument(previewModel('article', { title: 'رحمة' }, 'ar'), 'ar', labels)).toContain('lang="ar" dir="rtl"');
   });
 
-  it('keeps the page preview on an opaque origin while Next finishes its stream', () => {
+  it('is handed to a frame that cannot run it, while the page frame is the site itself', () => {
     const editor = readFileSync(join(process.cwd(), 'src/components/console/ConsoleEditor.tsx'), 'utf8');
-    // The card still has sandbox="" and cannot run pasted markup. The page needs Next's stream
-    // scripts to replace its loading boundary, but without allow-same-origin the frame cannot
-    // access the console's session or parent DOM.
-    expect(editor).toMatch(/sandbox=\{draftHref \? 'allow-scripts' : ''\}/);
+    // Scripting is off in the card frame, which keeps `sandbox=""` outright: no origin either,
+    // so a `<script>` pasted into a body could not read the console's session cookie even if a
+    // frame could run one. The other frame is the site's own draft route — a first-party page
+    // which the route itself sanitizes — so it carries no sandbox and simply loads like a tab.
+    // `tests/service-preview.test.ts` checks which row gets which frame and which source.
+    expect(editor).toMatch(/sandbox=\{draftHref \? undefined : ''\}/);
     expect(editor).not.toContain('allow-same-origin');
+    expect(editor).not.toContain('allow-scripts');
     expect(editor).toMatch(/srcDoc=\{draftHref \? undefined : previewSrc\}/);
   });
 });

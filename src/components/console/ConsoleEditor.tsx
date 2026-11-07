@@ -36,10 +36,11 @@
  * the frame the HTML exactly as it was typed, instead of bundling the site's Node-only
  * sanitizer into the console. An article or service is a whole page rather than a card, so its
  * frame loads the site's own draft route instead: the real components, the site's stylesheet
- * and none of the console's. That route streams through Next's loading boundary, so its frame
- * needs scripts to finish painting; without the same-origin capability the frame
- * sits on an opaque origin
- * that cannot read the console's cookies or DOM. The route sanitizes the draft before rendering.
+ * and none of the console's. That route streams through Next's loading boundary, whose swap
+ * script needs the frame to load the site's chunks — which an opaque origin cannot do in dev
+ * (`/_next/static` answers 403 under `Origin: null`). So the frame carries no sandbox: the
+ * route sanitizes the draft before rendering, it is a first-party page on the first party's
+ * own origin, and the scripts that run are the site's own bundle.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { consoleCall, consoleRead } from './client-api';
@@ -800,13 +801,16 @@ export function ConsoleEditor({
             </div>
           )}
           <div ref={stageRef} className="console-preview-stage" data-viewport={viewport} style={stageStyle}>
-            {/* The page route needs Next's stream scripts, but no same-origin capability; its
-                opaque sandbox keeps the rendered draft away from the session and parent DOM. */}
+            {/* The page frame is this site's own route on this site's own origin, fed by markup
+                the route sanitized on the server — so it needs no sandbox: it loads the chunks
+                streaming the page through, and a frame NEXT's splash-swap requires, without the
+                opaque-origin refusals that leave the splash standing in dev. The card frame keeps
+                its stricter sandbox, scripts off and no origin. */}
             <iframe
               className="console-preview-frame"
               title={labels['content.preview']}
               style={frameStyle}
-              sandbox={draftHref ? 'allow-scripts' : ''}
+              sandbox={draftHref ? undefined : ''}
               src={draftHref ?? undefined}
               srcDoc={draftHref ? undefined : previewSrc}
             />
