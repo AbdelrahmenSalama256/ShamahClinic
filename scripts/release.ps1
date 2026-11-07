@@ -231,11 +231,11 @@ try {
     throw "Node.js 22 or newer is required for a release build; found $nodeVersion."
   }
 
-  Invoke-CheckedCommand -Executable 'npm' -CommandArgs @('ci', '--include=dev') -WorkingDirectory $validationDirectory
-  Invoke-CheckedCommand -Executable 'npm' -CommandArgs @('run', 'copy:check') -WorkingDirectory $validationDirectory
-  Invoke-CheckedCommand -Executable 'npm' -CommandArgs @('run', 'typecheck') -WorkingDirectory $validationDirectory
+  Invoke-CheckedCommand -Executable 'npm.cmd' -CommandArgs @('ci', '--include=dev') -WorkingDirectory $validationDirectory
+  Invoke-CheckedCommand -Executable 'npm.cmd' -CommandArgs @('run', 'copy:check') -WorkingDirectory $validationDirectory
+  Invoke-CheckedCommand -Executable 'npm.cmd' -CommandArgs @('run', 'typecheck') -WorkingDirectory $validationDirectory
   $env:NEXT_PUBLIC_SITE_URL = 'https://shamahnew.shamahclinics.com'
-  Invoke-CheckedCommand -Executable 'npm' -CommandArgs @('run', 'build') -WorkingDirectory $validationDirectory
+  Invoke-CheckedCommand -Executable 'npm.cmd' -CommandArgs @('run', 'build') -WorkingDirectory $validationDirectory
   Assert-DirectoriesMatch -FirstDirectory (Join-Path $mirror 'src') -SecondDirectory (Join-Path $validationDirectory 'src') -Description 'src and validated deploy source'
 }
 finally {
