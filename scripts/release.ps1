@@ -234,6 +234,7 @@ try {
   Invoke-CheckedCommand -Executable 'npm' -CommandArgs @('ci', '--include=dev') -WorkingDirectory $validationDirectory
   Invoke-CheckedCommand -Executable 'npm' -CommandArgs @('run', 'copy:check') -WorkingDirectory $validationDirectory
   Invoke-CheckedCommand -Executable 'npm' -CommandArgs @('run', 'typecheck') -WorkingDirectory $validationDirectory
+  $env:NEXT_PUBLIC_SITE_URL = 'https://shamahnew.shamahclinics.com'
   Invoke-CheckedCommand -Executable 'npm' -CommandArgs @('run', 'build') -WorkingDirectory $validationDirectory
   Assert-DirectoriesMatch -FirstDirectory (Join-Path $mirror 'src') -SecondDirectory (Join-Path $validationDirectory 'src') -Description 'src and validated deploy source'
 }
@@ -254,7 +255,7 @@ try {
   }
 
   $remoteUrl = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('remote', 'get-url', 'origin') -WorkingDirectory $DeployClone
-  if ($remoteUrl.TrimEnd('/') -notin @($repositoryUrl, $repositoryUrl -replace '\.git$', '')) {
+  if ($remoteUrl.TrimEnd('/') -notin @($repositoryUrl, ($repositoryUrl -replace '\.git$', ''))) {
     throw "Deploy clone origin is not $repositoryUrl"
   }
   if ((Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('branch', '--show-current') -WorkingDirectory $DeployClone) -ne 'main') {
