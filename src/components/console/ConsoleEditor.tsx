@@ -31,13 +31,15 @@
  * or the keystroke refused it. A server message left standing over a value that has since
  * been corrected is a lie about what is on the screen.
  *
- * **The body is previewed inside a frame that runs no scripts.** For the card-shaped kinds
+ * **A card preview runs no scripts.** For the card-shaped kinds
  * that means `sandbox=""`: no origin, no navigation — which is what makes it safe to hand
  * the frame the HTML exactly as it was typed, instead of bundling the site's Node-only
- * sanitizer into the console. A service row is a whole page rather than a card, so its
+ * sanitizer into the console. An article or service is a whole page rather than a card, so its
  * frame loads the site's own draft route instead: the real components, the site's stylesheet
- * and none of the console's. Scripting stays off there too, which is the one thing that
- * makes a same-origin frame safe to point at a page holding half-written HTML.
+ * and none of the console's. That route streams through Next's loading boundary, so its frame
+ * needs scripts to finish painting; without the same-origin capability the frame
+ * sits on an opaque origin
+ * that cannot read the console's cookies or DOM. The route sanitizes the draft before rendering.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { consoleCall, consoleRead } from './client-api';
@@ -798,14 +800,13 @@ export function ConsoleEditor({
             </div>
           )}
           <div ref={stageRef} className="console-preview-stage" data-viewport={viewport} style={stageStyle}>
-            {/* A page frame is same-origin and still runs no scripts, so the half-written HTML
-                it renders cannot reach the session cookie the route read it with; the card
-                frame keeps the stricter sandbox and no origin at all. */}
+            {/* The page route needs Next's stream scripts, but no same-origin capability; its
+                opaque sandbox keeps the rendered draft away from the session and parent DOM. */}
             <iframe
               className="console-preview-frame"
               title={labels['content.preview']}
               style={frameStyle}
-              sandbox={draftHref ? 'allow-same-origin' : ''}
+              sandbox={draftHref ? 'allow-scripts' : ''}
               src={draftHref ?? undefined}
               srcDoc={draftHref ? undefined : previewSrc}
             />

@@ -41,7 +41,10 @@ powershell -ExecutionPolicy Bypass -File .\scripts\release.ps1 -Message "Describ
 The script checks that `src/` matches `cpanel-upload/src/`, validates the catalog,
 TypeScript, and production build, scans for secrets, then makes a normal fast-forward
 push to `main`. It refuses to release if the deploy clone is dirty or the remote has
-diverged.
+diverged. Before releasing, run the same command with `-DryRun` to stage the snapshot in
+a temporary clone and print its added/modified/deleted paths; the temporary clone is
+removed afterward. A release that deletes more than 25 tracked files is refused unless
+`-AllowDeletes` is passed deliberately.
 
 On the cPanel server, run this from the application's Git clone after confirming there
 are no local changes:

@@ -3,7 +3,9 @@ param(
   [Parameter(Mandatory = $true, Position = 0)]
   [ValidateNotNullOrEmpty()]
   [string]$Message,
-  [string]$DeployClone
+  [string]$DeployClone,
+  [switch]$DryRun,
+  [switch]$AllowDeletes
 )
 
 $ErrorActionPreference = 'Stop'
@@ -11,7 +13,14 @@ $repositoryUrl = 'https://github.com/AbdelrahmenSalama256/newshamah-cpanel.git'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $mirror = Join-Path $root 'cpanel-upload'
 
-if ([string]::IsNullOrWhiteSpace($DeployClone)) {
+if ($DryRun) {
+  if (-not [string]::IsNullOrWhiteSpace($DeployClone)) {
+    throw 'Do not pass -DeployClone with -DryRun; dry runs use a temporary clone.'
+  }
+  $DeployClone = Join-Path ([System.IO.Path]::GetTempPath()) ('shamah-release-dry-run-' + [guid]::NewGuid().ToString('N'))
+  $removeDeployCloneAfterDryRun = $true
+}
+elseif ([string]::IsNullOrWhiteSpace($DeployClone)) {
   $DeployClone = Join-Path (Split-Path $root -Parent) 'newshamah-cpanel-deploy'
 }
 $DeployClone = [System.IO.Path]::GetFullPath($DeployClone)
@@ -212,7 +221,7 @@ foreach ($requiredPattern in @('(?m)^\.env\*', '(?m)^node_modules/', '(?m)^\.nex
 Assert-DirectoriesMatch -FirstDirectory (Join-Path $root 'src') -SecondDirectory (Join-Path $mirror 'src') -Description 'src and cpanel-upload/src'
 Assert-FileMatches -FirstFile (Join-Path $root 'package.json') -SecondFile (Join-Path $mirror 'package.json') -Description 'package.json and cpanel-upload/package.json'
 Assert-FileMatches -FirstFile (Join-Path $root 'package-lock.json') -SecondFile (Join-Path $mirror 'package-lock.json') -Description 'package-lock.json and cpanel-upload/package-lock.json'
-Assert-NoSecrets -Directory $root
+Assert-NoSecrets -Directory $mirror
 
 $validationDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ('shamah-release-check-' + [guid]::NewGuid().ToString('N'))
 try {
@@ -234,72 +243,94 @@ finally {
   }
 }
 
-if (-not (Test-Path -LiteralPath (Join-Path $DeployClone '.git') -PathType Container)) {
-  if (Test-Path -LiteralPath $DeployClone) {
-    throw "Deploy clone path exists but is not a Git clone: $DeployClone"
+try {
+  if (-not (Test-Path -LiteralPath (Join-Path $DeployClone '.git') -PathType Container)) {
+    if (Test-Path -LiteralPath $DeployClone) {
+      throw "Deploy clone path exists but is not a Git clone: $DeployClone"
+    }
+    $parent = Split-Path $DeployClone -Parent
+    New-Item -ItemType Directory -Force -Path $parent | Out-Null
+    Invoke-CheckedCommand -Executable 'git' -CommandArgs @('clone', '--branch', 'main', '--single-branch', $repositoryUrl, $DeployClone) -WorkingDirectory $parent
   }
-  $parent = Split-Path $DeployClone -Parent
-  New-Item -ItemType Directory -Force -Path $parent | Out-Null
-  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('clone', '--branch', 'main', '--single-branch', $repositoryUrl, $DeployClone) -WorkingDirectory $parent
-}
 
-$remoteUrl = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('remote', 'get-url', 'origin') -WorkingDirectory $DeployClone
-if ($remoteUrl.TrimEnd('/') -notin @($repositoryUrl, $repositoryUrl -replace '\.git$', '')) {
-  throw "Deploy clone origin is not $repositoryUrl"
-}
-if ((Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('branch', '--show-current') -WorkingDirectory $DeployClone) -ne 'main') {
-  throw 'Deploy clone must be checked out on main.'
-}
-if (Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('status', '--porcelain') -WorkingDirectory $DeployClone) {
-  throw 'Deploy clone has local changes; commit or preserve them before releasing.'
-}
+  $remoteUrl = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('remote', 'get-url', 'origin') -WorkingDirectory $DeployClone
+  if ($remoteUrl.TrimEnd('/') -notin @($repositoryUrl, $repositoryUrl -replace '\.git$', '')) {
+    throw "Deploy clone origin is not $repositoryUrl"
+  }
+  if ((Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('branch', '--show-current') -WorkingDirectory $DeployClone) -ne 'main') {
+    throw 'Deploy clone must be checked out on main.'
+  }
+  if (Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('status', '--porcelain') -WorkingDirectory $DeployClone) {
+    throw 'Deploy clone has local changes; commit or preserve them before releasing.'
+  }
 
-Invoke-CheckedCommand -Executable 'git' -CommandArgs @('fetch', 'origin', 'main') -WorkingDirectory $DeployClone
-Invoke-CheckedCommand -Executable 'git' -CommandArgs @('pull', '--ff-only', 'origin', 'main') -WorkingDirectory $DeployClone
-if ((Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('rev-parse', 'HEAD') -WorkingDirectory $DeployClone) -ne
-  (Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('rev-parse', 'origin/main') -WorkingDirectory $DeployClone)) {
-  throw 'Deploy clone has unpushed commits; refusing to build on an unexpected history.'
-}
-Assert-NoSecrets -Directory $DeployClone
+  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('fetch', 'origin', 'main') -WorkingDirectory $DeployClone
+  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('pull', '--ff-only', 'origin', 'main') -WorkingDirectory $DeployClone
+  if ((Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('rev-parse', 'HEAD') -WorkingDirectory $DeployClone) -ne
+    (Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('rev-parse', 'origin/main') -WorkingDirectory $DeployClone)) {
+    throw 'Deploy clone has unpushed commits; refusing to build on an unexpected history.'
+  }
+  Assert-NoSecrets -Directory $DeployClone
 
-$mirrorFiles = Get-FileHashes -Directory $mirror
-$trackedFiles = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('ls-files') -WorkingDirectory $DeployClone
-foreach ($trackedPath in ($trackedFiles -split "`n")) {
-  if ($trackedPath -and -not $mirrorFiles.ContainsKey($trackedPath)) {
+  $mirrorFiles = Get-FileHashes -Directory $mirror
+  $trackedFiles = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('ls-files') -WorkingDirectory $DeployClone
+  $deletePaths = [System.Collections.Generic.List[string]]::new()
+  foreach ($trackedPath in ($trackedFiles -split "`n")) {
+    if ($trackedPath -and -not $mirrorFiles.ContainsKey($trackedPath)) {
+      $deletePaths.Add($trackedPath)
+    }
+  }
+  if ($deletePaths.Count -gt 25 -and -not $AllowDeletes) {
+    throw "Release would delete $($deletePaths.Count) tracked files; pass -AllowDeletes to confirm."
+  }
+  foreach ($trackedPath in $deletePaths) {
     Invoke-CheckedCommand -Executable 'git' -CommandArgs @('rm', '--', $trackedPath) -WorkingDirectory $DeployClone
   }
-}
-foreach ($file in Get-ChildItem -LiteralPath $mirror -File -Recurse -Force) {
-  $relativePath = $file.FullName.Substring($mirror.Length).TrimStart('\').Replace('\', '/')
-  $destination = Join-Path $DeployClone ($relativePath.Replace('/', '\'))
-  $destinationDirectory = Split-Path $destination -Parent
-  New-Item -ItemType Directory -Force -Path $destinationDirectory | Out-Null
-  Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
-}
 
-Assert-NoSecrets -Directory $DeployClone
-Invoke-CheckedCommand -Executable 'git' -CommandArgs @('add', '--all') -WorkingDirectory $DeployClone
-$stagedFiles = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('diff', '--cached', '--name-only') -WorkingDirectory $DeployClone
-if (-not $stagedFiles) {
-  Write-Output 'No deployable changes; nothing to commit or push.'
-  return
-}
+  foreach ($file in Get-ChildItem -LiteralPath $mirror -File -Recurse -Force) {
+    $relativePath = $file.FullName.Substring($mirror.Length).TrimStart('\').Replace('\', '/')
+    $destination = Join-Path $DeployClone ($relativePath.Replace('/', '\'))
+    $destinationDirectory = Split-Path $destination -Parent
+    New-Item -ItemType Directory -Force -Path $destinationDirectory | Out-Null
+    Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
+  }
 
-Invoke-CheckedCommand -Executable 'git' -CommandArgs @('diff', '--cached', '--check') -WorkingDirectory $DeployClone
-Invoke-CheckedCommand -Executable 'git' -CommandArgs @('commit', '-m', $Message) -WorkingDirectory $DeployClone
-Invoke-CheckedCommand -Executable 'git' -CommandArgs @('fetch', 'origin', 'main') -WorkingDirectory $DeployClone
+  Assert-NoSecrets -Directory $DeployClone
+  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('add', '--all') -WorkingDirectory $DeployClone
+  if ($DryRun) {
+    Invoke-CheckedCommand -Executable 'git' -CommandArgs @('diff', '--cached', '--name-status') -WorkingDirectory $DeployClone
+    Write-Output 'Dry run complete; no commit or push was made.'
+    return
+  }
+  $stagedFiles = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('diff', '--cached', '--name-only') -WorkingDirectory $DeployClone
+  if (-not $stagedFiles) {
+    Write-Output 'No deployable changes; nothing to commit or push.'
+    return
+  }
 
-Push-Location -LiteralPath $DeployClone
-try {
-  & git merge-base --is-ancestor origin/main HEAD
-  if ($LASTEXITCODE -ne 0) {
-    throw 'origin/main is not an ancestor of this release; refusing a non-fast-forward push.'
+  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('diff', '--cached', '--check') -WorkingDirectory $DeployClone
+  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('commit', '-m', $Message) -WorkingDirectory $DeployClone
+  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('fetch', 'origin', 'main') -WorkingDirectory $DeployClone
+
+  Push-Location -LiteralPath $DeployClone
+  try {
+    & git merge-base --is-ancestor origin/main HEAD
+    if ($LASTEXITCODE -ne 0) {
+      throw 'origin/main is not an ancestor of this release; refusing a non-fast-forward push.'
+    }
+  }
+  finally {
+    Pop-Location
   }
 }
 finally {
-  Pop-Location
+  if ($removeDeployCloneAfterDryRun -and (Test-Path -LiteralPath $DeployClone)) {
+    Remove-Item -LiteralPath $DeployClone -Recurse -Force
+  }
 }
 
-Invoke-CheckedCommand -Executable 'git' -CommandArgs @('push', 'origin', 'main') -WorkingDirectory $DeployClone
-$commit = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('rev-parse', 'HEAD') -WorkingDirectory $DeployClone
-Write-Output "Released $commit to origin/main."
+if (-not $DryRun) {
+  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('push', 'origin', 'main') -WorkingDirectory $DeployClone
+  $commit = Get-CheckedCommandOutput -Executable 'git' -CommandArgs @('rev-parse', 'HEAD') -WorkingDirectory $DeployClone
+  Write-Output "Released $commit to origin/main."
+}
