@@ -645,11 +645,15 @@
   }
 
   @keyframes brand-loading-spin {
-    to { transform: rotate(1turn); }
+    to {
+      transform: rotate(1turn);
+    }
   }
 
   @keyframes brand-loading-breathe {
-    50% { opacity: 0.72; }
+    50% {
+      opacity: 0.72;
+    }
   }
 
   /* --- the sidebar: column, drawer, or both ---------------------------------- */
@@ -4742,4 +4746,11 @@
       overflow: clip;
     }
   }
+}
+div,
+i,
+a,
+button,
+a {
+  transition: 0.3s all ease !important;
 }

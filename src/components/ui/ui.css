@@ -42,6 +42,9 @@
    `.console-button-primary`, which meant a filled button took the default's
    `background: var(--bg-secondary)` and inverted to a light one under a cursor.
    ---------------------------------------------- */
+* {
+  transition: 0.3s all ease !important;
+}
 .ui-button {
   display: inline-flex;
   align-items: center;
@@ -77,7 +80,7 @@
   box-shadow: none;
 }
 
-.ui-button[data-variant='primary'] {
+.ui-button[data-variant="primary"] {
   background: var(--gold-gradient);
   border-color: var(--border-control);
   color: var(--btn-gold-fg);
@@ -86,19 +89,19 @@
 
 /* A gradient cannot be hovered by changing one colour, so the fill holds and the control
    gains presence instead: the brand glow behind the lift. */
-.ui-button[data-variant='primary']:hover:not(:disabled) {
+.ui-button[data-variant="primary"]:hover:not(:disabled) {
   background: var(--gold-gradient);
   box-shadow: var(--glow-gold), var(--elev-1);
 }
 
-.ui-button[data-variant='ghost'] {
+.ui-button[data-variant="ghost"] {
   border-color: transparent;
   background: transparent;
   color: var(--text-secondary);
   padding-inline: var(--sp-2);
 }
 
-.ui-button[data-variant='ghost']:hover:not(:disabled) {
+.ui-button[data-variant="ghost"]:hover:not(:disabled) {
   background: var(--bg-secondary);
   box-shadow: none;
   color: var(--text-primary);
@@ -107,14 +110,14 @@
 /* A destructive action is filled in both themes because the pair is what travels:
    `--text-danger` on cream is `#b3261e`, on charcoal it is the lifted `#f2a0a0`, and
    `--bg-card` is the ink that clears AA against either (6.39:1 light, 8.14:1 dark). */
-.ui-button[data-variant='danger'] {
+.ui-button[data-variant="danger"] {
   background: var(--text-danger);
   border-color: transparent;
   color: var(--bg-card);
   font-weight: 600;
 }
 
-.ui-button[data-variant='danger']:hover:not(:disabled) {
+.ui-button[data-variant="danger"]:hover:not(:disabled) {
   background: var(--text-danger);
   box-shadow: var(--elev-2);
 }
@@ -128,14 +131,14 @@
   font-weight: 600;
 }
 
-.ui-button[data-size='sm'] {
+.ui-button[data-size="sm"] {
   font-size: var(--ui-font-small);
   padding: var(--sp-1) var(--sp-2);
 }
 
 /* Icon-only keeps the floor on both axes: a 44px square, not a 44px-tall pill, because
    a lone chevron on the edge of a toolbar is the hardest target to hit. */
-.ui-button[data-size='icon'] {
+.ui-button[data-size="icon"] {
   min-inline-size: var(--tap);
   padding-inline: var(--sp-1);
   gap: 0;
@@ -273,7 +276,7 @@
    *above* the card in dark, so a field reads as a raised slot instead of a hole cut in
    the panel it sits on. The primitive names the theme it is correcting rather than
    leaving the decision to which selector happens to be heavier. */
-html[data-theme='dark'] .ui-control {
+html[data-theme="dark"] .ui-control {
   background: var(--bg-card-subtle);
 }
 
@@ -300,7 +303,7 @@ select.ui-control {
 /* A search field filters as it is typed, so the browser's own clear glyph is a second way
    to do what is already done — it sits on the reading end, cannot be moved or restyled,
    and on a narrow bar it overlaps the text. */
-.ui-control[type='search']::-webkit-search-cancel-button {
+.ui-control[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: none;
   appearance: none;
 }
@@ -322,7 +325,7 @@ select.ui-control {
    what is wrong. `aria-invalid` is the hook because it is the attribute the control already
    has to carry for a screen reader; a second `data-invalid` on the same element would be a
    second answer to the same question. */
-.ui-control[aria-invalid='true'] {
+.ui-control[aria-invalid="true"] {
   border-color: var(--text-danger);
 }
 
@@ -396,25 +399,25 @@ select.ui-control {
    that means "not the brand" — so it takes the neutral fill and the two signals nobody can
    confuse: the brand's own ink and a 3.58:1 boundary.
    ---------------------------------------------- */
-.ui-badge[data-tone='ok'],
-.ui-alert[data-tone='ok'],
-.ui-note[data-tone='ok'] {
+.ui-badge[data-tone="ok"],
+.ui-alert[data-tone="ok"],
+.ui-note[data-tone="ok"] {
   --tone-fg: var(--text-success);
   --tone-bg: var(--bg-success-soft);
   --tone-border: var(--border-success);
 }
 
-.ui-badge[data-tone='warn'],
-.ui-alert[data-tone='warn'],
-.ui-note[data-tone='warn'] {
+.ui-badge[data-tone="warn"],
+.ui-alert[data-tone="warn"],
+.ui-note[data-tone="warn"] {
   --tone-fg: var(--text-gold);
   --tone-bg: var(--bg-secondary);
   --tone-border: var(--border-control);
 }
 
-.ui-badge[data-tone='danger'],
-.ui-alert[data-tone='danger'],
-.ui-note[data-tone='danger'] {
+.ui-badge[data-tone="danger"],
+.ui-alert[data-tone="danger"],
+.ui-note[data-tone="danger"] {
   --tone-fg: var(--text-danger);
   --tone-bg: var(--bg-danger-soft);
   --tone-border: var(--border-danger);
@@ -576,13 +579,13 @@ select.ui-control {
   color: var(--text-secondary);
 }
 
-.ui-mark[data-state='yes'] {
+.ui-mark[data-state="yes"] {
   color: var(--text-success);
 }
 
 /* An absent value is not a false one, so it is the quietest of the three: a column of
    `—` must never read as a column of `○` from across the room. */
-.ui-mark[data-state='none'] {
+.ui-mark[data-state="none"] {
   color: var(--text-muted);
 }
 
@@ -829,7 +832,9 @@ select.ui-control {
   font-size: var(--ui-font-small);
   overflow-wrap: normal;
   cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out),
+  transition:
+    background-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
     border-color var(--dur-fast) var(--ease-out);
 }
 
@@ -951,7 +956,7 @@ select.ui-control {
     box-shadow var(--dur-base) var(--ease-out);
 }
 
-.ui-picker-frame[data-empty='true'] {
+.ui-picker-frame[data-empty="true"] {
   border-style: dashed;
 }
 
@@ -959,15 +964,15 @@ select.ui-control {
   border-color: var(--border-control);
 }
 
-.ui-picker-frame[data-ratio='wide'] {
+.ui-picker-frame[data-ratio="wide"] {
   aspect-ratio: 16 / 9;
 }
 
-.ui-picker-frame[data-ratio='square'] {
+.ui-picker-frame[data-ratio="square"] {
   aspect-ratio: 1 / 1;
 }
 
-.ui-picker-frame[data-ratio='tall'] {
+.ui-picker-frame[data-ratio="tall"] {
   aspect-ratio: 3 / 4;
 }
 
@@ -1062,7 +1067,7 @@ select.ui-control {
   border-color: var(--border-control);
 }
 
-.ui-picker-tile[data-active='true'] {
+.ui-picker-tile[data-active="true"] {
   border-color: var(--border-control);
   background: var(--bg-active);
 }
@@ -1165,7 +1170,7 @@ select.ui-control {
   color: var(--text-muted);
 }
 
-.ui-rich-surface[data-disabled='true'] {
+.ui-rich-surface[data-disabled="true"] {
   background: var(--bg-card-subtle);
   color: var(--text-muted);
   cursor: not-allowed;
@@ -1229,6 +1234,13 @@ select.ui-control {
 .ui-rich-file {
   display: none;
 }
-a{
+a {
   text-decoration: none;
+}
+div,
+i,
+a,
+button,
+a {
+  transition: 0.3s all ease !important;
 }

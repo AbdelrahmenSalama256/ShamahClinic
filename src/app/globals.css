@@ -64,6 +64,7 @@
 
 * {
   box-sizing: border-box;
+  transition: 0.3s all ease !important;
 }
 /* Hover polish. The original site writes a blanket over every element — `.3s`,
    `!important`, and `all` for the property list — which outranks each of the 131 numeric
@@ -79,7 +80,19 @@
    other half: this sheet is the site's, and the console's polish has always lived in
    `console.css` at its own numbers. */
 @layer base {
-  [data-surface="site"] :is(a, button, input, select, textarea, summary, label, [role="button"], [role="link"], [tabindex]) {
+  [data-surface="site"]
+    :is(
+      a,
+      button,
+      input,
+      select,
+      textarea,
+      summary,
+      label,
+      [role="button"],
+      [role="link"],
+      [tabindex]
+    ) {
     transition:
       color var(--dur-hover) var(--ease-signature),
       background-color var(--dur-hover) var(--ease-signature),
@@ -171,7 +184,8 @@ body {
   inline-size: min(13.75rem, 58vw) !important;
   block-size: auto;
   object-fit: contain;
-  animation: brand-loading-breathe var(--dur-loader-breathe) ease-in-out infinite;
+  animation: brand-loading-breathe var(--dur-loader-breathe) ease-in-out
+    infinite;
 }
 
 @keyframes brand-loading-spin {
@@ -1147,7 +1161,8 @@ a {
   border-radius: var(--radius-sm);
   padding: var(--sp-1) var(--sp-2);
   text-decoration: none;
-  transition: color var(--dur-hover) var(--ease-signature),
+  transition:
+    color var(--dur-hover) var(--ease-signature),
     background-color var(--dur-hover) var(--ease-signature);
 }
 
@@ -1168,4 +1183,11 @@ a {
   font-weight: 700;
   color: var(--gold-end);
   padding-block-start: 0.15rem;
+}
+div,
+i,
+a,
+button,
+a {
+  transition: 0.3s all ease !important;
 }
