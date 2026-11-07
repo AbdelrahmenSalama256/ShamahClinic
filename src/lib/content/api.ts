@@ -23,7 +23,7 @@ import { revalidatePath } from 'next/cache';
 import { guard, jsonError, type GuardResult } from '../auth/guard';
 import { can, type Action as PermissionAction, type Grant, type Resource, type Target } from '../auth/permissions';
 import { CONTENT_LOCALES, isContentKind, isContentLocale, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
-import { createRow, getRow, listKeyOfItem, saveDraft, setTrashed, type StoreResult } from './store';
+import { createRow, getRow, listKeyOfItem, renameRow, saveDraft, setTrashed, type StoreResult } from './store';
 import { createTitledRow } from './create';
 import { listRevisions, publishRow, rollbackToRevision } from './publish';
 import { listSummaries } from './summary';
@@ -59,10 +59,19 @@ const settingSchema = z.object({ group: z.string().min(1).max(64), key: z.string
  * a box is a position two people can claim at once.
  */
 const moveSchema = z.object({ direction: z.enum(['up', 'down']) });
+/**
+ * A new address for a row that already has one.
+ *
+ * Its own verb rather than a field in the save body, because the identity column is the URL
+ * the row is served at: a draft save must never move a published page, and the autosave that
+ * runs every two seconds must not be able to either. The value is normalised by the store, the
+ * same way a new row's is, so what the console prints while a person types is what lands.
+ */
+const renameSchema = z.object({ key: z.string().trim().min(1).max(191), version: z.number().int().positive().optional() });
 /** A bulk request is capped: 100 rows is a page of lists, and anything larger is a script's job. */
 const bulkSchema = z.object({ ids: z.array(z.string().min(1).max(64)).min(1).max(100) });
 
-type RowAction = 'publish' | 'restore' | 'rollback' | 'revisions' | 'move';
+type RowAction = 'publish' | 'restore' | 'rollback' | 'revisions' | 'move' | 'rename';
 /** The bulk verbs, named in the path so permission is decided before the body is read. */
 type Bulk = 'publish' | 'trash' | 'restore' | 'migrate-alt';
 const BULK_ACTIONS: readonly Bulk[] = ['publish', 'trash', 'restore', 'migrate-alt'];
@@ -86,7 +95,7 @@ function parseRoute(url: string): Route | null {
     if (!action || !BULK_ACTIONS.includes(action as Bulk)) return null;
     return { kind, id: null, action: null, bulk: action as Bulk };
   }
-  const known: readonly RowAction[] = ['publish', 'restore', 'rollback', 'revisions', 'move'];
+  const known: readonly RowAction[] = ['publish', 'restore', 'rollback', 'revisions', 'move', 'rename'];
   if (action && !known.includes(action as RowAction)) return null;
   return { kind, id: id ?? null, action: (action as RowAction) ?? null, bulk: null };
 }
@@ -304,6 +313,42 @@ async function moveHandler(req: Request, spec: KindSpec, kind: ContentKind, id: 
 }
 
 /**
+ * Give a row a new address.
+ *
+ * The write is the store's, and so are its refusals: a list item is refused because its uid is
+ * a reference other rows hold, a slug another row already has answers 409, and the version lock
+ * is the same one a save uses. What this adds is the cache: the address a visitor types is the
+ * thing that changed, and the public pages are ISR — without the purge the old path would keep
+ * serving the row it no longer names and the new one would 404 until the layout expired.
+ */
+async function renameHandler(req: Request, spec: KindSpec, kind: ContentKind, id: string): Promise<Response> {
+  return guard<z.output<typeof renameSchema>, Body>(
+    req,
+    { resource: spec.resource, action: 'update', schema: renameSchema, target: (r) => scopeOf(r, spec) },
+    async (ctx): Promise<GuardResult<Body>> => {
+      // One column serves both languages, so a grant narrowed to one of them must not move it:
+      // an Arabic-only editor would otherwise change the English URL from a pane that says
+      // "Arabic" on it. The catalog roles hold both locales; a role built on the roles screen
+      // may not, and this is where that difference is honoured.
+      if (spec.perLocale && writableLocales(ctx.auth.user.grants, spec.resource).length < CONTENT_LOCALES.length) {
+        return { status: 403, data: { error: 'address_locale_locked' } };
+      }
+      const before = await getRow(kind, id);
+      if (!before) return notFound();
+      const done = await renameRow(kind, { id, key: ctx.input.key, expectedVersion: ctx.input.version, actorId: ctx.auth.user.id });
+      if (!done.ok) return failure(done);
+      // Re-typing the address the row already has is not a write, so it is not one for the trail
+      // either: an audit line claiming a move that never happened is a line somebody will chase.
+      if (done.value.key === before.key) return { data: { row: done.value }, audit: false };
+      revalidateSite();
+      // The audit names both addresses: a moved page is the one write whose `after` is not
+      // readable from the row alone, because the row no longer holds the old one.
+      return { data: { row: done.value }, audit: { entityType: kind, entityId: id, before: { key: before.key }, after: { key: done.value.key } } };
+    },
+  );
+}
+
+/**
  * Publish, Trash or restore a page of rows in one request.
  *
  * The verb is a path segment, not a body field, because `guard()` decides permission
@@ -472,6 +517,7 @@ export async function contentActionHandler(req: Request): Promise<Response> {
   if (route.action === 'publish') return publishHandler(req, spec, kind, id);
   if (route.action === 'rollback') return rollbackHandler(req, spec, kind, id);
   if (route.action === 'move') return moveHandler(req, spec, kind, id);
+  if (route.action === 'rename') return renameHandler(req, spec, kind, id);
   return trashHandler(req, spec, kind, id, false);
 }
 

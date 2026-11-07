@@ -17,6 +17,7 @@ import { sanitizeRichHtml } from './rich';
 import { htmlStems, listSchemaOf, pageDocSchema, parseListDoc } from './list-schema';
 import { positionForNewItem } from './order';
 import { canonicalizeOfferServices } from './offer-services';
+import { identityForTitle } from './slug';
 import {
   calendarDay,
   CONTENT_LOCALES,
@@ -447,6 +448,64 @@ export async function saveDraft(
 async function rawRow(spec: KindSpec, id: string): Promise<AnyRow> {
   const row = await (db.selectFrom(spec.table).selectAll().where('id', '=', id) as unknown as QueryShape).executeTakeFirst();
   return (row ?? {}) as AnyRow;
+}
+
+/**
+ * Move an article, an offer or a page to a new address.
+ *
+ * The identity column *is* the URL the row is served at, so this is not a field edit: it is
+ * the one write that changes where a published row lives, and the old address stops
+ * answering the moment it lands. That is why it is its own action instead of a member of
+ * `fields` — a draft save must never move a page, and an autosave that runs every two
+ * seconds must not be able to either.
+ *
+ * A list item is refused outright. Its `uid` looks like the same kind of name but is a
+ * reference other rows hold: an offer's `applicable_services` names services by uid, and a
+ * result story is attached to its article by the number the WordPress import keyed it on.
+ * Renaming one would break those links from a screen that has no way to show them.
+ *
+ * The value is normalised rather than trusted, by the same `identityForTitle()` a new row is
+ * named with, so what the console prints while a person types is what the column ends up
+ * holding: Arabic letters kept, punctuation folded to one hyphen, a page's leading slash put
+ * back. Re-typing the address it already has is not a write and does not spend a version.
+ */
+export async function renameRow(
+  kind: ContentKind,
+  input: { id: string; key: string; expectedVersion?: number; actorId: string },
+): Promise<StoreResult<ContentRow>> {
+  const spec = kindSpec(kind);
+  if (spec.table === 'list_items') return { ok: false, status: 400, code: 'rename_not_applicable' };
+
+  const current = await getRow(kind, input.id);
+  if (!current) return { ok: false, status: 404, code: 'not_found' };
+  if (current.trashed) return { ok: false, status: 409, code: 'in_trash' };
+
+  const key = identityForTitle(kind, input.key);
+  if (!key) return { ok: false, status: 400, code: 'invalid_key', issues: [{ path: 'key', message: 'required' }] };
+  if (key === current.key) return { ok: true, value: current };
+
+  // Unique across the whole table, trashed rows included: their index does not disappear
+  // with their `deleted_at`, and the driver would answer a 500 where this answers a 409.
+  let taken: FilterShape = db.selectFrom(spec.table).select(['id']) as unknown as FilterShape;
+  taken = taken.where(spec.keyColumn, '=', key).where('id', '!=', input.id);
+  if (await taken.executeTakeFirst()) {
+    return { ok: false, status: 409, code: 'key_taken', issues: [{ path: 'key', message: `"${key}" is another row's address` }] };
+  }
+
+  const lock = input.expectedVersion ?? current.version;
+  const result = await (
+    db
+      .updateTable(spec.table)
+      .set({ [spec.keyColumn]: key, updated_by: input.actorId, version: current.version + 1 } as never)
+      .where('id', '=', input.id)
+      .where('version', '=', lock) as unknown as TakeFirstShape
+  ).executeTakeFirst();
+
+  if (Number(result?.numUpdatedRows ?? 0) === 0) {
+    return { ok: false, status: 409, code: 'stale_row', issues: [{ path: 'version', message: `the row is at version ${current.version}; reload it` }] };
+  }
+  const row = await getRow(kind, input.id);
+  return row ? { ok: true, value: row } : { ok: false, status: 500, code: 'update_failed' };
 }
 
 /** Move a row into Trash or back out of it. Both keep the id, version and revisions. */

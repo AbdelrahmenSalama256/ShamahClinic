@@ -1734,3 +1734,189 @@ describe('moving a row one step renumbers its list, and no route takes a typed n
     expect(res.page.rows.map((row) => row.key).filter((key) => key.startsWith(od('')))).toEqual(await uidsOf());
   });
 });
+
+// --- the address a row is served at (P1-A3) -------------------------------------
+
+describe('a row can be moved to a new address, by a verb of its own', () => {
+  /** Every article slug this suite owns, so a move is proved by what is and is not in the table. */
+  const slugs = async (): Promise<string[]> =>
+    (await db.selectFrom('articles').select('slug').where('slug', 'like', 'bk6-%').orderBy('slug', 'asc').execute()).map((row) => row.slug);
+
+  async function article(name: string, title?: string): Promise<ContentRow> {
+    const body = title === undefined ? { key: slug(name) } : { title };
+    const res = await call('/content/article?locale=ar', write(actors.Owner, 'POST', body));
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    return res.row;
+  }
+
+  function rename(row: ContentRow, key: string, actor: Session = actors.Owner, version?: number) {
+    return call(`/content/article/${row.id}/rename?locale=ar`, write(actor, 'POST', { key, ...(version === undefined ? {} : { version }) }));
+  }
+
+  it('derives an Arabic-safe address from the title, then lets a person change it', async () => {
+    // A title is the whole input, and the fold is the one `slug.ts` does: Latin lower-cased,
+    // punctuation collapsed to one hyphen, Arabic letters kept rather than transliterated.
+    const latin = await article('derived-latin', `${ar} Derma Pen — Fusion!`);
+    expect(latin.key).toBe(`${ar}-derma-pen-fusion`);
+    const arabic = await article('derived-arabic', `${ar} بشرة نضرة`);
+    expect(arabic.key).toBe(`${ar}-بشرة-نضرة`);
+
+    const moved = await rename(latin, `${ar} mesotherapy fusion`);
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(moved.row.key).toBe(`${ar}-mesotherapy-fusion`);
+    // It is the same row: the id, the draft and the history all survive the move, and the
+    // version lock was spent — a move is a write like any other.
+    expect(moved.row.id).toBe(latin.id);
+    expect(moved.row.version).toBe(latin.version + 1);
+    const stored = await slugs();
+    expect(stored).toContain(`${ar}-mesotherapy-fusion`);
+    expect(stored).not.toContain(`${ar}-derma-pen-fusion`);
+  });
+
+  it('folds what is typed, so a pasted title becomes the address it will be', async () => {
+    const row = await article('folded');
+    // Typed as a person pastes it: stray spaces, capitals and punctuation the address cannot hold.
+    // The expected value keeps this suite's prefix, or `purge()` would leave the row behind.
+    const moved = await rename(row, `  ${ar}   Derma   PEN?? `);
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(moved.row.key).toBe(`${ar}-derma-pen`);
+
+    // A value with no letters in it folds to nothing, and nothing is not an address: the store
+    // refuses it rather than storing an empty slug the site would serve at `/blogs/`.
+    const empty = await rename(row, '??? —');
+    expect(empty.status).toBe(400);
+    expect(empty.error).toBe('invalid_key');
+    expect(empty.issues.map((issue) => issue.path)).toEqual(['key']);
+    expect((await call(`/content/article/${row.id}`, read(actors.Owner))).row.key).toBe(`${ar}-derma-pen`);
+  });
+
+  it('answers 409 for an address another row holds — including one in the Trash', async () => {
+    const one = await article('taken-one');
+    const two = await article('taken-two');
+    const clash = await rename(one, two.key);
+    expect(clash.status).toBe(409);
+    expect(clash.error).toBe('key_taken');
+    expect(clash.issues.map((issue) => issue.path)).toEqual(['key']);
+    expect((await call(`/content/article/${one.id}`, read(actors.Owner))).row.key).toBe(one.key);
+
+    // The unique index does not disappear with `deleted_at`, so a trashed twin still occupies its
+    // address. Checking only the live rows would let the driver answer a 500 instead of this 409.
+    await call(`/content/article/${two.id}?locale=ar`, write(actors.Owner, 'DELETE', { trashed: true }));
+    const trashed = await rename(one, two.key);
+    expect(trashed.status).toBe(409);
+    expect(trashed.error).toBe('key_taken');
+  });
+
+  it('writes nothing when the address it is given is the one the row already has', async () => {
+    const row = await article('same-address');
+    const audits = await auditCount('article.update', actors.Owner);
+    const again = await rename(row, row.key);
+    expect(again.status).toBe(200);
+    expect(again.row.version, 'a no-op spends no version').toBe(row.version);
+    expect(await auditCount('article.update', actors.Owner)).toBe(audits);
+  });
+
+  it('is not reachable from a draft save, whatever the body says', async () => {
+    const row = await article('save-cannot-move');
+    // `saveSchema` names `fields` and `version` only, so an address in the body is not a field
+    // the save can write — which is what keeps the two-second autosave from moving a page.
+    const saved = await call(
+      `/content/article/${row.id}?locale=ar`,
+      write(actors.Owner, 'PATCH', { fields: { title: 'عنوان محفوظ' }, version: row.version, key: slug('sneaky') }),
+    );
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+    expect(saved.row.key).toBe(row.key);
+    expect(await slugs()).not.toContain(slug('sneaky'));
+    expect(parseWrites(kindSpec('article'), { key: '', fields: { key: slug('sneaky') } }, 'ar').issues).toEqual([
+      { path: 'key', message: 'unknown field' },
+    ]);
+  });
+
+  it('asks permission first, and asks for both languages before it moves a shared address', async () => {
+    const row = await article('guarded');
+
+    const viewer = await rename(row, slug('viewer'), actors.Viewer);
+    expect(viewer.status).toBe(403);
+    expect(viewer.denied).toBe('article.update');
+
+    // A writer of Arabic only: the grant reaches the row, but the column serves both languages,
+    // so an editor who cannot write English must not be able to change the English URL either.
+    const oneLanguage = await rename(row, slug('one-language'), actors.ArabicOnly);
+    expect(oneLanguage.status).toBe(403);
+    expect(oneLanguage.error).toBe('address_locale_locked');
+    expect((await call(`/content/article/${row.id}`, read(actors.Owner))).row.key).toBe(row.key);
+
+    // The same caller may still write the row's Arabic, which is the grant they do hold.
+    const saved = await call(
+      `/content/article/${row.id}?locale=ar`,
+      write(actors.ArabicOnly, 'PATCH', { fields: { title: 'عنوان' }, version: row.version }),
+    );
+    expect(saved.status, JSON.stringify(saved.body)).toBe(200);
+  });
+
+  it('honours the version lock, and refuses a row in the Trash', async () => {
+    const row = await article('locked');
+    const stale = await rename(row, slug('locked-moved'), actors.Owner, row.version + 5);
+    expect(stale.status).toBe(409);
+    expect(stale.error).toBe('stale_row');
+    expect((await call(`/content/article/${row.id}`, read(actors.Owner))).row.key).toBe(row.key);
+
+    await call(`/content/article/${row.id}?locale=ar`, write(actors.Owner, 'DELETE', { trashed: true }));
+    const trashed = await rename(row, slug('locked-moved'));
+    expect(trashed.status).toBe(409);
+    expect(trashed.error).toBe('in_trash');
+  });
+
+  it('keeps a page’s leading slash, and its route unique', async () => {
+    const page = await call('/content/page?locale=ar', write(actors.Owner, 'POST', { title: `${ar} about us` }));
+    expect(page.status, JSON.stringify(page.body)).toBe(200);
+    expect(page.row.key).toBe(`/${ar}-about-us`);
+
+    const moved = await call(`/content/page/${page.row.id}/rename?locale=ar`, write(actors.Owner, 'POST', { key: `${ar} team`, version: page.row.version }));
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(moved.row.key).toBe(`/${ar}-team`);
+
+    const other = await call('/content/page?locale=ar', write(actors.Owner, 'POST', { title: `${ar} contact` }));
+    const clash = await call(`/content/page/${other.row.id}/rename?locale=ar`, write(actors.Owner, 'POST', { key: `${ar} team` }));
+    expect(clash.status).toBe(409);
+    expect(clash.error).toBe('key_taken');
+  });
+
+  it('refuses a list row, whose identifier is a reference other rows hold', async () => {
+    const created = await call('/content/list_item?list=faq', write(actors.Editor, 'POST', { key: slug('li') }));
+    expect(created.status, JSON.stringify(created.body)).toBe(200);
+
+    // Permission is decided before the body is read, so a caller with no grant never learns that
+    // the verb exists for this kind at all.
+    const denied = await call(`/content/list_item/${created.row.id}/rename?list=faq`, write(actors.Viewer, 'POST', { key: slug('li-moved') }));
+    expect(denied.status).toBe(403);
+    expect(denied.denied).toBe('list.update');
+
+    const refused = await call(`/content/list_item/${created.row.id}/rename?list=faq`, write(actors.Editor, 'POST', { key: slug('li-moved') }));
+    expect(refused.status).toBe(400);
+    expect(refused.error).toBe('rename_not_applicable');
+    const stored = await db.selectFrom('list_items').select('uid').where('id', '=', created.row.id).executeTakeFirst();
+    expect(stored?.uid).toBe(slug('li'));
+  });
+
+  it('records both addresses, because the row afterwards holds only the new one', async () => {
+    const row = await article('audited');
+    const audits = await auditCount('article.update', actors.Owner);
+    const moved = await rename(row, slug('audited-moved'));
+    expect(moved.status, JSON.stringify(moved.body)).toBe(200);
+    expect(await auditCount('article.update', actors.Owner)).toBe(audits + 1);
+
+    const trail = await db
+      .selectFrom('audit_log')
+      .select(['entity_type', 'entity_id', 'before_json', 'after_json'])
+      .where('action', '=', 'article.update')
+      .where('entity_id', '=', row.id)
+      .orderBy('id', 'desc')
+      .executeTakeFirstOrThrow();
+    const read = (value: unknown): Record<string, unknown> =>
+      typeof value === 'string' ? (JSON.parse(value) as Record<string, unknown>) : ((value ?? {}) as Record<string, unknown>);
+    expect(trail).toMatchObject({ entity_type: 'article', entity_id: row.id });
+    expect(read(trail.before_json).key).toBe(slug('audited'));
+    expect(read(trail.after_json).key).toBe(slug('audited-moved'));
+  });
+});

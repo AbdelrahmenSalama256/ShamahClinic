@@ -36,7 +36,12 @@ export interface GuardResult<R> {
    * so an export is recorded by what it contained, not by the bytes it returned.
    */
   response?: Response;
-  audit?: AuditPatch;
+  /**
+   * What the trail records. `false` says the request changed nothing — a rename to the address
+   * the row already has — and a line for it would claim a change that never happened, which is
+   * the same reason a refused request is not recorded.
+   */
+  audit?: AuditPatch | false;
 }
 
 /** `I` is the parsed shape; omit `schema` on read routes and it stays `unknown`. */
@@ -136,7 +141,8 @@ export async function guard<I, R>(
 
   // A handler that refuses the request (its own 400, after the schema passed)
   // changed nothing, so an audit row would record a change that never happened.
-  if (rule.action !== 'read' && (result.status ?? 200) < 400) {
+  // `audit: false` is a handler saying the same thing about a request it accepted.
+  if (rule.action !== 'read' && (result.status ?? 200) < 400 && result.audit !== false) {
     const audit = result.audit ?? {};
     await writeAudit({
       actorId: auth.user.id,
