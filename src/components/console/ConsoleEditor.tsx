@@ -42,7 +42,7 @@
  * route sanitizes the draft before rendering, it is a first-party page on the first party's
  * own origin, and the scripts that run are the site's own bundle.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { consoleCall, consoleRead } from './client-api';
 import { fieldOf, formValueOf, groupIssues, liveIssues, type TrackedIssue } from '@/lib/console/issues';
 import {
@@ -180,8 +180,12 @@ export function ConsoleEditor({
   /** The frame's width, not the browser's: a page is written for both, and the narrow one
    *  is where a section's overflow first shows. */
   const [viewport, setViewport] = useState<'wide' | 'phone'>('wide');
-  /** The rail the frame is drawn into, measured — see the scale below. */
-  const stageRef = useRef<HTMLDivElement | null>(null);
+  /** The rail the frame is drawn into, measured — see the scale below. A callback ref rather
+   *  than a bare `useRef`, because the editor re-mounts its detail subtree when the row data
+   *  lands: a ref captured once would hold a node that is not on the page by then, and the
+   *  measurement would stay at whatever the loading layout measured — which is exactly the
+   *  stale `scale(1)` a clip-everything rail showed while the 1280px frame ran unscaled. */
+  const [stageNode, setStageNode] = useState<HTMLDivElement | null>(null);
   const [stageWidth, setStageWidth] = useState(0);
   /** The case the same form draws its comparison from, kept beside the frame because the
    *  frame runs no scripts and a slider needs them. */
@@ -356,16 +360,18 @@ export function ConsoleEditor({
   }, [kind, locale, row?.listKey, shown, referenceOptions, labels]);
 
   // The scale is a fraction of the rail, so the rail's width has to be measured, not guessed:
-  // it changes with the window, with the console's own breakpoints and with the locale's script.
+  // it changes with the window, with the console's own breakpoints and with the locale's
+  // script. The effect keys on the node itself: whenever React hands over a fresh stage —
+  // row data arriving, a row switch — the measure starts over and the observer follows the
+  // element the page actually shows.
   useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage) return;
-    const measure = () => setStageWidth(stage.clientWidth);
+    if (!stageNode) return;
+    const measure = () => setStageWidth(stageNode.clientWidth);
     measure();
     const observer = new ResizeObserver(measure);
-    observer.observe(stage);
+    observer.observe(stageNode);
     return () => observer.disconnect();
-  }, []);
+  }, [stageNode]);
 
   async function publish(): Promise<void> {
     if (!row) return;
@@ -800,7 +806,7 @@ export function ConsoleEditor({
               </ButtonLink>
             </div>
           )}
-          <div ref={stageRef} className="console-preview-stage" data-viewport={viewport} style={stageStyle}>
+          <div ref={setStageNode} className="console-preview-stage" data-viewport={viewport} style={stageStyle}>
             {/* The page frame is this site's own route on this site's own origin, fed by markup
                 the route sanitized on the server — so it needs no sandbox: it loads the chunks
                 streaming the page through, and a frame NEXT's splash-swap requires, without the
