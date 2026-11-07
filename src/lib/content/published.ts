@@ -18,6 +18,9 @@ import { readStored } from './format';
 import { readMissingTextRule, resolveMissingText, type MissingText } from './language-fill';
 import { calendarDay, kindSpec, type ContentKind, type ContentLocale, type KindSpec } from './kinds';
 
+/** Which twin of a gated column a read answers with: the visitor's, or the author's. */
+export type Copy = 'published' | 'draft';
+
 /** A bilingual field's public copy, or `null` when neither locale was ever published. */
 export type PublicValue =
   | { kind: 'bi'; ar: string; en: string }
@@ -79,17 +82,18 @@ function asJsonValue(value: unknown): unknown {
  * stop printing markup. `html` and `source` keep theirs; a body is the one thing printed
  * as markup, and it is filtered by `sanitizeHtmlBody()` at render.
  */
-function publicValue(spec: KindSpec, row: AnyRow, name: string, missingText: MissingText): PublicValue | null {
+function publicValue(spec: KindSpec, row: AnyRow, name: string, missingText: MissingText, copy: Copy): PublicValue | null {
   const bi = spec.bi.find((field) => field.name === name);
   if (bi) {
     // With a published twin the draft is invisible; without one the column is the
     // live value, because saving it was never gated by publishing.
-    const [ar, en] = bi.pub ? [row[bi.pub.ar], row[bi.pub.en]] : [row[bi.draft.ar], row[bi.draft.en]];
+    const twin = copy === 'draft' ? null : bi.pub;
+    const [ar, en] = twin ? [row[twin.ar], row[twin.en]] : [row[bi.draft.ar], row[bi.draft.en]];
     return { kind: 'bi', ...resolveMissingText(missingText, { ar: readStored(bi.format, ar), en: readStored(bi.format, en) }) };
   }
 
   const json = spec.json.find((field) => field.name === name);
-  if (json) return { kind: 'json', value: asJsonValue(row[json.pub ?? json.draft]) };
+  if (json) return { kind: 'json', value: asJsonValue(row[(copy === 'draft' ? null : json.pub) ?? json.draft]) };
 
   const text = spec.text.find((field) => field.name === name);
   if (text) {
@@ -119,10 +123,10 @@ function fieldNames(spec: KindSpec): string[] {
   return [...spec.bi, ...spec.json, ...spec.text, ...spec.date, ...spec.number, ...spec.flag].map((field) => field.name);
 }
 
-function toPublicRow(spec: KindSpec, row: AnyRow, listKey: string | null, missingText: MissingText): PublicRow {
+function toPublicRow(spec: KindSpec, row: AnyRow, listKey: string | null, missingText: MissingText, copy: Copy = 'published'): PublicRow {
   const values: Record<string, PublicValue> = {};
   for (const name of fieldNames(spec)) {
-    const value = publicValue(spec, row, name, missingText);
+    const value = publicValue(spec, row, name, missingText, copy);
     if (value) values[name] = value;
   }
   return {
@@ -267,4 +271,30 @@ export function localesOf(row: PublicRow, name: string): ContentLocale[] {
   const value = row.values[name];
   if (!value || value.kind !== 'bi') return [];
   return (['ar', 'en'] as const).filter((locale) => value[locale].trim().length > 0);
+}
+
+/**
+ * One row's **draft** copy, by id — the question the console's preview frame asks.
+ *
+ * `publicRow()` answers what a visitor reads: published, not trashed, the `pub_*` twin. A
+ * preview asks what this author has written and not yet sent, so this reads the draft columns
+ * and asks nothing about `status`: an article that has never been published is exactly the one
+ * somebody most needs to see before they publish it. The Trash is still honoured, because a
+ * trashed row is not a page anybody is writing.
+ *
+ * Everything else is the same mapping, the same missing-text rule and the same `readStored()`
+ * cleaning, so the frame is drawn by the site's own readers instead of a second implementation
+ * that can disagree with them.
+ *
+ * Not memoised. The frame reloads on the row's version, and a cached draft would answer the
+ * author with the save before the one they just made.
+ */
+export async function draftRow(kind: ContentKind, id: string, options: Options = {}): Promise<PublicRow | null> {
+  const spec = kindSpec(kind);
+  const listId = spec.table === 'list_items' ? await listIdOf(options.listKey ?? '') : null;
+  if (spec.table === 'list_items' && !listId) return null;
+  const query = db.selectFrom(spec.table).selectAll().where('id', '=', id).where('deleted_at', 'is', null) as unknown as QueryShape;
+  const scoped = listId === null ? query : query.where('list_id', '=', listId);
+  const [row, missingText] = await Promise.all([scoped.executeTakeFirst(), readMissingTextRule()]);
+  return row ? toPublicRow(spec, row, options.listKey ?? null, missingText, 'draft') : null;
 }

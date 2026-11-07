@@ -27,7 +27,7 @@ import type { Article, ArticleCard, Bi, CategoryTerm, Lang, Offer, OfferDetail, 
 import { db } from '../db';
 import { SITE_URL } from '../site';
 import { getLocalizedHref } from '../locale';
-import { hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
+import { draftRow, hasPublished, publicRow, publicRows, type PublicRow, type PublicValue } from './published';
 import { readMissingTextRule, resolveMissingText, type MissingText } from './language-fill';
 import { teaserPair } from './teaser';
 import { offerLiveOn } from './offer-services';
@@ -262,6 +262,25 @@ export async function getPost(slug: string): Promise<WithSeo<Article> | null> {
     },
     null,
   );
+}
+
+/**
+ * The article a console preview draws: the same `Article` the public page builds, from the
+ * row's **draft** columns instead of its published twins.
+ *
+ * Deliberately not behind `rung()`: that gate answers "is anything of this kind published",
+ * and the article somebody most needs to preview is the one they have never published. The
+ * caller has already checked the console session and the grant, so this only reads.
+ *
+ * `articleCard()` and `body()` are the public page's own — the excerpt rule, the entity
+ * decoding, the category name and the sanitizer are one implementation, which is what makes
+ * the frame identical to the page rather than a second drawing of it that can drift.
+ */
+export async function getDraftArticle(id: string): Promise<Article | null> {
+  const row = await draftRow('article', id);
+  if (!row) return null;
+  const card = articleCard(row, 0, await categoryIndex());
+  return { ...card, content: body(row, 'content') };
 }
 
 export async function getCategories(): Promise<CategoryTerm[]> {

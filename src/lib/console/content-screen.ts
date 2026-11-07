@@ -147,6 +147,26 @@ export async function previewableRow(
   return row && !row.trashed ? row : null;
 }
 
+/**
+ * The same question for a bilingual kind, scoped to the language the frame is served in.
+ *
+ * One check, not two: `can(…, {})` asks for an *unscoped* grant, and every seeded role holds
+ * `{locales:[…]}` — `dimensionAllowed(values, undefined)` is false — so a pre-check with an
+ * empty target would refuse the Arabic-only editor their own Arabic tab. Naming the locale is
+ * the whole question, and a grant with `scope: null` answers it for both languages.
+ *
+ * `getRow` is keyed by id and table, so an id belonging to another kind cannot reach this
+ * reader at all.
+ */
+export async function previewableArticle(
+  id: string,
+  input: { grants: readonly Grant[]; locale: ContentLocale },
+): Promise<ContentRow | null> {
+  if (!can(input.grants, 'article', 'read', { locales: input.locale })) return null;
+  const row = await getRow('article', id);
+  return row && !row.trashed ? row : null;
+}
+
 /** Rows for one content screen, or `null` when the role cannot read the resource. */
 export async function contentScreenData(
   kind: ContentKind,
