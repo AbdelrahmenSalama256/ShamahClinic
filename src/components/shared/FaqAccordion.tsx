@@ -20,10 +20,14 @@ export interface FaqEntry {
   answer: { ar: string; en: string };
 }
 
-export const FaqAccordion: React.FC<{ items: readonly FaqEntry[] }> = ({ items }) => {
+export const FaqAccordion: React.FC<{ items: readonly FaqEntry[] }> = ({ items: given }) => {
   const { t, language, formatNumber } = useLanguage();
   const reduce = useReducedMotion();
-  const [open, setOpen] = useState<string | null>(items[0]?.id ?? null);
+  // The data boundary is JSON: a row that never had a FAQ may hand over null instead of an
+  // empty list. A page without questions draws no accordion, but the component still has to
+  // survive being rendered with nothing rather than reading `null[0]`.
+  const items = given ?? [];
+  const [open, setOpen] = useState<string | null>(() => items[0]?.id ?? null);
 
   return (
     <div className="border-t border-[var(--border-control)]">

@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useSyncExternalStore } from 'react';
+import { usePathname } from 'next/navigation';
+import { useEffect, useSyncExternalStore } from 'react';
 import { message } from '@/lib/console/messages';
 import type { ConsoleLocale } from '@/lib/console/prefs';
 
@@ -20,6 +21,14 @@ const serverLocale = (): ConsoleLocale => 'ar';
 
 export default function ConsoleError({ reset }: Readonly<{ error: Error & { digest?: string }; reset: () => void }>) {
   const locale = useSyncExternalStore(subscribe, readLocale, serverLocale);
+  // An error boundary stays mounted across client navigations: the address bar moves to
+  // the screen the person asked for, but this fallback keeps painting because React has
+  // no reason to re-render the segment it already replaced with a fallback. Reset when the
+  // route changes, so Back/Forward and a sidebar click always show the screen they name.
+  const pathname = usePathname();
+  useEffect(() => {
+    reset();
+  }, [pathname, reset]);
 
   return (
     <main className="console-center">

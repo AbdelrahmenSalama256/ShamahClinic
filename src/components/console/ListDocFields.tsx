@@ -144,7 +144,15 @@ export function ListDocFields({
             key={group.key}
             className="console-doc-group-box"
             open={!shut[group.key]}
-            onToggle={(event) => setShut((current) => ({ ...current, [group.key]: !event.currentTarget.open }))}
+            // Read the element now, not inside the updater below. A `<details>` fires
+            // `toggle` when React sets `open` on mount — including on a soft navigation —
+            // and React may run the updater after the event has been dispatched, when the
+            // browser has already nulled `currentTarget`. That updater read `.open` of
+            // null and took the whole detail screen down.
+            onToggle={(event) => {
+              const open = event.currentTarget.open;
+              setShut((current) => ({ ...current, [group.key]: !open }));
+            }}
           >
             <summary className="console-doc-group">
               <span className="console-doc-group-caret" aria-hidden="true" />

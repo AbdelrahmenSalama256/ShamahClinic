@@ -33,6 +33,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
 import { Reveal } from "@/components/ui/Reveal";
+import { Breadcrumbs, type Crumb } from "@/components/ui/Breadcrumbs";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Photo } from "@/components/ui/Photo";
 import { TreatmentCard } from "@/components/cards/TreatmentCard";
@@ -122,7 +123,7 @@ const SectionTitle: React.FC<{
   </h2>
 );
 
-type Breadcrumb = { href: string; label: string };
+type Breadcrumb = Crumb;
 type FactChip = {
   key: string;
   label: string;
@@ -136,9 +137,8 @@ const ServiceHero: React.FC<{
   photo?: React.ComponentProps<typeof Photo>["slot"];
   priceChip: React.ReactNode;
   breadcrumbs: Breadcrumb[];
-  breadcrumbsLabel: string;
   actions: React.ReactNode;
-}> = ({ title, lead, photo, priceChip, breadcrumbs, breadcrumbsLabel, actions }) => {
+}> = ({ title, lead, photo, priceChip, breadcrumbs, actions }) => {
   const src = photo?.src ?? "";
   const [brokenSrc, setBrokenSrc] = useState<string | null>(null);
 
@@ -167,35 +167,7 @@ const ServiceHero: React.FC<{
       }`}
     >
       <div className="mx-auto max-w-7xl px-4 pb-9 pt-6 sm:px-6 lg:px-8 lg:pb-14 lg:pt-8">
-        <nav aria-label={breadcrumbsLabel} className="mb-6">
-          <ol className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-muted)] sm:text-sm">
-            {breadcrumbs.map((crumb, index) => {
-              const last = index === breadcrumbs.length - 1;
-              return (
-                <li key={`${crumb.href}-${index}`} className="flex items-center gap-2">
-                  {index > 0 ? (
-                    <span
-                      aria-hidden
-                      className="h-1 w-1 rounded-full bg-[var(--text-muted)]/60"
-                    />
-                  ) : null}
-                  {last ? (
-                    <span aria-current="page" className="font-bold text-[var(--text-primary)]">
-                      {crumb.label}
-                    </span>
-                  ) : (
-                    <Link
-                      href={crumb.href}
-                      className="rounded transition-colors hover:text-[var(--gold-end)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--gold-end)] focus-visible:ring-offset-2"
-                    >
-                      {crumb.label}
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ol>
-        </nav>
+        <Breadcrumbs items={breadcrumbs} />
 
         <div
           className={
@@ -1118,19 +1090,18 @@ export const TreatmentDetailClient: React.FC<{ page: ServicePage }> = ({
         lead={has(heroLead) ? words(heroLead) : ""}
         photo={heroPhoto}
         priceChip={hasPrice ? priceChip : null}
-        breadcrumbsLabel={t("مسار التصفح", "Breadcrumb")}
         breadcrumbs={[
           {
-            href: getLocalizedHref("/", language),
-            label: t("الرئيسية", "Home"),
+            href: "/",
+            label: { ar: "الرئيسية", en: "Home" },
           },
           {
-            href: getLocalizedHref("/services", language),
-            label: t("الخدمات", "Treatments"),
+            href: "/services",
+            label: { ar: "الخدمات", en: "Treatments" },
           },
           {
-            href: getLocalizedHref(`/services/${content.key}`, language),
-            label: words(content.name),
+            href: `/services/${content.key}`,
+            label: content.name,
           },
         ]}
         actions={stackActions}

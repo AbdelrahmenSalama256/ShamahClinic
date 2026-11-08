@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   // measurement) can run without rewriting the `.next` cache a live `next dev`
   // server is watching. Unset means the normal `.next`.
   distDir: process.env.NEXT_DIST_DIR || ".next",
+  productionBrowserSourceMaps: true,
   // ISR pages keep serving from cache while the next render refreshes WordPress,
   // so no visitor waits on the CMS host.
   expireTime: 3600,
