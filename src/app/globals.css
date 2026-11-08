@@ -1187,7 +1187,7 @@ a {
 div,
 i,
 a,
-button,
+button, 
 a {
   transition: 0.3s all ease !important;
 }

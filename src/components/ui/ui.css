@@ -44,7 +44,7 @@
    ---------------------------------------------- */
 * {
   transition: 0.3s all ease !important;
-}
+ }
 .ui-button {
   display: inline-flex;
   align-items: center;

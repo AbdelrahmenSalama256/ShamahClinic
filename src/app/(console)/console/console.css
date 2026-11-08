@@ -317,7 +317,7 @@
 
   [data-surface="console"] :where(input, select, textarea)::placeholder {
     color: var(--c-text-3);
-  }
+  } 
 
   [data-surface="console"] :where(table) {
     border-collapse: collapse;

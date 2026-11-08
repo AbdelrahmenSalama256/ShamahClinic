@@ -374,4 +374,3 @@ using it needs no proxy rule at all.
 7. The exact database name and user cPanel creates (they are prefixed), to fill in
    `DATABASE_NAME` / `DATABASE_USER`.
 8. Whether the plan allows cron jobs (needed for the nightly backup).
-
