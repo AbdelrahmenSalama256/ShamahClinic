@@ -309,7 +309,7 @@ try {
     return
   }
 
-  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('diff', '--cached', '--check') -WorkingDirectory $DeployClone
+  Invoke-CheckedCommand -Executable 'git' -CommandArgs @('-c', 'core.whitespace=cr-at-eol,-trailing-space', 'diff', '--cached', '--check') -WorkingDirectory $DeployClone
   Invoke-CheckedCommand -Executable 'git' -CommandArgs @('commit', '-m', $Message) -WorkingDirectory $DeployClone
   Invoke-CheckedCommand -Executable 'git' -CommandArgs @('fetch', 'origin', 'main') -WorkingDirectory $DeployClone
 
