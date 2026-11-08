@@ -42,9 +42,6 @@
    `.console-button-primary`, which meant a filled button took the default's
    `background: var(--bg-secondary)` and inverted to a light one under a cursor.
    ---------------------------------------------- */
-* {
-  transition: 0.3s all ease !important;
- }
 .ui-button {
   display: inline-flex;
   align-items: center;
@@ -1236,11 +1233,4 @@ select.ui-control {
 }
 a {
   text-decoration: none;
-}
-div,
-i,
-a,
-button,
-a {
-  transition: 0.3s all ease !important;
 }

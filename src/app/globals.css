@@ -64,7 +64,6 @@
 
 * {
   box-sizing: border-box;
-  transition: 0.3s all ease !important;
 }
 /* Hover polish. The original site writes a blanket over every element — `.3s`,
    `!important`, and `all` for the property list — which outranks each of the 131 numeric
@@ -1187,7 +1186,7 @@ a {
 div,
 i,
 a,
-button, 
+button,
 a {
   transition: 0.3s all ease !important;
 }

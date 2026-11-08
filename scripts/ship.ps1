@@ -7,6 +7,10 @@ $root  = 'D:\shamah_cms'
 $clone = 'D:\deploys\newshamah-cpanel'
 Set-Location $root
 
+npm run copy:catalog
+if ($LASTEXITCODE -ne 0) { throw 'copy:catalog failed' }
+npm run copy:catalog
+if ($LASTEXITCODE -ne 0) { throw 'copy:catalog failed' }
 npm run typecheck
 if ($LASTEXITCODE -ne 0) { throw 'typecheck failed' }
 

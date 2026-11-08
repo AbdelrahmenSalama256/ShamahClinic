@@ -5,7 +5,7 @@
  * console writes and the default the site falls back to. `npm run copy:catalog` rewrites
  * this file; `npm run build` fails when it is stale.
  *
- * 253 entries from 136 components. Data-driven calls
+ * 251 entries from 136 components. Data-driven calls
  * (`t(row.name.ar, row.name.en)`) are console rows, not copy, and are not listed here.
  */
 export interface CopyEntry {
@@ -111,7 +111,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Page sections",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1148,
+    line: 1119,
     uses: 1,
   },
   {
@@ -273,7 +273,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Available doctors",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1009,
+    line: 981,
     uses: 1,
   },
   {
@@ -364,15 +364,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "cards",
     file: "src/components/cards/OfferCard.tsx",
     line: 98,
-    uses: 1,
-  },
-  {
-    key: "copy.249f43733db4",
-    ar: "الخدمات",
-    en: "Treatments",
-    area: "pages",
-    file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1129,
     uses: 1,
   },
   {
@@ -1074,7 +1065,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Browse all treatments",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1230,
+    line: 1201,
     uses: 1,
   },
   {
@@ -1164,7 +1155,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Quick actions",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1240,
+    line: 1211,
     uses: 1,
   },
   {
@@ -1308,7 +1299,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Book your consultation for this service and we will confirm a time that suits you.",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1109,
+    line: 1081,
     uses: 1,
   },
   {
@@ -1425,7 +1416,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Treatment at a glance",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1142,
+    line: 1113,
     uses: 1,
   },
   {
@@ -1695,7 +1686,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "About this treatment",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 624,
+    line: 596,
     uses: 1,
   },
   {
@@ -1762,15 +1753,6 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
-    key: "copy.c3535f330105",
-    ar: "الرئيسية",
-    en: "Home",
-    area: "pages",
-    file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1125,
-    uses: 1,
-  },
-  {
     key: "copy.c4849425b040",
     ar: "شروط الباقات",
     en: "Package terms",
@@ -1803,7 +1785,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Book your consultation for this treatment, or send your question on WhatsApp and we reply within minutes.",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1105,
+    line: 1077,
     uses: 1,
   },
   {
@@ -1927,9 +1909,9 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     key: "copy.d8cd9187df5e",
     ar: "مسار التصفح",
     en: "Breadcrumb",
-    area: "pages",
-    file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1121,
+    area: "common",
+    file: "src/components/ui/Breadcrumbs.tsx",
+    line: 35,
     uses: 1,
   },
   {
