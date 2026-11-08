@@ -111,7 +111,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Page sections",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1119,
+    line: 1163,
     uses: 1,
   },
   {
@@ -273,7 +273,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Available doctors",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 981,
+    line: 1034,
     uses: 1,
   },
   {
@@ -1065,7 +1065,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Browse all treatments",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1201,
+    line: 1241,
     uses: 1,
   },
   {
@@ -1155,7 +1155,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Quick actions",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1211,
+    line: 1251,
     uses: 1,
   },
   {
@@ -1299,7 +1299,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Book your consultation for this service and we will confirm a time that suits you.",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1081,
+    line: 1129,
     uses: 1,
   },
   {
@@ -1416,7 +1416,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Treatment at a glance",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1113,
+    line: 1157,
     uses: 1,
   },
   {
@@ -1686,7 +1686,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "About this treatment",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 596,
+    line: 662,
     uses: 1,
   },
   {
@@ -1785,7 +1785,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Book your consultation for this treatment, or send your question on WhatsApp and we reply within minutes.",
     area: "pages",
     file: "src/components/pages/TreatmentDetailClient.tsx",
-    line: 1077,
+    line: 1125,
     uses: 1,
   },
   {
