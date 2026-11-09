@@ -95,6 +95,12 @@ an existing account's password, and it ensures that account has the Owner role. 
 entire file in one phpMyAdmin **SQL** tab execution; do not copy only one statement from
 it. Then sign out and back in so the console refreshes the account's role.
 
+**Updating a database that is already live** (no re-import): import
+`database/update-testimonials.sql` in phpMyAdmin. It adds the *Patient testimonials* list,
+lets the Editor role edit it, and records migration 015 as applied. It is safe to run
+twice. Import it even if `server-setup.mjs --apply` already ran: migrations add the list
+but cannot give the Editor role access to it.
+
 In the cPanel terminal, run the following from the application root after importing the
 SQL file. Use the same database credentials as the running application:
 
