@@ -327,12 +327,18 @@
 
 /* --- voice note ---------------------------------------------------------------- */
 
+/* A voice bubble has a set width, and everything inside shrinks to it: in a narrow phone the
+   waveform loses bars' width, never spills past the bubble's edge. */
+.bubble[data-voice] {
+  inline-size: min(82%, 17rem);
+}
+
 .voice {
   display: grid;
-  grid-template-columns: auto auto 1fr;
+  grid-template-columns: auto auto minmax(0, 1fr);
   align-items: center;
-  gap: 0.5rem;
-  min-inline-size: 13.5rem;
+  gap: 0.4rem;
+  min-inline-size: 0;
   padding-block: 0.15rem 0.1rem;
 }
 
@@ -388,7 +394,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 1.5px;
+  min-inline-size: 0;
+  overflow: hidden;
   block-size: 1.6rem;
   direction: ltr;
   cursor: pointer;
@@ -397,7 +405,7 @@
 
 .bars span {
   flex: 1;
-  min-inline-size: 2px;
+  min-inline-size: 1px;
   border-radius: 2px;
   background: #b4bec4;
   transition: background-color var(--dur-fast) linear;
@@ -411,9 +419,24 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.4rem;
+  min-inline-size: 0;
   color: var(--wa-ink-soft);
   font-size: 0.62rem;
   direction: ltr;
+}
+
+/* a long "time" typed in the console is cut with an ellipsis, not pushed out of the bubble */
+.voiceFoot > span {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* the duration is the one figure that must stay whole */
+.voiceFoot > span:first-child {
+  flex: none;
 }
 
 .speed {
