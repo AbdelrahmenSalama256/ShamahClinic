@@ -1,0 +1,706 @@
+/*
+ * The proofs band: a phone running a WhatsApp-style chat, and a row of portrait video reels.
+ *
+ * A CSS module on purpose. The phone has to look like *the app*, not like the site, so it
+ * carries its own palette (the `--wa-*` values below) — and none of it may leak into the
+ * site's sheet or the console's. Every class here is hashed by the bundler, and the only
+ * custom properties declared live on `.band`, so nothing outside this component can see them.
+ */
+
+.band {
+  --wa-header: #008069;
+  --wa-header-ink: #ffffff;
+  --wa-wall: #efeae2;
+  --wa-wall-mark: rgba(84, 101, 111, 0.075);
+  --wa-in: #ffffff;
+  --wa-out: #d9fdd3;
+  --wa-ink: #111b21;
+  --wa-ink-soft: #667781;
+  --wa-tick: #53bdeb;
+  --wa-green: #00a884;
+  --wa-chip: #ffffff;
+  --wa-bar: #f0f2f5;
+  --phone-bezel: #16110f;
+  --phone-shadow: 0 40px 80px -30px rgba(33, 26, 22, 0.45), 0 18px 36px -18px rgba(33, 26, 22, 0.35);
+}
+
+.grid {
+  display: grid;
+  gap: 2.5rem;
+  align-items: center;
+  margin-block-start: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .grid[data-both] {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 3.5rem;
+  }
+}
+
+/* --- phone --------------------------------------------------------------------- */
+
+.phoneColumn {
+  display: grid;
+  justify-items: center;
+  gap: 1.25rem;
+}
+
+.phone {
+  position: relative;
+  inline-size: min(100%, 20rem);
+  aspect-ratio: 9 / 18.5;
+  padding: 0.7rem;
+  border-radius: 3rem;
+  background: var(--phone-bezel);
+  box-shadow: var(--phone-shadow), inset 0 0 0 2px rgba(255, 255, 255, 0.08);
+}
+
+.phone::before {
+  /* the side button, so the frame reads as a device and not as a rounded box */
+  content: "";
+  position: absolute;
+  inset-inline-end: -3px;
+  inset-block-start: 22%;
+  inline-size: 3px;
+  block-size: 4.5rem;
+  border-radius: 0 3px 3px 0;
+  background: #2a221f;
+}
+
+.screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  overflow: hidden;
+  border-radius: 2.4rem;
+  background: var(--wa-wall);
+  color: var(--wa-ink);
+  font-size: 0.8125rem;
+}
+
+.island {
+  position: absolute;
+  inset-block-start: 0.55rem;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  inline-size: 5.6rem;
+  block-size: 1.45rem;
+  border-radius: 999px;
+  background: #000;
+  z-index: 3;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1.5rem 0.25rem;
+  background: var(--wa-header);
+  color: var(--wa-header-ink);
+  font-size: 0.72rem;
+  font-weight: 600;
+  direction: ltr;
+}
+
+.statusIcons {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.75rem 0.6rem;
+  background: var(--wa-header);
+  color: var(--wa-header-ink);
+}
+
+.headerName {
+  flex: 1;
+  min-inline-size: 0;
+  line-height: 1.2;
+}
+
+.headerName strong {
+  display: block;
+  font-size: 0.92rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerName span {
+  font-size: 0.7rem;
+  opacity: 0.85;
+}
+
+.headerIcons {
+  display: inline-flex;
+  gap: 0.9rem;
+  opacity: 0.95;
+}
+
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 2.2rem;
+  block-size: 2.2rem;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #dfe5e7;
+  color: #54656f;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.avatar img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.chat {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 0.75rem 0.7rem 0.9rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  /* a quiet hand-drawn texture of our own, in the spirit of the app's wallpaper */
+  background-color: var(--wa-wall);
+  background-image:
+    radial-gradient(circle at 20% 30%, var(--wa-wall-mark) 0 2px, transparent 2.5px),
+    radial-gradient(circle at 70% 65%, var(--wa-wall-mark) 0 1.5px, transparent 2px),
+    radial-gradient(circle at 45% 85%, var(--wa-wall-mark) 0 2.5px, transparent 3px);
+  background-size: 46px 46px, 38px 38px, 58px 58px;
+}
+
+.chat::-webkit-scrollbar {
+  display: none;
+}
+
+.day {
+  align-self: center;
+  margin-block: 0.15rem 0.45rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 0.5rem;
+  background: var(--wa-chip);
+  color: var(--wa-ink-soft);
+  font-size: 0.68rem;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+}
+
+.bubble {
+  position: relative;
+  max-inline-size: 82%;
+  padding: 0.35rem 0.55rem 0.3rem;
+  border-radius: 0.55rem;
+  line-height: 1.45;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.bubble[data-from="patient"] {
+  align-self: flex-start;
+  background: var(--wa-in);
+  border-start-start-radius: 0;
+}
+
+.bubble[data-from="clinic"] {
+  align-self: flex-end;
+  background: var(--wa-out);
+  border-start-end-radius: 0;
+}
+
+/* The tail: a small triangle at the top outer corner, mirrored by the reading direction. */
+.bubble[data-tail]::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inline-size: 0.5rem;
+  block-size: 0.65rem;
+  background: inherit;
+}
+
+.bubble[data-tail][data-from="patient"]::before {
+  inset-inline-start: -0.45rem;
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+
+.bubble[data-tail][data-from="clinic"]::before {
+  inset-inline-end: -0.45rem;
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+:global([dir="rtl"]) .bubble[data-tail][data-from="patient"]::before {
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+}
+
+:global([dir="rtl"]) .bubble[data-tail][data-from="clinic"]::before {
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+}
+
+.meta {
+  float: inline-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-inline-start: 0.6rem;
+  margin-block-start: 0.35rem;
+  color: var(--wa-ink-soft);
+  font-size: 0.62rem;
+  line-height: 1;
+  direction: ltr;
+}
+
+.ticks {
+  color: var(--wa-tick);
+}
+
+.typing {
+  align-self: flex-start;
+  display: inline-flex;
+  gap: 0.22rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.55rem;
+  border-start-start-radius: 0;
+  background: var(--wa-in);
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+}
+
+.typing i {
+  inline-size: 0.38rem;
+  block-size: 0.38rem;
+  border-radius: 50%;
+  background: #8696a0;
+  animation: typing 1.2s infinite ease-in-out;
+}
+
+.typing i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes typing {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.enter {
+  animation: enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter,
+  .typing i {
+    animation: none;
+  }
+}
+
+/* --- voice note ---------------------------------------------------------------- */
+
+.voice {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 0.5rem;
+  min-inline-size: 13.5rem;
+  padding-block: 0.15rem 0.1rem;
+}
+
+.voiceAvatar {
+  position: relative;
+  inline-size: 2.6rem;
+  block-size: 2.6rem;
+}
+
+.voiceAvatar .avatar {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.mic {
+  position: absolute;
+  inset-block-end: -2px;
+  inset-inline-end: -4px;
+  display: grid;
+  place-items: center;
+  inline-size: 1.05rem;
+  block-size: 1.05rem;
+  border-radius: 50%;
+  background: var(--wa-in);
+  color: var(--wa-green);
+}
+
+.play {
+  display: grid;
+  place-items: center;
+  inline-size: 2rem;
+  block-size: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: #54656f;
+  cursor: pointer;
+}
+
+.play:focus-visible {
+  outline: 2px solid var(--wa-green);
+  outline-offset: 2px;
+}
+
+.wave {
+  display: grid;
+  gap: 0.25rem;
+  min-inline-size: 0;
+}
+
+.bars {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  block-size: 1.6rem;
+  direction: ltr;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.bars span {
+  flex: 1;
+  min-inline-size: 2px;
+  border-radius: 2px;
+  background: #b4bec4;
+  transition: background-color 0.15s linear;
+}
+
+.bars span[data-played] {
+  background: var(--wa-green);
+}
+
+.voiceFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--wa-ink-soft);
+  font-size: 0.62rem;
+  direction: ltr;
+}
+
+.speed {
+  padding: 0.05rem 0.35rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(84, 101, 111, 0.12);
+  color: var(--wa-ink-soft);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* --- composer (decorative) ----------------------------------------------------- */
+
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.5rem 0.9rem;
+  background: transparent;
+}
+
+.composerField {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 999px;
+  background: var(--wa-in);
+  color: var(--wa-ink-soft);
+  font-size: 0.78rem;
+  box-shadow: 0 1px 0.5px rgba(11, 20, 26, 0.13);
+}
+
+.composerField span {
+  flex: 1;
+}
+
+.composerMic {
+  display: grid;
+  place-items: center;
+  inline-size: 2.4rem;
+  block-size: 2.4rem;
+  border-radius: 50%;
+  background: var(--wa-green);
+  color: #fff;
+}
+
+/* --- chat switcher ------------------------------------------------------------- */
+
+.switcher {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.8rem 0.3rem 0.3rem;
+  border: 1px solid var(--border-subtle, rgba(33, 26, 22, 0.12));
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+:global([dir="rtl"]) .switch {
+  padding: 0.3rem 0.3rem 0.3rem 0.8rem;
+}
+
+.switch[aria-pressed="true"] {
+  border-color: var(--gold-mid);
+  box-shadow: 0 0 0 3px var(--gold-glow);
+}
+
+.switch .avatar {
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  font-size: 0.75rem;
+}
+
+.caption {
+  max-inline-size: 22rem;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.stars {
+  display: inline-flex;
+  gap: 1px;
+  color: var(--gold-mid);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: rgba(201, 162, 39, 0.14);
+  color: var(--text-gold);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* --- video reels --------------------------------------------------------------- */
+
+.reels {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(13rem, 15.5rem);
+  gap: 1rem;
+  padding-block: 0.5rem 1rem;
+  padding-inline: 0.25rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scroll-snap-type: inline mandatory;
+  scrollbar-width: thin;
+}
+
+.reel {
+  position: relative;
+  display: block;
+  /* a <button> sizes to its content even as a block; the reel fills its column */
+  inline-size: 100%;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 1.5rem;
+  background: #1d1714;
+  color: #fff;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  scroll-snap-align: start;
+  box-shadow: 0 22px 40px -24px rgba(33, 26, 22, 0.6);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+}
+
+.reel:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 30px 50px -24px rgba(33, 26, 22, 0.7);
+}
+
+.reel:focus-visible {
+  outline: 3px solid var(--gold-mid);
+  outline-offset: 3px;
+}
+
+.reel > img,
+.reel > video {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.reelShade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 35%, rgba(0, 0, 0, 0.78) 100%);
+}
+
+.reelPlay {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  translate: -50% -50%;
+  display: grid;
+  place-items: center;
+  inline-size: 3.6rem;
+  block-size: 3.6rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  transition: transform 0.3s ease;
+}
+
+:global([dir="rtl"]) .reelPlay {
+  translate: 50% -50%;
+}
+
+.reel:hover .reelPlay {
+  transform: scale(1.08);
+}
+
+.reelBody {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+.reelName {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.reelName .avatar {
+  inline-size: 1.9rem;
+  block-size: 1.9rem;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  font-size: 0.8rem;
+}
+
+.reelQuote {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  opacity: 0.92;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+
+/* --- player dialog ------------------------------------------------------------- */
+
+.dialog {
+  /* the reset zeroes every margin; a modal dialog centres itself with `margin: auto` */
+  margin: auto;
+  inline-size: min(92vw, 26rem);
+  max-block-size: 92vh;
+  padding: 0;
+  border: 0;
+  border-radius: 1.5rem;
+  background: #000;
+  overflow: hidden;
+}
+
+.dialog[data-wide] {
+  inline-size: min(92vw, 56rem);
+}
+
+.dialog::backdrop {
+  background: rgba(15, 11, 9, 0.82);
+  backdrop-filter: blur(4px);
+}
+
+.dialog video,
+.dialog iframe {
+  display: block;
+  inline-size: 100%;
+  max-block-size: 86vh;
+  border: 0;
+}
+
+.dialog iframe {
+  aspect-ratio: 16 / 9;
+}
+
+.dialog[data-portrait] iframe {
+  aspect-ratio: 9 / 16;
+}
+
+.close {
+  position: absolute;
+  inset-block-start: 0.6rem;
+  inset-inline-end: 0.6rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  inline-size: 2.3rem;
+  block-size: 2.3rem;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  cursor: pointer;
+}

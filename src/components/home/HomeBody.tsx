@@ -13,7 +13,9 @@ import { GoldLink, useWhatsappHref } from "@/components/shared/Actions";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { OfferCard } from "@/components/cards/OfferCard";
 import { TreatmentCard } from "@/components/cards/TreatmentCard";
-import type { HomeCompareCase } from "./ResultCompareSection";
+import { ResultCompareSection, type HomeCompareCase } from "./ResultCompareSection";
+import { ProofsSection } from "@/components/proofs/ProofsSection";
+import type { Testimonial } from "@/lib/content/site";
 import { getLocalizedHref } from "@/lib/locale";
 import { toPhotoSlot } from "@/lib/wp/ui-helpers";
 import type { Offer as UIOffer } from "@/data/offers";
@@ -48,6 +50,8 @@ interface HomeBodyProps {
   servicesTitle: Localized;
   /** The cases the owner asked to compare on Home, already narrowed to those with both pictures. */
   cases: HomeCompareCase[];
+  /** Published patient testimonials (WhatsApp chats and videos); empty hides the proofs band. */
+  testimonials?: Testimonial[];
   offers: UIOffer[];
   articles: UIArticle[];
   branches: HomeBranch[];
@@ -78,6 +82,7 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   servicesTotal,
   servicesTitle,
   cases,
+  testimonials = [],
   offers,
   articles,
   branches,
@@ -94,8 +99,9 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   );
   const hasIntroPanel = hasIntro || hasWhyChooseUs;
   const hasServices = !!services.length;
+  const hasProofs = testimonials.length > 0;
   const hasHomeContent =
-    hasIntroPanel || hasServices || cases.length > 0 || offers.length > 0 || branches.length > 0 || articles.length > 0;
+    hasIntroPanel || hasServices || hasProofs || cases.length > 0 || offers.length > 0 || branches.length > 0 || articles.length > 0;
   // The numerals count the bands that actually paint. They used to be written into the page,
   // so a Home with no introduction opened at "02" — and a comparison band, which is there or
   // not there on its own data, would have moved every number after it. This list is the paint
@@ -103,6 +109,8 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
   const paintedBands = [
     hasIntro && "intro",
     hasServices && "services",
+    hasProofs && "proofs",
+    !!cases.length && "compare",
     !!offers.length && "offers",
     !!branches.length && "branches",
     !!articles.length && "articles",
@@ -203,7 +211,10 @@ export const HomeBody: React.FC<HomeBodyProps> = ({
 
       {/* Before/after comparison, only from cases the owner put on Home and photographed
           twice. The band draws nothing when no case qualifies, and takes no numeral either. */}
-      {/* {!!cases.length && <ResultCompareSection cases={cases} index={numeralOf("compare")} />} */}
+      {/* Proofs: WhatsApp chats, voice notes and video testimonials, then the before/after
+          comparison beside them. Each band draws nothing (and takes no numeral) without rows. */}
+      {hasProofs && <ProofsSection testimonials={testimonials} index={numeralOf("proofs")} />}
+      {!!cases.length && <ResultCompareSection cases={cases} index={numeralOf("compare")} />}
 
       {/* Seasonal offers (console, else the WooCommerce snapshot, max 3) */}
       {!!offers.length && (

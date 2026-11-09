@@ -123,6 +123,9 @@ async function listHandler(req: Request): Promise<Response> {
         .selectFrom('media')
         .select(['id', 'path', 'filename', 'mime', 'width', 'height', 'size_bytes', 'alt_ar', 'alt_en'])
         .where('deleted_at', 'is', null)
+        // Voice notes and videos share the table but not the picture grid.
+        .where('mime', 'not like', 'audio/%')
+        .where('mime', 'not like', 'video/%')
         .orderBy('created_at', 'desc')
         .limit(ctx.input.limit)
         .execute();

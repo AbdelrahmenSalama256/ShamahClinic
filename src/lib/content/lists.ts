@@ -23,6 +23,7 @@ export const LIST_LABELS: Record<ListKey, { ar: string; en: string }> = {
   services: { ar: 'الخدمات', en: 'Services' },
   faq: { ar: 'الأسئلة الشائعة', en: 'Questions' },
   results: { ar: 'قصص النتائج', en: 'Result stories' },
+  testimonials: { ar: 'آراء المرضى (واتساب وفيديو)', en: 'Patient testimonials (WhatsApp & video)' },
 };
 
 export interface ListSyncRow {

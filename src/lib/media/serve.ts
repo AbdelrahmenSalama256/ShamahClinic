@@ -14,12 +14,13 @@
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 import { mediaRoot } from './storage';
+import { CLIP_CONTENT_TYPES } from './clip-types';
 
 /** Safe because every address `store.ts` writes carries a content hash and a random id. */
 export const UPLOAD_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
 /** Only what the pipeline writes. A row pointing at anything else is a 404, not a guess. */
-const CONTENT_TYPES = new Map([['.webp', 'image/webp']]);
+const CONTENT_TYPES = new Map([['.webp', 'image/webp'], ...CLIP_CONTENT_TYPES]);
 
 export interface UploadFile {
   bytes: Buffer;

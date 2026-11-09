@@ -85,6 +85,12 @@ export type ListField =
   | (FieldBase & { type: 'list'; required?: boolean })
   | (FieldBase & { type: 'strings' })
   | (FieldBase & { type: 'image'; required?: boolean })
+  /**
+   * A voice note or a video, uploaded from the device like a picture is. The stored value is
+   * the `/uploads/clips/…` address the clip route answered with; `accept` decides which file
+   * picker the editor opens and which formats the server takes.
+   */
+  | (FieldBase & { type: 'clip'; accept: 'audio' | 'video'; required?: boolean })
   | (FieldBase & { type: 'number' })
   | (FieldBase & { type: 'flag' })
   | (FieldBase & { type: 'select'; options: readonly { value: string; label: Bi }[] })
@@ -610,6 +616,82 @@ const RESULTS: ListSchema = {
 };
 
 /**
+ * What patients said, in their own voice: a WhatsApp conversation (typed messages and voice
+ * notes) or a short video. The site draws a chat as a real phone with WhatsApp's own layout and
+ * a video as a vertical reel; a row with nothing to read or play is never drawn, and when no row
+ * qualifies the whole band disappears instead of showing an empty phone.
+ */
+const TESTIMONIAL_G = {
+  who: { key: 'who', label: { ar: 'صاحبة الرأي', en: 'Who said it' } },
+  chat: {
+    key: 'chat',
+    label: { ar: 'محادثة واتساب', en: 'WhatsApp conversation' },
+    hint: { ar: 'لنوع «محادثة واتساب» فقط: رسائل مكتوبة أو تسجيل صوتي أو الاثنان.', en: 'For the "WhatsApp conversation" format only: typed messages, a voice note, or both.' },
+  },
+  video: {
+    key: 'video',
+    label: { ar: 'فيديو', en: 'Video' },
+    hint: { ar: 'لنوع «فيديو» فقط: ارفعي الفيديو من جهازك أو ضعي رابط يوتيوب.', en: 'For the "Video" format only: upload the video from your device or paste a YouTube link.' },
+  },
+} as const;
+
+const TESTIMONIALS: ListSchema = {
+  key: 'testimonials',
+  title: 'name',
+  fields: [
+    {
+      type: 'select',
+      stem: 'format',
+      group: TESTIMONIAL_G.who,
+      label: { ar: 'نوع الرأي', en: 'Format' },
+      hint: { ar: 'محادثة تظهر داخل هاتف بشكل واتساب، أو فيديو يظهر كريل طولي.', en: 'A chat drawn inside a phone in WhatsApp style, or a video drawn as a portrait reel.' },
+      options: [
+        { value: 'chat', label: { ar: 'محادثة واتساب', en: 'WhatsApp conversation' } },
+        { value: 'video', label: { ar: 'فيديو', en: 'Video' } },
+      ],
+    },
+    {
+      type: 'text',
+      stem: 'name',
+      group: TESTIMONIAL_G.who,
+      label: { ar: 'الاسم الظاهر', en: 'Displayed name' },
+      hint: { ar: 'كما وافقت المريضة أن يظهر، مثل «سارة م.».', en: 'As the patient agreed to be named, e.g. "Sara M.".' },
+      required: true,
+      max: 80,
+    },
+    { type: 'image', stem: 'avatar', group: TESTIMONIAL_G.who, label: { ar: 'الصورة الشخصية (اختياري)', en: 'Profile picture (optional)' }, hint: { ar: 'بدونها يظهر أول حرف من الاسم.', en: 'Without one, the first letter of the name shows.' } },
+    { type: 'refs', stem: 'service', source: 'services', group: TESTIMONIAL_G.who, label: { ar: 'الخدمة', en: 'Service' }, hint: { ar: 'تظهر كوسم صغير بجانب الرأي.', en: 'Shown as a small tag beside the testimonial.' } },
+    { type: 'text', stem: 'quote', group: TESTIMONIAL_G.who, label: { ar: 'جملة مختصرة', en: 'Short quote' }, hint: { ar: 'سطر أو سطران يلخصان الرأي، تظهر تحت الفيديو أو المحادثة.', en: 'One or two lines summing it up, shown under the video or chat.' }, multiline: true, max: 280 },
+    { type: 'number', stem: 'rating', group: TESTIMONIAL_G.who, label: { ar: 'التقييم من ٥ (اختياري)', en: 'Rating out of 5 (optional)' }, hint: { ar: 'اتركيه فارغًا لإخفاء النجوم.', en: 'Leave empty to hide the stars.' } },
+    {
+      type: 'children',
+      stem: 'messages',
+      group: TESTIMONIAL_G.chat,
+      label: { ar: 'الرسائل', en: 'Messages' },
+      hint: { ar: 'بالترتيب كما في المحادثة. رسائل «المريضة» بيضاء ورسائل «العيادة» خضراء، كما في واتساب.', en: 'In conversation order. "Patient" bubbles are white and "Clinic" bubbles are green, as in WhatsApp.' },
+      row: [
+        {
+          type: 'select',
+          stem: 'from',
+          label: { ar: 'المرسل', en: 'Sender' },
+          options: [
+            { value: 'patient', label: { ar: 'المريضة', en: 'Patient' } },
+            { value: 'clinic', label: { ar: 'العيادة', en: 'Clinic' } },
+          ],
+        },
+        { type: 'text', stem: 'text', label: { ar: 'نص الرسالة', en: 'Message' }, multiline: true, required: true },
+        { type: 'text', stem: 'time', label: { ar: 'الوقت', en: 'Time' } },
+      ],
+    },
+    { type: 'clip', accept: 'audio', stem: 'voice', group: TESTIMONIAL_G.chat, label: { ar: 'التسجيل الصوتي', en: 'Voice note' }, hint: { ar: 'ملف صوتي من واتساب (opus أو mp3 أو m4a) حتى ١٦ ميجا. يظهر كرسالة صوتية بعد الرسائل.', en: 'An audio file from WhatsApp (opus, mp3 or m4a), up to 16 MB. Shown as a voice message after the texts.' } },
+    { type: 'text', stem: 'day', group: TESTIMONIAL_G.chat, label: { ar: 'تاريخ المحادثة', en: 'Conversation day' }, hint: { ar: 'يظهر أعلى المحادثة مثل «اليوم» أو «١٢ مارس».', en: 'Shown above the chat, like "Today" or "12 March".' }, max: 40 },
+    { type: 'clip', accept: 'video', stem: 'video', group: TESTIMONIAL_G.video, label: { ar: 'ملف الفيديو', en: 'Video file' }, hint: { ar: 'mp4 أو webm حتى ٨٠ ميجا. التصوير الطولي أفضل.', en: 'mp4 or webm, up to 80 MB. Portrait works best.' } },
+    { type: 'text', stem: 'videoLink', mono: true, group: TESTIMONIAL_G.video, label: { ar: 'أو رابط يوتيوب', en: 'Or a YouTube link' }, hint: { ar: 'يُستخدم فقط إن لم يُرفع ملف.', en: 'Used only when no file is uploaded.' }, max: 300 },
+    { type: 'image', stem: 'poster', group: TESTIMONIAL_G.video, label: { ar: 'صورة الغلاف', en: 'Cover picture' }, hint: { ar: 'تظهر قبل التشغيل. بدونها يظهر أول إطار من الفيديو.', en: 'Shown before playing. Without one, the first frame shows.' } },
+  ],
+};
+
+/**
  * The About page's own headings, in the order `/about` draws its blocks.
  *
  * A `pages` row keeps its title in its own columns; this document holds every other word
@@ -817,7 +899,7 @@ export function pageDocSchema(route: string | null | undefined): ListSchema | nu
   return route ? PAGE_DOCS[route] ?? null : null;
 }
 
-const SCHEMAS: readonly ListSchema[] = [SERVICES, BRANCHES, SPECIALISTS, FAQ, NAV, RESULTS, ABOUT];
+const SCHEMAS: readonly ListSchema[] = [SERVICES, BRANCHES, SPECIALISTS, FAQ, NAV, RESULTS, TESTIMONIALS, ABOUT];
 
 const BY_KEY = new Map<string, ListSchema>(SCHEMAS.map((schema) => [schema.key, schema]));
 
@@ -1141,11 +1223,11 @@ export function parseListDoc(schema: ListSchema, input: unknown): ParsedListDoc 
       continue;
     }
 
-    if (field.type === 'image' || field.type === 'href' || field.type === 'select' || field.type === 'story') {
+    if (field.type === 'image' || field.type === 'clip' || field.type === 'href' || field.type === 'select' || field.type === 'story') {
       const raw = source[field.stem];
       if (raw !== undefined && typeof raw !== 'string') issues.push({ path: field.stem, message: 'expected text' });
       const value = typeof raw === 'string' ? raw.trim() : '';
-      if ((field.type === 'image' || field.type === 'href' || field.type === 'story') && field.required && !value) {
+      if ((field.type === 'image' || field.type === 'clip' || field.type === 'href' || field.type === 'story') && field.required && !value) {
         issues.push({ path: field.stem, message: 'required' });
       }
       if (field.type === 'select' && value && !field.options.some((option) => option.value === value)) {

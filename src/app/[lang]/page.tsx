@@ -3,7 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeBody } from "@/components/home/HomeBody";
-import { getHeroPhotos, getHome, getHomeHero, getHomeIntro, getHomeResultCases, getPageTitle } from "@/lib/content/site";
+import { getHeroPhotos, getHome, getHomeHero, getHomeIntro, getHomeResultCases, getPageTitle, getTestimonials } from "@/lib/content/site";
 import { getHomeWhyChooseUs } from "@/lib/content/about-page";
 import { getBannerOverride } from "@/lib/content/banners";
 import { getMergedTreatments, getFeaturedServices } from "@/lib/wp/treatments";
@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function HomePage() {
   await guardPage('home');
   const lang = await routeLang();
-  const [home, treatments, hero, heroSlides, intro, whyChooseUs, services, servicesTitle, banner, storyCases] = await Promise.all([
+  const [home, treatments, hero, heroSlides, intro, whyChooseUs, services, servicesTitle, banner, storyCases, testimonials] = await Promise.all([
     getHome({ offers: 4, articles: 4, lang }),
     getMergedTreatments(),
     getHeroPhotos(),
@@ -37,6 +37,7 @@ export default async function HomePage() {
     }),
     getBannerOverride('home'),
     getHomeResultCases(),
+    getTestimonials(),
   ]);
   // The comparison draws two pictures or nothing, so the reader hands it only the cases that
   // hold both — the `pair` the site reader already dropped the half of.
@@ -79,6 +80,7 @@ export default async function HomePage() {
         servicesTotal={treatments.length}
         servicesTitle={servicesTitle}
         cases={cases}
+        testimonials={testimonials}
         offers={home.offers.map(offerToUI)}
         articles={home.articles.map(cardToUIArticle)}
         branches={home.branches}

@@ -31,6 +31,7 @@
  */
 import { Fragment, useState } from 'react';
 import { Badge, Button, Checkbox, Field, Input, Note, Select, Textarea, pairName } from '@/components/console/kit';
+import { ClipPicker } from './ClipPicker';
 import { ImagePicker } from './ImagePicker';
 import { BlockEditor } from './BlockEditor';
 import type { Form } from '@/lib/console/editor-form';
@@ -536,6 +537,31 @@ function SchemaField({
           disabled={disabled}
           inputId={id}
           alt={altOf(form, field.stem)}
+          onChange={(next) => onChange(field.stem, next)}
+        />
+      </Field>
+    );
+  }
+
+  if (field.type === 'clip') {
+    return (
+      <Field
+        htmlFor={id}
+        errors={errors}
+        label={
+          <>
+            {label}
+            {field.required ? <Badge tone="warn">{labels['content.issue.required']}</Badge> : null}
+          </>
+        }
+        note={hint ? <Note>{hint}</Note> : null}
+      >
+        <ClipPicker
+          labels={labels}
+          accept={field.accept}
+          value={textOf(form, field.stem)}
+          disabled={disabled}
+          inputId={id}
           onChange={(next) => onChange(field.stem, next)}
         />
       </Field>

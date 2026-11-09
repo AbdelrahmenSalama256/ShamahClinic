@@ -33,6 +33,8 @@ const LIST_PATHS: Record<string, (key: string) => string | null> = {
   specialists: () => '/doctors',
   faq: () => '/faq',
   results: () => '/results',
+  // testimonials render in the proofs band on Home and on /results
+  testimonials: () => '/results',
   nav: () => null,
 };
 

@@ -918,6 +918,120 @@ export async function getHomeResultCases(): Promise<ResultStory[]> {
   return stories.filter((story) => story.showOnHome && story.pair !== null).slice(0, HOME_CASE_LIMIT);
 }
 
+// --- testimonials -----------------------------------------------------------------
+
+export interface ChatMessage {
+  from: 'patient' | 'clinic';
+  text: Bi;
+  time: Bi;
+}
+
+interface TestimonialBase {
+  key: string;
+  name: Bi;
+  avatar: string | null;
+  quote: Bi;
+  rating: number | null;
+  service: { name: Bi; href: Bi } | null;
+}
+
+export interface ChatTestimonial extends TestimonialBase {
+  format: 'chat';
+  day: Bi;
+  messages: ChatMessage[];
+  voice: string | null;
+}
+
+export interface VideoTestimonial extends TestimonialBase {
+  format: 'video';
+  poster: string | null;
+  /** an uploaded file, played in a `<video>` */
+  src: string | null;
+  /** else a YouTube id, played in its embed */
+  youtube: string | null;
+}
+
+export type Testimonial = ChatTestimonial | VideoTestimonial;
+
+/** `youtu.be/x`, `youtube.com/watch?v=x`, `/shorts/x`, `/embed/x` — the id, or nothing. */
+export function youtubeIdOf(link: string): string | null {
+  const text = link.trim();
+  if (!text) return null;
+  let url: URL;
+  try {
+    url = new URL(text);
+  } catch {
+    return null;
+  }
+  const host = url.hostname.replace(/^(www\.|m\.)/, '');
+  let id: string | null = null;
+  if (host === 'youtu.be') id = url.pathname.split('/')[1] ?? null;
+  else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+    id = url.searchParams.get('v') ?? url.pathname.match(/^\/(?:shorts|embed|live)\/([^/?#]+)/)?.[1] ?? null;
+  }
+  return id && /^[\w-]{6,20}$/.test(id) ? id : null;
+}
+
+function chatMessagesOf(doc: Record<string, unknown>): ChatMessage[] {
+  const raw = doc.messages;
+  if (!Array.isArray(raw)) return [];
+  return raw.flatMap((entry): ChatMessage[] => {
+    if (!entry || typeof entry !== 'object') return [];
+    const cell = entry as Record<string, unknown>;
+    const text = docBi(cell, 'text');
+    if (!text.ar && !text.en) return [];
+    return [{ from: docStr(cell, 'from') === 'clinic' ? 'clinic' : 'patient', text, time: docBi(cell, 'time') }];
+  });
+}
+
+/**
+ * What patients said, as the console's testimonials list publishes it.
+ *
+ * A row is drawn only when it has something to show: a chat needs a message or a voice note,
+ * a video needs a file or a YouTube link. Everything else — a row whose upload never finished,
+ * a link that is not YouTube — is left out rather than drawn as an empty phone, and with no row
+ * left the proofs band does not render at all.
+ */
+export async function getTestimonials(): Promise<Testimonial[]> {
+  return listRung(
+    'testimonials',
+    async () => {
+      const services = new Map((await getServiceCards()).map((card) => [card.slug, card]));
+      return (await publicRows('list_item', { listKey: 'testimonials' }))
+        .filter((row) => flag(row, 'enabled'))
+        .flatMap((row): Testimonial[] => {
+          const doc = documentOf(row);
+          if (!doc) return [];
+          const named = docStrings(doc, 'service');
+          const card = named.length > 0 ? services.get(named[0]) : undefined;
+          const rating = Number(doc.rating);
+          const base: TestimonialBase = {
+            key: row.key,
+            name: docBi(doc, 'name'),
+            avatar: docStr(doc, 'avatar') || null,
+            quote: docBi(doc, 'quote'),
+            rating: Number.isFinite(rating) && rating > 0 ? Math.min(5, Math.round(rating)) : null,
+            service: card ? { name: card.title, href: card.href } : null,
+          };
+          if (!base.name.ar && !base.name.en) return [];
+
+          if (docStr(doc, 'format') === 'video') {
+            const src = docStr(doc, 'video') || null;
+            const youtube = src ? null : youtubeIdOf(docStr(doc, 'videoLink'));
+            if (!src && !youtube) return [];
+            return [{ ...base, format: 'video', poster: docStr(doc, 'poster') || null, src, youtube }];
+          }
+
+          const messages = chatMessagesOf(doc);
+          const voice = docStr(doc, 'voice') || null;
+          if (messages.length === 0 && !voice) return [];
+          return [{ ...base, format: 'chat', day: docBi(doc, 'day'), messages, voice }];
+        });
+    },
+    [],
+  );
+}
+
 // --- settings -----------------------------------------------------------------
 
 /**
