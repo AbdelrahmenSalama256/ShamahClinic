@@ -90,7 +90,9 @@
   }
 }
 
-img {
+/* Scoped to the site's own document, like every other element rule in this sheet: the
+   console never loads it, and if anything ever did, this rule could not reach it. */
+[data-surface="site"] img {
   width: 100% !important;
   height: auto;
 }
