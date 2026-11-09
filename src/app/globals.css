@@ -1183,10 +1183,3 @@ a {
   color: var(--gold-end);
   padding-block-start: 0.15rem;
 }
-div,
-i,
-a,
-button,
-a {
-  transition: 0.3s all ease !important;
-}

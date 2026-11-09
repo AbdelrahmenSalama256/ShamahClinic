@@ -4747,10 +4747,3 @@
     }
   }
 }
-div,
-i,
-a,
-button,
-a {
-  transition: 0.3s all ease !important;
-}
