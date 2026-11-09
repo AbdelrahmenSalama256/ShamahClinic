@@ -1254,7 +1254,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "online",
     area: "components",
     file: "src/components/proofs/WhatsAppPhone.tsx",
-    line: 97,
+    line: 100,
     uses: 1,
   },
   {
@@ -1704,7 +1704,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "typing…",
     area: "components",
     file: "src/components/proofs/WhatsAppPhone.tsx",
-    line: 97,
+    line: 100,
     uses: 1,
   },
   {
@@ -1848,7 +1848,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Read",
     area: "components",
     file: "src/components/proofs/WhatsAppPhone.tsx",
-    line: 130,
+    line: 133,
     uses: 1,
   },
   {
@@ -1866,7 +1866,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "typing",
     area: "components",
     file: "src/components/proofs/WhatsAppPhone.tsx",
-    line: 136,
+    line: 139,
     uses: 1,
   },
   {
@@ -2019,7 +2019,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Message",
     area: "components",
     file: "src/components/proofs/WhatsAppPhone.tsx",
-    line: 147,
+    line: 150,
     uses: 1,
   },
   {

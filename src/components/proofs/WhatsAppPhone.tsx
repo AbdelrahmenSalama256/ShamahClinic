@@ -57,17 +57,20 @@ export const WhatsAppPhone: React.FC<{ chat: ChatTestimonial }> = ({ chat }) => 
           seen.disconnect();
         }
       },
-      { threshold: 0.45 },
+      { threshold: 0.25 },
     );
     seen.observe(el);
     return () => seen.disconnect();
   }, [started, reduce]);
 
+  // Primitive dependencies only: `next` is rebuilt on every render, and depending on it would
+  // let any parent re-render clear the timer before it fires, so the chat would never play.
+  const pending = next !== null;
   useEffect(() => {
-    if (next === null) return;
+    if (!pending) return;
     const timer = window.setTimeout(() => setPlayed((n) => n + 1), shown === 0 ? 400 : typing ? 1100 : 650);
     return () => window.clearTimeout(timer);
-  }, [next, shown, typing]);
+  }, [pending, shown, typing]);
 
   useEffect(() => {
     const el = scroller.current;
@@ -109,7 +112,7 @@ export const WhatsAppPhone: React.FC<{ chat: ChatTestimonial }> = ({ chat }) => 
             if (step.kind === "voice") {
               const prevFrom = prev?.kind === "text" ? chat.messages[prev.index].from : null;
               return (
-                <div key="voice" className={`${styles.bubble} ${reduce ? "" : styles.enter}`} data-from="patient" data-tail={prevFrom !== "patient" || undefined}>
+                <div key="voice" className={`${styles.bubble} ${reduce ? "" : styles.enter}`} data-voice data-from="patient" data-tail={prevFrom !== "patient" || undefined}>
                   <VoiceNote src={chat.voice!} time={lastTime} avatar={<Avatar src={chat.avatar} name={name} />} />
                 </div>
               );
