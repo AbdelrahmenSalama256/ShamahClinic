@@ -115,7 +115,7 @@ export const ROLE_SEEDS: readonly RoleSeed[] = [
       // The role's own screen: writing a meta row without being able to read the list
       // would open an empty console, so `read` is spelled out beside the writes.
       { resource: 'seo', actions: ['read', ...WRITE, 'publish'], scope: null },
-      { resource: 'redirect', actions: [...WRITE, 'publish'], scope: null },
+      { resource: 'redirect', actions: ['read', ...WRITE, 'publish'], scope: null },
       { resource: 'article', actions: ['read'], scope: null },
       { resource: 'offer', actions: ['read'], scope: null },
       { resource: 'page', actions: ['read'], scope: null },

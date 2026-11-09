@@ -276,12 +276,12 @@ describe('the sidebar registry', () => {
     // `texts` is the site's own wording, addressed through the `page` grant, so every role
     // that reads pages sees the row — six of six here.
     const expected: Record<RoleName, string[]> = {
-      Owner: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'tracking', 'roles', 'users', 'settings', 'password'],
-      Admin: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'tracking', 'roles', 'users', 'settings', 'password'],
+      Owner: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'redirects', 'tracking', 'roles', 'users', 'settings', 'password'],
+      Admin: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'redirects', 'tracking', 'roles', 'users', 'settings', 'password'],
       Editor: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'password'],
-      SEO: ['overview', ...content, 'lists', 'texts', 'seo', 'password'],
+      SEO: ['overview', ...content, 'lists', 'texts', 'seo', 'redirects', 'password'],
       // The Marketer is the role the screen exists for: `integration` and nothing else.
-      Marketer: ['overview', 'leads', ...content, 'texts', 'seo', 'tracking', 'password'],
+      Marketer: ['overview', 'leads', ...content, 'texts', 'seo', 'redirects', 'tracking', 'password'],
       Viewer: ['overview', 'leads', ...content, 'lists', 'texts', 'seo', 'password'],
     };
     for (const name of Object.keys(expected) as RoleName[]) {
@@ -609,6 +609,7 @@ describe('the navigation reads off the grants (BK-13.2, S3)', () => {
       ...LIST_KEYS,
       'texts',
       'seo',
+      'redirects',
       'tracking',
       'roles',
       'users',

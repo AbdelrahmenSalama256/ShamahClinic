@@ -470,6 +470,8 @@ describe('no console route writes without guard()', () => {
     // Search appearance is one write shared by the SEO center and the panel inside every
     // entity page, so its route file stays a one-line delegate.
     ['@/lib/content/seo-api', 'src/lib/content/seo-api.ts'],
+    // Redirects and the 404 log: two route files, one handler, every verb through `guard()`.
+    ['@/lib/content/redirects-api', 'src/lib/content/redirects-api.ts'],
     // The hero document is one read and one write across two tables, and both go through
     // `guard()`: the route file is three verbs and a delegate so the transaction cannot
     // begin before the grant is checked.

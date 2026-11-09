@@ -317,6 +317,15 @@ export interface RedirectsTable extends Editable {
   hits: Generated<number>;
   note: Generated<string>;
 }
+export interface NotFoundLogTable {
+  id: string;
+  path_hash: string;
+  path: string;
+  referrer: Generated<string>;
+  hits: Generated<number>;
+  first_seen_at: Generated<Date>;
+  last_seen_at: Generated<Date>;
+}
 export interface CtasTable extends Editable {
   id: string;
   cta_key: string;
@@ -622,6 +631,7 @@ export interface Database {
   media: MediaTable;
   seo_entries: SeoEntriesTable;
   redirects: RedirectsTable;
+  not_found_log: NotFoundLogTable;
   ctas: CtasTable;
   cta_actions: CtaActionsTable;
   leads: LeadsTable;

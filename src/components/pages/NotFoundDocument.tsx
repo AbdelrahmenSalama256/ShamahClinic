@@ -8,6 +8,8 @@ import { normalizeLang } from "@/lib/route-lang";
 import { getBranchList, getNavList, getSpecialistList } from "@/lib/content/site";
 import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
 import { getMergedTreatments } from "@/lib/wp/treatments";
+import { recordNotFound } from "@/lib/content/not-found-log";
+import { NotFoundBeacon } from "@/components/pages/NotFoundBeacon";
 
 /**
  * The whole 404 document, shared by `src/app/global-not-found.tsx` (URLs that match
@@ -45,8 +47,23 @@ export async function notFoundMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function NotFoundDocument() {
+/**
+ * The 404 monitor records a miss in one of two ways, because the two renders differ:
+ *
+ * - `global` (no route matched) renders only for a real miss, so it records on the
+ *   server — a crawler that runs no JavaScript, which is most of what finds an old
+ *   WordPress address, is counted too.
+ * - `boundary` (a page called `notFound()`) is rendered ahead of time on *every* page,
+ *   as the fallback the page might need, so recording there would log every visit. Its
+ *   beacon is a client effect, which only runs when the fallback is actually shown.
+ */
+export default async function NotFoundDocument({ source = "boundary" }: { source?: "global" | "boundary" } = {}) {
   const lang = await notFoundLang();
+  if (source === "global") {
+    const asked = await headers();
+    const missed = asked.get("x-shamah-path");
+    if (missed) await recordNotFound(missed, asked.get("referer"));
+  }
   const [treatments, branches, pages, nav, specialists] = await Promise.all([
     getMergedTreatments(),
     getBranchList(),
@@ -71,6 +88,7 @@ export default async function NotFoundDocument() {
       >
         <SiteShell branches={branches} treatments={treatments} nav={nav} specialists={specialists} hiddenPaths={hiddenPageHrefs(pages)}>
           <NotFoundClient />
+          {source === "boundary" && <NotFoundBeacon />}
         </SiteShell>
       </body>
     </html>
