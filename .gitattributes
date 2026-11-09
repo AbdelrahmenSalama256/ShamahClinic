@@ -1,0 +1,26 @@
+# One line ending everywhere: GitHub, Linux/cPanel, and Windows checkouts (even with
+# core.autocrlf=true). Tests read sources as text and migrations are checksummed, so a CRLF
+# working copy used to fail tests and look like an edited migration.
+* text=auto eol=lf
+
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.avif binary
+*.ico binary
+*.gif binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.zip binary
+*.mp3 binary
+*.mp4 binary
+*.webm binary
+*.wav binary
+*.ogg binary
+*.m4a binary
