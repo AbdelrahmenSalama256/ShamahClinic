@@ -87,9 +87,10 @@ describe('the lint has teeth', () => {
     // --strict removes the exemption table, so the table's cost is a number, not a rumour.
     const strict = run({ strict: true });
     expect([...new Set(strict.findings.map((f: { file: string }) => f.file))]).toEqual([
+      'src/app/globals.css',
       'src/components/pages/TreatmentDetailClient.tsx',
     ]);
-    expect(strict.findings).toHaveLength(3);
+    expect(strict.findings).toHaveLength(7);
   });
 
   it('runs as the command the gates call', () => {
