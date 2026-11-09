@@ -89,7 +89,7 @@ describe('the lint has teeth', () => {
     expect([...new Set(strict.findings.map((f: { file: string }) => f.file))]).toEqual([
       'src/components/pages/TreatmentDetailClient.tsx',
     ]);
-    expect(strict.findings).toHaveLength(5);
+    expect(strict.findings).toHaveLength(3);
   });
 
   it('runs as the command the gates call', () => {

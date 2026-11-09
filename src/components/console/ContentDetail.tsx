@@ -88,7 +88,10 @@ export function ContentDetail({ data }: Readonly<{ data: ContentDetailData }>) {
         <Button onClick={() => requestNav(goBack)}>{labels['content.back']}</Button>
         <div className="console-detail-id">
           <h1 className="console-heading">{data.title}</h1>
-          <Note className="console-detail-key">{row.key}</Note>
+          {/* a slug helps; the random id a console-created list row gets does not */}
+          {!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.key) && (
+            <Note className="console-detail-key">{row.key}</Note>
+          )}
         </div>
       </div>
 

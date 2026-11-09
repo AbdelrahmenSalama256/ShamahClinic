@@ -110,6 +110,14 @@ function titleOf(row: ListSummary, locale: ContentLocale): string {
   return (locale === 'ar' ? row.titleAr : row.titleEn) || (other === 'ar' ? row.titleAr : row.titleEn) || row.key;
 }
 
+/**
+ * The line under a row's title. An article's slug is something a person recognises; the
+ * random id a list row gets when it is created in the console is not, so it is not shown.
+ */
+function KeyLine({ row }: Readonly<{ row: ListSummary }>) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.key) ? null : <RowKey>{row.key}</RowKey>;
+}
+
 /** One row's state, as one chip — the same four the editor prints. */
 function stateOf(row: ListSummary): MessageKey {
   if (row.trashed) return 'content.state.trashed';
@@ -624,7 +632,7 @@ export function ConsoleList({
                     {page.hasImages && <Thumb src={row.image} labels={labels} />}
                     <span className="console-card-text">
                       <RowTitle>{titleOf(row, locale)}</RowTitle>
-                      <RowKey>{row.key}</RowKey>
+                      <KeyLine row={row} />
                     </span>
                     <Badge tone={contentStateTone(state)}>{labels[state]}</Badge>
                     {isHidden(row) && <Badge tone="neutral">{labels['content.state.hidden']}</Badge>}
@@ -672,7 +680,7 @@ export function ConsoleList({
                         {page.hasImages && <Thumb src={row.image} labels={labels} />}
                         <span className="console-row-text">
                           <RowTitle>{titleOf(row, locale)}</RowTitle>
-                          <RowKey>{row.key}</RowKey>
+                          <KeyLine row={row} />
                         </span>
                       </Link>
                     </td>

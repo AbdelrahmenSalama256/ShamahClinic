@@ -202,9 +202,14 @@ function sampleDoc(schema: ListSchema): Record<string, unknown> {
 describe('what the typed list form really paints (BK-20 F)', () => {
   it('draws a control for every field of all six lists', () => {
     for (const schema of listSchemas()) {
-      const markup = renderForm(schema, listDocForm(schema, sampleDoc(schema)));
+      const form = listDocForm(schema, sampleDoc(schema));
+      const painted = renderForm(schema, form);
       for (const field of schema.fields) {
         const id = `list-field-${field.stem}`;
+        // A group drawn only for one value of another field (a testimonial's video fields)
+        // is painted with that value chosen; every control must still exist somewhere.
+        const when = field.group?.when;
+        const markup = when ? renderForm(schema, { ...form, [when.stem]: when.equals }) : painted;
         if (field.type === 'refs') {
           expect(markup, `${schema.key}.${field.stem} offers choices`).toContain(labels['content.list.refs.empty']);
           continue;

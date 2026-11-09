@@ -35,8 +35,14 @@ export function migrationFiles(dir) {
     .filter((name) => name.endsWith('.sql'))
     .sort()
     .map((name) => {
-      const contents = readFileSync(resolve(dir, name), 'utf8');
-      return { name, contents, checksum: createHash('sha256').update(contents).digest('hex') };
+      // Same as src/lib/db/migrate.ts: the checksum is of the text, whatever line endings git wrote.
+      const contents = readFileSync(resolve(dir, name), 'utf8').replace(/\r\n/g, '\n');
+      return {
+        name,
+        contents,
+        checksum: createHash('sha256').update(contents).digest('hex'),
+        crlfChecksum: createHash('sha256').update(contents.replace(/\n/g, '\r\n')).digest('hex'),
+      };
     });
 }
 
@@ -172,7 +178,7 @@ async function applyMigrations(env, args) {
     for (const file of files) {
       const seen = applied?.get(file.name);
       if (seen) {
-        if (seen !== file.checksum) {
+        if (seen !== file.checksum && seen !== file.crlfChecksum) {
           throw new Error(
             `Migration ${file.name} was edited after it ran here (${seen.slice(0, 12)} -> ${file.checksum.slice(0, 12)}). ` +
               'Add a new migration instead of rewriting history.',

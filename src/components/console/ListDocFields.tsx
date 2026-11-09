@@ -31,6 +31,7 @@
  */
 import { Fragment, useState } from 'react';
 import { Badge, Button, Checkbox, Field, Input, Note, Select, Textarea, pairName } from '@/components/console/kit';
+import { ClipPicker } from './ClipPicker';
 import { ImagePicker } from './ImagePicker';
 import { BlockEditor } from './BlockEditor';
 import type { Form } from '@/lib/console/editor-form';
@@ -138,6 +139,10 @@ export function ListDocFields({
         ));
         const group = chunk.group;
         if (!group) return <Fragment key="*">{fields}</Fragment>;
+        if (group.when) {
+          const value = textOf(form, group.when.stem);
+          if (value !== group.when.equals && !(group.when.orEmpty && value === '')) return null;
+        }
         const owed = chunk.fields.some((field) => (errors[field.stem] ?? []).length > 0);
         return (
           <details
@@ -536,6 +541,31 @@ function SchemaField({
           disabled={disabled}
           inputId={id}
           alt={altOf(form, field.stem)}
+          onChange={(next) => onChange(field.stem, next)}
+        />
+      </Field>
+    );
+  }
+
+  if (field.type === 'clip') {
+    return (
+      <Field
+        htmlFor={id}
+        errors={errors}
+        label={
+          <>
+            {label}
+            {field.required ? <Badge tone="warn">{labels['content.issue.required']}</Badge> : null}
+          </>
+        }
+        note={hint ? <Note>{hint}</Note> : null}
+      >
+        <ClipPicker
+          labels={labels}
+          accept={field.accept}
+          value={textOf(form, field.stem)}
+          disabled={disabled}
+          inputId={id}
           onChange={(next) => onChange(field.stem, next)}
         />
       </Field>

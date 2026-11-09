@@ -775,6 +775,39 @@
     object-fit: cover;
   }
 
+  /* A voice note or a video: the same dashed drop frame, with a player once there is a file. */
+  .console-clip-frame {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-block-size: 5.5rem;
+    padding: var(--c-sp-3);
+    border: 1px dashed var(--c-line);
+    border-radius: var(--c-r-lg);
+    background: var(--c-surface-soft);
+  }
+
+  .console-clip-frame[data-empty="false"] {
+    border-style: solid;
+  }
+
+  .console-clip-frame:where(:hover, :focus-within),
+  .console-clip-frame[data-dragging] {
+    border-color: var(--c-accent);
+  }
+
+  .console-clip-frame audio {
+    inline-size: 100%;
+  }
+
+  .console-clip-frame video {
+    display: block;
+    max-inline-size: 100%;
+    max-block-size: 22rem;
+    border-radius: var(--c-r-md);
+    background: #000;
+  }
+
   .console-picker-empty {
     padding: var(--c-sp-4);
     color: var(--c-text-3);

@@ -5,7 +5,7 @@
  * console writes and the default the site falls back to. `npm run copy:catalog` rewrites
  * this file; `npm run build` fails when it is stale.
  *
- * 251 entries from 136 components. Data-driven calls
+ * 263 entries from 141 components. Data-driven calls
  * (`t(row.name.ar, row.name.en)`) are console rows, not copy, and are not listed here.
  */
 export interface CopyEntry {
@@ -421,6 +421,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.2afcb767b215",
+    ar: "إيقاف التسجيل",
+    en: "Pause voice note",
+    area: "components",
+    file: "src/components/proofs/VoiceNote.tsx",
+    line: 123,
+    uses: 1,
+  },
+  {
     key: "copy.2b0c4945782f",
     ar: "كل الخدمات",
     en: "All treatments",
@@ -473,6 +482,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     file: "src/components/layout/Navbar.tsx",
     line: 558,
     uses: 2,
+  },
+  {
+    key: "copy.310c64f166ba",
+    ar: "اختاري محادثة",
+    en: "Choose a conversation",
+    area: "components",
+    file: "src/components/proofs/ProofsSection.tsx",
+    line: 49,
+    uses: 1,
   },
   {
     key: "copy.3225b0bd7393",
@@ -610,6 +628,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.44982e5e8173",
+    ar: "شاهدي رأي {0}",
+    en: "Watch {0}'s testimonial",
+    area: "components",
+    file: "src/components/proofs/VideoReels.tsx",
+    line: 51,
+    uses: 1,
+  },
+  {
     key: "copy.452e273c9905",
     ar: "ما يميز هذا الفرع",
     en: "What this branch offers",
@@ -651,7 +678,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All services",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 170,
+    line: 178,
     uses: 1,
   },
   {
@@ -840,7 +867,16 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Why clients choose Shamah",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 152,
+    line: 160,
+    uses: 1,
+  },
+  {
+    key: "copy.62c6b34e9ec2",
+    ar: "موضع التشغيل",
+    en: "Playback position",
+    area: "components",
+    file: "src/components/proofs/VoiceNote.tsx",
+    line: 132,
     uses: 1,
   },
   {
@@ -849,7 +885,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All blogs",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 340,
+    line: 351,
     uses: 2,
   },
   {
@@ -859,6 +895,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
     line: 405,
+    uses: 1,
+  },
+  {
+    key: "copy.65e93b39f0da",
+    ar: "تشغيل التسجيل",
+    en: "Play voice note",
+    area: "components",
+    file: "src/components/proofs/VoiceNote.tsx",
+    line: 123,
     uses: 1,
   },
   {
@@ -1159,6 +1204,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.7bf10d04980b",
+    ar: "التقييم {0} من ٥",
+    en: "Rated {0} out of 5",
+    area: "components",
+    file: "src/components/proofs/VideoReels.tsx",
+    line: 14,
+    uses: 1,
+  },
+  {
     key: "copy.7cddd1ed6ea3",
     ar: "اسم المريضة:",
     en: "Patient:",
@@ -1195,12 +1249,21 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.80dfc9c3d7fe",
+    ar: "متصل الآن",
+    en: "online",
+    area: "components",
+    file: "src/components/proofs/WhatsAppPhone.tsx",
+    line: 97,
+    uses: 1,
+  },
+  {
     key: "copy.81904e2a196c",
     ar: "تواصلي معنا وسيسعد فريقنا بمساعدتكِ في معرفة خدمات العيادة.",
     en: "Contact us and our team will be happy to help you learn about our services.",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 119,
+    line: 127,
     uses: 1,
   },
   {
@@ -1263,7 +1326,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "WhatsApp",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 315,
+    line: 326,
     uses: 4,
   },
   {
@@ -1411,6 +1474,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 1,
   },
   {
+    key: "copy.96b25adf42aa",
+    ar: "سرعة التشغيل",
+    en: "Playback speed",
+    area: "components",
+    file: "src/components/proofs/VoiceNote.tsx",
+    line: 168,
+    uses: 1,
+  },
+  {
     key: "copy.974745354cd6",
     ar: "نظرة سريعة على الجلسة",
     en: "Treatment at a glance",
@@ -1452,7 +1524,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "All offers",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 222,
+    line: 233,
     uses: 1,
   },
   {
@@ -1569,7 +1641,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branch details",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 250,
+    line: 261,
     uses: 1,
   },
   {
@@ -1624,6 +1696,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
     line: 516,
+    uses: 1,
+  },
+  {
+    key: "copy.b5d5d1fb574b",
+    ar: "يكتب الآن…",
+    en: "typing…",
+    area: "components",
+    file: "src/components/proofs/WhatsAppPhone.tsx",
+    line: 97,
     uses: 1,
   },
   {
@@ -1723,7 +1804,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "shell",
     file: "src/components/layout/Navbar.tsx",
     line: 400,
-    uses: 2,
+    uses: 3,
   },
   {
     key: "copy.c0256ba10e32",
@@ -1762,12 +1843,30 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     uses: 2,
   },
   {
+    key: "copy.c735350889a9",
+    ar: "تمت القراءة",
+    en: "Read",
+    area: "components",
+    file: "src/components/proofs/WhatsAppPhone.tsx",
+    line: 130,
+    uses: 1,
+  },
+  {
     key: "copy.c9165cef2015",
     ar: "الخطوة ٤: بياناتكِ للتأكيد والمتابعة",
     en: "Step 4: Contact Details for Confirmation",
     area: "booking",
     file: "src/components/booking/BookingModal.tsx",
     line: 765,
+    uses: 1,
+  },
+  {
+    key: "copy.ca175b096064",
+    ar: "يكتب الآن",
+    en: "typing",
+    area: "components",
+    file: "src/components/proofs/WhatsAppPhone.tsx",
+    line: 136,
     uses: 1,
   },
   {
@@ -1803,7 +1902,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "Branch",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 278,
+    line: 289,
     uses: 1,
   },
   {
@@ -1912,6 +2011,15 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     area: "common",
     file: "src/components/ui/Breadcrumbs.tsx",
     line: 35,
+    uses: 1,
+  },
+  {
+    key: "copy.da3a633d0b29",
+    ar: "رسالة",
+    en: "Message",
+    area: "components",
+    file: "src/components/proofs/WhatsAppPhone.tsx",
+    line: 147,
     uses: 1,
   },
   {
@@ -2226,7 +2334,7 @@ export const COPY_CATALOG: readonly CopyEntry[] = [
     en: "There’s nothing to show just yet",
     area: "home",
     file: "src/components/home/HomeBody.tsx",
-    line: 118,
+    line: 126,
     uses: 1,
   },
   {

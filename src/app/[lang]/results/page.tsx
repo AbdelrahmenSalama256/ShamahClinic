@@ -4,7 +4,8 @@ import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/jsonld";
 import { ResultsClient } from "@/components/pages/ResultsClient";
-import { getResultStories, type ResultStory } from "@/lib/content/site";
+import { getResultStories, getTestimonials, type ResultStory } from "@/lib/content/site";
+import { ProofsSection } from "@/components/proofs/ProofsSection";
 import { getBanner } from "@/lib/content/banners";
 import { cardToUIArticle, toPhotoSlot } from "@/lib/wp/ui";
 import type { ResultStoryView } from "@/components/pages/ResultsClient";
@@ -92,7 +93,7 @@ export default async function ResultsPage({ searchParams }: Props) {
   // keep showing yesterday's results after a publish.
   unstable_noStore();
   await guardPage('results');
-  const [{ paged, page }, banner] = await Promise.all([read(searchParams), getBanner('results')]);
+  const [{ paged, page }, banner, testimonials] = await Promise.all([read(searchParams), getBanner('results'), getTestimonials()]);
   const lang = await routeLang();
 
   return (
@@ -112,6 +113,8 @@ export default async function ResultsPage({ searchParams }: Props) {
         totalPages={paged.totalPages}
         banner={banner}
       />
+      {/* What patients said beside what the photographs show; only on the first page of the list. */}
+      {page === 1 && <ProofsSection testimonials={testimonials} />}
     </>
   );
 }

@@ -3,6 +3,31 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
+import {
+  Activity,
+  BadgePercent,
+  CircleHelp,
+  FileText,
+  GalleryHorizontal,
+  Images,
+  Inbox,
+  Info,
+  KeyRound,
+  LayoutDashboard,
+  LogOut,
+  MapPin,
+  Menu,
+  MessageCircleHeart,
+  Newspaper,
+  Search,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Stethoscope,
+  Type,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import type { NavItem } from '@/lib/console/screens';
 import { consoleCall } from './client-api';
 
@@ -19,6 +44,35 @@ import { consoleCall } from './client-api';
  * shows exactly one at any width, so only one nav landmark is ever in the accessibility
  * tree or the tab order.
  */
+/**
+ * A glyph beside each row, so a person scanning twenty links finds "Leads" by its shape
+ * before reading. The row's words stay the name; the icon is decoration (`aria-hidden`).
+ * A key with no glyph here (a list added later) simply draws its words alone.
+ */
+const ICONS: Readonly<Record<string, LucideIcon>> = {
+  overview: LayoutDashboard,
+  leads: Inbox,
+  articles: Newspaper,
+  offers: BadgePercent,
+  pages: FileText,
+  about: Info,
+  hero: GalleryHorizontal,
+  nav: Menu,
+  branches: MapPin,
+  specialists: Stethoscope,
+  services: Sparkles,
+  faq: CircleHelp,
+  results: Images,
+  testimonials: MessageCircleHeart,
+  texts: Type,
+  seo: Search,
+  tracking: Activity,
+  roles: ShieldCheck,
+  users: Users,
+  settings: Settings,
+  password: KeyRound,
+};
+
 export function ConsoleNav({
   items,
   labels,
@@ -36,20 +90,24 @@ export function ConsoleNav({
   return (
     <nav className={variant === 'strip' ? 'console-nav console-nav-strip' : 'console-nav'} aria-label={labels.screens}>
       <ul className="console-nav-list">
-        {items.map((item) => (
-          <li key={item.key}>
-            <Link
-              href={item.path}
-              className="console-nav-link"
-              aria-current={current(item.path) ? 'page' : undefined}
-              aria-disabled={item.writable ? undefined : true}
-              title={item.writable ? undefined : labels.readOnly}
-              data-locked={item.writable ? undefined : 'true'}
-            >
-              {item.label}
-            </Link>
-          </li>
-        ))}
+        {items.map((item) => {
+          const Icon = ICONS[item.key];
+          return (
+            <li key={item.key}>
+              <Link
+                href={item.path}
+                className="console-nav-link"
+                aria-current={current(item.path) ? 'page' : undefined}
+                aria-disabled={item.writable ? undefined : true}
+                title={item.writable ? undefined : labels.readOnly}
+                data-locked={item.writable ? undefined : 'true'}
+              >
+                {Icon && <Icon className="console-nav-icon" size={17} strokeWidth={1.8} aria-hidden />}
+                {item.label}
+              </Link>
+            </li>
+          );
+        })}
         <li>
           <SignOut label={labels.signOut} />
         </li>
@@ -76,6 +134,7 @@ function SignOut({ label }: Readonly<{ label: string }>) {
 
   return (
     <button type="button" className="console-nav-link console-nav-signout" disabled={busy} onClick={() => void signOut()}>
+      <LogOut className="console-nav-icon" size={17} strokeWidth={1.8} aria-hidden />
       {label}
     </button>
   );

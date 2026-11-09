@@ -15,6 +15,8 @@ export interface MigrationFile {
   name: string;
   contents: string;
   checksum: string;
+  /** The same text hashed with CRLF endings: what a run from a Windows checkout recorded. */
+  crlfChecksum: string;
 }
 
 export function migrationsDir(): string {
@@ -26,8 +28,15 @@ export function migrationFiles(dir = migrationsDir()): MigrationFile[] {
     .filter((name) => name.endsWith('.sql'))
     .sort()
     .map((name) => {
-      const contents = readFileSync(path.join(dir, name), 'utf8');
-      return { name, contents, checksum: createHash('sha256').update(contents).digest('hex') };
+      // A Windows checkout (core.autocrlf) turns LF into CRLF; the checksum is of the text, not
+      // of whichever line endings git wrote, or every Windows worktree reads as "edited".
+      const contents = readFileSync(path.join(dir, name), 'utf8').replace(/\r\n/g, '\n');
+      return {
+        name,
+        contents,
+        checksum: createHash('sha256').update(contents).digest('hex'),
+        crlfChecksum: createHash('sha256').update(contents.replace(/\n/g, '\r\n')).digest('hex'),
+      };
     });
 }
 
@@ -69,7 +78,7 @@ export async function migrate(options: { dryRun?: boolean } = {}): Promise<Migra
   for (const file of files) {
     const seen = byName.get(file.name);
     if (seen) {
-      if (seen !== file.checksum) {
+      if (seen !== file.checksum && seen !== file.crlfChecksum) {
         throw new Error(
           `Migration ${file.name} was edited after it ran (${seen.slice(0, 12)} -> ${file.checksum.slice(0, 12)}). ` +
             'Add a new migration instead of rewriting history.',
