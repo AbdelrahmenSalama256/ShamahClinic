@@ -22,6 +22,7 @@ export interface RedirectsScreenProps {
   notFound: NotFoundView[];
   can: { create: boolean; update: boolean; delete: boolean };
   labels: Record<MessageKey, string>;
+  initialTab?: 'rules' | 'missing';
 }
 
 interface Draft {
@@ -43,10 +44,10 @@ function errorKey(code: string | undefined, labels: Record<MessageKey, string>):
 
 const day = (iso: string) => iso.slice(0, 10);
 
-export function RedirectsScreen({ redirects, notFound, can, labels }: Readonly<RedirectsScreenProps>) {
+export function RedirectsScreen({ redirects, notFound, can, labels, initialTab = 'rules' }: Readonly<RedirectsScreenProps>) {
   const router = useRouter();
   const id = useId();
-  const [tab, setTab] = useState<'rules' | 'missing'>('rules');
+  const [tab, setTab] = useState<'rules' | 'missing'>(initialTab);
   const [draft, setDraft] = useState<Draft>(BLANK);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ tone: Tone; key: MessageKey } | null>(null);

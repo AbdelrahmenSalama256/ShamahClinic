@@ -6,6 +6,7 @@ import { cache } from 'react';
 import { db } from '../db';
 import { BRAND_DEFAULTS, BRAND_GROUP, BRAND_KEY, normalizeBrand, type BrandProfile } from './brand-shape';
 import { HOME_LAYOUT_DEFAULTS, HOME_LAYOUT_GROUP, HOME_LAYOUT_KEY, normalizeHomeLayout, type HomeBandState } from './home-layout-shape';
+import { PROMO_DEFAULTS, PROMO_GROUP, PROMO_KEY, normalizePromo, type Promo } from './promo-shape';
 
 async function readDocument(group: string, key: string): Promise<unknown> {
   const row = await db.selectFrom('settings').select('value').where('group_name', '=', group).where('setting_key', '=', key).executeTakeFirst();
@@ -17,6 +18,16 @@ async function readDocument(group: string, key: string): Promise<unknown> {
     return undefined;
   }
 }
+
+/** The promotions as saved — the console's view. The site filters it with `livePromo`. */
+export const getPromo = cache(async function getPromo(): Promise<Promo> {
+  try {
+    const value = await readDocument(PROMO_GROUP, PROMO_KEY);
+    return value === undefined ? PROMO_DEFAULTS : normalizePromo(value);
+  } catch {
+    return PROMO_DEFAULTS;
+  }
+});
 
 /** The homepage's band order and visibility; the shipped order when nothing is saved. */
 export const getHomeLayout = cache(async function getHomeLayout(): Promise<HomeBandState[]> {

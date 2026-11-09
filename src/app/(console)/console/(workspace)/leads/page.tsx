@@ -4,6 +4,7 @@ import { can } from '@/lib/auth/permissions';
 import { catalogFor, message } from '@/lib/console/messages';
 import { consoleView } from '@/lib/console/server';
 import { leadsScreenData, parseLeadsView } from '@/lib/leads/view';
+import { leadTeam } from '@/lib/leads/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +31,7 @@ export default async function ConsoleLeadsPage({ searchParams }: Props) {
   return (
     <>
       <h1 className="console-heading">{message('nav.leads', prefs.locale)}</h1>
-      <LeadsScreen initial={data} labels={catalogFor(prefs.locale)} locale={prefs.locale} />
+      <LeadsScreen initial={data} team={await leadTeam()} labels={catalogFor(prefs.locale)} locale={prefs.locale} />
     </>
   );
 }

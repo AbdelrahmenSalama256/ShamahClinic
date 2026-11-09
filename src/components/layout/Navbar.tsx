@@ -22,6 +22,7 @@ import {
   Calendar,
   Globe,
   MapPin,
+  Megaphone,
   ChevronDown,
   Moon,
   Sun,
@@ -83,6 +84,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
   const isActive = (href: string) =>
     href === "/" ? normalizedPath === "/" : normalizedPath.startsWith(href);
 
+  const announcement = clinic.promo.announcement;
   const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(clinic.brand.whatsappMessage[language])}`;
 
   // A hidden page keeps its line in the authored menu but loses its way into the
@@ -114,21 +116,37 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
       >
         {/* ── Announcement mini-bar ── */}
         <div
-          className={`hidden lg:block overflow-hidden transition-[max-height,opacity] duration-hover ease-brand ${
+          className={`${announcement.enabled ? "block" : "hidden lg:block"} overflow-hidden transition-[max-height,opacity] duration-hover ease-brand ${
             isScrolled ? "max-h-0 opacity-0" : "max-h-10 opacity-100"
           } border-b border-[var(--border-control)] pb-2 mb-2 text-xs text-[var(--text-secondary)]`}
         >
-          <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-            <div className="flex items-center gap-6">
-              <span className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[var(--text-gold)]" />
-                {t(
-                  "فروعنا: مدينة نصر • التجمع الخامس • الشيخ زايد",
-                  "Branches: Nasr City • New Cairo • Sheikh Zayed",
-                )}
-              </span>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
+            <div className="flex items-center gap-6 min-w-0">
+              {announcement.enabled ? (
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium text-[var(--text-primary)]" data-announcement>
+                  <Megaphone className="w-3.5 h-3.5 shrink-0 text-[var(--text-gold)]" aria-hidden="true" />
+                  <span>{language === "ar" ? announcement.text.ar || announcement.text.en : announcement.text.en || announcement.text.ar}</span>
+                  {announcement.href && (
+                    <Link
+                      href={announcement.href.startsWith("/") ? getLocalizedHref(announcement.href, language) : announcement.href}
+                      className="text-[var(--text-gold)] underline underline-offset-4 hover:text-[var(--gold-end)]"
+                      data-cta="announcement"
+                    >
+                      {announcement.linkLabel[language] || t("اعرفي أكثر", "Learn more")}
+                    </Link>
+                  )}
+                </p>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[var(--text-gold)]" />
+                  {t(
+                    "فروعنا: مدينة نصر • التجمع الخامس • الشيخ زايد",
+                    "Branches: Nasr City • New Cairo • Sheikh Zayed",
+                  )}
+                </span>
+              )}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-4">
               <a
                 href={`tel:${clinic.phone.replace(/\s/g, "")}`}
                 dir="ltr"

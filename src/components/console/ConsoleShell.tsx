@@ -1,4 +1,5 @@
 import type { ConsoleUser } from '@/lib/auth/sessions';
+import { can } from '@/lib/auth/permissions';
 import { message } from '@/lib/console/messages';
 import type { ConsolePrefs } from '@/lib/console/prefs';
 import { navItems, palettePlaces } from '@/lib/console/screens';
@@ -78,6 +79,8 @@ export function ConsoleShell({
         close: message('shell.close', prefs.locale),
         readOnly: message('nav.readonly', prefs.locale),
         signOut: message('shell.sign_out', prefs.locale),
+        // Only an account that may read leads is shown how many are waiting.
+        newLeads: can(user.grants, 'lead', 'read', {}) ? message('nav.badge.new_leads', prefs.locale) : undefined,
         palette: {
           open: message('palette.open', prefs.locale),
           placeholder: message('palette.placeholder', prefs.locale),

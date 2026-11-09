@@ -101,6 +101,12 @@ lets the Editor role edit it, and records migration 015 as applied. It is safe t
 twice. Import it even if `server-setup.mjs --apply` already ran: migrations add the list
 but cannot give the Editor role access to it.
 
+Then import `database/update-console-pack.sql` the same way. It adds the 404 monitor's
+table and the *Ad landing pages* list, lets the SEO role open the Redirects screen and the
+Editor role edit landing pages, and records migrations 016 and 017 as applied. It is also
+safe to run twice. The rest of that release (SEO settings, brand & social, homepage order,
+promotions) is stored in tables the database already has.
+
 In the cPanel terminal, run the following from the application root after importing the
 SQL file. Use the same database credentials as the running application:
 

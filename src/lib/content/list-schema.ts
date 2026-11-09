@@ -907,7 +907,48 @@ export function pageDocSchema(route: string | null | undefined): ListSchema | nu
   return route ? PAGE_DOCS[route] ?? null : null;
 }
 
-const SCHEMAS: readonly ListSchema[] = [SERVICES, BRANCHES, SPECIALISTS, FAQ, NAV, RESULTS, TESTIMONIALS, ABOUT];
+const LANDING_G = {
+  page: { key: 'page', label: { ar: 'رأس الصفحة', en: 'Page top' } },
+  pitch: { key: 'pitch', label: { ar: 'العرض والمزايا', en: 'Offer & selling points' } },
+  setup: { key: 'setup', label: { ar: 'الإعلان والظهور', en: 'Ads & visibility' } },
+};
+
+/**
+ * Ad landing pages: one focused page per campaign at `/lp/<address>`, with the booking
+ * form as its only way out. Kept out of Google and the sitemap unless the row says
+ * otherwise, because a page built for a paid click is a duplicate of the offer it sells.
+ */
+const LANDING: ListSchema = {
+  key: 'landing',
+  title: 'headline',
+  fields: [
+    { type: 'text', stem: 'headline', group: LANDING_G.page, label: { ar: 'العنوان الرئيسي', en: 'Headline' }, required: true, max: 120 },
+    { type: 'text', stem: 'subhead', group: LANDING_G.page, label: { ar: 'السطر التعريفي', en: 'Subheading' }, multiline: true, max: 300 },
+    { type: 'image', stem: 'image', group: LANDING_G.page, label: { ar: 'الصورة', en: 'Picture' } },
+    {
+      type: 'text',
+      stem: 'bullets',
+      group: LANDING_G.pitch,
+      label: { ar: 'المزايا', en: 'Selling points' },
+      hint: { ar: 'ميزة في كل سطر، مثل «جلسة أولى مجانية».', en: 'One point per line, e.g. "First session free".' },
+      multiline: true,
+      max: 1200,
+    },
+    { type: 'refs', stem: 'offers', source: 'offers', group: LANDING_G.pitch, label: { ar: 'العروض', en: 'Offers' }, hint: { ar: 'تظهر بطاقاتها بالسعر وزر الحجز.', en: 'Their cards appear with price and booking button.' } },
+    { type: 'refs', stem: 'services', source: 'services', group: LANDING_G.pitch, label: { ar: 'الخدمات', en: 'Services' } },
+    { type: 'refs', stem: 'faq', source: 'faq', group: LANDING_G.pitch, label: { ar: 'أسئلة شائعة', en: 'FAQ' } },
+    { type: 'text', stem: 'cta', group: LANDING_G.pitch, label: { ar: 'نص زر الحجز', en: 'Booking button text' }, max: 40 },
+    {
+      type: 'flag',
+      stem: 'indexed',
+      group: LANDING_G.setup,
+      label: { ar: 'إظهار الصفحة في جوجل', en: 'Show this page in Google' },
+      hint: { ar: 'اتركيه مغلقاً لصفحات الإعلانات: الصفحة تعمل بالرابط ولا تظهر في البحث.', en: 'Leave off for ad pages: the link works but the page stays out of search.' },
+    },
+  ],
+};
+
+const SCHEMAS: readonly ListSchema[] = [SERVICES, BRANCHES, SPECIALISTS, FAQ, NAV, RESULTS, TESTIMONIALS, LANDING, ABOUT];
 
 const BY_KEY = new Map<string, ListSchema>(SCHEMAS.map((schema) => [schema.key, schema]));
 

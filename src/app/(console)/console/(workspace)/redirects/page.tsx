@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic';
  * Redirects and the 404 monitor. The 404 log is read defensively: on a database that has
  * not had its 016 table added yet, the rules still work and the tab says it is empty.
  */
-export default async function ConsoleRedirectsPage() {
+export default async function ConsoleRedirectsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const { auth, prefs } = await consoleView();
   if (!auth) return null; // the workspace layout has already redirected
 
@@ -33,6 +33,7 @@ export default async function ConsoleRedirectsPage() {
           delete: can(grants, 'redirect', 'delete', {}),
         }}
         labels={catalogFor(prefs.locale)}
+        initialTab={(await searchParams).tab === 'missing' ? 'missing' : 'rules'}
       />
     </>
   );

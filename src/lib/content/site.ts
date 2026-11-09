@@ -34,8 +34,9 @@ import { offerLiveOn } from './offer-services';
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
 import { SEO_SETTING_GROUP } from './settings-catalog';
-import { getBrandProfile } from './brand';
+import { getBrandProfile, getPromo } from './brand';
 import type { BrandProfile } from './brand-shape';
+import { livePromo, type Promo } from './promo-shape';
 import { branchOfDoc, docBi, docBiAny, docBool, docStringPairs, docStrings, docStr, faqOfDoc, navOfDoc, resultStoryPointer, specialistOfDoc } from './list-docs';
 import { faqData, type FaqItem } from '../../data/faq';
 import { navItems, type NavItem } from '../../data/nav';
@@ -1034,6 +1035,50 @@ export async function getTestimonials(): Promise<Testimonial[]> {
   );
 }
 
+export interface LandingPage {
+  key: string;
+  headline: Bi;
+  subhead: Bi;
+  image: string | null;
+  /** One selling point per line, per language. */
+  bullets: { ar: string[]; en: string[] };
+  offers: string[];
+  services: string[];
+  faq: string[];
+  cta: Bi;
+  indexed: boolean;
+}
+
+/** One ad landing page by its address, or null when it does not exist or is switched off. */
+export async function getLandingPage(key: string): Promise<LandingPage | null> {
+  return listRung(
+    'landing',
+    async () => {
+      const row = (await publicRows('list_item', { listKey: 'landing' })).find((candidate) => candidate.key === key);
+      if (!row || !flag(row, 'enabled')) return null;
+      const doc = documentOf(row);
+      if (!doc) return null;
+      const headline = docBi(doc, 'headline');
+      if (!headline.ar && !headline.en) return null;
+      const lines = (text: string) => text.split(/\r?\n/).map((line) => line.replace(/^[-•*]\s*/, '').trim()).filter(Boolean);
+      const bullets = docBi(doc, 'bullets');
+      return {
+        key: row.key,
+        headline,
+        subhead: docBi(doc, 'subhead'),
+        image: docStr(doc, 'image') || null,
+        bullets: { ar: lines(bullets.ar), en: lines(bullets.en) },
+        offers: docStrings(doc, 'offers'),
+        services: docStrings(doc, 'services'),
+        faq: docStrings(doc, 'faq'),
+        cta: docBi(doc, 'cta'),
+        indexed: docBool(doc, 'indexed'),
+      };
+    },
+    null,
+  );
+}
+
 // --- settings -----------------------------------------------------------------
 
 /**
@@ -1131,6 +1176,8 @@ export interface ClinicWords {
   whatsappUrl: string;
   /** Logo, social accounts, WhatsApp opening message and footer trust details. */
   brand: BrandProfile;
+  /** The announcement line and exit prompt, already filtered to what is live today. */
+  promo: Promo;
 }
 
 /**
@@ -1158,6 +1205,7 @@ export async function getClinicWords(): Promise<ClinicWords> {
     whatsapp,
     whatsappUrl: whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, '')}` : '',
     brand: await getBrandProfile(),
+    promo: livePromo(await getPromo()),
   };
 }
 

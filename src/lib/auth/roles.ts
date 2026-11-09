@@ -36,7 +36,7 @@ export type RoleName = 'Owner' | 'Admin' | 'Editor' | 'SEO' | 'Marketer' | 'View
  * treatments page: the data moved into `services` and the old rows stay in the
  * database (never deleted) but no role is granted a screen for them.
  */
-export const LIST_KEYS = ['nav', 'branches', 'specialists', 'services', 'faq', 'results', 'testimonials'] as const;
+export const LIST_KEYS = ['nav', 'branches', 'specialists', 'services', 'faq', 'results', 'testimonials', 'landing'] as const;
 /** An editor may rewrite any list except the navigation, which is Admin's. */
 export const EDITOR_LIST_KEYS = LIST_KEYS.filter((key) => key !== 'nav');
 

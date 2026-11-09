@@ -2348,6 +2348,54 @@
     gap: var(--c-gap-tight);
   }
 
+  .console-ov-setup-progress {
+    margin: 0 0 var(--c-gap-tight);
+    font-size: var(--c-font-small);
+    color: var(--c-text-2);
+  }
+  .console-ov-setup {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--c-font-small);
+  }
+  .console-ov-setup a {
+    display: flex;
+    gap: var(--c-gap-tight);
+    align-items: baseline;
+    color: inherit;
+  }
+  .console-ov-setup a:hover {
+    color: var(--c-accent);
+  }
+  .console-ov-setup li[data-done="yes"] {
+    color: var(--c-text-3);
+  }
+  .console-ov-setup li[data-done="yes"] > a > span:first-child {
+    color: var(--c-success);
+  }
+
+  .console-nav-badge {
+    margin-inline-start: auto;
+    min-inline-size: 1.4rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: var(--c-r-pill);
+    font-size: var(--c-font-micro);
+    font-weight: 700;
+    line-height: 1.5;
+    text-align: center;
+    color: var(--c-surface);
+    background: var(--c-danger);
+  }
+
+  .console-lead-assignee {
+    display: grid;
+    gap: var(--c-gap-tight);
+    margin-block-start: var(--c-gap);
+  }
+
   /* --- redirects & 404 ------------------------------------------------------ */
   .console-redirects {
     display: grid;

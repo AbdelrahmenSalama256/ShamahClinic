@@ -4,6 +4,7 @@ import React, { createContext, useContext } from "react";
 import type { ClinicWords } from "@/lib/content/site";
 import { clinicData } from "@/data/clinic";
 import { BRAND_DEFAULTS } from "@/lib/content/brand-shape";
+import { PROMO_DEFAULTS } from "@/lib/content/promo-shape";
 
 /**
  * The phone number, the WhatsApp number and the link built from it — read once per
@@ -21,6 +22,7 @@ const fallback: ClinicWords = {
   whatsapp: clinicData.whatsapp,
   whatsappUrl: clinicData.whatsappUrl,
   brand: BRAND_DEFAULTS,
+  promo: PROMO_DEFAULTS,
 };
 
 const ClinicContext = createContext<ClinicWords>(fallback);

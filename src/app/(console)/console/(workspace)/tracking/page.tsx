@@ -1,4 +1,6 @@
 import { TrackingWorkspace } from '@/components/console/TrackingWorkspace';
+import { PromotionsPanel } from '@/components/console/PromotionsPanel';
+import { getPromo } from '@/lib/content/brand';
 import { Empty } from '@/components/console/kit';
 import { can } from '@/lib/auth/permissions';
 import { catalogFor, message } from '@/lib/console/messages';
@@ -41,6 +43,7 @@ export default async function ConsoleTrackingPage() {
         labels={catalogFor(prefs.locale)}
         canWrite={can(grants, 'integration', 'update', {})}
       />
+      <PromotionsPanel initial={await getPromo()} canWrite={can(grants, 'integration', 'update', {})} labels={catalogFor(prefs.locale)} />
     </>
   );
 }

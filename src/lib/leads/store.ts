@@ -522,6 +522,43 @@ export async function setLeadStatus(input: { id: string; status: LeadStatus; act
   return getLead(input.id);
 }
 
+/**
+ * Hands a lead to a team member, or back to nobody. Only an active console account may
+ * hold one: a disabled or deleted person is not someone a lead can wait on.
+ */
+export async function setLeadAssignee(input: { id: string; assigneeId: string | null; actorId: string }): Promise<LeadRecord | null | 'unknown_user'> {
+  if (input.assigneeId) {
+    const person = await db
+      .selectFrom('users')
+      .select('id')
+      .where('id', '=', input.assigneeId)
+      .where('status', '=', 'active')
+      .where('deleted_at', 'is', null)
+      .executeTakeFirst();
+    if (!person) return 'unknown_user';
+  }
+  const result = await db
+    .updateTable('leads')
+    .set({ assignee_id: input.assigneeId, updated_by: input.actorId })
+    .where('id', '=', input.id)
+    .where('deleted_at', 'is', null)
+    .executeTakeFirst();
+  if (Number(result.numUpdatedRows ?? 0) === 0) return null;
+  return getLead(input.id);
+}
+
+/** The people a lead can be handed to: every active console account, by name. */
+export async function leadTeam(): Promise<{ id: string; name: string }[]> {
+  const rows = await db
+    .selectFrom('users')
+    .select(['id', 'name', 'email'])
+    .where('status', '=', 'active')
+    .where('deleted_at', 'is', null)
+    .orderBy('name', 'asc')
+    .execute();
+  return rows.map((row) => ({ id: row.id, name: row.name || row.email }));
+}
+
 export async function addLeadNote(input: { leadId: string; authorId: string; body: string }): Promise<LeadNote> {
   const id = randomUUID();
   await db

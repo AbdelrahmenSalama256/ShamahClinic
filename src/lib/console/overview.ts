@@ -18,6 +18,7 @@
  * database server's own clock — the only honest answer for a row that never recorded
  * the clinic's day.
  */
+import { overviewChecks, setupChecklist, type CheckKey, type SetupItem } from './overview-checks';
 import { sql } from 'kysely';
 import { db } from '../db';
 import { can, type Grant, type Resource } from '../auth/permissions';
@@ -250,7 +251,7 @@ export interface HeatCell {
 }
 
 export interface AttentionRow {
-  key: 'overview.attention.unanswered' | 'overview.attention.unattributed' | 'overview.attention.booked';
+  key: 'overview.attention.unanswered' | 'overview.attention.unattributed' | 'overview.attention.booked' | CheckKey;
   count: number;
   href: string;
 }
@@ -292,6 +293,8 @@ export interface OverviewData {
   devices: DeviceRow[];
   leads: LeadBlocks | null;
   attention: AttentionRow[];
+  /** The site setup checklist, for the accounts that run the site; null for everyone else. */
+  setup: SetupItem[] | null;
   library: OverviewRow[];
   quickActions: ActionLink[];
   canExport: boolean;
@@ -684,13 +687,15 @@ async function buildOverview(input: {
     missing: number(coverage?.missing),
   };
 
-  const attention: AttentionRow[] = leadVisible
+  const [checks, setup] = await Promise.all([overviewChecks(grants, today), setupChecklist(grants)]);
+  const leadAttention: AttentionRow[] = leadVisible
     ? [
         { key: 'overview.attention.unanswered' as const, count: number(staleNew.rows[0]?.n), href: '/console/leads?status=new' },
         { key: 'overview.attention.unattributed' as const, count: number(unattributed.rows[0]?.n), href: '/console/leads' },
         { key: 'overview.attention.booked' as const, count: number(staleBooked.rows[0]?.n), href: '/console/leads?status=booked' },
       ].filter((row) => row.count > 0)
     : [];
+  const attention: AttentionRow[] = [...leadAttention, ...checks];
 
   const quickActions: ActionLink[] = [];
   if (can(grants, 'article', 'read', {})) quickActions.push({ key: 'nav.articles', href: '/console/articles' });
@@ -720,6 +725,7 @@ async function buildOverview(input: {
     devices,
     leads,
     attention,
+    setup,
     library,
     quickActions,
     canExport: can(grants, 'stat', 'export', {}),

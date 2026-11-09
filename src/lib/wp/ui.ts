@@ -79,6 +79,7 @@ export function offerToUI(offer: WpOffer): UIOffer {
     savingsPercentage: offer.discountPercent || 0,
     currency: offer.currency,
     validUntil: offerValidUntil(offer.validUntil),
+    endsOn: offer.validUntil,
     href: offer.href,
     popular: Boolean(offer.onSale),
   };

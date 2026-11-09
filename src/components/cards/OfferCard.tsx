@@ -10,6 +10,7 @@ import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
 import { getLocalizedHref } from "@/lib/locale";
 import type { Offer } from "@/data/offers";
 import { Check, Calendar } from "lucide-react";
+import { OfferCountdown } from "./OfferCountdown";
 
 export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
   const { t, language, formatNumber } = useLanguage();
@@ -115,6 +116,7 @@ export const OfferCard: React.FC<{ offer: Offer }> = ({ offer }) => {
               {validUntil}
             </p>
           ) : null}
+          <OfferCountdown endsOn={offer.endsOn} />
 
           <div className="mt-4 flex flex-col sm:flex-row gap-2">
             <button
