@@ -1697,6 +1697,28 @@ export function OverviewScreen({
               </ul>
             )}
           </Panel>
+          {data.setup && data.setup.some((item) => !item.done) && (
+            <Panel title={labels["overview.setup.title"]}>
+              <p className="console-ov-setup-progress">
+                {labels["overview.setup.progress"]
+                  .replace("{done}", n(data.setup.filter((item) => item.done).length))
+                  .replace("{all}", n(data.setup.length))}
+              </p>
+              <ul className="console-ov-setup">
+                {data.setup.map((item) => (
+                  <li key={item.key} data-done={item.done ? "yes" : "no"}>
+                    <a href={item.href}>
+                      <span aria-hidden="true">{item.done ? "✓" : "○"}</span>
+                      <span>{labels[item.key]}</span>
+                      <span className="console-sr-only">
+                        {item.done ? labels["overview.setup.done"] : labels["overview.setup.todo"]}
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Panel>
+          )}
         </div>
       </div>
 

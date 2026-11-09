@@ -62,18 +62,16 @@ export const SITE_SETTING_FIELDS: readonly SettingField[] = [
 ];
 
 /**
- * Site-wide metadata. These four words and one verification code are what the layout
- * falls back to when a page publishes no metadata of its own, and what Google reads
- * from the home page.
+ * Site-wide metadata. These four words are what the layout falls back to when a page
+ * publishes no metadata of its own, and what Google reads from the home page. The
+ * verification codes moved to the SEO screen's settings (`seo-config.ts`), which still
+ * reads a code saved here before.
  */
 export const SEO_SETTING_FIELDS: readonly SettingField[] = [
   { group: SEO_SETTING_GROUP, key: 'title.ar', label: { ar: 'عنوان الموقع (عربي)', en: 'Site title (Arabic)' }, multiline: true },
   { group: SEO_SETTING_GROUP, key: 'title.en', label: { ar: 'عنوان الموقع (إنجليزي)', en: 'Site title (English)' }, multiline: true },
   { group: SEO_SETTING_GROUP, key: 'description.ar', label: { ar: 'وصف الموقع (عربي)', en: 'Site description (Arabic)' }, multiline: true },
   { group: SEO_SETTING_GROUP, key: 'description.en', label: { ar: 'وصف الموقع (إنجليزي)', en: 'Site description (English)' }, multiline: true },
-  { group: SEO_SETTING_GROUP, key: 'verification.google', label: { ar: 'كود تحقق Google', en: 'Google verification' } },
-  // input read only and can copy from it 
-  { group: SEO_SETTING_GROUP, key: 'verification.bing', label: { ar: 'كود تحقق Bing', en: 'Bing verification' } },
 ];
 
 /**

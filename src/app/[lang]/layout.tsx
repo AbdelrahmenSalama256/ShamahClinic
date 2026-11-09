@@ -11,6 +11,7 @@ import { getLocalizedHref } from "@/lib/locale";
 import { langStaticParams, normalizeLang } from "@/lib/route-lang";
 import { getBranchList, getBrandWords, getClinicWords, getNavList, getSiteMeta, getSpecialistList } from "@/lib/content/site";
 import { hiddenPageHrefs, readPageStates } from "@/lib/content/page-visibility";
+import { getSeoConfig } from "@/lib/content/seo-config";
 import { readCopy } from "@/lib/copy/store";
 import { getMergedTreatments } from "@/lib/wp/treatments";
 import { ClinicProvider } from "@/context/ClinicContext";
@@ -45,6 +46,16 @@ export async function generateMetadata(props: {
   const home = getLocalizedHref("", lang);
   const meta = await getSiteMeta(lang);
   const brand = await getBrandWords();
+  const seo = await getSeoConfig();
+  const codes = seo.verification;
+  // Bing, Pinterest and Facebook have no key of their own in Next's `verification`; they are
+  // the named `<meta>` tags each one documents.
+  const otherTags: Record<string, string> = {
+    ...(codes.bing ? { "msvalidate.01": codes.bing } : {}),
+    ...(codes.pinterest ? { "p:domain_verify": codes.pinterest } : {}),
+    ...(codes.facebook ? { "facebook-domain-verification": codes.facebook } : {}),
+    ...(seo.facebookAppId ? { "fb:app_id": seo.facebookAppId } : {}),
+  };
   return {
     metadataBase: new URL(SITE_URL),
     title: {
@@ -52,13 +63,17 @@ export async function generateMetadata(props: {
       template: lang === "ar" ? siteConfig.metadata.titleTemplate : siteConfig.metadata.titleTemplateEn,
     },
     description: meta.description,
-    verification: meta.verification ? { google: meta.verification } : undefined,
+    verification: {
+      ...(codes.google || meta.verification ? { google: codes.google || meta.verification || "" } : {}),
+      ...(codes.yandex ? { yandex: codes.yandex } : {}),
+      ...(Object.keys(otherTags).length ? { other: otherTags } : {}),
+    },
     keywords: [...siteConfig.metadata.keywords],
     authors: [{ name: brand[lang] }],
     robots: {
-      index: true,
+      index: seo.indexing,
       follow: true,
-      googleBot: { index: true, follow: true, "max-image-preview": "large" },
+      googleBot: { index: seo.indexing, follow: true, "max-image-preview": "large" },
     },
     icons: {
       icon: siteConfig.brand.logo,

@@ -1537,7 +1537,7 @@ describe('search appearance is one override per address and language (S4)', () =
     const id = await actorId();
     await saveSeoOverride({ path: seoPath, locale: 'ar', title: '  عنوان  ', description: ' وصف ', actorId: id });
 
-    expect(await readSeoOverride(seoPath, 'ar')).toEqual({ title: 'عنوان', description: 'وصف' });
+    expect(await readSeoOverride(seoPath, 'ar')).toMatchObject({ title: 'عنوان', description: 'وصف' });
     // The key is address plus language: the other tab still inherits.
     expect(await readSeoOverride(seoPath, 'en')).toBeNull();
 
@@ -1552,8 +1552,8 @@ describe('search appearance is one override per address and language (S4)', () =
     await saveSeoOverride({ path: secondPath, locale: 'en', title: '', description: 'English description', actorId: id });
 
     const batch = await readSeoOverrides([seoPath, secondPath, '/bk6-never-saved'], 'en');
-    expect(batch.get(seoPath)).toEqual({ title: 'English title', description: '' });
-    expect(batch.get(secondPath)).toEqual({ title: '', description: 'English description' });
+    expect(batch.get(seoPath)).toMatchObject({ title: 'English title', description: '' });
+    expect(batch.get(secondPath)).toMatchObject({ title: '', description: 'English description' });
     expect(batch.has('/bk6-never-saved')).toBe(false);
 
     await saveSeoOverride({ path: seoPath, locale: 'en', title: '', description: '', actorId: id });
@@ -1575,7 +1575,7 @@ describe('search appearance is one override per address and language (S4)', () =
       write(actors.Owner, 'POST', { path: seoPath, locale: 'ar', title: 'من الرابط', description: 'وصف من الرابط' }),
     );
     expect(saved.status, JSON.stringify(saved.body)).toBe(200);
-    expect(saved.body.override).toEqual({ title: 'من الرابط', description: 'وصف من الرابط' });
+    expect(saved.body.override).toMatchObject({ title: 'من الرابط', description: 'وصف من الرابط' });
 
     const cleared = await call('/seo', write(actors.Owner, 'POST', { path: seoPath, locale: 'ar', title: '', description: '' }));
     expect(cleared.status).toBe(200);

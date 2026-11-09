@@ -44,6 +44,7 @@ export interface ConsoleScreen {
     | 'lists'
     | 'texts'
     | 'seo'
+    | 'redirects'
     | 'tracking'
     | 'settings'
     | 'users'
@@ -90,6 +91,7 @@ export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   // after the content sections because the words come from those rows; the screen is a
   // second way to read the same site, not a separate content type.
   { key: 'seo', path: '/console/seo', resource: 'seo', action: 'read', entities: 'none' },
+  { key: 'redirects', path: '/console/redirects', resource: 'redirect', action: 'read', entities: 'none' },
   // The tags that watch the site and where a lead goes. A Marketer holds `integration`
   // and nothing else here, so this is their screen; no other role has a reason to open it.
   { key: 'tracking', path: '/console/tracking', resource: 'integration', action: 'read', entities: 'none' },

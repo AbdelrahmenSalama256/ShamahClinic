@@ -22,6 +22,7 @@ import {
   Calendar,
   Globe,
   MapPin,
+  Megaphone,
   ChevronDown,
   Moon,
   Sun,
@@ -83,11 +84,8 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
   const isActive = (href: string) =>
     href === "/" ? normalizedPath === "/" : normalizedPath.startsWith(href);
 
-  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(
-    language === "ar"
-      ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
-      : "Hello Shamah Clinics, I would like to inquire about appointments and services.",
-  )}`;
+  const announcement = clinic.promo.announcement;
+  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(clinic.brand.whatsappMessage[language])}`;
 
   // A hidden page keeps its line in the authored menu but loses its way into the
   // chrome — the route itself answers 404 (or its redirect) when reached directly.
@@ -118,21 +116,37 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
       >
         {/* ── Announcement mini-bar ── */}
         <div
-          className={`hidden lg:block overflow-hidden transition-[max-height,opacity] duration-hover ease-brand ${
+          className={`${announcement.enabled ? "block" : "hidden lg:block"} overflow-hidden transition-[max-height,opacity] duration-hover ease-brand ${
             isScrolled ? "max-h-0 opacity-0" : "max-h-10 opacity-100"
           } border-b border-[var(--border-control)] pb-2 mb-2 text-xs text-[var(--text-secondary)]`}
         >
-          <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
-            <div className="flex items-center gap-6">
-              <span className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-[var(--text-gold)]" />
-                {t(
-                  "فروعنا: مدينة نصر • التجمع الخامس • الشيخ زايد",
-                  "Branches: Nasr City • New Cairo • Sheikh Zayed",
-                )}
-              </span>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 flex justify-between items-center">
+            <div className="flex items-center gap-6 min-w-0">
+              {announcement.enabled ? (
+                <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 font-medium text-[var(--text-primary)]" data-announcement>
+                  <Megaphone className="w-3.5 h-3.5 shrink-0 text-[var(--text-gold)]" aria-hidden="true" />
+                  <span>{language === "ar" ? announcement.text.ar || announcement.text.en : announcement.text.en || announcement.text.ar}</span>
+                  {announcement.href && (
+                    <Link
+                      href={announcement.href.startsWith("/") ? getLocalizedHref(announcement.href, language) : announcement.href}
+                      className="text-[var(--text-gold)] underline underline-offset-4 hover:text-[var(--gold-end)]"
+                      data-cta="announcement"
+                    >
+                      {announcement.linkLabel[language] || t("اعرفي أكثر", "Learn more")}
+                    </Link>
+                  )}
+                </p>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-[var(--text-gold)]" />
+                  {t(
+                    "فروعنا: مدينة نصر • التجمع الخامس • الشيخ زايد",
+                    "Branches: Nasr City • New Cairo • Sheikh Zayed",
+                  )}
+                </span>
+              )}
             </div>
-            <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center gap-4">
               <a
                 href={`tel:${clinic.phone.replace(/\s/g, "")}`}
                 dir="ltr"
@@ -165,7 +179,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
           >
             <span className="relative block w-36 sm:w-44 h-10">
               <Image
-                src={images.logo}
+                src={clinic.brand.logo || images.logo}
                 alt={t("شعار عيادات شامه", "Shamah Clinics logo")}
                 fill
                 sizes="(min-width: 640px) 176px, 144px"
@@ -388,7 +402,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                   <div className="flex items-center justify-between pb-5 border-b border-[var(--gold-border)]">
                     <span className="relative block w-32 h-9">
                       <Image
-                        src={images.logo}
+                        src={clinic.brand.logo || images.logo}
                         alt={t("شعار عيادات شامه", "Shamah Clinics logo")}
                         fill
                         sizes="128px"

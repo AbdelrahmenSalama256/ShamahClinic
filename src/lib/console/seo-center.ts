@@ -17,6 +17,7 @@ import { localizedPath } from '../content/paths';
 import { readSeoOverride, readSeoOverrides, seoPathOf, type SeoOverride } from '../content/seo';
 import { SITE_SEO } from '../content/seo-defaults';
 import { SEO_DESCRIPTION_MAX, SEO_TITLE_MAX, seoStatus, worstStatus, type SeoStatus } from '../content/seo-limits';
+import { seoScore } from '../content/seo-score';
 import { SITE_PAGES } from '../content/settings-catalog';
 import { getAllArticles, getAllOffers, getBranchList, getOffer, getPost } from '../content/site';
 import { getMergedTreatment, getMergedTreatments } from '../wp/treatments';
@@ -42,6 +43,11 @@ export interface SeoRow {
   titleStatus: SeoStatus;
   descriptionStatus: SeoStatus;
   status: SeoStatus;
+  /**
+   * The SEO score from what this screen can see — the result pair, focus keyword, address
+   * and share image. Body checks need the page's text and are graded in its own editor.
+   */
+  score: number;
 }
 
 export interface SeoCenterData {
@@ -100,6 +106,14 @@ function rowOf(entry: Entry, locale: ContentLocale, override: SeoOverride | null
     titleStatus,
     descriptionStatus,
     status: worstStatus(titleStatus, descriptionStatus),
+    score: seoScore({
+      focusKeyword: override?.focusKeyword ?? '',
+      title,
+      description,
+      path: entry.path,
+      body: null,
+      ogImage: override?.ogImage ?? '',
+    }).score,
   };
 }
 

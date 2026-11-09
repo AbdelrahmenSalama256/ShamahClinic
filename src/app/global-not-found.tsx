@@ -17,4 +17,6 @@ export async function generateMetadata(): Promise<Metadata> {
   return notFoundMetadata();
 }
 
-export default NotFoundDocument;
+export default function GlobalNotFound() {
+  return <NotFoundDocument source="global" />;
+}

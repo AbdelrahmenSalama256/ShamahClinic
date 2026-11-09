@@ -54,6 +54,8 @@ export interface Offer {
     ar: string;
     en: string;
   };
+  /** The raw end day (`YYYY-MM-DD`, Cairo), for the final-week countdown; null when open-ended. */
+  endsOn?: string | null;
   /** Detail page path for each language (the WP slug of that store's row). */
   href: {
     ar: string;

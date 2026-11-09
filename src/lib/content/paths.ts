@@ -35,6 +35,7 @@ const LIST_PATHS: Record<string, (key: string) => string | null> = {
   results: () => '/results',
   // testimonials render in the proofs band on Home and on /results
   testimonials: () => '/results',
+  landing: (key) => `/lp/${key}`,
   nav: () => null,
 };
 

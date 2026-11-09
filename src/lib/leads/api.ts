@@ -24,7 +24,7 @@ import {
   isLeadStatus,
   leadNotes,
   listLeads,
-  setLeadStatus,
+  setLeadAssignee, setLeadStatus,
   LEAD_STATUSES,
   type LeadNote,
   type LeadRecord,
@@ -96,7 +96,10 @@ async function readHandler(req: Request, id: string): Promise<Response> {
   });
 }
 
-const statusSchema = z.object({ status: z.enum(LEAD_STATUSES) });
+// A lead update moves its status, hands it to someone, or both; an empty body is refused.
+const statusSchema = z
+  .object({ status: z.enum(LEAD_STATUSES).optional(), assigneeId: z.string().uuid().nullable().optional() })
+  .refine((body) => body.status !== undefined || body.assigneeId !== undefined, { message: 'empty_update' });
 
 async function statusHandler(req: Request, id: string): Promise<Response> {
   return guard<z.output<typeof statusSchema>, Body>(
@@ -112,8 +115,18 @@ async function statusHandler(req: Request, id: string): Promise<Response> {
       // The guard checked the grant against the source the request *named*; this is
       // the check that the lead really is that source.
       if (!before || before.source !== ctx.target.leadSources) return notFound();
-      const row = await setLeadStatus({ id, status: ctx.input.status, actorId: ctx.auth.user.id });
-      if (!row) return notFound();
+      let row = before;
+      if (ctx.input.status !== undefined) {
+        const moved = await setLeadStatus({ id, status: ctx.input.status, actorId: ctx.auth.user.id });
+        if (!moved) return notFound();
+        row = moved;
+      }
+      if (ctx.input.assigneeId !== undefined) {
+        const handed = await setLeadAssignee({ id, assigneeId: ctx.input.assigneeId, actorId: ctx.auth.user.id });
+        if (handed === 'unknown_user') return { status: 400, data: { error: 'unknown_user' } };
+        if (!handed) return notFound();
+        row = handed;
+      }
       return {
         data: { lead: leadRow(ctx.auth.user.grants, row) },
         audit: { entityType: 'lead', entityId: id, before, after: row },

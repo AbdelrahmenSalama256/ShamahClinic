@@ -92,7 +92,7 @@ interface Notice {
 /**
  * A section frame: sticky header, body, sticky-on-mobile footer.
  */
-function SettingsSection({
+export function SettingsSection({
   index,
   title,
   lede,

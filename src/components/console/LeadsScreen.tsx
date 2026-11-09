@@ -201,10 +201,13 @@ function isNarrow(): boolean {
 
 export function LeadsScreen({
   initial,
+  team = [],
   labels,
   locale,
 }: Readonly<{
   initial: LeadsScreenData;
+  /** The people a lead can be handed to. */
+  team?: { id: string; name: string }[];
   labels: Labels;
   locale: ConsoleLocale;
 }>) {
@@ -392,6 +395,23 @@ export function LeadsScreen({
     mergeLead(result.data.lead);
     setNotice({ tone: "ok", key: "leads.status.saved" });
     void load(view);
+  }
+
+  async function assign(assigneeId: string | null): Promise<void> {
+    if (!detail?.editable || assigneeId === detail.assigneeId) return;
+    setBusy(true);
+    const result = await consoleCall<{ lead?: LeadRow }>(
+      `/api/console/leads/${detail.id}?source=${encodeURIComponent(detail.source)}`,
+      "PATCH",
+      { assigneeId },
+    );
+    setBusy(false);
+    if (!result.data?.lead) {
+      setNotice({ tone: "danger", key: "leads.assignee.failed" });
+      return;
+    }
+    mergeLead(result.data.lead);
+    setNotice({ tone: "ok", key: "leads.assignee.saved" });
   }
 
   async function addNote(): Promise<void> {
@@ -806,6 +826,23 @@ export function LeadsScreen({
                       </Chip>
                     ))}
                   </ChipRow>
+                  {team.length > 0 && (
+                    <label className="console-lead-assignee">
+                      <span className="console-lead-caption">{labels["leads.field.assignee"]}</span>
+                      <Select
+                        value={detail.assigneeId ?? ""}
+                        disabled={busy}
+                        onChange={(event) => void assign(event.target.value || null)}
+                      >
+                        <option value="">{labels["leads.assignee.none"]}</option>
+                        {team.map((person) => (
+                          <option key={person.id} value={person.id}>
+                            {person.name}
+                          </option>
+                        ))}
+                      </Select>
+                    </label>
+                  )}
                 </div>
               )}
 

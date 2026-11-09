@@ -13,6 +13,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { BookingProvider } from "@/context/BookingContext";
 import { SpecialistsProvider } from "@/context/SpecialistsContext";
 import { Navbar } from "@/components/layout/Navbar";
+import { ExitIntentPrompt } from "@/components/shared/ExitIntentPrompt";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingActions } from "@/components/ui/FloatingActions";
 import { CtaBand } from "@/components/ui/CtaBand";
@@ -77,6 +78,7 @@ export const SiteShell: React.FC<{
               <div className="h-0.5 bg-gold-gradient" />
               <Footer branches={branches} nav={nav} hiddenPaths={hiddenPaths} cookieSettings={cookieSettings} />
               <FloatingActions />
+              <ExitIntentPrompt />
             </div>
           </BookingProvider>
           </SpecialistsProvider>

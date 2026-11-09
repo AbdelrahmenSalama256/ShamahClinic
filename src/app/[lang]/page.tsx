@@ -3,6 +3,7 @@ import { buildPageMetadata } from "@/lib/seo";
 import { SITE_SEO } from "@/lib/content/seo-defaults";
 import { HomeHero } from "@/components/home/HomeHero";
 import { HomeBody } from "@/components/home/HomeBody";
+import { getHomeLayout } from "@/lib/content/brand";
 import { getHeroPhotos, getHome, getHomeHero, getHomeIntro, getHomeResultCases, getPageTitle, getTestimonials } from "@/lib/content/site";
 import { getHomeWhyChooseUs } from "@/lib/content/about-page";
 import { getBannerOverride } from "@/lib/content/banners";
@@ -84,6 +85,7 @@ export default async function HomePage() {
         offers={home.offers.map(offerToUI)}
         articles={home.articles.map(cardToUIArticle)}
         branches={home.branches}
+        layout={await getHomeLayout()}
       />
     </>
   );

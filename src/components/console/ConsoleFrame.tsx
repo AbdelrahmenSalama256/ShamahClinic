@@ -42,6 +42,7 @@ export function ConsoleFrame({
     close: string;
     readOnly: string;
     signOut: string;
+    newLeads?: string;
     palette: PaletteLabels;
   };
   brand: React.ReactNode;
@@ -93,7 +94,7 @@ export function ConsoleFrame({
     if (sideRef.current?.contains(document.activeElement)) toggleRef.current?.focus();
   };
 
-  const navLabels = { screens: labels.screens, readOnly: labels.readOnly, signOut: labels.signOut };
+  const navLabels = { screens: labels.screens, readOnly: labels.readOnly, signOut: labels.signOut, newLeads: labels.newLeads };
 
   return (
     <div className="console-frame" data-nav={open ? 'open' : 'closed'}>

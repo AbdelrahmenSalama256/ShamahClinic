@@ -8,7 +8,6 @@ import { useClinic } from "@/context/ClinicContext";
 import type { BranchLite } from "@/data/branches";
 import { images } from "@/lib/images";
 import { getLocalizedHref } from "@/lib/locale";
-import { socialLinks } from "@/lib/site";
 import { reopenConsent } from "@/lib/tracking/client";
 import type { NavItem } from "@/data/nav";
 import { WhatsAppIcon } from "@/components/ui/WhatsAppIcon";
@@ -26,6 +25,41 @@ const SocialIcon: React.FC<{ id: string }> = ({ id }) => {
     return (
       <svg {...common}>
         <path d="M13.5 21v-7h2.4l.4-2.8h-2.8V9.4c0-.8.2-1.4 1.4-1.4h1.5V5.5c-.3 0-1.2-.1-2.2-.1-2.2 0-3.7 1.3-3.7 3.8v2H8v2.8h2.5V21h3z" />
+      </svg>
+    );
+  }
+  if (id === "tiktok") {
+    return (
+      <svg {...common}>
+        <path d="M16.6 2h-3.3v13.2a2.9 2.9 0 1 1-2.9-2.9c.3 0 .6 0 .9.1V9a6.3 6.3 0 1 0 5.3 6.2V8.6a7.7 7.7 0 0 0 4.4 1.4V6.7a4.4 4.4 0 0 1-4.4-4.4z" />
+      </svg>
+    );
+  }
+  if (id === "x") {
+    return (
+      <svg {...common}>
+        <path d="M17.8 3h3.1l-6.8 7.7L22 21h-6.2l-4.9-6.4L5.3 21H2.2l7.2-8.3L1.9 3h6.3l4.4 5.9L17.8 3zm-1.1 16.2h1.7L7.4 4.7H5.6l11.1 14.5z" />
+      </svg>
+    );
+  }
+  if (id === "snapchat") {
+    return (
+      <svg {...common}>
+        <path d="M12 2.5c2.9 0 5 2.2 5 5.1v2.2c.4.2.9.2 1.4 0 .6-.2 1.2.4.8 1-.4.5-1.1.8-1.8 1 .5 1.6 1.9 3 3.6 3.5.5.2.5.8 0 1-.8.4-1.7.5-2 .7-.2.3-.1 1-.5 1.2-.5.2-1.3-.2-2.4 0-1.1.3-1.8 1.6-4.1 1.6s-3-1.3-4.1-1.6c-1.1-.2-1.9.2-2.4 0-.4-.2-.3-.9-.5-1.2-.3-.2-1.2-.3-2-.7-.5-.2-.5-.8 0-1 1.7-.5 3.1-1.9 3.6-3.5-.7-.2-1.4-.5-1.8-1-.4-.6.2-1.2.8-1 .5.2 1 .2 1.4 0V7.6c0-2.9 2.1-5.1 5-5.1z" />
+      </svg>
+    );
+  }
+  if (id === "linkedin") {
+    return (
+      <svg {...common}>
+        <path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.5h4V21H3zM9.5 9.5h3.8v1.6h.1c.5-1 1.8-2 3.8-2 4 0 4.8 2.6 4.8 6V21h-4v-5.1c0-1.2 0-2.8-1.7-2.8s-2 1.3-2 2.7V21h-4z" />
+      </svg>
+    );
+  }
+  if (id === "threads") {
+    return (
+      <svg {...common}>
+        <path d="M16.7 11.1c-.1 0-.2-.1-.3-.1-.2-3-1.8-4.7-4.6-4.7-1.7 0-3.1.7-3.9 2l1.5 1c.6-.9 1.6-1.1 2.4-1.1 1 0 1.7.3 2.2.9.3.4.6 1 .7 1.7-.8-.1-1.6-.2-2.5-.1-2.5.1-4.1 1.6-4 3.6.1 2.1 2 3.2 4 3.1 2.9-.2 4.1-2.4 4.4-4.4 1.1.7 1.7 1.8 1.7 3.1-.1 2.4-2.7 4.6-6.4 4.6-4.3 0-6.9-2.8-6.9-7.7S5.6 4.3 9.9 4.3c3.6 0 5.9 1.6 6.8 4.7l1.8-.5C17.3 4.6 14.4 2.5 9.9 2.5 4.6 2.5 1.2 6 1.2 11.9s3.4 9.5 8.7 9.5c4.6 0 8.1-2.8 8.2-6.4.1-2-1-3.3-1.4-3.9zm-4.9 5.1c-1.1.1-2.2-.4-2.2-1.4 0-.7.5-1.6 2.5-1.7h.7c.7 0 1.3.1 1.9.2-.2 2.3-1.4 2.8-2.9 2.9z" />
       </svg>
     );
   }
@@ -72,11 +106,8 @@ export const Footer: React.FC<{
     setNewsletterSubscribed(true);
   };
 
-  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(
-    language === "ar"
-      ? "مرحباً عيادات شامه، أود الاستفسار عن الخدمات المتاحة لديكم."
-      : "Hello Shamah Clinics, I would like to inquire about services.",
-  )}`;
+  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(clinic.brand.whatsappMessage[language])}`;
+  const { brand } = clinic;
 
   return (
     <footer className="on-dark bg-[var(--bg-dark)] text-[var(--text-on-dark)] pt-12 pb-[calc(var(--mobile-bar-height)+env(safe-area-inset-bottom))] sm:pb-[calc(var(--floating-control-size)+var(--floating-control-gap))] border-t border-[var(--border-control)]">
@@ -86,7 +117,7 @@ export const Footer: React.FC<{
           <div className="lg:col-span-4 space-y-5">
             <span className="relative block w-48 h-11">
               <Image
-                src={images.logo}
+                src={brand.logo || images.logo}
                 alt={t("شعار عيادات شامه", "Shamah Clinics logo")}
                 fill
                 sizes="192px"
@@ -120,7 +151,7 @@ export const Footer: React.FC<{
             </div>
             {/* Social */}
             <div className="flex items-center gap-3 pt-1">
-              {socialLinks.map((s) => (
+              {brand.socials.map((s) => (
                 <a
                   key={s.id}
                   href={s.href}
@@ -233,6 +264,34 @@ export const Footer: React.FC<{
             )}
           </div>
         </div>
+
+        {(brand.commercialReg || brand.taxId || brand.paymentImage) && (
+          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-gray-400">
+            <p className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
+              {brand.commercialReg && (
+                <span>
+                  {t("سجل تجاري", "Commercial reg.")}: <bdi>{brand.commercialReg}</bdi>
+                </span>
+              )}
+              {brand.taxId && (
+                <span>
+                  {t("بطاقة ضريبية", "Tax ID")}: <bdi>{brand.taxId}</bdi>
+                </span>
+              )}
+            </p>
+            {brand.paymentImage && (
+              <span className="relative block w-56 h-8">
+                <Image
+                  src={brand.paymentImage}
+                  alt={t("وسائل الدفع المتاحة", "Accepted payment methods")}
+                  fill
+                  sizes="224px"
+                  className="object-contain"
+                />
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="pt-7 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-300">
           <p>

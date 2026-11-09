@@ -7,6 +7,8 @@ import { getAllArticles, getAllOffers, getAllPages } from "@/lib/content/site";
 import { getBranchList } from "@/lib/content/site";
 import { readPageStates, type PageStates } from "@/lib/content/page-visibility";
 import type { SitePageKey } from "@/lib/content/settings-catalog";
+import { getSeoConfig } from "@/lib/content/seo-config";
+import { readNoindexPaths } from "@/lib/content/seo";
 
 const LANGS: Locale[] = ["ar", "en"];
 
@@ -57,6 +59,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getMergedServices(),
     readPageStates(),
   ]);
+  const [config, noindexPaths] = await Promise.all([getSeoConfig(), readNoindexPaths()]);
+  // Indexing switched off: the site is asking not to be crawled, so it invites nobody.
+  if (!config.indexing) return [];
 
   // A hidden page is not a canonical URL: it either 404s or redirects, and a sitemap
   // that lists it invites a crawler to an answer the site has already replaced.
@@ -118,7 +123,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     page: "offers",
   }));
 
-  return [...staticRoutes, ...treatmentRoutes, ...branchRoutes, ...blogRoutes, ...offerRoutes]
-    .filter((route) => shown(states, route.page))
+  // The SEO settings can leave a whole section out, and a row's own box can leave itself out.
+  const sections = [
+    ...(config.sitemap.services ? treatmentRoutes : []),
+    ...(config.sitemap.branches ? branchRoutes : []),
+    ...(config.sitemap.articles ? blogRoutes : []),
+    ...(config.sitemap.offers ? offerRoutes : []),
+  ];
+  return [...staticRoutes, ...sections]
+    .filter((route) => shown(states, route.page) && !noindexPaths.has(route.path))
     .flatMap(entriesFor);
 }

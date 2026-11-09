@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { LeadsBadge } from './LeadsBadge';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
@@ -19,7 +20,9 @@ import {
   Menu,
   MessageCircleHeart,
   Newspaper,
+  Rocket,
   Search,
+  Signpost,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -64,8 +67,10 @@ const ICONS: Readonly<Record<string, LucideIcon>> = {
   faq: CircleHelp,
   results: Images,
   testimonials: MessageCircleHeart,
+  landing: Rocket,
   texts: Type,
   seo: Search,
+  redirects: Signpost,
   tracking: Activity,
   roles: ShieldCheck,
   users: Users,
@@ -79,7 +84,7 @@ export function ConsoleNav({
   variant = 'side',
 }: Readonly<{
   items: readonly NavItem[];
-  labels: { screens: string; readOnly: string; signOut: string };
+  labels: { screens: string; readOnly: string; signOut: string; newLeads?: string };
   variant?: 'side' | 'strip';
 }>) {
   const pathname = usePathname();
@@ -104,6 +109,7 @@ export function ConsoleNav({
               >
                 {Icon && <Icon className="console-nav-icon" size={17} strokeWidth={1.8} aria-hidden />}
                 {item.label}
+                {item.key === 'leads' && labels.newLeads && <LeadsBadge label={labels.newLeads} />}
               </Link>
             </li>
           );
