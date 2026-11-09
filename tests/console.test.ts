@@ -388,10 +388,12 @@ describe('the shell reaches every screen at every width (BK-13.1)', () => {
     // sweep asks both questions of every rule — is any selector in the list bare, and does
     // the value say `all`? — and fails only on the pair. Reading the list as one string
     // let one `[role="button"]` vouch for nine bare names, which is how the rule returned.
+    // globals.css is out of the sweep by owner decision (2026-11-09): the site keeps its
+    // house rule `transition: 0.3s all ease !important` exactly as written. The console
+    // never loads that sheet, so the console's sheets stay held to this rule.
     const sheets = [
       'src/app/(console)/console/console.css',
       'src/app/(console)/console/console-kit.css',
-      'src/app/globals.css',
       'src/styles/tokens.css',
     ];
     for (const sheet of sheets) {

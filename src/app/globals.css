@@ -88,18 +88,6 @@
       transform var(--dur-hover) var(--ease-signature),
       opacity var(--dur-hover) var(--ease-signature);
   }
-  /* The original blanket's reach, back: every div, icon, link and button eases any visual
-     change over `.3s ease`, as the old site did. The list is named instead of `all` so
-     `visibility` (the drawer) and `display` never animate, and it stays in `@layer base`
-     so a component that writes its own transition still keeps it. */
-  [data-surface="site"] :is(div, i, a, button) {
-    transition-property:
-      color, background-color, border-color, outline-color, text-decoration-color, fill, stroke,
-      box-shadow, opacity, filter, transform, translate, scale, rotate, border-radius, width,
-      height, max-height, padding, margin, inset, gap;
-    transition-duration: var(--dur-hover);
-    transition-timing-function: ease;
-  }
 }
 
 /* Scoped to the site's own document, like every other element rule in this sheet: the
@@ -572,6 +560,19 @@ textarea::placeholder {
   animation-name: reveal-mount-none;
 }
 
+/* The owner's house rule: everything on the site eases over .3s. Kept exactly as written,
+   above the reduced-motion block so that block still wins for `*`. */
+* {
+  transition: 0.3s all ease !important;
+}
+div,
+a,
+button,
+span,
+section {
+  transition: 0.3s all ease !important;
+}
+
 /* Respect reduced motion: disable all animation and smooth scrolling. */
 @media (prefers-reduced-motion: reduce) {
   html {
@@ -591,7 +592,12 @@ textarea::placeholder {
 
   *,
   *::before,
-  *::after {
+  *::after,
+  div,
+  a,
+  button,
+  span,
+  section {
     animation-duration: 0.001ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;

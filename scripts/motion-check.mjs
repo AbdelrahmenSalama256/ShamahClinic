@@ -61,6 +61,12 @@ const TOKEN_TABLE = 'src/styles/tokens.css';
  * so this list can only shrink.
  */
 const EXEMPT = {
+  'src/app/globals.css': {
+    rules: ['blanket-transition', 'raw-time-literal'],
+    reason:
+      'Owner decision (2026-11-09): the site keeps its house rule `transition: 0.3s all ease !important` ' +
+      'on `*` and on div, a, button, span, section, exactly as written. Site surface only; the console never loads this sheet.',
+  },
   'src/components/pages/TreatmentDetailClient.tsx': {
     rules: ['numeric-duration', 'arbitrary-ease', 'raw-curve', 'raw-duration-number', 'raw-time-literal'],
     reason:
