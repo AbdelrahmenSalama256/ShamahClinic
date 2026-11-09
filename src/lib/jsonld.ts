@@ -46,7 +46,11 @@ export async function organizationJsonLd(): Promise<Json> {
     "@id": `${SITE_URL}/#organization`,
     ...brand,
     url: SITE_URL,
-    logo: logoUrl,
+    logo: clinic.brand.logo ? `${SITE_URL}${clinic.brand.logo}` : logoUrl,
+    // The accounts Settings lists, and the clinic's map: how Google ties the profiles to the site.
+    ...(clinic.brand.socials.length || clinic.brand.mapsUrl
+      ? { sameAs: [...clinic.brand.socials.map((link) => link.href), ...(clinic.brand.mapsUrl ? [clinic.brand.mapsUrl] : [])] }
+      : {}),
     image: `${SITE_URL}${images.interiors.reception.src}`,
     description: lang === "ar" ? siteConfig.metadata.description : siteConfig.metadata.descriptionEn,
     telephone: clinic.phone,

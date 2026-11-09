@@ -83,11 +83,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
   const isActive = (href: string) =>
     href === "/" ? normalizedPath === "/" : normalizedPath.startsWith(href);
 
-  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(
-    language === "ar"
-      ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
-      : "Hello Shamah Clinics, I would like to inquire about appointments and services.",
-  )}`;
+  const whatsappUrl = `${clinic.whatsappUrl}?text=${encodeURIComponent(clinic.brand.whatsappMessage[language])}`;
 
   // A hidden page keeps its line in the authored menu but loses its way into the
   // chrome — the route itself answers 404 (or its redirect) when reached directly.
@@ -165,7 +161,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
           >
             <span className="relative block w-36 sm:w-44 h-10">
               <Image
-                src={images.logo}
+                src={clinic.brand.logo || images.logo}
                 alt={t("شعار عيادات شامه", "Shamah Clinics logo")}
                 fill
                 sizes="(min-width: 640px) 176px, 144px"
@@ -388,7 +384,7 @@ export const Navbar: React.FC<{ nav: NavItem[]; hiddenPaths: string[] }> = ({ na
                   <div className="flex items-center justify-between pb-5 border-b border-[var(--gold-border)]">
                     <span className="relative block w-32 h-9">
                       <Image
-                        src={images.logo}
+                        src={clinic.brand.logo || images.logo}
                         alt={t("شعار عيادات شامه", "Shamah Clinics logo")}
                         fill
                         sizes="128px"

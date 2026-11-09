@@ -34,6 +34,8 @@ import { offerLiveOn } from './offer-services';
 import type { ContentKind } from './kinds';
 import { pageSlug, publicPathOf } from './paths';
 import { SEO_SETTING_GROUP } from './settings-catalog';
+import { getBrandProfile } from './brand';
+import type { BrandProfile } from './brand-shape';
 import { branchOfDoc, docBi, docBiAny, docBool, docStringPairs, docStrings, docStr, faqOfDoc, navOfDoc, resultStoryPointer, specialistOfDoc } from './list-docs';
 import { faqData, type FaqItem } from '../../data/faq';
 import { navItems, type NavItem } from '../../data/nav';
@@ -1127,6 +1129,8 @@ export interface ClinicWords {
   phone: string;
   whatsapp: string;
   whatsappUrl: string;
+  /** Logo, social accounts, WhatsApp opening message and footer trust details. */
+  brand: BrandProfile;
 }
 
 /**
@@ -1153,6 +1157,7 @@ export async function getClinicWords(): Promise<ClinicWords> {
     phone,
     whatsapp,
     whatsappUrl: whatsapp ? `https://wa.me/${whatsapp.replace(/\D/g, '')}` : '',
+    brand: await getBrandProfile(),
   };
 }
 

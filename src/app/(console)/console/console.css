@@ -2295,6 +2295,59 @@
     color: var(--c-accent);
     text-decoration: underline;
   }
+  /* --- settings: brand & homepage sections --------------------------------- */
+  .settings-workspace-more {
+    margin-block-start: var(--c-stack);
+  }
+  .settings-brand-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: var(--c-gap);
+  }
+  .settings-brand-sub {
+    margin: var(--c-sp-3) 0 var(--c-gap-tight);
+    font-size: var(--c-font-small);
+    font-weight: 600;
+    color: var(--c-text-2);
+  }
+  .settings-brand-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap);
+  }
+  .settings-home-bands {
+    display: grid;
+    gap: var(--c-gap-tight);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .settings-home-band {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--c-gap);
+    padding: var(--c-sp-2);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface);
+  }
+  .settings-home-band[data-fixed] {
+    background: var(--c-surface-soft);
+  }
+  .settings-home-band[data-hidden] {
+    opacity: 0.6;
+  }
+  .settings-home-name {
+    font-weight: 500;
+  }
+  .settings-home-move {
+    display: flex;
+    gap: var(--c-gap-tight);
+  }
+
   /* --- redirects & 404 ------------------------------------------------------ */
   .console-redirects {
     display: grid;

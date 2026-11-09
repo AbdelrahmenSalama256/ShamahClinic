@@ -1,4 +1,6 @@
 import { SettingsWorkspace } from '@/components/console/SettingsWorkspace';
+import { BrandSettings } from '@/components/console/BrandSettings';
+import { getBrandProfile, getHomeLayout } from '@/lib/content/brand';
 import { Empty } from '@/components/console/kit';
 import { siteConfig } from '@/config/site';
 import { can } from '@/lib/auth/permissions';
@@ -64,6 +66,15 @@ export default async function ConsoleSettingsPage() {
         labels={catalogFor(prefs.locale)}
         canWrite={can(grants, 'setting', 'update', {})}
       />
+      <div className="settings-workspace settings-workspace-more">
+        <BrandSettings
+          brand={await getBrandProfile()}
+          layout={await getHomeLayout()}
+          canWrite={can(grants, 'setting', 'update', {})}
+          locale={prefs.locale}
+          labels={catalogFor(prefs.locale)}
+        />
+      </div>
     </>
   );
 }

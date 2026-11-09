@@ -14,12 +14,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-/** The words a WhatsApp button opens with when the caller has not written its own. */
-function defaultWaMessage(language: "ar" | "en"): string {
-  return language === "ar"
-    ? "مرحباً عيادات شامه، أود الاستفسار عن المواعيد والخدمات المتاحة لديكم."
-    : "Hello Shamah Clinics, I would like to inquire about appointments and services.";
-}
 
 /**
  * Build a WhatsApp link for the number the clinic saved in Settings. A hook rather than
@@ -28,11 +22,13 @@ function defaultWaMessage(language: "ar" | "en"): string {
  * phone changed nothing on the site.
  */
 export function useWhatsappHref() {
-  const { whatsappUrl } = useClinic();
+  // The opening words are Settings' "Brand & social" message when the caller has not
+  // written its own.
+  const { whatsappUrl, brand } = useClinic();
   return useCallback(
     (language: "ar" | "en", custom?: string): string =>
-      `${whatsappUrl}?text=${encodeURIComponent(custom ?? defaultWaMessage(language))}`,
-    [whatsappUrl],
+      `${whatsappUrl}?text=${encodeURIComponent(custom ?? brand.whatsappMessage[language])}`,
+    [whatsappUrl, brand],
   );
 }
 

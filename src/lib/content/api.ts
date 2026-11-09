@@ -18,6 +18,8 @@
  * article bodies to draw them. Bulk writes answer with the ids that moved and the ones
  * that did not, since a page of rows that is half-allowed is an ordinary thing to send.
  */
+import { BRAND_GROUP, BRAND_KEY, normalizeBrand } from './brand-shape';
+import { HOME_LAYOUT_GROUP, HOME_LAYOUT_KEY, normalizeHomeLayout } from './home-layout-shape';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { guard, jsonError, type GuardResult } from '../auth/guard';
@@ -521,6 +523,17 @@ export async function contentActionHandler(req: Request): Promise<Response> {
   return trashHandler(req, spec, kind, id, false);
 }
 
+/**
+ * The settings rows that hold a whole document are stored in the shape their reader
+ * expects, whatever the request carried: a hand-built body cannot leave the footer with
+ * a `javascript:` social link or the homepage with a band list it cannot draw.
+ */
+function knownDocument(group: string, key: string, value: unknown): unknown {
+  if (group === BRAND_GROUP && key === BRAND_KEY) return normalizeBrand(value);
+  if (group === HOME_LAYOUT_GROUP && key === HOME_LAYOUT_KEY) return normalizeHomeLayout(value);
+  return value;
+}
+
 /** `GET /api/console/settings`, `PATCH /api/console/settings` */
 export async function settingsHandler(req: Request): Promise<Response> {
   if (req.method === 'GET') {
@@ -532,7 +545,7 @@ export async function settingsHandler(req: Request): Promise<Response> {
     req,
     { resource: 'setting', action: 'update', schema: settingSchema },
     async (ctx): Promise<GuardResult<Body>> => {
-      const saved = await writeSetting({ group: ctx.input.group, key: ctx.input.key, value: ctx.input.value, actorId: ctx.auth.user.id });
+      const saved = await writeSetting({ group: ctx.input.group, key: ctx.input.key, value: knownDocument(ctx.input.group, ctx.input.key, ctx.input.value), actorId: ctx.auth.user.id });
       if (!saved.ok) return failure(saved);
       revalidateSite();
       return { data: { row: saved.value }, audit: { entityType: 'setting', entityId: `${ctx.input.group}.${ctx.input.key}`, after: saved.value } };

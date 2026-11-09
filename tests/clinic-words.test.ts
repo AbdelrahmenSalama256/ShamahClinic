@@ -28,6 +28,7 @@ import { db, destroyDb, readDbConfig } from '../src/lib/db';
 import { assertTestDb } from '../src/lib/db/guard';
 import { clinicData } from '../src/data/clinic';
 import type { ClinicWords } from '../src/lib/content/site';
+import { BRAND_DEFAULTS } from '../src/lib/content/brand-shape';
 import { getClinicWords, getBranchList } from '../src/lib/content/site';
 import { getBanner } from '../src/lib/content/banners';
 import { organizationJsonLd } from '../src/lib/jsonld';
@@ -98,7 +99,7 @@ const nav: NavItem[] = [{ href: '/contact', label: { ar: 'تواصلي', en: 'Co
 const branchPhone = '+20 2 2575 0000';
 const branchLite = [{ id: `s1-${run}`, name: { ar: 'فرع', en: 'Branch' }, address: { ar: 'عنوان', en: 'Address' }, phone: branchPhone }];
 
-const words: ClinicWords = { phone: PHONE_SAVED, whatsapp: WHATSAPP_SAVED, whatsappUrl: `https://wa.me/${WA_DIGITS}` };
+const words: ClinicWords = { phone: PHONE_SAVED, whatsapp: WHATSAPP_SAVED, whatsappUrl: `https://wa.me/${WA_DIGITS}`, brand: BRAND_DEFAULTS };
 
 function readSetting(key: string): Promise<string | null> {
   return db

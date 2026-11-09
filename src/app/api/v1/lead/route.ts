@@ -14,6 +14,7 @@ import {
   visitorHash,
 } from "@/lib/tracking/ingest";
 import { CF7_FIELDS, CF7_FORM_ID, LEAD_MODE, WHATSAPP, WP_ORIGIN } from "@/lib/wp/config";
+import { getClinicWords } from "@/lib/content/site";
 
 export const runtime = "nodejs";
 
@@ -292,7 +293,10 @@ export async function POST(req: Request) {
   // Default mode: hand the user a prefilled WhatsApp deep link (no email sent).
   if (LEAD_MODE === "whatsapp") {
     const waText = buildWhatsAppMessage({ ...input, name, phone });
-    const waUrl = `https://wa.me/${WHATSAPP}?text=${encodeURIComponent(waText)}`;
+    // The number Settings saved, so a changed WhatsApp line reaches the booking form too;
+    // the shipped constant only answers when Settings has none.
+    const saved = (await getClinicWords().catch(() => null))?.whatsapp.replace(/\D/g, "");
+    const waUrl = `https://wa.me/${saved || WHATSAPP}?text=${encodeURIComponent(waText)}`;
     return NextResponse.json({ ok: true, mode: "whatsapp", whatsappUrl: waUrl, message: waText });
   }
 
