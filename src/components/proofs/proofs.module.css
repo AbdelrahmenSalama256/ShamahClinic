@@ -283,15 +283,15 @@
   block-size: 0.38rem;
   border-radius: 50%;
   background: #8696a0;
-  animation: typing 1.2s infinite ease-in-out;
+  animation: typing var(--dur-shimmer) infinite var(--ease-in-out);
 }
 
 .typing i:nth-child(2) {
-  animation-delay: 0.15s;
+  animation-delay: calc(var(--dur-shimmer) / 8);
 }
 
 .typing i:nth-child(3) {
-  animation-delay: 0.3s;
+  animation-delay: calc(var(--dur-shimmer) / 4);
 }
 
 @keyframes typing {
@@ -308,7 +308,7 @@
 }
 
 .enter {
-  animation: enter 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: enter var(--dur-settle) var(--ease-signature) both;
 }
 
 @keyframes enter {
@@ -400,7 +400,7 @@
   min-inline-size: 2px;
   border-radius: 2px;
   background: #b4bec4;
-  transition: background-color 0.15s linear;
+  transition: background-color var(--dur-fast) linear;
 }
 
 .bars span[data-played] {
@@ -486,7 +486,7 @@
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
 }
 
 :global([dir="rtl"]) .switch {
@@ -563,7 +563,7 @@
   cursor: pointer;
   scroll-snap-align: start;
   box-shadow: 0 22px 40px -24px rgba(33, 26, 22, 0.6);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+  transition: transform var(--dur-settle) var(--ease-signature), box-shadow var(--dur-settle) var(--ease-signature);
 }
 
 .reel:hover {
@@ -604,7 +604,7 @@
   background: rgba(255, 255, 255, 0.22);
   backdrop-filter: blur(6px);
   border: 1px solid rgba(255, 255, 255, 0.45);
-  transition: transform 0.3s ease;
+  transition: transform var(--dur-hover) var(--ease-signature);
 }
 
 :global([dir="rtl"]) .reelPlay {
