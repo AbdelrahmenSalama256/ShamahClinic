@@ -64,6 +64,12 @@ export interface FieldGroup {
   key: string;
   label: Bi;
   hint?: Bi;
+  /**
+   * Draw the group only while another field holds this value — a testimonial's chat fields
+   * while its format is "chat". `orEmpty` also draws it before that field is chosen. Hidden
+   * fields keep their values; the site reads only the ones the chosen format uses.
+   */
+  when?: { stem: string; equals: string; orEmpty?: boolean };
 }
 
 interface FieldBase {
@@ -625,11 +631,13 @@ const TESTIMONIAL_G = {
   who: { key: 'who', label: { ar: 'صاحبة الرأي', en: 'Who said it' } },
   chat: {
     key: 'chat',
+    when: { stem: 'format', equals: 'chat', orEmpty: true },
     label: { ar: 'محادثة واتساب', en: 'WhatsApp conversation' },
     hint: { ar: 'لنوع «محادثة واتساب» فقط: رسائل مكتوبة أو تسجيل صوتي أو الاثنان.', en: 'For the "WhatsApp conversation" format only: typed messages, a voice note, or both.' },
   },
   video: {
     key: 'video',
+    when: { stem: 'format', equals: 'video' },
     label: { ar: 'فيديو', en: 'Video' },
     hint: { ar: 'لنوع «فيديو» فقط: ارفعي الفيديو من جهازك أو ضعي رابط يوتيوب.', en: 'For the "Video" format only: upload the video from your device or paste a YouTube link.' },
   },

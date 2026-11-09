@@ -139,6 +139,10 @@ export function ListDocFields({
         ));
         const group = chunk.group;
         if (!group) return <Fragment key="*">{fields}</Fragment>;
+        if (group.when) {
+          const value = textOf(form, group.when.stem);
+          if (value !== group.when.equals && !(group.when.orEmpty && value === '')) return null;
+        }
         const owed = chunk.fields.some((field) => (errors[field.stem] ?? []).length > 0);
         return (
           <details

@@ -116,7 +116,7 @@ export function ClipPicker({ labels, accept, value, onChange, disabled, inputId 
         ) : null}
       </div>
 
-      {sent !== null ? <Note tone="ok">{formatBytes(sent)}</Note> : <Note>{labels[accept === 'audio' ? 'clip.hint.audio' : 'clip.hint.video']}</Note>}
+      {sent !== null ? <Note tone="ok">{formatBytes(sent)}</Note> : null}
       {error ? (
         <Alert tone="danger" role="alert">
           {labels[error]}
