@@ -4,6 +4,7 @@ import { getLocalizedHref, type Locale } from "./locale";
 import { routeLang } from "./route-lang";
 import { readSeoOverride } from "./content/seo";
 import { getBrandWords } from "./content/site";
+import { getSeoConfig } from "./content/seo-config";
 
 interface LocalizedText {
   ar: string;
@@ -69,20 +70,26 @@ export async function buildPageMetadata({
   // The SEO center writes one record per address and language; that record wins over
   // the authored pair the caller passed. An empty or unreadable row is not a failure —
   // the caller's copy is already the complete answer.
-  const override = await readSeoOverride(path, lang);
+  const [override, config] = await Promise.all([readSeoOverride(path, lang), getSeoConfig()]);
   const heading = override?.title || title[lang] || title[other];
   const summary = override?.description || description[lang] || description[other];
   const brand = (await getBrandWords())[lang];
+  // The share card may say something the result does not: the console's Social tab.
+  const shareTitle = override?.ogTitle || heading;
+  const shareSummary = override?.ogDescription || summary;
+  const shareImage = override?.ogImage || image || config.defaultOgImage || null;
+  // A row's own box wins over the caller's document; the site-wide switch wins over both.
+  const hidden = !config.indexing || !!override?.noindex || !!noindex;
 
   const url = `${SITE_URL}${getLocalizedHref(path, lang)}`;
   // WordPress SEO titles often already carry the brand, so appending it again
   // would produce "Home — Shamah Clinics | Shamah Clinics".
-  const pageTitle = heading.toLowerCase().includes(brand.toLowerCase()) ? heading : `${heading} | ${brand}`;
-  const isAbsolute = !!image && /^https?:\/\//i.test(image);
-  const ogImage = image
+  const pageTitle = heading.toLowerCase().includes(brand.toLowerCase()) ? heading : `${heading} ${config.separator} ${brand}`;
+  const isAbsolute = !!shareImage && /^https?:\/\//i.test(shareImage);
+  const ogImage = shareImage
     ? isAbsolute
-      ? image
-      : `${SITE_URL}${image}`
+      ? shareImage
+      : `${SITE_URL}${shareImage}`
     : `${SITE_URL}/images/clinic-reception.jpg`;
 
   return {
@@ -91,9 +98,9 @@ export async function buildPageMetadata({
     // Only a row that asked to stay out of the index gets a robots tag. Emitting the
     // permissive answer on every page would rewrite the served HTML of a site nobody
     // asked to change, and `index, follow` is what a crawler already assumes.
-    ...(noindex ? { robots: { index: false, follow: true } } : {}),
+    ...(hidden ? { robots: { index: false, follow: true } } : {}),
     alternates: {
-      canonical: authoritativeCanonical(canonical, url),
+      canonical: authoritativeCanonical(override?.canonical || canonical, url),
       languages: {
         ar: `${SITE_URL}${getLocalizedHref(path, "ar")}`,
         en: `${SITE_URL}${getLocalizedHref(path, "en")}`,
@@ -101,19 +108,20 @@ export async function buildPageMetadata({
       },
     },
     openGraph: {
-      title: heading,
-      description: summary,
+      title: shareTitle,
+      description: shareSummary,
       url,
       siteName: brand,
       locale: OG_LOCALE[lang],
       alternateLocale: [OG_LOCALE[other]],
       type,
-      images: [{ url: ogImage, width: 1200, height: 630, alt: heading }],
+      images: [{ url: ogImage, width: 1200, height: 630, alt: shareTitle }],
     },
     twitter: {
       card: "summary_large_image",
-      title: heading,
-      description: summary,
+      ...(config.twitterSite ? { site: config.twitterSite } : {}),
+      title: shareTitle,
+      description: shareSummary,
       images: [ogImage],
     },
   };

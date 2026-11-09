@@ -84,7 +84,7 @@ async function call(actor: RoleName, method: 'GET' | 'POST', body?: unknown): Pr
 async function rowFor(locale: 'ar' | 'en') {
   return db
     .selectFrom('seo_entries')
-    .select(['title', 'description'])
+    .select(['title', 'description', 'robots', 'og_image'])
     .where('entity_type', '=', SEO_ENTITY_TYPE)
     .where('entity_id', '=', PATH)
     .where('locale', '=', locale)
@@ -158,7 +158,7 @@ describe('the one write path', () => {
     });
     expect(res.status).toBe(200);
     const body = (await res.json()) as { override: { title: string; description: string } };
-    expect(body.override).toEqual({ title: 'عنوان اختبار الظهور', description: 'وصف اختبار الظهور في البحث' });
+    expect(body.override).toMatchObject({ title: 'عنوان اختبار الظهور', description: 'وصف اختبار الظهور في البحث' });
     expect(await rowFor('ar')).toMatchObject({ title: 'عنوان اختبار الظهور' });
 
     const audit = await db
@@ -200,6 +200,35 @@ describe('the one write path', () => {
     const body = (await res.json()) as { error: string; issues?: unknown };
     expect(body.error).toBe('invalid_input');
     expect(Array.isArray(body.issues)).toBe(true);
+  });
+
+  it('keeps the share card and noindex when the two-field table saves the pair', async () => {
+    const full = await call('SEO', 'POST', {
+      path: PATH,
+      locale: 'ar',
+      title: 'عنوان اختبار الظهور',
+      description: '',
+      focusKeyword: 'كلمة اختبار',
+      ogImage: '/uploads/test-share.webp',
+      canonical: '/about',
+      noindex: true,
+    });
+    expect(full.status).toBe(200);
+    // The SEO center's row posts only the pair; every other field must survive it.
+    const pair = await call('SEO', 'POST', { path: PATH, locale: 'ar', title: 'عنوان جديد', description: 'وصف' });
+    expect(((await pair.json()) as { override: unknown }).override).toMatchObject({
+      title: 'عنوان جديد',
+      focusKeyword: 'كلمة اختبار',
+      ogImage: '/uploads/test-share.webp',
+      canonical: '/about',
+      noindex: true,
+    });
+    expect(await rowFor('ar')).toMatchObject({ robots: 'noindex,follow', og_image: '/uploads/test-share.webp' });
+    // A share image from another site's protocol-relative address is refused outright.
+    const bad = await call('SEO', 'POST', { path: PATH, locale: 'ar', title: 'x', description: '', ogImage: '//evil.example/a.jpg' });
+    expect(bad.status).toBe(400);
+    // Back to the pair alone, so the next case starts from a row it can clear.
+    await call('SEO', 'POST', { path: PATH, locale: 'ar', title: 'عنوان جديد', description: 'وصف', focusKeyword: '', ogImage: '', canonical: '', noindex: false });
   });
 
   it('clears the red row when both fields are emptied', async () => {

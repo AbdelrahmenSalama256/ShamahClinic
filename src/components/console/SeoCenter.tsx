@@ -15,6 +15,8 @@
  * because the inherited copy and the overrides are both per language.
  */
 import { useCallback, useMemo, useState } from 'react';
+import { Badge } from './kit';
+import { seoGrade } from '@/lib/content/seo-score';
 import { useRouter } from 'next/navigation';
 import { Empty, Input, Note, Select } from './kit';
 import { Tabs } from './kit-tabs';
@@ -133,6 +135,7 @@ export function SeoCenter({ data, labels }: Readonly<{ data: SeoCenterData; labe
                     <th scope="col">{labels['seo.column.title']}</th>
                     <th scope="col">{labels['seo.column.description']}</th>
                     <th scope="col">{labels['seo.column.status']}</th>
+                    <th scope="col">{labels['seo.score']}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -156,6 +159,11 @@ export function SeoCenter({ data, labels }: Readonly<{ data: SeoCenterData; labe
                         variant="row"
                         onStatusChange={onStatusChange(row.key)}
                       />
+                      <td className="console-seo-cell-score">
+                        <Badge tone={{ good: 'ok', fair: 'warn', poor: 'danger' }[seoGrade(row.score)] as 'ok' | 'warn' | 'danger'}>
+                          {row.score}
+                        </Badge>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

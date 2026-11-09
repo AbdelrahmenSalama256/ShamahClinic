@@ -832,6 +832,7 @@ export function ConsoleEditor({
           writable={seo.writable}
           labels={labels}
           rowLabel={model.title}
+          body={typeof form.content === 'string' ? form.content : typeof form.body === 'string' ? form.body : null}
         />
       </aside>
     </div>

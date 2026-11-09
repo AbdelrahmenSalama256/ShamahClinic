@@ -1,4 +1,7 @@
 import { SeoCenter } from '@/components/console/SeoCenter';
+import { SeoConfigForm } from '@/components/console/SeoConfigForm';
+import { SeoViewTabs } from '@/components/console/SeoViewTabs';
+import { getSeoConfig } from '@/lib/content/seo-config';
 import { Empty } from '@/components/console/kit';
 import { can } from '@/lib/auth/permissions';
 import { catalogFor, message } from '@/lib/console/messages';
@@ -34,6 +37,17 @@ export default async function ConsoleSeoPage({ searchParams }: Props) {
   if (!can(grants, 'seo', 'read', {})) return <Empty>{message('content.no_permission', prefs.locale)}</Empty>;
 
   const params = await searchParams;
+  const labels = catalogFor(prefs.locale);
+  // `?view=settings` is the site-wide switches; anything else is the per-page table.
+  if (params.view === 'settings') {
+    return (
+      <>
+        <h1 className="console-heading">{message('nav.seo', prefs.locale)}</h1>
+        <SeoViewTabs value="settings" labels={labels} />
+        <SeoConfigForm initial={await getSeoConfig()} writable={can(grants, 'seo', 'update', {})} labels={labels} />
+      </>
+    );
+  }
   const locale = askedLocale(params.locale, prefs.locale);
   const data = await seoCenterData({ grants, locale });
   if (!data) return <Empty>{message('content.no_permission', prefs.locale)}</Empty>;
@@ -41,7 +55,8 @@ export default async function ConsoleSeoPage({ searchParams }: Props) {
   return (
     <>
       <h1 className="console-heading">{message('nav.seo', prefs.locale)}</h1>
-      <SeoCenter key={locale} data={data} labels={catalogFor(prefs.locale)} />
+      <SeoViewTabs value="pages" labels={labels} />
+      <SeoCenter key={locale} data={data} labels={labels} />
     </>
   );
 }

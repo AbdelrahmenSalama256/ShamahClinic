@@ -25,6 +25,77 @@ export const SEO_ENTITY_TYPE = 'path';
 export interface SeoOverride {
   title: string;
   description: string;
+  /** The phrase the page is written to rank for; graded by `seo-score.ts`, never emitted. */
+  focusKeyword?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  /** A rooted upload path or an absolute URL. */
+  ogImage?: string;
+  canonical?: string;
+  noindex?: boolean;
+}
+
+/**
+ * The focus keyword has no column of its own: it rides in `head_tags`, which nothing on
+ * the public side reads, under a name no `<meta>` would carry. That keeps the live
+ * database free of a schema change for a word only the console ever looks at.
+ */
+const FOCUS_TAG = 'console:focus-keyword';
+
+const SEO_COLUMNS = ['entity_id', 'title', 'description', 'og_title', 'og_description', 'og_image', 'canonical', 'robots', 'head_tags'] as const;
+
+interface SeoRowShape {
+  title: string;
+  description: string;
+  og_title: string | null;
+  og_description: string | null;
+  og_image: string | null;
+  canonical: string | null;
+  robots: string | null;
+  head_tags: unknown;
+}
+
+function focusOf(tags: unknown): string {
+  let list = tags;
+  if (typeof list === 'string') {
+    try {
+      list = JSON.parse(list);
+    } catch {
+      return '';
+    }
+  }
+  if (!Array.isArray(list)) return '';
+  const tag = list.find((entry) => entry && typeof entry === 'object' && (entry as Record<string, unknown>).name === FOCUS_TAG);
+  const content = tag ? (tag as Record<string, unknown>).content : '';
+  return typeof content === 'string' ? content.trim() : '';
+}
+
+/** A row as the record the console and the metadata builder read, or null when it says nothing. */
+function recordOf(row: SeoRowShape): SeoOverride | null {
+  const record: SeoOverride = {
+    title: row.title.trim(),
+    description: row.description.trim(),
+    focusKeyword: focusOf(row.head_tags),
+    ogTitle: (row.og_title ?? '').trim(),
+    ogDescription: (row.og_description ?? '').trim(),
+    ogImage: (row.og_image ?? '').trim(),
+    canonical: (row.canonical ?? '').trim(),
+    noindex: /noindex/i.test(row.robots ?? ''),
+  };
+  return isEmptyRecord(record) ? null : record;
+}
+
+export function isEmptyRecord(record: SeoOverride): boolean {
+  return (
+    !record.title &&
+    !record.description &&
+    !record.focusKeyword &&
+    !record.ogTitle &&
+    !record.ogDescription &&
+    !record.ogImage &&
+    !record.canonical &&
+    !record.noindex
+  );
 }
 
 /** A path this console may write. Empty is the home page; `..`, `//` and schemes are not paths. */
@@ -70,15 +141,12 @@ export const readSeoOverride = cache(async function readSeoOverride(path: string
   try {
     const row = await db
       .selectFrom('seo_entries')
-      .select(['title', 'description'])
+      .select([...SEO_COLUMNS])
       .where('entity_type', '=', SEO_ENTITY_TYPE)
       .where('entity_id', '=', path)
       .where('locale', '=', locale)
       .executeTakeFirst();
-    if (!row) return null;
-    const title = row.title.trim();
-    const description = row.description.trim();
-    return title || description ? { title, description } : null;
+    return row ? recordOf(row) : null;
   } catch {
     // A public page must not fail to render because its optional SEO row could not be
     // read; the authored copy is a complete answer.
@@ -92,48 +160,92 @@ export async function readSeoOverrides(paths: readonly string[], locale: Content
   if (paths.length === 0) return out;
   const rows = await db
     .selectFrom('seo_entries')
-    .select(['entity_id', 'title', 'description'])
+    .select([...SEO_COLUMNS])
     .where('entity_type', '=', SEO_ENTITY_TYPE)
     .where('locale', '=', locale)
     .where('entity_id', 'in', [...paths])
     .execute();
   for (const row of rows) {
-    const title = row.title.trim();
-    const description = row.description.trim();
-    if (title || description) out.set(row.entity_id, { title, description });
+    const record = recordOf(row);
+    if (record) out.set(row.entity_id, record);
   }
   return out;
 }
 
-/** An empty pair is not an override: it deletes the row and hands the page back its copy. */
+/** Every path a row has asked to keep out of the index, in either language. */
+export async function readNoindexPaths(): Promise<Set<string>> {
+  try {
+    const rows = await db
+      .selectFrom('seo_entries')
+      .select(['entity_id'])
+      .where('entity_type', '=', SEO_ENTITY_TYPE)
+      .where('robots', 'like', '%noindex%')
+      .execute();
+    return new Set(rows.map((row) => row.entity_id));
+  } catch {
+    return new Set();
+  }
+}
+
+/**
+ * Writes one address's record. A field the caller leaves out keeps what is stored — the
+ * SEO center's table edits only the search pair and must not wipe a share image set in the
+ * article's own panel — and a record left with nothing in it is deleted, which hands the
+ * page back its own copy.
+ */
 export async function saveSeoOverride(input: {
   path: string;
   locale: ContentLocale;
   title: string;
   description: string;
+  focusKeyword?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  ogImage?: string;
+  canonical?: string;
+  noindex?: boolean;
   actorId: string;
 }): Promise<SeoOverride | null> {
-  const title = input.title.trim();
-  const description = input.description.trim();
   const existing = await db
     .selectFrom('seo_entries')
-    .select('id')
+    .select(['id', ...SEO_COLUMNS])
     .where('entity_type', '=', SEO_ENTITY_TYPE)
     .where('entity_id', '=', input.path)
     .where('locale', '=', input.locale)
     .executeTakeFirst();
+  const before: SeoOverride = (existing && recordOf(existing)) ?? { title: '', description: '' };
+  const keep = (value: string | undefined, kept: string | undefined): string => (value === undefined ? kept ?? '' : value.trim());
+  const next: SeoOverride = {
+    title: input.title.trim(),
+    description: input.description.trim(),
+    focusKeyword: keep(input.focusKeyword, before.focusKeyword),
+    ogTitle: keep(input.ogTitle, before.ogTitle),
+    ogDescription: keep(input.ogDescription, before.ogDescription),
+    ogImage: keep(input.ogImage, before.ogImage),
+    canonical: keep(input.canonical, before.canonical),
+    noindex: input.noindex === undefined ? !!before.noindex : input.noindex,
+  };
 
-  if (!title && !description) {
+  if (isEmptyRecord(next)) {
     if (existing) await db.deleteFrom('seo_entries').where('id', '=', existing.id).execute();
     return null;
   }
 
+  const columns = {
+    title: next.title,
+    description: next.description,
+    og_title: next.ogTitle || null,
+    og_description: next.ogDescription || null,
+    og_image: next.ogImage || null,
+    canonical: next.canonical || null,
+    robots: next.noindex ? 'noindex,follow' : null,
+    head_tags: JSON.stringify(next.focusKeyword ? [{ name: FOCUS_TAG, content: next.focusKeyword }] : []),
+    draft: 0 as const,
+    published_at: new Date(),
+    updated_by: input.actorId,
+  };
   if (existing) {
-    await db
-      .updateTable('seo_entries')
-      .set({ title, description, draft: 0, published_at: new Date(), updated_by: input.actorId })
-      .where('id', '=', existing.id)
-      .execute();
+    await db.updateTable('seo_entries').set(columns).where('id', '=', existing.id).execute();
   } else {
     await db
       .insertInto('seo_entries')
@@ -142,14 +254,10 @@ export async function saveSeoOverride(input: {
         entity_type: SEO_ENTITY_TYPE,
         entity_id: input.path,
         locale: input.locale,
-        title,
-        description,
-        draft: 0,
-        published_at: new Date(),
+        ...columns,
         created_by: input.actorId,
-        updated_by: input.actorId,
       })
       .execute();
   }
-  return { title, description };
+  return next;
 }

@@ -2103,13 +2103,16 @@
     inline-size: 18%;
   }
   .console-seo-table th:nth-child(2) {
-    inline-size: 31%;
+    inline-size: 29%;
   }
   .console-seo-table th:nth-child(3) {
-    inline-size: 36%;
+    inline-size: 33%;
   }
   .console-seo-table th:nth-child(4) {
-    inline-size: 15%;
+    inline-size: 12%;
+  }
+  .console-seo-table th:nth-child(5) {
+    inline-size: 8%;
   }
 
   .console-seo-table th,
@@ -2137,6 +2140,166 @@
   .console-screen-cell-name > .console-note {
     display: block;
     margin-block-start: 0.25rem;
+  }
+
+  /* --- SEO box: score, previews, settings ------------------------------------ */
+  .console-seo-box {
+    display: grid;
+    gap: var(--c-gap);
+  }
+
+  .console-seo-score {
+    --c-grade: var(--c-danger);
+    display: flex;
+    align-items: center;
+    gap: var(--c-gap);
+  }
+  .console-seo-score[data-grade="fair"] {
+    --c-grade: var(--c-accent);
+  }
+  .console-seo-score[data-grade="good"] {
+    --c-grade: var(--c-success);
+  }
+  .console-seo-score > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight);
+  }
+
+  .console-seo-score-ring {
+    --c-score: 0;
+    display: grid;
+    place-items: center;
+    flex: none;
+    inline-size: 3.25rem;
+    block-size: 3.25rem;
+    border-radius: 50%;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-grade);
+    background:
+      radial-gradient(closest-side, var(--c-surface) 76%, transparent 78%),
+      conic-gradient(var(--c-grade) calc(var(--c-score) * 1%), var(--c-line) 0);
+  }
+
+  .console-seo-checks {
+    display: grid;
+    gap: 0.3rem;
+    margin: 0;
+    padding: var(--c-sp-2);
+    list-style: none;
+    font-size: var(--c-font-small);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface-soft);
+  }
+  .console-seo-checks li[data-pass="yes"] > span {
+    color: var(--c-success);
+  }
+  .console-seo-checks li[data-pass="no"] > span {
+    color: var(--c-danger);
+  }
+
+  .console-serp,
+  .console-share-card {
+    display: grid;
+    gap: 0.2rem;
+    margin: 0;
+    padding: var(--c-sp-2);
+    border: 1px solid var(--c-line);
+    border-radius: var(--c-r-md);
+    background: var(--c-surface);
+    overflow-wrap: anywhere;
+  }
+  .console-serp figcaption,
+  .console-share-card figcaption {
+    font-size: var(--c-font-micro);
+    color: var(--c-text-3);
+  }
+  .console-serp-url {
+    font-size: var(--c-font-small);
+    color: var(--c-text-2);
+    text-align: start;
+  }
+  .console-serp-title {
+    font-size: 1.05rem;
+    color: #1a0dab;
+  }
+  .console-serp-text {
+    font-size: var(--c-font-small);
+    color: var(--c-text-2);
+  }
+
+  .console-share-card {
+    padding: 0;
+    overflow: hidden;
+  }
+  .console-share-card > * {
+    padding-inline: var(--c-sp-2);
+  }
+  .console-share-card figcaption {
+    padding-block-start: var(--c-sp-2);
+  }
+  .console-share-card > img,
+  .console-share-card-blank {
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: 1200 / 630;
+    padding: 0;
+    object-fit: cover;
+    background: var(--c-bg-alt);
+  }
+  .console-share-card-host {
+    font-size: var(--c-font-micro);
+    color: var(--c-text-3);
+    text-transform: uppercase;
+  }
+  .console-share-card > span:last-child {
+    padding-block-end: var(--c-sp-2);
+    font-size: var(--c-font-small);
+    color: var(--c-text-2);
+  }
+
+  .console-seo-view {
+    margin-block-end: var(--c-stack);
+  }
+
+  .console-seo-config {
+    display: grid;
+    gap: var(--c-stack);
+    max-inline-size: 48rem;
+  }
+  .console-seo-config .console-panel {
+    display: grid;
+    gap: var(--c-gap);
+  }
+  .console-seo-sitemap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--c-gap);
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  .console-seo-sitemap legend {
+    margin-block-end: var(--c-gap-tight);
+    font-weight: 500;
+  }
+  .console-seo-links {
+    display: flex;
+    gap: var(--c-gap);
+    margin: 0;
+  }
+  .console-seo-links a {
+    color: var(--c-accent);
+    text-decoration: underline;
+  }
+  .console-seo-config-save {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap);
   }
 
   .console-screen-input {
