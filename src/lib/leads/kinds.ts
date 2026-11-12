@@ -9,7 +9,7 @@ export const LEAD_STATUSES = ['new', 'contacted', 'booked', 'done', 'lost'] as c
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 /** The two public forms; an import may carry its own source string. */
-export const LEAD_SOURCES = ['booking', 'contact-form'] as const;
+export const LEAD_SOURCES = ['booking', 'contact-form', 'app-booking', 'app-contact'] as const;
 export type LeadSource = (typeof LEAD_SOURCES)[number];
 
 export function isLeadStatus(value: unknown): value is LeadStatus {

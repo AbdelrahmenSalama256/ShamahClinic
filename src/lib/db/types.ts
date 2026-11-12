@@ -607,6 +607,94 @@ export interface ConsoleViewsTable {
   version: Generated<number>;
 }
 
+// --- mobile app (018) -------------------------------------------------------
+
+export interface AppCustomersTable {
+  id: string;
+  code: string;
+  first_name: Generated<string>;
+  second_name: Generated<string>;
+  phone: string;
+  email: Generated<string>;
+  password_hash: string;
+  image_url: Generated<string>;
+  push_token: Generated<string>;
+  locale: Generated<string>;
+  blocked: Generated<number>;
+  last_login_at: Date | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+  deleted_at: Date | null;
+}
+
+export interface AppTokensTable {
+  id: string;
+  customer_id: string;
+  token_hash: string;
+  user_agent: Generated<string>;
+  created_at: Generated<Date>;
+  last_used_at: Date | null;
+  expires_at: Date;
+  revoked_at: Date | null;
+}
+
+export interface AppBookingsTable {
+  id: string;
+  code: string;
+  customer_id: string;
+  branch_uid: string;
+  service_uid: Generated<string>;
+  service_name_ar: Generated<string>;
+  service_name_en: Generated<string>;
+  start_at: Date;
+  end_at: Date | null;
+  status: Generated<number>;
+  price: string | null;
+  clinic_note: Generated<string>;
+  lead_id: string | null;
+  points_awarded: Generated<number>;
+  cancelled_at: Date | null;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
+  updated_by: string | null;
+}
+
+export interface AppFavouritesTable {
+  customer_id: string;
+  product_id: string;
+  created_at: Generated<Date>;
+}
+
+export interface AppAddressesTable {
+  id: string;
+  customer_id: string;
+  client_name: Generated<string>;
+  street_name: Generated<string>;
+  building_number: Generated<string>;
+  floor: Generated<string>;
+  apartment_number: Generated<string>;
+  phone: Generated<string>;
+  extra_info: Generated<string>;
+  latitude: string | null;
+  longitude: string | null;
+  fav: Generated<number>;
+  created_at: Generated<Date>;
+  deleted_at: Date | null;
+}
+
+export interface AppLoyaltyTable {
+  id: string;
+  customer_id: string;
+  type: Generated<number>;
+  cat: Generated<number>;
+  points: number;
+  amount_spent: string | null;
+  booking_id: string | null;
+  note: Generated<string>;
+  created_by: string | null;
+  created_at: Generated<Date>;
+}
+
 /** No index signature: `extends Record<string, unknown>` makes Kysely's `keyof Database`
  * collapse to `string` and every qualified join reference infer as `never`. */
 export interface Database {
@@ -656,6 +744,12 @@ export interface Database {
   hero_slides: HeroSlidesTable;
   hero_settings: HeroSettingsTable;
   console_views: ConsoleViewsTable;
+  app_customers: AppCustomersTable;
+  app_tokens: AppTokensTable;
+  app_bookings: AppBookingsTable;
+  app_favourites: AppFavouritesTable;
+  app_addresses: AppAddressesTable;
+  app_loyalty: AppLoyaltyTable;
 }
 
 export type Db = Kysely<Database>;
