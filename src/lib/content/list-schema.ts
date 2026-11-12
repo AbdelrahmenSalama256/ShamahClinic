@@ -443,6 +443,11 @@ const BRANCHES: ListSchema = {
     { type: 'text', stem: 'intro', label: { ar: 'نبذة', en: 'Short introduction' }, hint: { ar: 'سطران يعرّفان بالفرع.', en: 'A couple of lines about the branch.' }, multiline: true, max: 800 },
     { type: 'list', stem: 'features', label: { ar: 'ما يميز الفرع', en: 'Branch highlights' }, hint: { ar: 'نقطة لكل ميزة.', en: 'One bullet per highlight.' } },
     { type: 'text', stem: 'landmark', label: { ar: 'علامة مميزة قريبة', en: 'Nearby landmark' }, hint: { ar: 'يساعد المريضة على الوصول.', en: 'Helps a patient find the door.' }, max: 300 },
+    // Read by the mobile app only (`/api/mobile/fetch_all_branches` and the nearby read).
+    { type: 'text', stem: 'latitude', mono: true, label: { ar: 'خط العرض', en: 'Latitude' }, hint: { ar: 'من خرائط جوجل: اضغطي مطولًا على الفرع وانسخي الرقم الأول، مثل 30.0566.', en: 'From Google Maps: long-press the branch and copy the first number, e.g. 30.0566.' }, max: 20 },
+    { type: 'text', stem: 'longitude', mono: true, label: { ar: 'خط الطول', en: 'Longitude' }, hint: { ar: 'الرقم الثاني، مثل 31.3390.', en: 'The second number, e.g. 31.3390.' }, max: 20 },
+    { type: 'text', stem: 'open_at', mono: true, label: { ar: 'يفتح الساعة', en: 'Opens at' }, hint: { ar: 'بصيغة 24 ساعة، مثل 10:00. الافتراضي 10:00.', en: '24-hour, e.g. 10:00. Defaults to 10:00.' }, max: 5 },
+    { type: 'text', stem: 'close_at', mono: true, label: { ar: 'يغلق الساعة', en: 'Closes at' }, hint: { ar: 'مثل 22:00. الافتراضي 22:00.', en: 'e.g. 22:00. Defaults to 22:00.' }, max: 5 },
   ],
 };
 

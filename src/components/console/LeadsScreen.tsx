@@ -85,6 +85,8 @@ const STATUS_KEY: Record<LeadStatus, MessageKey> = {
 const SOURCE_KEY: Record<string, MessageKey> = {
   booking: "leads.source.booking",
   "contact-form": "leads.source.contact-form",
+  "app-booking": "leads.source.app-booking",
+  "app-contact": "leads.source.app-contact",
 };
 
 const FIELD_KEYS: Record<string, MessageKey> = {

@@ -5060,3 +5060,56 @@
     }
   }
 }
+
+/* --- mobile app screen (AppScreen.tsx) ------------------------------------------ */
+@layer screens {
+  .console-app-screen {
+    display: grid;
+    gap: var(--c-gap);
+    max-inline-size: none;
+  }
+  .console-app-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--c-gap-tight);
+  }
+  .console-app-tools > .console-control {
+    inline-size: auto;
+    flex: 0 1 18rem;
+  }
+  .console-app-screen .console-table {
+    min-inline-size: 62rem;
+  }
+  .console-app-screen .console-table td {
+    vertical-align: top;
+  }
+  .console-app-when {
+    white-space: nowrap;
+  }
+  .console-app-sub {
+    display: block;
+    margin-block-start: 0.2rem;
+    color: var(--c-ink-soft, inherit);
+    font-size: 0.85em;
+    white-space: nowrap;
+  }
+  .console-app-actions {
+    display: grid;
+    gap: 0.4rem;
+    margin-block-start: 0.4rem;
+    min-inline-size: 14rem;
+  }
+  .console-app-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    min-inline-size: 18rem;
+  }
+  .console-app-inline > .console-control {
+    inline-size: 8rem;
+  }
+  .console-app-price {
+    inline-size: 6.5rem;
+  }
+}

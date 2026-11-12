@@ -23,6 +23,7 @@ import {
   Rocket,
   Search,
   Signpost,
+  Smartphone,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -55,6 +56,7 @@ import { consoleCall } from './client-api';
 const ICONS: Readonly<Record<string, LucideIcon>> = {
   overview: LayoutDashboard,
   leads: Inbox,
+  app: Smartphone,
   articles: Newspaper,
   offers: BadgePercent,
   pages: FileText,

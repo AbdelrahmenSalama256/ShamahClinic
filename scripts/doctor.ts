@@ -36,6 +36,9 @@ function checkEnv(): void {
     if (process.env[name]) ok(name, 'set');
     else bad(name, 'not set — copy .env.example to .env.local and fill it in');
   }
+  // Not required for the site, but without it the mobile app's API refuses every call.
+  if (process.env.MOBILE_API_PASSWORD) ok('MOBILE_API_PASSWORD', 'set');
+  else console.log('  warn MOBILE_API_PASSWORD — not set: /api/mobile/* answers 401 (docs/MOBILE-API.md)');
   const node = process.versions.node;
   if (Number(node.split('.')[0]) >= 20) ok('node', node);
   else bad('node', `${node} is too old; 20+ required`);

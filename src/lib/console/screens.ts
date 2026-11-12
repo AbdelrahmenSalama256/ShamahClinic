@@ -36,6 +36,7 @@ export interface ConsoleScreen {
   key:
     | 'overview'
     | 'leads'
+    | 'app'
     | 'articles'
     | 'offers'
     | 'pages'
@@ -73,6 +74,8 @@ export const CONSOLE_SCREENS: readonly ConsoleScreen[] = [
   // are unscoped; every role with a `lead read` grant sees the list, and the contact
   // columns are blanked for the ones that may only count.
   { key: 'leads', path: '/console/leads', resource: 'lead', action: 'read', entities: 'none' },
+  // The mobile app's bookings and patients. Same grant as leads: every app booking is a lead too.
+  { key: 'app', path: '/console/app', resource: 'lead', action: 'read', entities: 'none' },
   { key: 'articles', path: '/console/articles', resource: 'article', action: 'read', entities: 'locales' },
   { key: 'offers', path: '/console/offers', resource: 'offer', action: 'read', entities: 'locales' },
   { key: 'pages', path: '/console/pages', resource: 'page', action: 'read', entities: 'locales' },

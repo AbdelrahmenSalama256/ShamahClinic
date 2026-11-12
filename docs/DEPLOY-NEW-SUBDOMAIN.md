@@ -63,6 +63,7 @@ SESSION_SECRET=<32+ random characters — generate on the server, never send it>
 NEXT_PUBLIC_SITE_URL=https://new.shamahclinics.com
 MEDIA_ROOT=/home/USER/shamah-media/uploads
 COOKIE_FORCE_SECURE=true
+MOBILE_API_PASSWORD=<random secret, the same value the mobile app is built with>
 ```
 
 Optional, only if used: `REVALIDATE_SECRET`, `DATABASE_POOL_SIZE`, `DATABASE_TLS`,
